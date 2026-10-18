@@ -1,0 +1,196 @@
+{
+  "key_title": "Alice's Adventures in Wonderland",
+  "key_bytes": 174311,
+  "unit_tests_passed": 9,
+  "roundtrips": [
+    {
+      "case": "key-message",
+      "exact_bytes": true,
+      "encode": {
+        "plaintext_bytes": 16,
+        "frame_bytes": 64,
+        "cover_bytes": 1608,
+        "payload_tokens": 322,
+        "total_tokens": 339,
+        "model_calls": 339,
+        "average_retained_probability_mass": 0.9647567161767197,
+        "elapsed_seconds": 17.191,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      },
+      "decode": {
+        "plaintext_bytes": 16,
+        "frame_bytes": 64,
+        "cover_bytes": 1608,
+        "payload_tokens": 322,
+        "total_tokens": 339,
+        "model_calls": 339,
+        "elapsed_seconds": 17.216,
+        "authenticated": true,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      },
+      "input_sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca",
+      "recovered_sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "case": "belfry",
+      "exact_bytes": true,
+      "input_sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495",
+      "recovered_sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495",
+      "encode": {
+        "plaintext_bytes": 53,
+        "frame_bytes": 96,
+        "cover_bytes": 2635,
+        "payload_tokens": 579,
+        "total_tokens": 588,
+        "model_calls": 588,
+        "average_retained_probability_mass": 0.972791672743962,
+        "elapsed_seconds": 30.132,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      },
+      "decode": {
+        "plaintext_bytes": 53,
+        "frame_bytes": 96,
+        "cover_bytes": 2635,
+        "payload_tokens": 579,
+        "total_tokens": 588,
+        "model_calls": 588,
+        "elapsed_seconds": 29.918,
+        "authenticated": true,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      }
+    },
+    {
+      "case": "unicode",
+      "exact_bytes": true,
+      "input_sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5",
+      "recovered_sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5",
+      "encode": {
+        "plaintext_bytes": 42,
+        "frame_bytes": 96,
+        "cover_bytes": 2718,
+        "payload_tokens": 537,
+        "total_tokens": 594,
+        "model_calls": 594,
+        "average_retained_probability_mass": 0.963408573586305,
+        "elapsed_seconds": 29.89,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      },
+      "decode": {
+        "plaintext_bytes": 42,
+        "frame_bytes": 96,
+        "cover_bytes": 2718,
+        "payload_tokens": 537,
+        "total_tokens": 594,
+        "model_calls": 594,
+        "elapsed_seconds": 30.376,
+        "authenticated": true,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      }
+    },
+    {
+      "case": "empty",
+      "exact_bytes": true,
+      "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recovered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "encode": {
+        "plaintext_bytes": 0,
+        "frame_bytes": 32,
+        "cover_bytes": 1317,
+        "payload_tokens": 287,
+        "total_tokens": 290,
+        "model_calls": 290,
+        "average_retained_probability_mass": 0.9833955126624052,
+        "elapsed_seconds": 14.929,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      },
+      "decode": {
+        "plaintext_bytes": 0,
+        "frame_bytes": 32,
+        "cover_bytes": 1317,
+        "payload_tokens": 287,
+        "total_tokens": 290,
+        "model_calls": 290,
+        "elapsed_seconds": 14.919,
+        "authenticated": true,
+        "model": "llama3.2:3b-instruct-q4_K_M",
+        "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "server_build": "b1-0f3a71be1",
+        "cold": false,
+        "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+      }
+    }
+  ],
+  "rejection_checks": [
+    {
+      "case": "wrong-key",
+      "rejected": true,
+      "no_plaintext_file": true,
+      "message": "error: No authenticated message recovered: wrong key, changed/truncated cover, or incompatible inference configuration."
+    },
+    {
+      "case": "changed-cover",
+      "rejected": true,
+      "no_plaintext_file": true,
+      "message": "error: Cover does not match the shared model at byte 0; text was changed or the inference configuration differs."
+    },
+    {
+      "case": "truncated-cover",
+      "rejected": true,
+      "no_plaintext_file": true,
+      "message": "error: Cover does not match the shared model at byte 802; text was changed or the inference configuration differs."
+    },
+    {
+      "case": "extra-cover",
+      "rejected": true,
+      "no_plaintext_file": true,
+      "message": "error: Cover has an altered, missing, or extra sentence-completion suffix."
+    }
+  ],
+  "fresh_server_recovery": {
+    "exact_bytes": true,
+    "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca",
+    "stats": {
+      "plaintext_bytes": 16,
+      "frame_bytes": 64,
+      "cover_bytes": 1608,
+      "payload_tokens": 322,
+      "total_tokens": 339,
+      "model_calls": 339,
+      "elapsed_seconds": 17.697,
+      "authenticated": true,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    }
+  }
+}

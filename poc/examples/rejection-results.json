@@ -1,0 +1,26 @@
+[
+  {
+    "case": "wrong-key",
+    "rejected": true,
+    "no_plaintext_file": true,
+    "message": "error: No authenticated message recovered: wrong key, changed/truncated cover, or incompatible inference configuration."
+  },
+  {
+    "case": "changed-cover",
+    "rejected": true,
+    "no_plaintext_file": true,
+    "message": "error: Cover does not match the shared model at byte 0; text was changed or the inference configuration differs."
+  },
+  {
+    "case": "truncated-cover",
+    "rejected": true,
+    "no_plaintext_file": true,
+    "message": "error: Cover does not match the shared model at byte 802; text was changed or the inference configuration differs."
+  },
+  {
+    "case": "extra-cover",
+    "rejected": true,
+    "no_plaintext_file": true,
+    "message": "error: Cover has an altered, missing, or extra sentence-completion suffix."
+  }
+]

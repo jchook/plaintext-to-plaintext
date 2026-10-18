@@ -1,0 +1,110 @@
+[
+  {
+    "case": "belfry",
+    "exact_bytes": true,
+    "input_sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495",
+    "recovered_sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495",
+    "encode": {
+      "plaintext_bytes": 53,
+      "frame_bytes": 96,
+      "cover_bytes": 2635,
+      "payload_tokens": 579,
+      "total_tokens": 588,
+      "model_calls": 588,
+      "average_retained_probability_mass": 0.972791672743962,
+      "elapsed_seconds": 30.132,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    },
+    "decode": {
+      "plaintext_bytes": 53,
+      "frame_bytes": 96,
+      "cover_bytes": 2635,
+      "payload_tokens": 579,
+      "total_tokens": 588,
+      "model_calls": 588,
+      "elapsed_seconds": 29.918,
+      "authenticated": true,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    }
+  },
+  {
+    "case": "unicode",
+    "exact_bytes": true,
+    "input_sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5",
+    "recovered_sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5",
+    "encode": {
+      "plaintext_bytes": 42,
+      "frame_bytes": 96,
+      "cover_bytes": 2718,
+      "payload_tokens": 537,
+      "total_tokens": 594,
+      "model_calls": 594,
+      "average_retained_probability_mass": 0.963408573586305,
+      "elapsed_seconds": 29.89,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    },
+    "decode": {
+      "plaintext_bytes": 42,
+      "frame_bytes": 96,
+      "cover_bytes": 2718,
+      "payload_tokens": 537,
+      "total_tokens": 594,
+      "model_calls": 594,
+      "elapsed_seconds": 30.376,
+      "authenticated": true,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    }
+  },
+  {
+    "case": "empty",
+    "exact_bytes": true,
+    "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "recovered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "encode": {
+      "plaintext_bytes": 0,
+      "frame_bytes": 32,
+      "cover_bytes": 1317,
+      "payload_tokens": 287,
+      "total_tokens": 290,
+      "model_calls": 290,
+      "average_retained_probability_mass": 0.9833955126624052,
+      "elapsed_seconds": 14.929,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    },
+    "decode": {
+      "plaintext_bytes": 0,
+      "frame_bytes": 32,
+      "cover_bytes": 1317,
+      "payload_tokens": 287,
+      "total_tokens": 290,
+      "model_calls": 290,
+      "elapsed_seconds": 14.919,
+      "authenticated": true,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    }
+  }
+]
