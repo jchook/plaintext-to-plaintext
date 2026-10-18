@@ -1,0 +1,790 @@
+                Near-imperceptible Neural Linguistic Steganography
+                       via Self-Adjusting Arithmetic Coding
+
+                                   Jiaming Shen, Heng Ji, Jiawei Han
+                  Department of Computer Science, University of Illinois Urbana-Champaign, IL, USA
+                                           {js2, hengji, hanj}@illinois.edu
+
+
+
+
+                      Abstract                                  Alice
+                                                                           Plaintext
+                                                                          Let’s meet in
+                                                                                        encrypt
+                                                                                                          Ciphertext
+                                                                                                          0100101
+                                                                                                                       encode
+                                                                                                                                      Cover Text
+                                                                                                                                 Boris Johnson unveils
+                                                              (sender)   Room 9112A at                     011010                   new COVID-19
+    Linguistic steganography studies how to hide                          2am tonight                     01011…                    lockdown rules
+
+    secret messages in natural language cover
+    texts. Traditional methods aim to transform a                          Paired Steganography Encoder-Decoder
+
+                                                                             01001010110          Hello    world   !
+    secret message into an innocent text via lexical                                                                               A public channel
+                                                                                                                                      monitored
+    substitution or syntactical modification. Re-                                                                               by Eve (eavesdropper)
+    cently, advances in neural language models                              Hello    world    !    01001010110
+                                                                                    Encoder           Decoder
+    (LMs) enable us to directly generate cover text
+    conditioned on the secret message. In this                             Plaintext                      Ciphertext                  Cover Text
+    study, we present a new linguistic steganogra-               Bob      Let’s meet in                   0100101                Boris Johnson unveils
+                                                              (receiver) Room 9112A at decrypt             011010      decode       new COVID-19
+    phy method which encodes secret messages us-                          2am tonight                     01011…                    lockdown rules
+    ing self-adjusting arithmetic coding based on a
+                                                                    Figure 1: Linguistic steganography pipeline.
+    neural language model. We formally analyze
+    the statistical imperceptibility of this method
+    and empirically show it outperforms the pre-            substitution (Topkara et al., 2006), paraphrase sub-
+    vious state-of-the-art methods on four datasets         stitution (Chang and Clark, 2010), and syntactic
+    by 15.3% and 38.9% in terms of bits/word and            transformation (Safaka et al., 2016), applied to vari-
+    KL metrics, respectively. Finally, human eval-
+                                                            ous text media such as Email (Tutuncu and Hassan,
+    uations show that 51% of generated cover texts
+    can indeed fool eavesdroppers.1                         2015) and Twitter (Wilson et al., 2014). Although
+                                                            being able to maintain the grammatical correctness
+1   Introduction                                            of output text, those edit-based methods cannot en-
+Privacy is central to modern communication sys-             code information efficiently. For example, the pop-
+tems such as email services and online social net-          ular CoverTweet system (Wilson and Ker, 2016)
+works. To protect privacy, two research fields are          can only encode two bits of information in each
+established: (1) cryptography which encrypts se-            tweet on average.
+cret messages into codes such that an eavesdrop-               Recent advances in neural language models
+per is unable to decrypt, and (2) steganography             (LMs) (Józefowicz et al., 2016; Radford et al.,
+which encodes messages into cover signals such              2019; Yang et al., 2019a) have enabled a diagram
+that an eavesdropper is not even aware a secret             shift from edit-based methods to generation-based
+message exists (Westfeld and Pfitzmann, 1999; bin           methods which directly output a cover text by en-
+Mohamed Amin et al., 2003; Chang and Clark,                 coding the message reversibly in the choices of
+2014). One useful cover signal for steganography            tokens. Various encoding algorithms (Fang et al.,
+is natural language text because of its prevalence          2017; Yang et al., 2019b; Ziegler et al., 2019) have
+and innocuity in daily life.                                been proposed to leverage neural LMs to generate
+   Traditional linguistic steganography methods are         high-quality cover texts in terms of both fluency
+mostly edit-based, i.e., they try to directly edit the      and information hiding capacity. However, most
+secret message and transform it into an innocent            of the existing methods do not provide explicit
+text that will not raise the eavesdropper’s suspi-          guarantees on the imperceptibility of generated
+cious eyes. Typical strategies include synonym              cover text (i.e., to what extent the cover text is
+  1
+    Code and datasets are available at https://github.      indistinguishable from natural texts without hidden
+com/mickeystroller/StegaText.                               messages). One recent exception is the work (Dai
+
+                                                        303
+       Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing, pages 303–313,
+                       November 16–20, 2020. c 2020 Association for Computational Linguistics
+and Cai, 2019) which shows the imperceptibility                    phy algorithms; (2) We propose SAAC, a new near-
+of the method in Fang et al. (2017). Neverthe-                     imperceptible linguistic steganography method that
+less, for other more advanced steganography meth-                  encodes secret messages using self-adjusting arith-
+ods (Yang et al., 2019b; Ziegler et al., 2019), their              metic coding with a neural LM; and (3) Extensive
+imperceptibilities still remain unknown.                           experiments on four datasets demonstrate our ap-
+   In this work, we propose a new linguistic                       proach can on average outperform the previous
+steganography method with guaranteed impercepti-                   state-of-the-art method by 15.3% and 38.9% in
+bility. Our new method is built based on the previ-                terms of bits/word and KL metrics, respectively.
+ous study (Ziegler et al., 2019) which views each
+secret message as a binary fractional number and                   2     Background
+encodes it using arithmetic coding (Rissanen and                   2.1    Linguistic Steganography
+Langdon, 1979) with a pretrained neural LM. This
+                                                               We consider the following scenario where Alice
+method generates cover text tokens one at a time
+                                                               (sender) wants to send Bob (receiver) a secret mes-
+(c.f. Fig. 2). At each time step t, it computes a
+                                                               sage (plaintext) through a public text channel (e.g.,
+distribution of the t-th token using the given LM;
+                                                               Twitter and Reddit) monitored by Eve (eavesdrop-
+truncates this distribution to include only top K
+                                                               per). This is also known as the “prisoner prob-
+most likely tokens, and finally outputs the t-th to-
+                                                               lem” (Simmons, 1984). Eve expects to see flu-
+ken based on the secret message and the truncated
+                                                               ent texts in this public channel and will suspect
+distribution. In their study, this hyperparameter K
+                                                               every non-fluent text of concealing some hidden
+is the same across all generation steps. We analyze
+                                                               messages. Therefore, Alice’s goal is to transform
+this method’s imperceptibility and show it is closely
+                                                               the plaintext into a fluent cover text that can pass
+related to the selected K. Specifically, increasing
+                                                               through Eve’s suspicious eyes while ensuring that
+K will improve the method’s imperceptibility at
+                                                               only Bob can read the secret message.
+the cost of a larger probability of generating rarely-
+                                                                  To achieve this goal, Alice could take the
+used tokens and slower encoding speed. When the
+                                                               “encrypt-encode” approach (c.f. Fig. 1). Namely,
+cover text token distribution is flat and close to the
+                                                               she first encrypts the plaintext into a ciphertext (i.e.,
+uniform distribution, we need a large K to achieve
+                                                               a bit sequence indistinguishable from a series of fair
+the required imperceptibility guarantee. When the
+                                                               coin flips) and then encodes the ciphertext into the
+cover text token distribution is concentrated, we
+                                                               cover text using an encoder f . When Bob receives
+can use a small K to avoid generating rarely-used
+                                                               the cover text, he first decodes it into the cipher-
+tokens and to increase encoding speed. As different
+                                                               text using the decoder f −1 and then decrypts the
+generation steps will witness different underlying
+                                                               ciphertext into the plaintext. Linguistic steganog-
+cover text token distributions, using a static K is
+                                                               raphy research focuses on the encoding/decoding
+clearly sub-optimal.
+                                                               steps, i.e., how to design the encoder that trans-
+   To address this issue, we propose a new al-
+                                                               forms the bit sequence into a fluent cover text and
+gorithm SAAC2 which automatically adjusts K
+                                                               its paired decoder that maps the cover text back to
+by comparing the truncated cover text token dis-
+                                                               the original bit sequence. Note here we introduce
+tribution with the original LM’s output at each
+                                                               the middle ciphertext for two purposes. First, it in-
+generation step and selects the minimal K that
+                                                               creases communication security as more advanced
+achieves the required imperceptibility. We the-
+                                                               encryption/decryption methods (e.g., AES, RSA,
+oretically prove the SAAC algorithm is near-
+                                                               etc.) can be used on top of the steganography en-
+imperceptible for linguistic steganography and
+                                                               coder/decoder. Second, it enlarges the output cover
+empirically demonstrate its effectiveness on four
+                                                               text space by removing the unnecessary restriction
+datasets from various domains. Furthermore, we
+                                                               that the cover text must be transformed from the
+conduct human evaluations via crowdsourcing and
+                                                               original plaintext.
+show 51% of cover texts generated by SAAC can
+indeed fool eavesdropper.                                          2.2    Statistical Imperceptibility
+Contributions. This study makes the following                      Notations. A vocabulary V is a finite set of to-
+contributions: (1) We formally analyze the imper-                  kens3 . A language model (LM) inputs a token
+ceptibility of arithmetic coding based steganogra-
+                                                                       3
+                                                                         Each token can be a single word, a subword unit, or even
+   2
+       SAAC is short for Self-Adjusting Arithmetic Coding.         a character, depending on the tokenizer choice.
+
+                                                             304
+sequence x = [x1 , x2 , . . . , xn ] and returns the                  divergence and obtain the following result:
+joint probability PLM (x). From this joint prob-                                    v
+                                                                                          ∞
+ability, we can derive the conditional probability
+                                                                                    u
+                                                                      1             u ln2 X
+                                                                        kPLM −Qk1 ≤ t        DKL (Q(·|y<t )kPLM (·|y<t )),
+PLM (xt+1 |x1 , . . . , xt ) which enables us to sam-                 2                2 t=1
+ple a text x by drawing each token xt , t = 1, 2, . . . ,                                                                     (4)
+one at a time.                                                    where y<t = [y1 , . . . , yt−1 ] is a cover text prefix.
+   A steganography encoder f inputs a language                    PLM (·|y<t ) and Q(·|y<t ) are distributions over
+model PLM as well as a length-L ciphertext m ∼                    the next token yt conditioned on the prefix y<t
+Unif({0, 1}L ), and outputs its corresponding cover               before and after the steganography encoding al-
+text y = f (m; PLM ). To ensure the receiver can                  gorithm, respectively. This inequality provides a
+uniquely decode the cover text, this encoder func-                formal framework to analyze the imperceptibility
+tion f must be both deterministic and invertible.                 of a steganography encoder. Moreover, it implies
+Moreover, this encoder f , together with the cipher-              that in order to achieve the near-imperceptibility,
+text distribution and the input LM, implicitly define             we must guarantee the encoder’s output Q(·|y<t )
+a distribution of cover text y which we denote as                 being close to its input PLM (·|y<t ) at all steps.
+Q(y). When cover texts are transmitted in the
+public channel, this distribution Q(y) is what an                     3     Self-Adjusting Arithmetic Coding
+eavesdropper would observe.
+                                                                  In this section, we first introduce the general arith-
+Imperceptibility. To avoid raising eavesdropper’s                 metic coding and discuss its practical limitations.
+suspicion, we want the cover text distribution Q to               We then present SAAC, a self-adjusting arithmetic
+be similar to the true natural language distribution              coding algorithm and analyze its imperceptibility.
+(i.e., what this eavesdropper would expect to see
+in this public channel). Following (Dai and Cai,                      3.1    Arithmetic Coding
+2019), we formulate “imperceptibility” using the                  Arithmetic coding is a method initially proposed
+total variation distance (TVD) as follows:                        to compress a string of elements sampled from a
+                                  1                               known probability distribution (Rissanen and Lang-
+              TVD(P∗LM , Q) =       kQ − P∗LM k1 ,        (1)
+                                  2                               don, 1979). For data compression, arithmetic cod-
+                                                                  ing is asymptotically optimal in the sense that it
+where P∗LM denotes the true language distribution.
+                                                                  can compress information within a long string to its
+As we approximate P∗LM using a LM PLM (e.g.,
+                                                                  entropy. In practice, it also outperforms the better-
+OpenAI GPT-2 (Radford et al., 2019)), we further
+                                                                  known Huffman coding method (Huffman, 1952)
+decompose TVD(P∗LM , Q) as follows:
+                                                                  because it does not partition the input string into
+                      1 ∗              1                          blocks. Traditionally, arithmetic coding encodes
+TVD(P∗LM , Q) ≤         kPLM − PLM k1 + kPLM − Qk1 ,
+                      2                2                          a string of elements into a bit sequence. To use
+                                                (2)
+                                                                  such a coding for linguistic steganography, we fol-
+where the first term measures how good this LM is
+                                                                  low (Ziegler et al., 2019) and reverse the encoding
+and the second term, that is the main focus of this
+                                                                  order. Namely, we encode a bit sequence (cipher-
+study, indicates the gap induced by the steganogra-
+                                                                  text) into a string of tokens (cover text) and decode
+phy encoder. Even without knowing the first term,
+                                                                  a cover text to its original ciphertext.
+we can still obtain a relative imperceptibility guar-
+antee based on the second term, which enables us                      Encoding. During the encoding stage, we view
+to compare different steganography algorithms.                        the bit sequence m = [m1 , m2 , . . . , mL ] as the
+   Using Pinsker’s inequality (Fedotov et al., 2003),                 binary
+                                                                      PL representation           of a single number B(m) =
+                                                                              m    ×  2 −i . For example, if m = [1, 0, 1], we
+we set the upper-bound for the total variation dis-                      i=1     i
+
+tance using the KL divergence4 :                                      have B(m) = 1 × 2−1 + 1 × 2−3 = 0.625.
+                                                                         The encoder generates the cover text token one
+                                                                      at a time. At each time step t, the encoder has
+                              r
+           1                      ln2
+             kPLM − Qk1 ≤             DKL (QkPLM ).       (3)
+           2                       2                                  access to an underlying language model PLM and
+                                                                      considers three things: (1) the number B(m), (2)
+Then, we further decompose the right hand side of
+                                                                      the cover text prefix y<t , and (3) the current inter-
+the above inequality based on the additivity of KL
+                                                                      val [lt , ut ) (at the beginning of the encoding pro-
+   4
+       We will consistently compute KL divergence in base 2.          cess, this interval [l1 , u1 ) is set to [0, 1), but it will
+
+                                                                305
+                                             MSB                                                                                                LSB
+
+                  Bit Sequence : . 1 0 0 1 0 1 0 1 1 0 1 0 0 1 0 1 1 1 1 0 0 0 1 1 0 1 0 1 0                                             ……
+      1.0                             0.6                             0.6                              0.586875                     0.586875
+
+
+            Q(“A”) = 0.2
+                                                     0.578125
+                                                                                                                                                Q(“John”) = 0.2
+                                              Q(“my”) = 0.25
+                                                                                                                                   0.5855625
+      0.8
+                                0.5 0.5625                                   Q(“friend”) = 0.35
+
+                                                                                                                                                Q(“Jimmy”) = 0.2
+                                                                                                                                                                   ……
+            Q(“The”) = 0.2
+                                              Q(“world”) = 0.2    0.586875                                        Q(“is”) = 0.7
+      0.6                                                                                                                           0.58425
+                                    0.5325
+
+
+     0.45
+            Q(“Hello”) = 0.15
+                                              Q(“there”) = 0.2
+                                                                             Q(“name”) = 0.25                                                   Q(“Alice”) = 0.2
+                                                                                                                                                                   ……
+            Q(“Once”) = 0.13        0.5025                         0.5775                                                          0.5829375
+     0.32                                                                    Q(“cell”) = 0.12                                                   Q(“Bob”) = 0.15
+                                             Q(“fellow”) = 0.13                                       0.5803125
+                                                                    0.573                                         Q(“””) = 0.1
+      ……          ……
+                                     0.483
+                                                                                                      0.579375
+                                                                                                                                  0.581953125
+                                                                                                                                                Q(“Eve”) = 0.15
+                                                                                                                                                                   ……
+                                                                       ……         ……
+                                       ……            ……
+                                                                                                            ……    ……              0.58096876
+                                                                                                                                                ……
+      0.0                             0.45                         0.5625                               0.5775                     0.5803125
+    Q(·|y<1 )                       Q(·|y<2 )                        Q(·|y<3 )                           Q(·|y<4 )                    Q(·|y<5 )
+
+
+      y1 = “Hello”                           y2 = “my”                  y3 = “name”                              y4 = “is”            y5 = “Jimmy”                 ……
+
+Figure 2: A running example of arithmetic coding. We input a bit sequence (i.e., the ciphertext) with the most
+significant bit (MSB) at the left and output the encoded cover text.
+
+change). Based on the LM and cover text prefix,                                                 phertext m. We achieve this goal by reversing
+the encoder first computes the conditional distribu-                                            the encoding process and gradually narrowing the
+tion of the next token Q(yt |y<t ). Then, it divides                                            range of possible bit sequences. At each time step t,
+the current interval [lt , ut ) into sub-intervals, each                                        the decoder first generates the conditional distribu-
+representing a fraction of the current interval pro-                                            tion Q(yt |y<t ). Then, it divides the current inter-
+portional to the conditional probability of a possible                                          val [lt , ut ) (initialized to [0, 1)) into sub-intervals
+next token. Whichever interval contains the num-                                                based on Q(yt |y<t ) and the one corresponding to
+ber B(m) becomes the interval used in the next                                                  yt becomes the interval used in the next step, that is,
+step (i.e., [lt+1 , ut+1 )) and its corresponding token                                         [lt+1 , ut+1 ). The decoding process stops after we
+becomes the cover text token yt . The encoding pro-                                             process the last cover text token yn and outputs the
+cess stops when all m-prefixed fractions fall into                                              decoded ciphertext to be the shared common prefix
+the final interval, that is, the generated cover text                                           of the binary representations of ln+1 and un+1 .
+unambiguously defines the bit sequence m. Be-
+fore we discuss and analyze the concrete design                                                 3.2      Imperceptibility Analysis
+of Q(·|y<t ) in the next section, we first present a                                            One important issue remained in the general arith-
+running example in Figure 2.                                                                    metic coding procedure is how to design the con-
+   Suppose we want to encode a bit sequence                                                     ditional distribution Q(·|y<t ). As we discussed
+m = [1, 0, 0, 1, 0, 1, . . . ]. This bit sequence rep-                                          in Section 2.2, this distribution should be close to
+resents a fraction B(m) ∈ [0.58425, 0.58556). At                                                the underlying model LM. Ideally, we may just set
+the time step t = 1, we divide the initial interval                                             Q(·|y<t ) to be the same as PLM (·|y<t ). However,
+[0, 1) and find B(m) falling into the sub-interval                                              this naïve design has several problems. First, it may
+[0.45, 0.6) which induces the first cover text token                                            generate a rarely-used cover text token because we
+y1 = “Hello”. At the time step t = 2, we further di-                                            are actually reading off the tokens based on the
+vide the interval [0.45, 0.6) and observe that B(m)                                             ciphertext, instead of really sampling the LM. This
+belongs to the range [0.5625, 0.6) corresponding to                                             could harm the cover text fluency and raises the
+the second cover text token y2 = “my”. We repeat                                                eavesdropper’s suspicion. Second, PLM (·|y<t ) is
+this process until the final interval covers all binary                                         a distribution over the entire vocabulary V (with a
+fractions starting with m and output the generated                                              full rank |V|) and using it to divide the [0, 1) inter-
+cover text by then.                                                                             val will quickly encounter the precision problem,
+Decoding. During the decoding stage, we are                                                     even if we implement the coding scheme using
+given a cover text y = [y1 , . . . , yn ] as well as                                            a fixed precision binary fractions (Witten et al.,
+the same language model PLM used in the en-                                                     1987). Finally, this design further slows down the
+coding stage, and aim to recover the original ci-                                               coding speed and the slow speed is the major weak-
+
+                                                                                       306
+ness of arithmetic coding compared to its rival Huff-                                   Dataset          Drug    News     COVID-19    Random
+
+man method (Duda, 2013).                                                         Num. of Sentences       3972     6437      2000          3000
+                                                                                Avg. Num. of Words       19.01    14.30     24.21          —
+   Due to the above reasons, people in practice will                             Avg. Num. of Bits      289.75   211.08    308.65         256
+truncate the LM distribution to include only top                                                  Table 1: Datasets statistics.
+K most likely tokens (Ziegler et al., 2019), which
+leads to the following distribution:                                        and based on the inequality 4 we will have:
+                 
+                      PLM (yt |y<t )        if yt ∈ TK (y<t )                                    v
+ Q(yt |y<t ) ∝                                                  (5)                                    ∞
+                                                                                                 u             r
+                      0                     otherwise                             1              u ln2 X  δ0     π 2 ln2
+                                                                                    kPLM − Qk1 ≤ t         2
+                                                                                                             =           δ0 .                    (8)
+                                                                                  2                 2 t=1 t        12
+where TK (y<t ) = argtopKy0 PLM (y 0 |y<t ). Ac-
+cordingly, we have the imperceptibility of one gen-                     This result shows our proposed SAAC algorithm
+eration step to be:                                                     is near-imperceptible for linguistic steganography.
+
+ DKL (Q(yt |y<t )kPLM (yt |y<t )) = − log ZK ,                              4        Experiments
+         X
+ ZK =             PLM (y 0 |y<t ),          (6)                             4.1        Experiment Setups
+         y 0 ∈TK (y<t )
+                                                                        Datasets. We conduct our experiments on four
+where ZK is essentially the cumulative probability                      datasets from different domains: (1) Drug (Ji and
+of top K most likely tokens. From this equation,                        Knight, 2018), which contains a set of Reddit com-
+we can see that the imperceptibility of arithmetic                      ments related to drugs, (2) News, which includes
+coding depends crucially on how the underlying                          a subset of news articles in the CNN/DailyMail
+LM distribution concentrates on its top K predic-                       dataset (Hermann et al., 2015), (3) COVID-19,
+tions. Previous study uses the same K across all                        which is a subset of research papers related to
+generation steps and ignores the different distribu-                    COVID-19 in the CORD-19 dataset (Wang et al.,
+tion characteristics in different steps. This strat-                    2020), and (4) Random, which is a collection of
+egy is sub-optimal because in some steps, the pre-                      uniformly sampled bit sequences. The first three
+defined K is too small to achieve good impercepti-                      datasets contain natural language texts and we con-
+bility, while in the other steps, the same K is too                     vert them into bit sequences5 following the same
+large and slows down the encoding speed.                                process in Ziegler et al. (2019). Table 1 summa-
+                                                                        rizes the dataset statistics.
+   In this study, we propose a new self-adjusting
+arithmetic coding algorithm SAAC to remedy the                              Compared Methods. We compare the following
+above problem. The idea is to dynamically select                            linguistic steganography methods.
+the most appropriate K that satisfies a pre-defined                         1. Bin-LM (Fang et al., 2017): This method first
+per-step imperceptibility guarantee. Specifically,                             splits the vocabulary V into 2B bins and repre-
+the sender can set a small per-step imperceptibility                           sents each bin using a B-bit sequence. Then,
+gap δ  1 and at time step t, we set the Kt as:                                it chunks the ciphertext into dL/Be blocks and
+                         X
+                                                                               encodes the t-th block by taking the most likely
+  Kt = min({K|                        PLM (y 0 |y<t ) ≥ 2−δ }). (7)            token (determined by the underlying LM) that
+                     y 0 ∈TK (y<t )
+                                                                               falls in the t-th bin.
+                                                                            2. RNN-Stega (Yang et al., 2019b): This method
+This selected Kt is essentially the smallest K that
+                                                                               first constructs a Huffman tree for top 2H most
+can achieve the imperceptibility guarantee. As we
+                                                                               likely tokens at each time step t according to
+later show in the experiment, this selected K varies
+                                                                               PLM (·|y<t ). Then, it follows the bits in ci-
+a lot in different steps, which further confirms the
+                                                                               phertext to sample a cover text token yt from
+sub-optimality of using a static K.
+                                                                               the constructed Huffman tree. It improves the
+   The above method guarantees that each step in-
+                                                                               above Bin-LM method by encoding one or more
+curs no more additional imperceptibility than the
+                                                                               bits per generated cover text token.
+threshold δ. This makes the imperceptibility of
+                                                                            3. Patient-Huffman (Dai and Cai, 2019): This
+an entire sequence dependent on the length of bit
+                                                                               method improves RNN-Stega by explicitly
+sequence. To achieve a length-agnostic impercepti-
+                                                                               checking if the KL divergence between the
+bility bound, we may choose a convergent series for
+per-step threshold. For example, if we set δt = δt20                             5
+                                                                                     This is essentially the encryption step in Fig. 1.
+
+                                                                      307
+                                         Drug                   News               COVID-19               Random
+             Methods
+                                 Bits/Word ↑    DKL ↓   Bits/Word ↑    DKL ↓   Bits/Word ↑   DKL ↓   Bits/Word ↑   DKL ↓
+         Bin-LM (B = 1)              1          1.864       1          1.922       1         1.838       1         1.185
+         Bin-LM (B = 2)              2          2.358       2          2.385       2         2.346       2         2.374
+         Bin-LM (B = 3)              3          2.660       3          2.680       3         2.659       3         2.664
+       RNN-Stega (H = 3)           2.370        1.015     2.387        1.015     2.368       0.999     2.378       0.991
+       RNN-Stega (H = 5)           3.399        0.628     3.393        0.628     3.368       0.624     3.370       0.630
+       RNN-Stega (H = 7)           4.202        0.424     4.202        0.426     4.197       0.426     4.163       0.422
+     Patient-Huffman ( = 0.8)     1.835        0.269     1.834        0.269     1.844       0.270     1.847       0.271
+     Patient-Huffman ( = 1.0)     2.147        0.360     2.154        0.361     2.142       0.357     2.148       0.358
+     Patient-Huffman ( = 1.5)     2.596        0.524     2.583        0.522     2.579       0.519     2.584       0.520
+       Arithmetic (K = 300)        3.497        0.203     3.491        0.209     3.510       0.191     3.466       0.189
+       Arithmetic (K = 600)        4.247        0.162     4.240        0.166     4.289       0.146     3.599       0.160
+       Arithmetic (K = 900)        4.376        0.149     4.358        0.152     4.414       0.131     3.669       0.147
+         SAAC (δ = 0.1)            4.262        0.153     4.232        0.157     4.301       0.133     4.225       0.136
+         SAAC (δ = 0.05)           4.451        0.134     4.441        0.138     4.519       0.114     4.419       0.117
+         SAAC (δ = 0.01)           4.862        0.109     4.784        0.117     4.851       0.093     4.778       0.099
+
+Table 2: Quantitative performance of linguistic steganography methods across all datasets. Each method has one
+parameter controlling various tradeoffs (c.f. detailed discussions in Compared Method subsection) and we indicate
+them in the parentheses. Larger bits/word values ↑ and smaller DKL values ↓ indicate better performance.
+
+   LM distribution and the Huffman distribution                    the Huggingface library as the underlying LM for
+   is smaller than a specified threshold . If the                 all methods. This LM includes 345M parameters
+   KL divergence is larger than , it samples from                 and there is no additional parameter introduced
+   the base LM distribution and patiently waits for                by steganography encoding algorithms. For base-
+   another opportunity.                                            line method Bin-LM, we choose its block size
+4. Arithmetic (Ziegler et al., 2019): This method                  B in [1, 2, 3, 4, 5]. For RNN-Stega method, we
+   also uses the arithmetic coding to generate cover               vary the Huffman tree depth H in [3, 5, 7, 9, 11].
+   text tokens. At each time step t, it truncates the              For Patient-Huffman method, we change the pa-
+   PLM (·|y<t ) distribution to include only top K                 tience threshold  in [0.8, 1.0, 1.5]. For Arithmetic
+   most likely tokens and samples one cover text                   method, we select its hyperparameter K ranging
+   tokens from the truncated distribution.                         from 100 to 1800 with an increment 300 and fix its
+5. SAAC: This method is our proposed Self-                         temperature parameter τ = 1. Finally, we choose
+   Adjusting Arithmetic Coding algorithm which                     the imperceptibility gap δ in our SAAC method in
+   automatically adjusts PLM (·|y<t ) to achieve                   [0.01, 0.05, 0.1]. For both Arithmetic and SAAC
+   the required imperceptibility guarantee δ.                      methods, we implement the arithmetic coding us-
+Evaluation Metrics. We follow previous studies                     ing a fixed 26-bits precision binary fractions. We
+and evaluate the results using two metrics:                        do not perform any hyperparameter search and di-
+1. Bits/word: This metric is the average number                    rectly report all the results in the main text.
+   of bits that one cover text token can encode. A                 Discussions on LM Sharing. We note that all
+   larger bits/word value indicates the algorithm                  compared methods require the employed LM to
+   can encode information more efficiently.                        be shared between the sender and the receiver be-
+2. DKL : This metric is the KL divergence between                  forehand. Therefore, in practice, people typically
+   the LM distribution and the cover text distribu-                use a popular public language model (e.g., GPT2)
+   tion. A smaller DKL value indicates the model                   available to everyone. This allows two parties to
+   has better imperceptibility (c.f. Section 2.2).                 directly download the same LM from a centroid
+Implementation Details. We implement all com-                      place (e.g., an OpenAI hosted server) and removes
+pared methods based on the codebase in (Ziegler                    the necessity of sending the LM though some com-
+et al., 2019). All the code and data are publicly                  munication channel.
+available6 . Specifically, we use PyTorch 1.4.0 and
+the pretrained OpenAI GPT-2 medium model in                        4.2    Experiment Results
+
+  6
+    https://github.com/mickeystroller/                             Overall Performance. Table 2 shows the over-
+StegaText                                                          all performance. First, we can see all variable
+
+                                                             308
+                      K=300     K=600     K=900                                 0.010
+        1.28
+                                                                                                                                                                             = 0.1
+        0.64
+                                                                                0.008                                                                                        = 0.05
+        0.32
+
+
+
+                                                                  Probability
+                                                                                                                                                                             = 0.01
+        0.16                                                                    0.006
+
+ DKL    0.08
+                                                                                0.004
+        0.04
+
+        0.02                                                                    0.002
+
+       0.01
+                                                                                0.000
+       0.005                                                                               0        200         400           600                   800        1000         1200       1400
+                                                                                                                            Selected K
+               Drug      News      COVID-19       Random
+                                                                 Figure 4: Histogram of selected Ks in our SAAC
+Figure 3: DKL for static arithmetic coding with differ-
+                                                                 method’s next token distribution Q(yt |y<t ).
+ent Ks. Note that the Y axis is in the log scale.
+                                                                             5.00                                                        0.35
+                                                                                                                                                                                Arithmetic
+                                                                             4.50                                                        0.30
+
+
+
+
+                                                                 Bits/Word
+                                                                                                                                                                                SAAC
+length coding algorithms (i.e., RNN-Stega, Patient-                          4.00                                                        0.25
+                                                                                                                                   DKL
+Huffman, Arithmetic, SAAC) outperform the fixed                              3.50
+                                                                                                                 Arithmetic
+                                                                                                                                         0.20
+
+                                                                             3.00                                                        0.15
+length coding algorithm Bin-LM. The Bin-LM                                                                       SAAC
+                                                                             2.50                                                        0.10
+method achieves worse imperceptibility (i.e., larger                                0   100 300   600   900   1200
+
+                                                                                               Average Selected K
+                                                                                                                     1500   1800                0    100 300   600    900
+                                                                                                                                                           Average Selected K
+                                                                                                                                                                             1200   1500   1800
+
+
+
+DKL ) when it encodes message bits at higher com-
+                                                             Figure 5: Comparison of baseline Arithmetic method
+pression rate (i.e., larger Bits/Word), which aligns         with SAAC across (roughly) the same average Ks.
+with the previous theoretical result in (Dai and Cai,        Larger bits/word values ↑ and smaller DKL values ↓
+2019). Second, we observe that Patient-Huffman               indicate better performance.
+method improves RNN-Stega as it achieves smaller
+DKL when Bits/Word is kept roughly the same.                 imperceptibility bound δ. Finally, we vary the im-
+Third, we find the arithmetic coding based meth-             perceptibility bound δ and calculate the average K
+ods (i.e., Arithmetic and SAAC) outperform the               selected by SAAC. Fig. 5 compares the baseline
+Huffman tree based methods (i.e., RNN-Stega and              Arithmetic method (of different predefined Ks)
+Patient-Huffman). Finally, we can see our proposed           with SAAC method that has the (roughly) same
+SAAC method can beat Arithmetic by automati-                 average selected K. We can see that using about
+cally choosing the most appropriate K values and             the same Ks, our SAAC method can clearly out-
+thus achieves the best overall performance.                  perform the Arithmetic baseline method in terms
+                                                             of both Bits/word and DKL metrics.
+Comparison with Arithmetic Baseline. We fur-
+ther analyze where SAAC’s gains over the Arith-              Efficiency Analysis. We run all our experiments
+metic baseline method come from. Fig. 3 shows                on a machine with one single RTX 8000 GPU and
+the KL divergence between LM’s distribution PLM              80 Intel Xeon Gold 6230 CPUs. On average, en-
+and steganography encoder’s distribution Q across            coding one sentence takes Bin-LM 2.361 second,
+all time steps. We can see that although most of             RNN-Stega 1.617 second, Arithmetic 2.085 second,
+KL values are less than 0.08, the 95th percentiles           Patient-Huffman 4.443 second, and our proposed
+are all above 0.32, which means even for large               SAAC method 1.722 second. This result shows dy-
+predefined K = 900, five percent of generation               namic selection of step-wise K will not introduce
+steps induce KL values larger than 0.32. Fig. 4              many computational overhead and can sometimes
+shows three histograms of SAAC selected Ks, one              even improve the efficiency of the static arithmetic
+for each required imperceptibility bound δ. We               coding method.
+observe that these histograms have several modes             Case Studies. We show some concrete exam-
+with one (largest) mode around 50 and one mode               ples of generated cover texts in Fig. 6. Follow-
+larger than 300. This indicates that for a majority          ing (Ziegler et al., 2019), we use an introductory
+of generation steps, choosing a K < 50 is enough             context c for generating the first cover text token
+to guarantee the required imperceptibility bound             (i.e., replace Q(·|y<1 ) with Q(·|[c; y<1 ])). This
+and thus fixing a static K = 300 is a big waste              strategy helps to improve the cover text quality and
+for those steps. Meanwhile, the LM distributions             will later also be used in the human evaluation. We
+at some generation steps are too “flat” and we in-           can see that those generated cover texts are flu-
+deed need to use a larger K to achieve the required          ent and grammatically correct. Besides, they are
+
+                                                           309
+            Plaintext                                            Context                                                                                Generated Cover Text
+
+                                       The first tally is in. The HEROES Act, passed the House of                              bipartisan bill would require a \$13 billion appropriation at the end of the
+  Phylogenetic analysis showed Representatives Friday evening, would reduce federal revenue by a net                           current fiscal year. Under the Act, you would not collect federal taxes on
+  that Bat-SARS-CoV formed a     total of \$883 billion between 2020 and 2030, according to the Joint                                drugs or make drug-related appropriation if you were a major
+   distinct cluster with SARS-   Committee on Taxation (JCT). It is highly unlikely that the bill will get                         manufacturer of cannabis. The proposal will likely give Trump the
+            CoV. <eos>          signed into law as is, given the White House's veto threat and Senate                           opportunity to only fund the 10 types of confiscated marijuana that the
+                                              Republican's view of it as hardly salvageable.                                           federal government has been conducting a current drug .
+
+                               Washington received his initial military training and command with the
+                                                                                                         Confederate troops were assigned a plaque near Berrien\'s Mill, a creek
+   molly ultra caps capped at     Virginia Regiment during the French and Indian War. He was later
+                                                                                                        south of New York City. His monument of Lafayette\'s power to bear arms
+   180mgs will have you flying elected to the Virginia House of Burgesses and was named a delegate
+                                                                                                         became the very flag of the Union government. Washington returned to
+ for hrs clean come down 99 of to the Continental Congress, where he was appointed Commanding
+                                                                                                          Pennsylvania in 1788 when the navy introduced Continental forces to
+         the time . <eos>       General of the nation's Continental Army. Washington led American
+                                                                                                             Britain. Five years later the \"Black Ships\" were commissioned
+                                  forces, allied with France, in the defeat of the British at Yorktown.
+
+
+Figure 6: Cover text examples generated by our SAAC method. The context is used for generating the first cover
+text token (c.f. Q(·|y<1 ) in Fig. 2). We can see that those generated cover texts are fluent and effectively hide
+messages in the original plaintexts.
+        Step t                                      Already Generated Cover Text y<t                                                         Select K              Generated Next Token yt
+          t=1             “”                                                                                                                   838              “Following”
+          t=2             “Following”                                                                                                          502              “the”
+          t=3             “Following the”                                                                                                        1036           “retreat”
+          t=4             “Following the retreat”                                                                                                 10            “of”
+          t=5             “Following the retreat of”                                                                                             399            “the”
+          t=6             “Following the retreat of the”                                                                                         1059           “British”
+          t=7             “Following the retreat of the British”                                                                                 138            “,”
+          t=8             “Following the retreat of the British , ”                                                                              243            “Washington”
+          t=9             “Following the retreat of the British , Washington”                                                                    585            “\’s”
+         t=10             “Following the retreat of the British , Washington \’s”                                                                1563           “comrades”
+         t=11             “Following the retreat of the British , Washington \’s comrades”                                                        28            “said”
+           …              ……                                                                                                                      …             …
+
+Figure 7: One step-by-step example of cover text generation. When less variety exists in the next token distribution
+Q(·|y<t ), we will choose a smaller K (lines in blue color). Otherwise, we select a larger K (lines in pink color).
+
+topically similar to the provided introductory con-                                                                     0.70                                                                                    0.67
+
+
+
+
+                                                                                                 Human Judgment Score
+                                                                                                                                          RNN-Stega       Arithmetic            SAAC          True Data
+text and effectively hide messages in the original
+                                                                                                                        0.55
+plaintexts. In Fig. 7, we further show a step-by-                                                                                                                                                     0.51
+                                                                                                                        0.50
+step generation example. We can see that in step                                                                                                                         0.45
+                                                                                                                                                                                              0.47
+
+                                                                                                                        0.45                                                           0.44
+4, the next token distribution Q(·|y<4 ) following                                                                                               0.43
+
+                                                                                                                        0.40
+word “retreat” exhibits less variety, and thus we                                                                                         0.36
+                                                                                                                                                                0.38
+
+                                                                                                                        0.35
+select a small K = 10. On the other hand, in step                                                                                                        0.32
+                                                                                                                                   0.30
+                                                                                                                        0.30
+6, the next token distribution Q(·|y<6 ) following
+                                                                                                                        0.25
+word “the” has more variety and we use a larger                                                                                    H=3    H=5    H=7    K=300 K=600 K=900              =0.1   =0.05   =0.01   True Data
+
+                                                                                                                                                   Steganography Encoding Method
+K = 1059 to satisfy the required imperceptibility.
+                                                                                               Figure 8: Human evaluation results. Y axis shows the
+4.3     Human Evaluation                                                                       percentage of cover texts (generated by one method)
+                                                                                               that are considered by humans to be a proper continua-
+We conduct human evaluation to test whether gen-                                               tion of the context.
+erated cover texts can indeed fool human eaves-
+droppers via crowdsourcing. First, we select 100                                               sors on Amazon Mechanical Turk.
+news articles from the CNN/DM dataset and treat                                                   In each HIT, the assessor is given one context
+each article’s first 3 sentences as the context. Next,                                         paired with one sentence and is asked “Given the
+we sample 100 ciphertexts uniformly at random                                                  start of a news article: <context>, is the following
+and pair each of them with the above 3 sentence                                                a likely next sentence: <sentence>? Yes or No?”.
+context. Then, for each hcontext, ciphertexti pair,                                            We explicitly ask assessors to consider whether
+we generate a cover text using different steganogra-                                           this sentence is grammatically correct, contains no
+phy methods, including RNN-Stega with Huffman                                                  factual error, and makes sense in the given context.
+tree depths 3, 5, 7, arithmetic coding with top Ks                                             To ensure the quality of collected data, we require
+300, 600, 900, and SAAC with imperceptibility                                                  crowd assessors to have a 95% HIT acceptance rate,
+gaps 0.1, 0.05, 0.01. Finally, we gather all the                                               a minimum of 1000 HITs, and be located in the
+generated cover texts; mix them with the original                                              United States or Canada. Moreover, we include a
+human-written sentences (i.e., the 4th sentence in                                             simple attention check question in 20% of HITs
+each news article), and send them to crowd acces-                                              and filter out the results from assessors who do not
+
+                                                                                        310
+pass the attention check.                              tic steganography. One pioneering work by (Fang
+   Fig. 8 shows the human evaluation results. First,   et al., 2017) divides the message bits into equal-
+we can see this test itself is challenging as only     size blocks and encodes each block using one cover
+67% of time people can correctly identify the true     text token. (Yang et al., 2019b) improves the above
+follow-up sentence. Second, more encouragingly,        method by constructing a Huffman tree and encod-
+we find the cover texts generated by our SAAC al-      ing the message in variable length chunks via a
+gorithm can indeed fool humans 51% of times. For       Huffman tree. (Dai and Cai, 2019) presents the
+those cover texts that do not pass the human test,     first theoretical analysis of the above two meth-
+we analyze crowd assessor’s feedbacks and find         ods and proposes a modified Huffman algorithm.
+they are rejected mostly because they contain some     The method most related to this study is (Ziegler
+factual errors. Thus, we believe improving the gen-    et al., 2019) where the arithmetic coding algorithm
+eration factual accuracy is an important direction     is introduced for steganography. In this study, we
+for future linguistic steganography research.          present a more formal analysis of arithmetic coding
+                                                       based steganography method and propose a better
+5   Related Work                                       self-adjusting algorithm to achieve the statistical
+                                                       imperceptibility.
+Early steganography methods (Marvel et al., 1999;
+Gopalan, 2003) use image and audio as the cover
+signal because they have a high information theo-        6   Discussions and Future Work
+retic entropy. However, sending an image or audio
+recording abruptly though a public channel will        This work presents a new linguistic steganography
+likely cause the eavesdropper’s suspicion. Thus,       method that encodes secret messages using self-
+linguistic steganography methods are proposed to       adjusting arithmetic coding. We formally prove
+leverage text as the cover signal because natural      this method is near-imperceptible and empirically
+language is prevalent and innocuous in daily life.     show it achieves the state-of-the-art results on vari-
+   Linguistic steganography methods can be cate-       ous text corpora. There are several directions we
+gorized into two types, edit-based or generation-      will further explore in the future. First, we may
+based (Bennett, 2004). Edit-based methods try to       combine the edit-based steganography with gener-
+directly edit the secret message and transform it      ative steganography method by first transforming
+into an innocent text. Typical transformations are     the original plaintext in a semantics-preserving way
+synonym substitution (Topkara et al., 2006; Chang      and then encoding the transformed plaintext. Sec-
+and Clark, 2014), paraphrase substitution (Chang       ond, we will study whether this current method is
+and Clark, 2010; Ji and Knight, 2018), and syntac-     still effective when a small-scale neural LM (e.g.,
+tic transformation (Thamaraiselvan and Saradha,        distilGPT-2) is applied. Finally, this study assumes
+2015; Safaka et al., 2016). Instead of editing all     a passive eavesdropper who does not modify the
+words in the secret message, (Zhang et al., 2014,      transmitted cover text. Adapting the current meth-
+2015) take an entity-oriented view and focus on        ods to be robust to an active eavesdropper who may
+encoding/decoding morphs of important entities in      alter the cover text is another interesting direction.
+the message. Finally, some work (Grosvald and
+Orgun, 2011; Wilson et al., 2014) allows human           Acknowledgements
+agents to assist the cover text generation process.
+   One major limitation of edit-based methods is         Research was sponsored in part by US DARPA
+that they cannot encode information efficiently.         SocialSim Program No. W911NF-17-C-0099, NSF
+(Wilson and Ker, 2016) show the popular Cover-           IIS-19-56151, IIS-17-41317, IIS 17-04532, and
+Tweet system (Wilson et al., 2014) can encode only       IIS 16-18481, and DTRA HDTRA11810026. Any
+two bits information in each transformed tweet on        opinions, findings or recommendations expressed
+average. To address this limitation, generation-         herein are those of the authors and should not be
+based methods try directly output the cover text         interpreted as necessarily representing the views,
+based on the secret message. Early study (Chap-          either expressed or implied, of DARPA or the U.S.
+man and Davida, 1997) utilizes a generative gram-        Government. We thank anonymous reviewers for
+mar to output the cover text. More recently, peo-        valuable and insightful feedback.
+ple leverage a neural language model for linguis-
+
+                                                   311
+References                                                  Muhalim bin Mohamed Amin, Mazleena bt. Salleh,
+                                                             Subariah Ibrahim, Mohd. Rozi b. Katmin, and
+Krista Bennett. 2004. Linguistic steganography: Sur-         M. Z. I. Shamsuddin. 2003. Information hiding
+  vey, analysis, and robustness concerns for hiding in-      using steganography. 4th National Conference of
+  formation in text.                                         Telecommunication Technology, 2003. NCTT 2003
+                                                             Proceedings., pages 21–25.
+Ching-Yun Chang and Stephen Clark. 2010. Linguistic
+  steganography using automatically generated para-         Alec Radford, Jeff Wu, Rewon Child, David Luan,
+  phrases. In HLT-NAACL.                                      Dario Amodei, and Ilya Sutskever. 2019. Language
+                                                              models are unsupervised multitask learners.
+Ching-Yun Chang and Stephen Clark. 2014. Practical
+  linguistic steganography using contextual synonym         Jorma Rissanen and Glen G. Langdon. 1979. Arith-
+  substitution and a novel vertex coding method. Com-          metic coding. IBM J. Res. Dev., 23:149–162.
+  putational Linguistics, 40:403–448.
+                                                            Iris Safaka, Christina Fragouli, and Katerina J. Argy-
+Mark Chapman and George I. Davida. 1997. Hiding                raki. 2016. Matryoshka: Hiding secret communica-
+ the hidden: A software system for concealing cipher-          tion in plain sight. In FOCI.
+ text as innocuous text. In ICICS.
+                                                            Gustavus J Simmons. 1984. The prisoners’ problem
+                                                              and the subliminal channel. In Advances in Cryptol-
+Falcon Z. Dai and Zheng Cai. 2019. Towards near-
+                                                              ogy, pages 51–67. Springer.
+  imperceptible steganographic text. In ACL.
+                                                            R. Thamaraiselvan and A. Saradha. 2015.       Text-
+Jarek Duda. 2013. Asymmetric numeral systems: en-             based steganography using cover text free human-
+   tropy coding combining speed of huffman coding             generated natural language (hgnl) approach.
+   with compression rate of arithmetic coding.
+                                                            Umut Topkara, Mercan Topkara, and Mikhail J. Atal-
+Tina Fang, Martin Jaggi, and Katerina J. Argyraki.           lah. 2006. The hiding virtues of ambiguity: quantifi-
+  2017. Generating steganographic text with lstms. In        ably resilient watermarking of natural language text
+  ACL.                                                       through synonym substitutions. In Multimedia and
+                                                             Secruity.
+Alexei A. Fedotov, Peter Harremoës, and Flemming
+  Topsøe. 2003. Refinements of pinsker’s inequality.        Kemal Tutuncu and Abdikarim Abi Hassan. 2015.
+  IEEE Trans. Inf. Theory, 49:1491–1498.                      New approach in e-mail based text steganography.
+                                                              International Journal of Intelligent Systems and Ap-
+Kaliappan Gopalan. 2003. Audio steganography us-              plications in Engineering, 3:54–56.
+  ing bit modification. In International Conference on
+  Multimedia and Expo.                                      Lucy Lu Wang, Kyle Lo, Yoganand Chandrasekhar,
+                                                              Russell Reas, Jiangjiang Yang, Darrin Eide, Kathryn
+Michael Grosvald and C Orhan Orgun. 2011. Free                Funk, Rodney Michael Kinney, Ziyang Liu, William.
+  from the cover text: a human-generated natural lan-         Merrill, Paul Mooney, Dewey A. Murdick, Devvret
+  guage approach to text-based steganography. Jour-           Rishi, Jerry Sheehan, Zhihong Shen, Brandon Stil-
+  nal of Information Hiding and Multimedia Signal             son, Alex D. Wade, Kuansan Wang, Christopher Wil-
+  Processing, 2(2):133–141.                                   helm, Boya Xie, Douglas M. Raymond, Daniel S.
+                                                              Weld, Oren Etzioni, and Sebastian Kohlmeier. 2020.
+Karl Moritz Hermann, Tomás Kociský, Edward Grefen-            Cord-19: The covid-19 open research dataset.
+  stette, Lasse Espeholt, Will Kay, Mustafa Suleyman,         ArXiv, abs/2004.10706.
+  and Phil Blunsom. 2015. Teaching machines to read
+  and comprehend. In NIPS.                                  Andreas Westfeld and Andreas Pfitzmann. 1999. At-
+                                                              tacks on steganographic systems. In Information
+                                                              Hiding.
+David A Huffman. 1952. A method for the construc-
+  tion of minimum-redundancy codes. Proceedings of          Alex Wilson, Phil Blunsom, and Andrew D. Ker. 2014.
+  the IRE, 40(9):1098–1101.                                   Linguistic steganography on twitter: hierarchical
+                                                              language modeling with manual interaction. In Elec-
+Heng Ji and Kevin Knight. 2018. Creative language             tronic Imaging.
+  encoding under censorship. In COLING.
+                                                            Alex Wilson and Andrew D. Ker. 2016. Avoiding de-
+Rafal Józefowicz, Oriol Vinyals, Mike Schuster, Noam          tection on twitter: embedding strategies for linguis-
+  Shazeer, and Yonghui Wu. 2016. Exploring the lim-           tic steganography. In Media Watermarking, Security,
+  its of language modeling. ArXiv.                            and Forensics.
+
+Lisa M Marvel, Charles G Boncelet, and Charles T Ret-       Ian H. Witten, Radford M. Neal, and John G. Cleary.
+   ter. 1999. Spread spectrum image steganography. In         1987. Arithmetic coding for data compression.
+  IEEE Transactions on image processing.                       Commun. ACM, 30:520–540.
+
+                                                      312
+Zhilin Yang, Zihang Dai, Yiming Yang, Jaime G.             Han, and Bülent Yener. 2014. Be appropriate and
+  Carbonell, Ruslan Salakhutdinov, and Quoc V. Le.         funny: Automatic entity morph encoding. In ACL.
+  2019a. Xlnet: Generalized autoregressive pretrain-
+  ing for language understanding. In NeurIPS.            Boliang Zhang, Hongzhao Huang, Xiaoman Pan, Su-
+Zhong-Liang Yang, Xiaoqing Guo, Zi-Ming Chen,              jian Li, Chin-Yew Lin, Heng Ji, Kevin Knight, Zhen
+  Yongfeng Huang, and Yu-Jin Zhang. 2019b. Rnn-            Wen, Yizhou Sun, Jiawei Han, and Bülent Yener.
+  stega: Linguistic steganography based on recurrent       2015. Context-aware entity morph decoding. In
+  neural networks. IEEE Transactions on Information        ACL.
+  Forensics and Security, 14:1280–1295.
+                                                         Zachary M. Ziegler, Yuntian Deng, and Alexander M.
+Boliang Zhang, Hongzhao Huang, Xiaoman Pan, Heng           Rush. 2019. Neural linguistic steganography. In
+  Ji, Kevin Knight, Zhen Wen, Yizhou Sun, Jiawei           EMNLP.
+
+
+
+
+                                                   313
+

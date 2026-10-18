@@ -1,0 +1,42 @@
+{
+  "id": "2025-sparsamp",
+  "title": "SparSamp: Efficient Provably Secure Steganography Based on Sparse Sampling",
+  "status": "USENIX Security 2025",
+  "kind": "paper",
+  "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+  "pdf": "https://www.usenix.org/system/files/usenixsecurity25-wang-yaofei.pdf",
+  "why": "Strong modern baseline combining distribution preservation with low sampling overhead. In the RRC paper's matched Llama-2-7B comparison it reaches 3.38 bits/token and is faster than RRC.",
+  "caveat": "Headline token rates do not include a universal solution to tokenization ambiguity. Compare identical distributions and full transmitted bytes before inferring gains for our POC.",
+  "repo": null,
+  "priority": "read first",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2025-sparsamp/paper.pdf",
+      "requested_url": "https://www.usenix.org/system/files/usenixsecurity25-wang-yaofei.pdf",
+      "resolved_url": "https://www.usenix.org/system/files/usenixsecurity25-wang-yaofei.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:54.530465+00:00",
+      "bytes": 1427464,
+      "sha256": "d574b1edd69ebedd948606d1427d10b3c00b50f373f12e4227b40b66c1dd75de"
+    },
+    {
+      "path": "2025-sparsamp/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 125183,
+      "sha256": "67c8cf7d194adc68ef1e5a19baf0f90b412af01b715b16bfbd6ea58b4c0c4c8e"
+    },
+    {
+      "path": "2025-sparsamp/source.html",
+      "requested_url": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+      "resolved_url": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:55.190904+00:00",
+      "bytes": 42050,
+      "sha256": "e63dfcdb6cdb46b7baf9ed2cca744b452e5831913417b4efae50e44de59598b2"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 20
+}

@@ -1,0 +1,1080 @@
+                                         UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                                                              1
+
+
+
+
+                                                                      HiTMS: A High-Throughput Multi-Stream
+                                                                            Linguistic Steganography Framework
+                                                                                 Ruiyi Yan, Zhongliang Yang, and Yugo Murawaki
+
+
+
+                                            Abstract—Generative linguistic steganography conceals secret                  HiTMS vs. single-stream: higher throughput and lower detectability
+                                         bits within the sampling randomness of large language models.                                                                                   dolly · Llama-3.2-3B · AC
+                                         Existing schemes are single-stream, conveying an entire secret                                                                 104.2                                      442.9
+                                                                                                                                                                              dolly · Llama-3.2-3B · Discop
+                                         through a single response to a single prompt. This convention                                                                  105.2                              294.2
+                                                                                                                                           dolly · Gemma-3-4B · AC
+                                         incurs limitations: it provides no protocol-level support for                            18.3                               58.6
+                                         batched multi-stream inference, and naive co-batching does not                            dolly · Gemma-3-4B · Discop
+                                                                                                                             14.5                                48.5
+                                         conceal slot occupancy or payload completion. We propose                                                                            no_robots · Llama-3.2-3B · AC
+                                                                                                                                                                        97.4                               292.3
+                                         the High-Throughput Multi-Stream (HiTMS) framework, which                                                                         no_robots · Llama-3.2-3B · Discop
+                                                                                                                                                                        105.8                            270.6
+                                         distributes a secret across multiple responses produced jointly                            no_robots · Gemma-3-4B · AC
+                                         over successive rounds of interaction. Each round embeds and                       14.1                                    57.0                                         Single-stream
+                                                                                                                            no_robots · Gemma-3-4B · Discop
+                                         extracts several streams within a single batched call, thereby                 11.6                                39.5                                                 HiTMS (Ours)
+                                         amortizing the cost of model invocation and substantially im-                   10               20                   50              100               200                     500
+                                         proving throughput. To ensure recoverability, HiTMS wraps each                                 Embedding throughput (bits/s, log scale)                   higher is faster
+
+
+
+
+arXiv:2607.23597v2 [cs.CR] 29 Jul 2026
+                                         response in a self-describing frame and employs a key-derived                     random guess (0.5)
+                                                                                                                                                                                                    dolly · Llama-3.2-3B · AC
+                                         schedule that binds streams to slots and fills unused slots with                                                                                      0.796                         0.873
+                                                                                                                                                                                      dolly · Llama-3.2-3B · Discop
+                                         decoys, guaranteeing exact recovery while concealing the number                                                                         0.739                               0.837
+                                         of active streams. The framework is agnostic to both the language                     dolly · Gemma-3-4B · AC
+                                                                                                                        0.481                         0.579
+                                         model and the steganographic coder. Across eight dataset–model–                  dolly · Gemma-3-4B · Discop
+                                                                                                                             0.505         0.527
+                                         coder settings, eight-stream HiTMS achieves up to 4.3× higher                                                                        no_robots · Llama-3.2-3B · AC
+                                                                                                                                                                         0.707                               0.807
+                                         embedding and extraction speeds than single-stream baselines,                                                               no_robots · Llama-3.2-3B · Discop
+                                                                                                                                                                    0.678                         0.767
+                                         while reducing the average area under the receiver operating                      no_robots · Gemma-3-4B · AC
+                                         characteristic curve (AUROC) of steganalyzers from 0.681 to                        0.501               0.547                                                                   Single-stream
+                                                                                                                        no_robots · Gemma-3-4B · Discop
+                                         0.601. Experiments with 4 to 64 streams demonstrate sustained                   0.487                   0.551                                                                  HiTMS (Ours)
+                                         throughput gains as concurrency increases.                                               0.5                    0.6                  0.7                      0.8                      0.9
+                                                                                                                                           Steganalysis detector AUROC                lower is more secure
+                                            Index Terms—Linguistic steganography, natural language pro-
+                                         cessing, multiple streams, high throughput, imperceptibility.
+                                                                                                                       Fig. 1. Comparison of eight-stream HiTMS with the basic single-stream base-
+                                                                 I. I NTRODUCTION                                      lines across eight dataset–model–coder settings. Top: embedding throughput
+                                                                                                                       in bits/s on a logarithmic scale, where higher is better. Bottom: AUROC of the
+                                            Linguistic steganography conceals a secret message within                  BERT-base steganalyzer, where lower is more secure and 0.5 denotes random
+                                         seemingly innocuous natural-language text, so that both the                   guessing. Each line connects the two methods under the same setting; HiTMS
+                                         existence of the communication and its content are hidden                     consistently achieves higher throughput and anti-steganalysis capability.
+                                         from observers. Driven by modern large language models
+                                         (LLMs), linguistic steganography has shifted from editing
+                                                                                                                       should be framed, scheduled, and recovered across rounds.
+                                         cover texts [1], [2] to directly steering the token-level sampling
+                                                                                                                       It may also expose slot occupancy and stream completion
+                                         process of an autoregressive LM, embedding secret bits into
+                                                                                                                       through changing batch sizes or response lengths. These
+                                         the randomness of generation [3]–[7].
+                                                                                                                       limitations motivate a protocol that supports batched inference
+                                            Existing schemes define a single payload-bearing stream per
+                                                                                                                       while preserving recoverability and concealing the internal
+                                         protocol instance: one secret is conveyed through one response
+                                                                                                                       stream pattern.
+                                         to one prompt [8], [9]. This exposes the limitation of forcing
+                                                                                                                          Motivated by these limitations, we propose HiTMS, a High-
+                                         linguistic steganography to rely on non-batched inference.
+                                                                                                                       Throughput Multi-Stream linguistic steganography framework
+                                         Specifically, protocol-level support for batched, multi-stream,
+                                                                                                                       that fragments and conveys secret messages across LM batch-
+                                         multi-round transmission is absent. A serving system could
+                                                                                                                       inference responses over multiple rounds of interaction. To the
+                                         co-batch multiple independent single-stream instances as an
+                                                                                                                       best of our knowledge, we are the first to formally propose
+                                         implementation-level optimization; however, such naive co-
+                                                                                                                       multi-stream linguistic steganography based on autoregres-
+                                         batching does not define how dynamically completing streams
+                                                                                                                       sive LMs. It is a significant step from isolated single-shot
+                                            This work was supported by JSPS KAKENHI Grant Number JP26KJ1382.           transmission toward a linguistic version of steganography as
+                                            Ruiyi Yan and Yugo Murawaki are with the Graduate School of Infor-         a service (LSaaS) [10]–[13], because it supports concurrency
+                                         matics, Kyoto University, Kyoto 606-8501, Japan. Zhongliang Yang is with
+                                         School of Cyberspace Security, Beijing University of Posts and Telecom-       for multiple requests.
+                                         munications, Beijing 100876, China. (E-mail: ruiyi@nlp.ist.i.kyoto-u.ac.jp;      Our contributions are summarized as follows. First, we for-
+                                         murawaki@i.kyoto-u.ac.jp; yangzl@bupt.edu.cn.)                                mulate multi-stream, multi-round linguistic steganography and
+                                            Corresponding author: Yugo Murawaki.
+                                            GitHub repository for this work is https://github.com/ryehr/HiTMS          propose HiTMS, a model- and coder-agnostic framework that
+                                         steganography.                                                                fragments secret messages across multiple response streams
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                                        2
+
+
+
+
+                                                                               Shared key K
+           Secret messages                                                                                                                          Prompts
+                 m1                                                      Language model fLM                                                x1,1       x1,2     ...
+                              Alice (sender)                                                                             Bob (receiver)
+                 m2
+
+                 m3                                                            Round 1
+                                                                                                           x1,1   x1,2    x1,3
+                                                                                          Prompt batch
+
+                m1,1   m1,2   m1,3
+                                       Stegotext batch fro            π1 slot order: [m2, m1, m3]
+                                                           m
+                y1,1   y1,2    y1,3    batched embedding                                                   Message batch fro
+                                                               y1,1                                                          m    y1,1     y1,2       y1,3
+                                                                        y1,2    y1,3                       batched extraction
+                                                                                                                                  m̂ 1,1   m̂ 1,2     m̂ 1,3
+                                                                               Round 2
+                                                                                                           x2,2   x2,3    x2,4
+                                                                                                    x2,1
+                                                                                 Prompt batch
+        m2,1    m2,2   m2,3   random
+                                       Stegotext batch fro
+                                                           m    π2 slot order: [m2, m1, "decoy", m3]
+         y2,1   y2,2   y2,3    y2,4    batched embedding                                                   Message batch fro
+                                                               y2,1                                                          m    y2,1     y2,2       y2,3      y2,4
+                                                                        y2,2    y2,3    y2,4               batched extraction
+                                                                                                                                  m̂ 2,1   m̂ 2,2     m̂ 2,3   discard
+                                                                                ……
+
+Fig. 2. Overview of HiTMS. In each round, Bob sends a batch of prompts and Alice returns a stegotext (response) batch produced by one batched LM call.
+A key-derived mapping assigns active secret streams to response slots, while unused slots carry decoys. The same-colored fragments indicate that one secret
+stream can span multiple rounds until Bob recovers all payloads.
+
+
+                                                                                                    (t)
+and processes each round using a single batched LM call,                               where pv is the probability assigned to the v-th vocabulary
+thereby amortizing inference costs and enabling concurrent                             token. The vector p(t) is obtained by applying a softmax to
+steganographic transmission. Figure 1 summarizes its main                              the logits produced by the LM head and therefore satisfies
+                                                                                         (t)         P|V| (t)
+advantages: compared with the single-stream baselines, eight-                          pv ≥ 0 and v=1 pv = 1. A decoding strategy then selects
+stream HiTMS achieves substantially higher throughput (with                            s(t) from this distribution. Standard covertext generation can
+speedups of up to 4.3×) and lower steganalyzer AUROC                                   use multinomial sampling, temperature scaling, top-k or top-p
+(from 0.681 to 0.601 on average) across all eight dataset–                             filtering. The selected token is appended to the context before
+model–coder settings and various steganalyzers. Besides, as                            the distribution for position t + 1 is evaluated. Consequently,
+illustrated in Figure 2, we design a self-describing framing                           the distribution at every position depends on the token prefix
+and scheduling protocol that combines encrypted headers,                               generated up to that point.
+key-derived stream-to-slot mapping, filler bits, and decoy                                 This token-by-token paradigm is also the basis of LM-
+responses. These mechanisms ensure exact recovery across                               based linguistic steganography. Instead of using unconstrained
+variable-length responses and multiple rounds while conceal-                           random bits to sample from p(t) , a steganographic coder
+ing the number and arrangement of active streams. We conduct                           uses secret bits to resolve the sampling choice. In the setup
+extensive experiments across two datasets, two LMs, and                                of symmetric linguistic steganography introduced below, the
+two steganographic coders. The scalability experiments with                            coder must expose the same token to the LM on both the
+4 to 64 streams under both arithmetic coding (AC) [14]                                 sender and receiver sides, so that both parties can reconstruct
+and Discop [15] confirm that its throughput gains persist as                           the same sequence of conditional distributions.
+concurrency increases.
+
+                II. P RELIMINARIES AND N OTATIONS                                      B. Single-Stream LM-Based Linguistic Steganography
+A. Language Model Preliminaries                                                           Single-stream generation is the de facto standard in gen-
+                                                                                       erative linguistic steganography over autoregressive LMs [6],
+   An autoregressive language model (LM) operates over a
+                                                                                       [14]–[16], apart from schemes built on diffusion LMs [17],
+finite vocabulary V. Consider a sequence of T LM-generated
+                                                                                       [18]. In this mode, one secret bitstring is conveyed through
+tokens [s(0) , . . . , s(T −1) ] ∈ V T . The generated sequence is
+                                                                                       the token-level sampling randomness of one LM response.
+preceded by a prompt (commonly an instruction or a question)
+                                                                                          Let B = {0, 1}. For a bitstring a, a[u:v] denotes its u-
+[s(−Np ) , . . . , s(−1) ] of length Np , for which we use negative
+                                                                                       th through (v−1)-th bits under 0-based indexing, while a[u:]
+indices to distinguish the prompt tokens from the generated
+                                                                                       denotes the suffix beginning at position u. Concatenation of
+tokens. Generation proceeds autoregressively. At each position
+                                                                                       two bitstrings is denoted by ∥. Alice, the sender, and Bob, the
+t, the LM takes the prompt together with all previously
+                                                                                       receiver, share a master key K ∈ {0, 1}κ established through
+generated tokens as its context and outputs the next-token
+                                                                                       an offline secure channel, in which κ denotes the key length
+distribution
+                                                                                       (security parameter), and K is a κ-bit binary string. They also
+                 (t)        (t) 
+  p(t) = p1 , . . . , p|V| = fLM · | s(−Np ) , . . . , s(t−1) , (1)
+                                                             
+                                                                                       use the same LM, tokenizer, prompt, and steganographic coder,
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                              3
+
+
+
+which allows Bob to replay the generation process from the                  A. Design Objectives
+observed token sequence.                                                       Generalizing single-stream steganography to a multi-stream,
+   Given a secret m ∈ B L and a prompt, Alice first computes                multi-round setting introduces challenges that do not arise
+the LM distribution for the current position and then invokes               when one response carries one complete message. A stream
+a token-level embedder:                                                     may span several responses of different realized lengths, the
+  s(t) = Emb p(t) , m, K, t ,                                               set of unfinished streams may change after every round, and
+                              
+                                     t = 0, 1, . . . , T − 1, (2)
+                                                                            a batch may contain more slots than currently active streams.
+where p(t) = fLM (· | s(−Np ) , . . . , s(t−1) ). The interface Emb         HiTMS is designed around the following four objectives.
+is stateful: it maintains a pointer to the first unconsumed                       a) Compatibility with batched inference: All responses
+position of m and updates that pointer after every token.                   within a round should be produced by a single batched LM
+Depending on the shape of p(t) and on the chosen coding rule,               call. At each autoregressive step, the LM evaluates the current
+a single token may consume several bits, one bit, or no bit.                prefixes of multiple slots together, allowing the dominant
+Bob receives the prompt and the complete stegotext response.                inference cost to be shared across the batch. The framing
+At position t, he conditions the same LM on the prompt and                  and scheduling operations should add only lightweight work
+the already observed stegotext prefix, thereby reconstructing               around the underlying coder. As a result, within a given time
+the same p(t) used by Alice. He then applies the matching                   budget, HiTMS should convey substantially more secret bits
+token-level extractor,                                                      than repeatedly invoking a single-stream scheme. For batched
+m̂(t) = Ext p(t) , s(t) , K, t ∈ B ∗ ,
+                                
+                                                  t = 0, 1, . . . , T −1,   LM inference, let X = {xj }nj=1 be a batch of prompts, where
+                                                                                       (−N )            (−1)
+                                                                      (3)   xj = [sj p,j , . . . , sj ]. The generated prefix in slot j is
+                                                                              (0)          (t−1)
+where m̂(t) is the possibly empty substring represented by to-              [sj , . . . , sj     ], and let Jt ⊆ {1, . . . , n} denote the slots
+ken s(t) under the coder state at position t. The recovered mes-            that have not terminated before decoding position t. A single
+sage is obtained in token order as m̂ = m̂(0) ∥ · · · ∥m̂(T −1) .           batched forward pass computes
+The scheme is lossless if m̂ = m whenever Alice and Bob                                                                             
+                                                                                  (t)              batch     (−Np ,j)            (t−1)
+begin with the same inputs and synchronized coder states.                       pj            = fLM         sj        , . . . , sj         . (4)
+                                                                                     j∈Jt                                       j∈Jt
+   We treat Emb and Ext as abstract steganographic coder
+interfaces. Concrete instantiations include arithmetic cod-                         batch
+                                                                            Here, fLM      denotes a batched evaluation of the same LM
+ing (AC) [14], adaptive dynamic grouping (ADG) [19],                                                                 (t)        (t)
+                                                                            fLM . A decoding strategy then selects sj from pj for every
+distribution-preserving Discop [15], and others. These coders               j ∈ Jt in parallel. Padding and attention masks, omitted from
+differ in how they partition or traverse p(t) , and therefore offer         Equation (4), align prefixes of different lengths.
+different trade-offs among embedding capacity, computational                     b) Recoverability of each stream in each round: Every
+cost, and distributional fidelity. The framework designed below             fragment must be assigned to the correct stream and placed at
+does not rely on the internal operation of any one coder; it only           the correct offset within that stream. This is nontrivial for two
+requires a matched, lossless pair of interfaces.                            reasons. First, the number of secret bits carried by a response
+                                                                            depends on the response’s realized token sequence and length,
+     III. H I TMS: H IGH -T HROUGHPUT M ULTI -S TREAM                       so Bob cannot know the fragment size in advance. Second,
+                L INGUISTIC S TEGANOGRAPHY                                  the active subset of streams is dynamic: a stream leaves the
+   Single-stream steganography assumes that an entire secret                active set as soon as all of its bits have been delivered,
+is conveyed through one LM response. When several secrets                   whereas a stream that is not served in the current round
+must be delivered, this convention invokes the LM on one                    must remain pending. The protocol must therefore be self-
+prompt at a time and serializes generated responses. It there-              describing. From the shared state, key, and information carried
+fore underutilizes the batched-inference capability and limits              by each served stegotext, Bob must be able to reproduce the
+the number of secret bits that can be processed within a                    stream-to-slot assignment, determine which extracted bits are
+fixed time budget. Moreover, a rigid one-question–one-answer                payload, update the correct stream offset, and detect when all
+exchange does not reflect realistic LM usage, which can                     streams have completed.
+involve multiple concurrent and successive interactions [20].                    c) Indistinguishability of stream patterns: The number of
+   To address these limitations, we propose HiTMS, a high-                  prompts nr in a round should be a free interaction parameter,
+throughput multi-stream linguistic steganography framework.                 rather than a direct signal of the number of active secret
+HiTMS fragments secret messages across multiple LM re-                      streams. If unused slots were omitted whenever few streams
+sponses and, when necessary, across multiple rounds of inter-               remained, the batch size would expose the active-stream count.
+action. In each round, several response streams are generated               Likewise, if Alice stopped a response immediately when its
+together in one batched LM call. A key-derived schedule                     payload ended, response length could reveal the fragment
+determines which secret stream occupies each response slot,                 boundary or completion of a stream. Therefore, unused slots
+while encrypted headers, filler bits, and decoy responses allow             are required to look like ordinary occupied slots and HiTMS
+Bob to recover every fragment without revealing the number                  allows every occupied response to continue after its real
+or arrangement of active streams. HiTMS changes how secret                  payload is exhausted.
+bits are framed and scheduled around an LM-based coder; it                       d) Generality of embedding and extraction: HiTMS is
+does not change the token-level coding rule itself.                         designed to be agnostic both to the LM and to the specific
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                    4
+
+
+
+steganographic coder. HiTMS consequently treats the token-             For a served slot, Alice constructs an encrypted header and
+level embedder and extractor as black boxes and adds multi-          an encrypted pending payload. The header encodes the residual
+stream scheduling only through their sequence-level wrappers.        payload length ρi,r at the beginning of round r, rather than
+Switching the (LM, coder) pair should not require any change         the number of payload bits carried by the current response:
+to the remaining protocol.                                                 hi,r = ENCH ρi,r ; K, r, j ∈ Bℓh ,
+                                                                                                       
+                                                                                                                                (6)
+                                                                                                                        
+                                                                           ci,r = mi ui,r :Li ⊕ PRFK (“xor”, i) ui,r :Li . (7)
+B. Multi-Stream Multi-Round Designs
+                                                                     The fixed-length header has ℓh bits; we use ℓh = 16, which
+      a) Streams and rounds: Alice holds M independent
+                                                                     requires Li < 2ℓh . The key-derived header encryption ENCH
+secret messages mi ∈ B Li , i = 1, . . . , M , which we call
+                                                                     is parameterized by the key, round, and slot, and its decryption
+streams. A session proceeds over R rounds; R is determined
+                                                                     allows Bob to recover the advertised residual ρi,r . The pay-
+by the time required to exhaust all streams and need not be
+                                                                     load is protected by a stream-specific keystream. Slicing this
+fixed in advance. In round r, Bob issues a batch of nr prompts
+                                                                     keystream at [ui,r :Li ] ensures that every message position is
+Xr = {xr,1 , . . . , xr,nr }, and Alice returns a corresponding
+                                                                     masked by the corresponding keystream position even when
+batch of stegotexts (responses) Yr = {yr,1 , . . . , yr,nr }. The
+                                                                     the stream is fragmented across several rounds.
+response in slot j is a token sequence yr,j ∈ V Tr,j , whose
+                                                                        The bitstring used to drive the sampler in slot j is
+realized length Tr,j is determined by generation up to an EOS                     (
+token or a prescribed maximum length. The prompt count nr                           hi,r ∥ ci,r , j = πr (i) for some i ∈ A′r ,
+                                                                         br,j =                                                   (8)
+may vary across rounds and is not required to equal the number                      fr,j ,        j ∈ Sr \ πr (A′r ).
+of streams that remain active.
+                                                                     Equation (8) displays the header–payload prefix of an active
+      b) Stream-to-slot mapping: Only an active subset of
+                                                                     slot. Operationally, Alice appends the filler keystream fr,j
+streams is transmitted in any one round. Let Ar ⊆ {1, . . . , M }
+                                                                     after ci,r (as made explicit in Algorithm 1), so that the sampler
+denote the streams that still have undelivered bits at the start
+                                                                     always has sufficient input bits. Thus, a served slot has the
+of round r, and let Sr = {1, . . . , nr } denote the available
+                                                                     structure header ∥ payload ∥ filler, whereas a decoy slot
+response-slot indices. HiTMS uses a key-derived schedule
+                                                                     contains only filler. The encrypted active prefix and the decoy
+to select which active streams are served and to assign the
+                                                                     keystream are pseudorandom-looking to a party without K,
+selected streams to distinct slots:
+                                                                     preventing that party from distinguishing the slot types from
+              (A′r , πr ) = PRFK (“map”, r, Ar ),                    their embedded bitstrings.
+ A′r ⊆ Ar ,       |A′r | = min(|Ar |, nr ),      πr : A′r ,→ Sr .          d) Embedding and extraction: For each j ∈ Sr , Alice
+                                                               (5)   runs a sequence-level embedder. All slots are advanced in
+Here A′r is the served subset, and the injection πr ensures that     batch until each has generated an EOS token or reached the
+no two served streams occupy the same slot. Throughout this          length cap Tmax :
+paper, PRFK denotes a variable-output-length pseudorandom                                                                  
+                                                                                 yr,j , βr,j = Embed xr,j , br,j , K, r, j .       (9)
+function. Its output is used either directly as a keystream or as
+the seed of a pseudorandom shuffle that derives (A′r , πr ). All     Here Embed is the autoregressive, sequence-level wrapper
+set-valued arguments are encoded canonically, for example as         of the token-level coder Emb in Equation (2). It repeatedly
+sorted stream indices, so that Alice and Bob obtain identical        evaluates the LM, invokes Emb, appends the resulting token,
+outputs from identical logical states. The labels “map”, “filler”,   and advances the bit pointer for that slot. The value βr,j
+and “xor” provide domain separation among the different uses         records the number of body bits consumed after the ℓh -bit
+of the shared key.                                                   header. It may include both payload and filler bits, but it does
+   The mapping handles both possible relations between the           not include the header itself.
+number of active streams and the number of available slots.             As an EOS token may appear at different positions in
+When |Ar | > nr , exactly nr streams are selected and                different responses, βr,j is known only after generation. The
+streams outside A′r retain their current offsets while waiting       real payload delivered for stream i in round r is
+for later rounds. When |Ar | < nr , every active stream is
+                                                                                                              
+                                                                                   di,r = min ρi,r , βr,πr (i) ≤ ρi,r .          (10)
+served, and the surplus slots in Sr \ πr (A′r ) carry decoy
+responses. The bits driving a decoy slot are obtained from           If the body capacity is smaller than ρi,r , all consumed body
+fr,j = PRFK (“filler”, r, j), so the public batch size need not      bits are payload and the remaining suffix is deferred. If the
+reveal how many streams are active.                                  body capacity exceeds ρi,r , the fragment completes the stream
+     c) Per-fragment payload: Consider a P     served stream i ∈     and the excess capacity is filledP from fr,j . Across a completed
+A′r mapped to slot j = πr (i). Let ui,r = r′ <r di,r′ be the         session, the fragments satisfy r di,r = Li for every stream
+number of bits of stream i that were delivered before round          i. Importantly, generation is not terminated at the payload
+r, where di,r′ denotes its round-r′ payload and is defined           boundary, so the realized response length does not directly
+to be zero when the stream is not served in round r′ . The           disclose when a stream finishes.
+residual ρi,r = Li − ui,r is therefore the number of bits still         After receiving Yr , Bob reconstructs (A′r , πr ) from his
+pending when round r begins. These two quantities partition          active-set state and the shared key. He then applies the
+the message into the already delivered prefix mi [:ui,r ] and the    matching sequence-level extractor to every slot:
+                                                                                                               
+undelivered suffix mi [ui,r :Li ].                                        b̂r,j = Extract xr,j , yr,j , K, r, j ,      j ∈ Sr .   (11)
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                                    5
+
+
+
+Algorithm 1 HiTMS Sender (Alice): Round r                                         Algorithm 2 HiTMS Receiver (Bob): Round r
+Input: Master key K; Embedder Embed with sampling hyper-parameters;               Input: Master key K; Extractor Extract with sampling hyper-parameters;
+    Header length ℓh ; Round index r; Prompts Xr = {xr,j }n         r
+                                                                  j=1 ; Secrets       Header length ℓh ; Round index r; Known stream-index set {1, . . . , M };
+    {mi ∈ BLi }M        , where  0 <   Li  <  2ℓh ; Offsets {u }M , where u
+                                                              i               i
+                                                                                      Observed prompts Xr = {xr,j }n              r
+                                                                                                                                j=1 ; Stegotexts Yr = {yr,j }j=1 ;
+                                                                                                                                                                   nr
+                    i=1                                         i=1
+    is the number of bits of mi already sent; Residual lengths {ρi = Li −             Offsets {ui }M  i=1 , where  u i  is the   number  of bits  of stream  i  already
+    ui }M
+        i=1                                                                           recovered; Residual lengths {ρi }M   i=1 , where ρi = ⊥ if stream i is unseen;
+Output: Stegotexts Yr ; Updated offsets {ui } and residual lengths {ρi }              Recovered prefixes {m̂i }M    i=1
+ 1: Ar ← {i : ρi > 0}                                                             Output: Updated recovered prefixes {m̂i }, offsets {ui }, and residual
+ 2: (A′r , πr ) ← PRFK (“map”, r, Ar )                                                lengths {ρi }
+ 3: for j = 1 to nr do                                                             1: Ar ← {i : ρi > 0 or ρi = ⊥}
+ 4:     if j = πr (i) for some i ∈ A′r then                                       2: (A′r , πr ) ← PRFK (“map”, r, Ar )                         ▷ Identical to Sender
+ 5:         br,j          ←           ENCH (ρi ; K, r, j) ∥ mi [ui :Li ]     ⊕     3: {b̂r,j } ← BATCH E XTRACT(Extract, {xr,j }, {yr,j }, K, r)
+                                                                                  4: for i ∈ A′r with j = πr (i) do
+    PRFK (“xor”, i)[ui :Li ] ∥ PRFK (“filler”, r, j)      ▷ Header ∥ Payload ∥     5:     if |b̂r,j | < ℓh then
+    Filler                                                                         6:          continue ▷ Incomplete header; preserve the current stream state
+ 6:     else                                                                              ρ̂ ← ENC−1
+                                                                                                                                
+ 7:         br,j ← PRFK (“filler”, r, j)                              ▷ Decoy
+                                                                                   7:                   H b̂r,j [:ℓh ]; K, r, j
+                                                                                   8:     w ← b̂r,j [ℓh :]
+ 8: ({yr,j }, {βr,j }) ← BATCH E MBED(Embed, {xr,j }, {br,j }, K, r)               9:     t ← min(ρ̂, |w|)
+    ▷ βr,j is the number of consumed bits after a complete ℓh -bit header; it     10:     m̂i ∥= w[:t] ⊕ PRFK (“xor”, i)[ui :ui +t]
+    is set to 0 if the header is incomplete                                       11:     ui += t
+ 9: for i ∈ A′r with j = πr (i) do                                                12:     ρi ← ρ̂ − t
+10:      d ← min(ρi , βr,j )
+                                                                                  13: return {m̂i }M              M           M
+                                                                                                       i=1 , {ui }i=1 , {ρi }i=1
+11:      ui += d
+12:      ρi −= d
+13: return Yr = {yr,j }n    r         M          M
+                           j=1 , {ui }i=1 , {ρi }i=1
+                                                                                  the shared key. For every served slot, she serializes the
+                                                                                  current residual into the encrypted ℓh -bit header, masks the
+The wrapper Extract replays the LM distribution at each ob-                       undelivered message suffix beginning at ui , and appends a
+served token and invokes Ext from Equation (3), concatenating                     filler keystream. For every surplus slot, she supplies a pure
+the recovered substrings in token order. Because the coder                        filler keystream. These nr bitstrings are passed together with
+is lossless, the resulting b̂r,j contains exactly the bit prefix                  the nr prompts to BATCH E MBED. Internally, this subroutine
+consumed by the embedder.                                                         maintains an independent coder state and bit pointer for each
+    For a served slot j = πr (i), Bob first decrypts the initial ℓh               slot while evaluating the corresponding LM prefixes in batch.
+bits to recover ρi,r . He treats the remaining extracted substring                Once all responses end, it returns both the stegotexts and the
+as the body and keeps only its first min(ρi,r , |b̂r,j | − ℓh ) bits              realized body-bit counts βr,j . Alice updates only the streams
+as encrypted payload. Applying the corresponding slice of                         in A′r ; waiting streams retain their offsets and residuals.
+PRFK (“xor”, i) recovers the next fragment. Any subsequent                              b) Receiver procedure: Bob forms his active set by
+body bits are filler and are discarded. Entire decoy slots are                    including every stream whose residual is positive or still un-
+also discarded according to the reconstructed mapping. No                         known. Because both parties use the same canonical active-set
+explicit field for di,r is required: lossless extraction determines               encoding, round index, and key, Bob derives the same served
+how many body bits were consumed, while the decrypted                             subset and the same injection πr . He applies BATCH E XTRACT
+residual header determines how many of them can belong to                         to all observed prompt–response pairs, including the slots
+the stream.                                                                       that the mapping identifies as decoys. Extraction itself is
+    The session terminates at R⋆ = min{r : Ar+1 = ∅},                             uniform across slots; the distinction is made only when the
+namely, after every residual has reached zero. Conventional                       recovered bitstrings are interpreted. For each served stream,
+single-stream steganography is recovered as the special case                      Bob decrypts the header, sets w to the extracted body, and
+M = 1 and nr = 1 in every round, without the length header,                       lets t = min(ρ̂, |w|). He decrypts exactly the first t body
+filler bits, or decoy slots. HiTMS therefore strictly generalizes                 bits with the stream keystream slice starting at ui , appends
+the single-stream setting while retaining the original token-                     the result to m̂i , advances ui by t, and stores the remaining
+level coder.                                                                      residual ρ̂ − t. All later body bits and all decoy-slot bits are
+                                                                                  discarded.
+C. Per-Round Procedures
+   Algorithms 1 and 2 specify one round of the sender and
+                                                                                  D. Multi-Round Procedures
+receiver procedures. A full session initializes the shared stream
+index space and repeats these procedures for r = 1, 2, . . . until                  Algorithms 3 and 4 lift the per-round procedures into com-
+the active set is empty. Alice initializes ui = 0 and ρi = Li                     plete interactive sessions. In every round, Bob first supplies
+for every stream. Bob initializes ui = 0, an empty recovered                      a nonempty prompt batch, Alice invokes Algorithm 1 once
+prefix m̂i , and ρi = ⊥. The value ⊥ means that stream i                          and returns the resulting stegotext batch, and Bob invokes
+has not yet appeared in a served slot and that Bob has not yet                    Algorithm 2 once on the received batch. The next round
+learned its residual length. Such an unseen stream is retained in                 begins only if the locally reconstructed active set is nonempty.
+Bob’s active set so that his mapping input agrees with Alice’s.                   For compactness, arguments that remain fixed throughout the
+     a) Sender procedure: At the beginning of round r, Alice                      session are suppressed when the per-round algorithms are
+forms Ar = {i : ρi > 0} and derives (A′r , πr ) from                              called below.
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                6
+
+
+
+Algorithm 3 HiTMS Sender (Alice): Multi-Round Session                               b) Batching, framing, and termination: Each round uses
+Input: Master key K; Embedder Embed with sampling hyper-parameters;           one BATCH E MBED call and one matching BATCH E XTRACT
+    Header length ℓh ; Secrets {mi ∈ BLi }Mi=1 , where 0 < Li < 2
+                                                                   ℓh
+Output: Completion round R⋆ and terminal sender state                         call, irrespective of how many of the nr slots contain active
+ 1: for i = 1 to M do                                                         streams. Header repetition makes every served fragment lo-
+ 2:     ui ← 0                                                                cally interpretable, filler permits a response to continue after its
+ 3:     ρi ← L i
+                                                                              payload ends, and decoys separate the public batch size from
+ 4: r ← 1
+ 5: while ∃i ∈ {1, . . . , M } : ρi > 0 do                                    the number of active streams. These mechanisms introduce
+ 6:     receive a nonempty prompt batch Xr = {xr,j }n   r
+                                                       j=1 from Bob           framing overhead, but they are external to (Emb, Ext) and
+ 7:     (Yr , {ui }, {ρi }) ← H I TMSS ENDER ROUND(r, Xr , {ui }, {ρi }) ▷    therefore preserve coder generality.
+    Algorithm 1
+ 8:     send Yr to Bob                                                           After Alice sends the final batch YR⋆ , her update makes
+ 9:     r ←r+1                                                                every residual zero. Lossless extraction makes Bob perform
+10: R⋆ ← r − 1                                                                the same payload updates after receiving that batch, so his
+11: return R⋆ , {ui }M            M
+                       i=1 , {ρi }i=1                                         loop condition becomes false in the same round. Bob there-
+                                                                              fore does not issue XR⋆ +1 , and Alice does not wait for
+Algorithm 4 HiTMS Receiver (Bob): Multi-Round Session                         another prompt batch. No separate termination message or per-
+Input: Master key K; Extractor Extract with sampling hyper-parameters;        fragment payload-length field is needed.
+    Header length ℓh ; Known stream-index set {1, . . . , M }; Application-
+    provided prompt-batch source                                                 Finite termination assumes that every unfinished stream is
+Output: Recovered streams {m̂i }M    i=1 and completion round R
+                                                                ⋆
+                                                                              eventually selected and that selected streams obtain positive
+ 1: for i = 1 to M do                                                         body capacity after a complete header
+ 2:     ui ← 0                                                                                                       P sufficiently often. Under
+ 3:     ρi ← ⊥                                                                this standard progress condition,        r di,r = Li for every i,
+ 4:     m̂i ← ϵ                                                               both algorithms return the same R⋆ , and Bob returns m̂i =
+ 5: r ← 1                                                                     mi for all streams.
+ 6: while ∃i ∈ {1, . . . , M } : ρi > 0 or ρi = ⊥ do
+ 7:     Xr ← O BTAIN P ROMPT BATCH(r)                            ▷ Xr ̸= ∅
+ 8:     nr ← |Xr |                                                                        IV. S ECURITY A NALYSIS OF H I TMS
+ 9:     send Xr to Alice
+10:     receive Yr = {yr,j }n    r
+                                j=1 from Alice                                   We analyze whether the multi-stream framing and schedul-
+11:     ({m̂i }, {ui }, {ρi }) ←                                              ing introduced by HiTMS preserve the security of the underly-
+            H I TMSR ECEIVER ROUND(r, Xr , Yr , {ui }, {ρi }, {m̂i })
+                                                              ▷ Algorithm 2   ing single-stream steganographic coder. The analysis separates
+12:     r ←r+1                                                                three related properties. First, steganographic imperceptibility
+13: R⋆ ← r − 1                                                                requires that the responses generated by HiTMS be indis-
+14: return {m̂i }Mi=1 , R
+                           ⋆
+                                                                              tinguishable from ordinary LM responses. Second, stream-
+                                                                              pattern privacy requires that an observer cannot determine
+     a) Round-by-round synchronization: The two session                       which slots are active, which slots are decoys, or where the
+loops remain synchronized by induction over rounds. Initially,                payload of an active slot ends. Third, message confidentiality
+Alice has ui = 0 and ρi = Li > 0, whereas Bob has ui = 0                      requires that the secret bits remain hidden even if the bitstrings
+and ρi = ⊥ for every i. Thus, both parties include every stream               recovered from the stegotexts are exposed. Recoverability
+index in A1 and derive the same (A′1 , π1 ). More generally,                  is addressed separately by the round-by-round invariant in
+suppose that their active sets and offsets agree at the beginning             Section III-D. After introducing a common model and as-
+of round r. They then provide identical inputs (K, r, Ar ) to                 sumptions, the following three main subsections analyze these
+the mapping function and obtain the same served subset and                    properties in the same order.
+slot assignment.
+   For a served slot with a complete header, losslessness of                  A. Security Model and Assumptions
+the underlying coder gives Bob exactly the header and body                    Adversarial setting. We consider a probabilistic polynomial-
+prefix consumed by Alice. Hence, ρ̂ = ρi and |w| = βr,j ,                     time passive warden W. The warden knows the LM, tokenizer,
+which gives                                                                   steganographic coder, sampling parameters, header length, and
+              t = min(ρ̂, |w|) = min(ρi , βr,j ) = d.                         HiTMS protocol, and observes all prompts, batch sizes, and
+                                                                              responses, including their token lengths. It does not know K
+Both parties apply the same keystream slice at the same offset                and does not modify, delete, insert, or reorder messages. The
+and advance that offset by the same amount. If the response                   prompt batch in a later round may depend on the text observed
+contains only a partial header, both algorithms perform a zero-               in earlier rounds, so the model also covers adaptive interaction.
+payload update: Alice has βr,j = d = 0, while Bob preserves                      Let
+the current stream state. Streams not selected in the current                                     ΓR = R, {nr , Xr }R
+                                                                                                                          
+                                                                                                                                           (12)
+                                                                                                                      r=1
+round are likewise unchanged at both parties.
+   Consequently, after every completed round, m̂i = mi [:ui ];                denote the public interaction schedule through round R. We
+the residuals agree for every previously seen stream; and an                  compare two experiments conditioned on the same ΓR . In
+unseen state ρi = ⊥ at Bob corresponds to a still-undelivered                 the HiTMS experiment, Alice generates every Yr using the
+stream at Alice. Their next-round active sets are therefore                   proposed protocol. In the cover experiment, every response is
+identical, which closes the induction.                                        generated by ordinary LM sampling under the same prompt,
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                    7
+
+
+
+sampling parameters, EOS rule, and length cap Tmax . For a            B. Steganographic Imperceptibility
+fixed public schedule ΓR , define the complete response text          Lemma 1 (Pseudorandomness of slot bitstrings). Condi-
+as                                                                    tioned on any preceding text, the consumed prefix of br,j
+                   Y1:R = (Y1 , . . . , YR ).           (13)          in every slot is computationally indistinguishable from an
+                                                                      independent uniform bitstring. This distribution is independent
+We denote its distributions in the stegotext and covertext
+                                                                      of whether the slot carries an active stream or a decoy.
+experiments by
+                                                                         Justification. Replace the domain-separated PRF outputs by
+    PSΓR (y1:R ) = Pr Y1:R = y1:R | ΓR , stegotexts ,
+                                                  
+                                                      (14)            independent random functions. In an active slot, the header is
+      ΓR
+                                                                    masked by fresh uniform bits, the payload is XORed with a
+    PC (y1:R ) = Pr Y1:R = y1:R | ΓR , covertexts .   (15)
+                                                                      nonreused uniform keystream slice, and the remaining input is
+The warden W is a binary distinguisher that outputs a bit in          an independent filler stream. Their concatenation is therefore
+{0, 1}, where output 1 denotes its decision that the observed         uniform. A decoy slot contains only an independent filler
+text was steganographic, and output 0 denotes cover. The              stream and has the same distribution. An incomplete header
+warden’s distinguishing advantage is                                  reveals only a prefix of a uniform string and causes no state
+                                                                      update. Replacing the random functions by PRFK changes the
+         Advsteg
+                                                  
+             W =         Pr     W(ΓR , Y1:R ) = 1                     warden’s view by at most the PRF distinguishing advantage.
+                                Γ
+                        Y1:R ←PS R
+                                                             (16)   Theorem 1 (Security preservation of HiTMS). Let q be an
+                    −      Pr            W(ΓR , Y1:R ) = 1 .          upper bound on the number of domain-separated PRF eval-
+                               Γ
+                        Y1:R ←PC R
+                                                                      uations made in an R-round session, and let ϵPRF (q) be the
+This definition treats ΓR as public leakage and asks whether          aggregate advantage of replacing those outputs by independent
+the response contents and lengths reveal any additional evi-          random functions. Under the preceding assumptions, every
+dence of steganographic communication.                                probabilistic polynomial-time passive warden satisfies
+Cryptographic primitives. We assume that PRFK is a secure                                                v
+                                                                                                         u R nr
+variable-output-length pseudorandom function and that all of                            steg
+                                                                                                         u1 X X
+                                                                                   AdvW ≤ ϵPRF (q) + t                δr,j .     (19)
+its uses are domain separated by their text labels. For a                                                  2 r=1 j=1
+concrete fixed-length header encryption, the construction in
+Section III-B can be instantiated as                                     Proof sketch. Begin with the real HiTMS experiment. In
+                                                                      the first hybrid, replace all outputs in the “map”, “header”,
+ ENCH (ρ; K, r, j) = binℓh (ρ) ⊕ PRFK (“header”, r, j)[:ℓh ],         “xor”, and “filler” domains by independent random-function
+                                                            (17)      outputs. A warden that distinguishes this hybrid from the real
+where binℓh (ρ) is the ℓh -bit binary encoding of ρ. Its inverse      experiment with advantage greater than ϵPRF (q) yields a PRF
+applies the same XOR mask. The tuples used by the “map”,              distinguisher. By Lemma 1, every slot in the resulting hybrid
+“header”, “xor”, and “filler” domains are encoded unambigu-           is driven by an independent uniform bitstream, regardless of
+ously.                                                                the internal stream pattern.
+   The proof below concerns one HiTMS session under a fresh              Next, replace the response of each slot, in text order, by an
+session key. Within a session, every pair (r, j) is unique, and       ordinary LM response generated under the same prompt and
+the monotonic offset ui ensures that no consumed position             stopping rule. The chain rule for KL divergence applies to
+of the stream-specific “xor” keystream is reused. If a long-          these conditional, potentially adaptive distributions and gives
+term master key is shared across multiple sessions, a fresh                                                X n
+                                                                                                           R X r
+session key must first be derived from a unique public session                    DKL PSΓR ,ideal ∥ PCΓR ≤
+                                                                                                        
+                                                                                                                 δr,j .          (20)
+identifier; we return to this point below.                                                                   r=1 j=1
+Underlying       steganographic       coder. HiTMS treats             Pinsker’s inequality bounds the statistical distance between the
+(Embed, Extract) as a black box, so its distributional                ideal hybrid and the cover experiment by the square-root term
+security must be inherited from that coder. Let Ur,j be an            in Theorem 1. Adding the PRF hybrid gap proves the stated
+independent uniform bitstream. For every prompt xr,j and              bound.
+every public history Hr,j preceding slot (r, j), assume that          Corollary 1 (Exact distribution preservation). If the un-
+            DKL PEmbed (yr,j | Hr,j , xr,j , Ur,j ) ∥                 derlying coder is exactly distribution preserving for uniform
+                                                              (18)   driver bits, so that δr,j = 0 for every slot, then HiTMS has
+                PLM (yr,j | Hr,j , xr,j ) ≤ δr,j .
+                                                                      zero KL divergence from the cover experiment in the random-
+Both distributions include the EOS event and therefore the            function model. With a real secure PRF, the two experiments
+realized response length. The value δr,j captures only the            are computationally indistinguishable with advantage at most
+distortion introduced by the underlying coder when it is              ϵPRF (q). Thus, a statistical claim applies to the ideal random-
+driven by uniform bits. An exactly distribution-preserving            function setting, while the corresponding real-world claim is
+coder has δr,j = 0, whereas an approximate or finite-precision        computational.
+coder may have δr,j > 0. Batched inference is assumed to
+be an implementation-level parallelization of the same per-           C. Stream-Pattern Privacy
+slot sampling process and not to introduce shared sampling            Lemma 2 (Hiding of the stream pattern). Fix a public sched-
+randomness across slots.                                              ule ΓR . In the random-function hybrid, the joint distribution
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                             8
+
+
+
+of all slot bitstrings is independent of {Ar , A′r , πr }R
+                                                         r=1 , the   B. Main Metrics
+message contents, and the payload boundaries.                           HiTMS is designed to improve throughput while main-
+   Justification. By Lemma 1, every slot is driven by an             taining recoverability and steganographic imperceptibility. The
+independent uniform bitstream, regardless of its internal role.      main metrics are as follows:
+Permuting active streams among slots, replacing an active slot          • Capacity: (1) the number of secret bits embedded per
+with a decoy, changing a covertext message, or moving the                 token (bits/token); (2) payload utilization (%), i.e., the
+payload–filler boundary therefore leaves the joint driver distri-         ratio of secret (payload) bits embedded to total embedded
+bution unchanged. Because the sequence-level coder receives               bits (length header, secret bits, and filler bits).
+only the prompt, its local state, and this driver stream, none          • Throughput: the embedding and extraction speed
+of these hidden choices affects the distribution passed to the            (bits/s), counting payload bits only.
+LM sampler. In particular, filler ensures that the bitstream            • Recoverability: the proportion (%) of stegotexts from
+does not end at the payload boundary, so the EOS time                     which the secret message is correctly extracted.1
+and response length are governed by the same coder-induced              • Imperceptibility: an LLM-as-a-judge (gpt-5.4-2026-03-
+distribution for both active and decoy slots. Replacing the               05) rates each Alice–Bob interaction on a 1 (lowest)–5
+random functions by the real PRF makes the two internal                   (highest) scale along two imperceptibility-related dimen-
+stream patterns computationally indistinguishable, up to the              sions: (1) answer naturalness and (2) answer coherence
+corresponding PRF advantage.                                              (including logical coherence and topical consistency).
+                                                                          LLM-as-a-judge metrics [30] can align more closely with
+                                                                          human perception than traditional automatic metrics such
+D. Message Confidentiality                                                as perplexity [31] or BERTScore [32].
+   The same hybrid argument also protects the message con-
+tents. Even if the warden is conservatively granted the en-          C. Main Results
+crypted body bits extracted from each response, those bits              In this section, HiTMS was evaluated with M = 8 streams,
+are the XOR of the secret-message fragment and a fresh,              the prompt number (issued by Bob) nr ∼ Uniform{1, ..., M }
+nonreused pseudorandom keystream slice. Therefore, for any           for each round r. Experiments were also conducted on 1-
+two message vectors consistent with the same public leakage,         stream HiTMS for reference and ablation. To compare our
+the resulting encrypted payloads are computationally indistin-       HiTMS against the basic 1-stream steganography (baseline),
+guishable. The encrypted residual headers similarly hide the         we additionally conducted 1-stream basic but multi-round
+per-fragment residual lengths. This confidentiality property is      linguistic steganography. The two share an identical basic
+separate from covertness: payload encryption protects what is        setup, except that basic 1-stream baseline requires no frame
+communicated, whereas Theorem 1 protects whether stegano-            design and thus contains no header or filler bits, giving
+graphic communication is taking place.                               it a constant payload utilization of 100%. Table I reports
+                                                                     the results of capacity, throughput and imperceptibility. The
+                                                                     recoverability is not reported separately, as all stegotexts are
+                       V. E XPERIMENTS                               correctly extracted (recoverability = 100%). From this table,
+                                                                     the following observations stand out:
+A. Setup
+                                                                           a) Multi-stream HiTMS delivers substantially higher
+   To validate the generality of our HiTMS framework, we             throughput: By embedding and extracting all streams of a
+implemented it using two language models: Llama-3.2-3b-              round in a single batched LM call, HiTMS obtains up to
+Instruct [21] and Gemma-3-4b-it [22]. For the steganographic         4.3× faster embedding and extraction speeds than the single-
+coders, we adopted the lightweight arithmetic coding, AC [14]        stream baseline across all datasets, models, and coders. Since
+and a typical provably secure method, Discop [15]. The ques-         nr ∼ Uniform{1, ..., M }, a single batched LM call serves
+tions and prompts are drawn from databricks-dolly-15k [23]           E(nr ) = M2+1 = 4.5 streams on average. However, the
+and no robots [24]. From each dataset, we retained the open-         observed speedup stays below 4.5×, because of the frame
+ended, creative instructions, as they elicit sufficiently high-      overhead.
+entropy responses for embedding.                                           b) The frame overhead is modest: HiTMS generally
+   At each step the target distribution is the model’s               matches the bits per token of the basic 1-stream steganography.
+temperature-scaled (τ = 1.0) distribution over the full vo-          The price of the self-describing frame is a payload utilization
+cabulary (top-p, p = 1.0); the maximum response length is            of roughly 70%–85%, reflecting the length headers and filler
+Tmax = 256 tokens. 500 interaction (session) samples were            bits required for recoverability and pattern indistinguishability.
+gathered for each experimental group, and all random seeds                 c) Imperceptibility is not only preserved but even slightly
+(pool shuffling, the per-round batch size n, the secret payloads,    improved: The LLM-as-a-judge naturalness and coherence
+and model sampling) were fixed for reproducibility. The length       scores of HiTMS are consistently above those of the single-
+of the secret message Li for each stream is 1,024 and each           stream baseline (e.g., naturalness 3.45 vs. 3.24 for AC on
+bit is independently and uniformly drawn from {0, 1}. All              1 Tokenization inconsistency and segmentation ambiguity are beyond the
+experiments were conducted on NVIDIA RTX A6000 (48 GB)               scope of this work, as existing countermeasures [25]–[29] are orthogonal to
+GPUs.                                                                our HiTMS framework.
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                                    9
+
+
+
+                                                            TABLE I
+      C OMPARISON BETWEEN BASIC 1- STREAM STEGANOGRAPHY AND OUR 8- STREAM H I TMS AND 1- STREAM H I TMS. E ACH CELL REPORTS
+     MEAN ± STANDARD DEVIATION OVER SAMPLES . R ECOVERABILITY IS OMITTED , AS ALL STEGOTEXTS ARE CORRECTLY EXTRACTED (100%).
+                  I MPERCEPTIBILITY ( NATURALNESS AND COHERENCE ) IS RATED BY AN LLM- AS - A - JUDGE ON A 1–5 SCALE .
+
+                                                                          Capacity                       Throughput (bits/s)                  Imperceptibility
+       Dataset       Model         Coder Method
+                                                            Bits/Token ↑ Payload Util. (%) ↑       Embedding ↑         Extraction ↑      Naturalness ↑ Coherence ↑
+                                          Basic(1-stream)    2.35 ±0.66         100.0 ±0.0         104.2 ±29.2        114.2 ±31.9         3.17 ±0.89    2.90 ±1.16
+                                   AC     HiTMS(8-stream)    2.40 ±0.18         75.3 ±4.4       442.9 ±80.5 (4.3×) 495.4 ±90.7 (4.3×)     3.20 ±0.90    3.03 ±1.12
+                     Llama-3.2-           HiTMS(1-stream)    2.57 ±0.80         76.3 ±12.6          91.9 ±30.0        101.5 ±33.1         3.19 ±0.87    3.15 ±1.10
+                     3b-Instruct
+                                          Basic(1-stream)    2.61 ±1.03         100.0 ±0.0         105.2 ±29.0        109.4 ±29.7         2.79 ±0.97    2.70 ±1.16
+       databricks-                 Discop HiTMS(8-stream)    2.75 ±0.32         69.6 ±6.1       294.2 ±41.2 (2.8×) 304.3 ±42.4 (2.8×)     2.93 ±1.05    2.93 ±1.16
+       dolly-15k                          HiTMS(1-stream)    3.04 ±1.42         73.1 ±15.2          93.5 ±27.8         97.9 ±28.8         2.78 ±1.05    2.81 ±1.20
+                                          Basic(1-stream)    0.72 ±0.06         100.0 ±0.0           18.3 ±1.6           20.2 ±1.8        4.43 ±0.65    4.03 ±1.12
+                                   AC     HiTMS(8-stream)    0.72 ±0.02         83.6 ±1.3        58.6 ±6.1 (3.2×)    64.5 ±6.8 (3.2×)     4.55 ±0.56    4.14 ±1.10
+                     Gemma-3-             HiTMS(1-stream)    0.73 ±0.06         83.9 ±3.4            15.5 ±1.5           17.1 ±1.6        4.55 ±0.54    4.30 ±1.00
+                     4b-it
+                                          Basic(1-stream)    0.56 ±0.05         100.0 ±0.0           14.5 ±1.3           15.2 ±1.4        4.46 ±0.63    4.06 ±1.12
+                                   Discop HiTMS(8-stream)    0.57 ±0.01         82.0 ±1.0        48.5 ±4.4 (3.3×)    50.8 ±4.6 (3.3×)     4.57 ±0.56    4.26 ±0.99
+                                          HiTMS(1-stream)    0.56 ±0.04         81.9 ±2.8            12.1 ±1.1           12.7 ±1.2        4.55 ±0.56    4.28 ±1.04
+                                          Basic(1-stream)    2.23 ±0.66         100.0 ±0.0          97.4 ±29.0        106.7 ±31.8         3.24 ±0.87    3.14 ±1.16
+                                   AC     HiTMS(8-stream)    2.27 ±0.19         75.5 ±4.3       292.3 ±55.2 (3.0×) 322.0 ±62.4 (3.0×)     3.45 ±0.91    3.50 ±1.08
+                     Llama-3.2-           HiTMS(1-stream)    2.41 ±0.80         77.3 ±11.8          89.5 ±28.9         98.9 ±31.9         3.42 ±0.92    3.49 ±1.10
+                     3b-Instruct
+                                          Basic(1-stream)    2.36 ±0.92         100.0 ±0.0         105.8 ±31.8        110.7 ±32.9         3.08 ±1.03    2.98 ±1.21
+                                   Discop HiTMS(8-stream)    2.49 ±0.31         70.7 ±6.0       270.6 ±40.1 (2.6×) 280.4 ±41.4 (2.5×)     3.14 ±1.08    3.24 ±1.21
+       no robots                          HiTMS(1-stream)    2.65 ±1.24         73.1 ±14.9          86.4 ±25.0         90.5 ±25.9         3.15 ±1.04    3.19 ±1.14
+                                          Basic(1-stream)    0.64 ±0.07         100.0 ±0.0           14.1 ±1.5           15.4 ±1.6        4.38 ±0.75    4.08 ±1.04
+                                   AC     HiTMS(8-stream)    0.65 ±0.02         83.1 ±1.3        57.0 ±15.7 (4.0×)   63.2 ±18.5 (4.1×)    4.47 ±0.70    4.17 ±1.01
+                     Gemma-3-             HiTMS(1-stream)    0.66 ±0.06         83.2 ±3.7            13.8 ±1.5           15.3 ±1.7        4.43 ±0.68    4.15 ±1.02
+                     4b-it
+                                          Basic(1-stream)    0.50 ±0.05         100.0 ±0.0           11.6 ±1.3           12.1 ±1.3        4.35 ±0.78    4.01 ±1.12
+                                   Discop HiTMS(8-stream)    0.50 ±0.02         81.2 ±1.1        39.5 ±6.5 (3.4×)    41.2 ±7.0 (3.4×)     4.51 ±0.65    4.17 ±0.98
+                                          HiTMS(1-stream)    0.50 ±0.05         81.2 ±3.0            12.4 ±2.7           13.2 ±3.0        4.43 ±0.70    4.12 ±1.00
+       Average of Basic(1-stream)                               1.50              100.0                58.9                63.0              3.74          3.49
+       Average of HiTMS(8-stream)                               1.54               77.6            188.0 (3.2×)        202.7 (3.2×)          3.85          3.68
+
+
+
+                              TABLE II                                                    this matches the realistic case in which the warden does
+ S TEGANALYSIS DATASET FOR THE UNIVERSAL DETECTOR . C OVERTEXTS                           not know which configuration produced a given text. Within
+  ARE PAYLOAD - FREE TEXT GENERATED FROM THE SAME PROMPTS AND
+                 MODEL . E ACH OF THE 16 TEST CELLS                                       every (model, dataset) block the cover and the stegano-
+( MODEL×DATASET×CODER×METHOD ) IS BALANCED TO 500 RESPONSES .                             graphic counts are matched and every configuration con-
+                                                                                          tributes an equal number of steganographic samples, so
+      Split                        Covertexts      Stegotexts           Total             model/dataset identity carries no label information. Samples
+      Train (mixed)                     11,840        11,840           23,680             are split grouped by question and each of the 16 test cells
+      Validation (mixed)                 2,896         2,896            5,792             is balanced to exactly 250 stegotexts with 250 cover re-
+      Test (16 × 500)                    4,000         4,000            8,000
+                                                                                          sponses (Table II excluding HiTMS1-stream rows). We used
+                                                                                          five pretrained encoders as detectors: BERT-base2 [33], BERT-
+                                                                                          large3 [33], RoBERTa-base4 [34], DeBERTa-v3-base5 [35],
+no robots with Llama). We attribute this gain to our filler-
+                                                                                          and ELECTRA-base6 [36]. Each of them is fine-tuned for up
+equipped frame design: the filler bits keep a response going
+                                                                                          to 5 epochs with AdamW (learning rate = 2×10−5 ), batch
+after its payload ends to avoid cutting a sentence off mid-way.
+                                                                                          size 32, max len=256. We report AUROC (↓ is more secure)
+                                                                                          with 500 test samples per cell.
+D. Analyses of Anti-Steganalysis Capability                                                     a) Main detection results: Table III reports the per-cell
+   We assessed security under the standard steganalysis threat                            AUROC of all five detectors. Two findings are consistent
+model, in which a warden is a binary classifier trained to                                across every encoder. First, on Gemma-3-4b-it the stegano-
+separate stegotexts from innocent text (covertexts). To iso-                              graphic text is highly imperceptible: the AUROC on Gemma
+late the effect of the embedding alone, the cover class was                               cells generally lies around the 0.5 chance level (random
+generated with the same model, the same prompts, and the                                  guessing), and neither the larger BERT-large nor the stronger
+same sampling distribution (τ =1.0, full vocabulary, chat-                                DeBERTa-v3 shows a consistent advantage over chance. These
+control tokens masked, EOS unmasked) as the steganographic                                results indicate that the detection failure is not one of detec-
+class runs, but without embedding any payload, i.e., via plain                            tor capacity but an absence of exploitable surface artifacts.
+multinomial sampling. For each (model, dataset) pair we                                   Second, on Llama-3.2-3b-Instruct the stegotexts are relatively
+generated 4,684 payload-free cover responses that replay the
+                                                                                             2 https://huggingface.co/google-bert/bert-base-uncased
+prompts consumed by the corresponding stegotexts run, giving                                 3 https://huggingface.co/google-bert/bert-large-uncased
+4 cover sets (18,736 responses in total).                                                    4 https://huggingface.co/FacebookAI/roberta-base
+   We trained a single universal detector over a mixture of                                  5 https://huggingface.co/microsoft/deberta-v3-base
+
+all configurations and report its per-cell test performance;                                 6 https://huggingface.co/google/electra-base-discriminator
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                   10
+
+
+
+                                                             TABLE III
+A NTI - STEGANALYSIS PERFORMANCE MEASURED AS DETECTOR AUROC (↓ IS MORE SECURE ; 0.5 IS RANDOM ). F IVE PRETRAINED ENCODERS SERVE
+AS STEGANALYZERS ; THE LAST COLUMN AVERAGES THEM . I N EVERY (BASIC (1- STREAM ) , H I TMS (8- STREAM ) ) PAIR THE MORE SECURE ( LOWER -AUROC)
+                                                       DATA POINT IS IN BOLD .
+
+
+    Dataset        Model         Coder     Method            BERTbase      BERTlarge     RoBERTa         DeBERTa-v3       ELECTRA          Avg.
+                                           Basic(1-stream)     0.873         0.830         0.867            0.858            0.878         0.861
+                   Llama-3.2-    AC        HiTMS(8-stream)     0.796         0.734         0.794            0.779            0.803         0.781
+                   3b-Instruct
+    databricks-                            Basic(1-stream)     0.837         0.796         0.844            0.830            0.845         0.830
+                                 Discop    HiTMS(8-stream)     0.739         0.678         0.748            0.753            0.733         0.730
+    dolly-15k
+                                           Basic(1-stream)     0.579         0.535         0.571            0.569            0.567         0.564
+                   Gemma-3-      AC        HiTMS(8-stream)     0.481         0.467         0.491            0.483            0.490         0.482
+                   4b-it
+                                           Basic(1-stream)     0.527         0.506         0.505            0.562            0.542         0.528
+                                 Discop    HiTMS(8-stream)     0.505         0.459         0.476            0.516            0.524         0.496
+                                           Basic(1-stream)     0.807         0.736         0.812            0.781            0.795         0.786
+                   Llama-3.2-    AC        HiTMS(8-stream)     0.707         0.622         0.678            0.704            0.701         0.682
+                   3b-Instruct
+                                           Basic(1-stream)     0.767         0.692         0.782            0.746            0.747         0.747
+    no robots                    Discop    HiTMS(8-stream)     0.678         0.588         0.649            0.645            0.653         0.643
+                                           Basic(1-stream)     0.547         0.578         0.560            0.611            0.593         0.578
+                   Gemma-3-      AC        HiTMS(8-stream)     0.501         0.509         0.461            0.512            0.483         0.493
+                   4b-it
+                                           Basic(1-stream)     0.551         0.566         0.525            0.572            0.561         0.555
+                                 Discop    HiTMS(8-stream)     0.487         0.484         0.514            0.497            0.498         0.496
+    Average of Basic(1-stream)                                 0.686         0.655         0.683            0.691            0.691         0.681
+    Average of HiTMS(8-stream)                                 0.612         0.568         0.601            0.611            0.611         0.601
+
+
+
+detectable, yet our multi-stream HiTMS is consistently harder                                       TABLE IV
+to detect than the single-stream baseline: averaged over the            T RIVIAL LENGTH - ONLY DETECTOR ( LOGISTIC REGRESSION ON RESPONSE
+                                                                        LENGTH IN TOKENS ), AVERAGED OVER THE FOUR CODER / DATASET CELLS
+eight Llama cells, HiTMS lowers the AUROC by 0.08–0.11                       OF EACH M ODEL×M ETHOD . S INGLE - STREAM LEAKS A LENGTH
+relative to single-stream for every encoder, and in all 40                              FINGERPRINT THAT H I TMS REMOVES .
+(setting × encoder) paired comparisons, HiTMS is harder to
+detect than the single-stream baseline. Similarly to analyses on                                         Avg. covertext   Avg. stegotext   Len-only
+                                                                          Model        Method
+                                                                                                         length           length           AUROC
+imperceptibility metrics, the filler bits keep generating tokens
+                                                                          Llama-3.2- Basic(1-stream)          231              192          0.700
+in stegotexts after its payload ends to avoid mid-sentence                3b-Instruct HiTMS(8-stream)         231              226          0.575
+termination. Besides, Figure 3 reports the ROC curves of the
+                                                                          Gemma-3-     Basic(1-stream)        221              208          0.558
+BERT-base steganalyzer for each setting.                                  4b-it        HiTMS(8-stream)        221              222          0.498
+      b) Where the residual detectability comes from: Part
+of the single-stream detectability is a length artifact: the
+single-stream protocol truncates its final response the moment          preserves the token distribution exactly, whereas arithmetic
+the fixed payload budget is exhausted, so its responses are             coding perturbs it slightly through integer quantization of the
+systematically shorter than cover, whereas HiTMS spreads                cumulative distribution which is a residual distortion that a
+the payload over several naturally terminated responses and             steganalyzer can partially exploit.
+leaks almost no length signal. Table IV quantifies this with
+a logistic-regression detector that uses a single feature, the
+response length in tokens. For single-stream on Llama this              E. Analyses of Multi-Stream Scalability
+trivial detector already reaches 0.700 AUROC (mean length                  We further evaluated the multi-stream scalability of HiTMS
+gap ≈ 40 tokens), whereas for HiTMS it collapses toward                 on databricks-dolly-15k using Llama-3.2-3b-Instruct with both
+chance (0.575; gap ≈ 5 tokens). Thus a non-trivial share of             arithmetic coding (AC) and Discop. We varied the number of
+the single-stream signal is length alone, a cue that HiTMS              streams as M ∈ {4, 8, 16, 32, 64} and sampled the number
+structurally removes. We keep this length difference in the             of prompts in each round as nr ∼ Uniform{1, . . . , M }.
+data, since under a realistic warden the length distribution is         Figures 4 and 5 report the embedding speed, extraction speed,
+itself an observable and legitimate detection cue.                      and number of rounds for AC and Discop, respectively.
+      c) Coder comparison: The two coders are ranked con-                  For both coders, the embedding and extraction throughput
+sistently: Discop is generally harder to detect than arithmetic         increases consistently with the number of streams. When M
+coding (AC). On Llama-3.2-3b-Instruct, Discop lowers the                increases from 4 to 64, the embedding and extraction speeds
+detector AUROC below AC in all 20 paired comparisons (4                 of AC increase from 228.4 to 1306.5 bits/s and from 251.6 to
+settings × 5 encoders), by 0.040 on average (AC 0.778 vs.               1562.7 bits/s, corresponding to 5.7× and 6.2× improvements,
+Discop 0.738); the gap is stable across every encoder (0.032–           respectively. Under Discop, the corresponding speeds increase
+0.049). On Gemma-3-4b-it the same ordering holds in 14/20               from 192.8 to 842.6 bits/s and from 198.4 to 864.0 bits/s,
+comparisons (AC 0.530 vs. Discop 0.519). This ordering                  both by approximately 4.4×. Both coders obtain substantial
+is consistent with the provable security of Discop, which               and consistent throughput improvements as M increases, con-
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                                                                              11
+
+
+
+                                      ROC of BERT-base steganalyzer (shaded area = AUROC; smaller = more secure)
+
+      1.0
+                 dolly · Llama · AC                      1.0
+                                                                    dolly · Llama · Discop                    1.0
+                                                                                                                         dolly · Gemma · AC                     1.0
+                                                                                                                                                                           dolly · Gemma · Discop
+
+
+
+
+TPR   0.5                                                0.5                                                  0.5                                               0.5
+
+
+
+                           Basic(1-stream) 0.873                                Basic(1-stream) 0.837                             Basic(1-stream) 0.579                               Basic(1-stream) 0.527
+                           HiTMS(8-stream) 0.796                                HiTMS(8-stream) 0.739                             HiTMS(8-stream) 0.481                               HiTMS(8-stream) 0.505
+      0.0                                                0.0                                                  0.0                                               0.0
+         0.0            0.5                        1.0      0.0              0.5                        1.0      0.0            0.5                       1.0      0.0              0.5                       1.0
+      1.0
+               no_robots · Llama · AC                    1.0
+                                                                  no_robots · Llama · Discop                  1.0
+                                                                                                                       no_robots · Gemma · AC                   1.0
+                                                                                                                                                                         no_robots · Gemma · Discop
+
+
+
+
+TPR   0.5                                                0.5                                                  0.5                                               0.5
+
+
+
+                           Basic(1-stream) 0.807                                Basic(1-stream) 0.767                             Basic(1-stream) 0.547                               Basic(1-stream) 0.551
+                           HiTMS(8-stream) 0.707                                HiTMS(8-stream) 0.678                             HiTMS(8-stream) 0.501                               HiTMS(8-stream) 0.487
+      0.0                                                0.0                                                  0.0                                               0.0
+         0.0            0.5                        1.0      0.0              0.5                        1.0      0.0            0.5                       1.0      0.0              0.5                       1.0
+                        FPR                                                  FPR                                                FPR                                                 FPR
+
+
+
+Fig. 3. Receiver operating characteristic (ROC) curves of the BERT-base steganalyzer for each of the eight experimental settings (dataset × model × coder),
+comparing the single-stream baseline (orange) against our 8-stream HiTMS (blue). Each curve traces the detector’s true positive rate (TPR) against its false
+positive rate (FPR) as the decision threshold is swept, where the TPR is the fraction of stegotexts correctly flagged as steganographic (i.e., recall) and the
+FPR is the fraction of payload-free covertexts wrongly flagged as steganographic.
+
+
+
+firming the effectiveness of HiTMS for large-scale concurrent                                                 line pursues provable security: Discop [15] embeds bits via
+transmission. They demonstrate that the scalability benefit is                                                “distribution copies” that exactly preserve the model distribu-
+not specific to a particular coding scheme.                                                                   tion; Shimmer [5] collects entropy across steps; SparSamp [6]
+   The throughput growth is nevertheless sub-linear relative                                                  improves efficiency through sparse sampling; and rotation
+to the 16× increase in the number of streams. We attribute                                                    range coding (RRC) has been employed for efficient provably
+this behavior to two factors. First, although batched infer-                                                  secure embedding [16]. Despite this diversity of coders and
+ence amortizes the cost of LM forward passes, token-level                                                     backbones, all of the above auto-regressive schemes are single-
+embedding and extraction for every response slot still require                                                stream: one secret is conveyed through one response to one
+coder-specific operations on the CPU. As the batch grows,                                                     prompt. HiTMS is orthogonal to this line and generalizes
+this per-slot coding overhead becomes increasingly significant                                                the transmission protocol itself to a multi-stream, multi-round
+and limits the benefit obtained from larger batches. Second,                                                  setting.
+a session terminates only after its last stream has been com-
+pletely transmitted. Increasing M raises the probability that                                                 B. Recoverability and Robustness
+at least one stream requires additional rounds, producing a
+                                                                                                                 Reliable extraction is a long-standing concern in LM-
+tail-completion effect. Accordingly, the average number of
+                                                                                                              based steganography. One family of work addresses extraction
+rounds increases from 4.88 to 6.97 for AC and from 4.72
+                                                                                                              failures caused by segmentation ambiguity or tokenization
+to 6.82 for Discop. These additional tail rounds contain fewer
+                                                                                                              inconsistency, either by disambiguating candidate pools [25]–
+valid payload bits after most streams have completed, thereby
+                                                                                                              [28] or by enforcing tokenization-consistent generation [29].
+reducing the average valid throughput per batched call.
+                                                                                                              Another family enhances robustness against channel distor-
+                                                                                                              tions, e.g., the adaptive enhancement framework WinStega [8]
+                              VI. R ELATED W ORK                                                              and the mechanism of the anchored sliding window [9]. These
+A. Generative Linguistic Steganography                                                                        methods all safeguard recoverability within a single response
+                                                                                                              and are therefore complementary to HiTMS.
+   Generative linguistic steganography embeds secret bits di-
+rectly into the token-level sampling randomness of an au-
+toregressive LM, as pioneered by RNN-Stega [3] and VAE-                                                       C. Steganography as a Service and Efficient LLM Inference
+Stega [4]. Ziegler et al. [14] introduced arithmetic coding for                                                 The vision of offering steganography as a cloud service
+near-optimal capacity. ADG [19] groups tokens adaptively to                                                   dates back to service-oriented steganography [10] and has
+approximate a uniform partition of the distribution. A parallel                                               been revisited for cloud data security [11], [12] and, recently,
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                                                                                                        12
+
+
+
+                                                  Embed                                                       Extract                                                                                Rounds
+                                                                                                                                                                             9
+                       1750                                                                                                        1562.7±148.3
+                                                                                                                                                                             8
+
+
+
+
+                                                                                                                                                        Rounds per message
+                       1500                                         1306.5±113.3                                                                                                                                             6.97±1.45
+                                                                                                                                                                             7                                   6.68±1.48
+
+
+
+      Speed (bits/s)
+                       1250                                                                                            1137.1±157.4                                                                  6.24±1.40
+                                                           977.8±127.7                                                                                                                   5.73±1.27
+                       1000                                                                                                                                                  6
+                                                                                                             703.0±122.6                                                     4.88±1.13
+                        750                      618.8±103.4                                                                                                                 5
+                                       442.9±80.5                                                495.4±90.7
+                        500
+                          228.4±44.4                                                251.6±49.3                                                                               4
+                        250
+                                                                                                                                                                             3
+                               4           8         16        32        64             4            8           16           32          64                                     4           8          16          32          64
+                                          Number of streams                                         Number of streams                                                                        Number of streams
+
+Fig. 4. Embedding and extraction speed (bits/s) and number of rounds of HiTMS as the number of streams M scales over {4, 8, 16, 32, 64}, on databricks-
+dolly-15k with Llama-3.2-3b-Instruct and arithmetic coding.
+
+                                                 Embed                                                        Extract                                                                                Rounds
+                       900                                           842.6±57.5                                                        864.0±59.8
+                                                                                                                                                                         8
+                       800
+
+
+
+
+                                                                                                                                                    Rounds per message
+                                                          697.2±61.6                                                      716.0±63.8                                                                                         6.82±1.44
+                       700                                                                                                                                               7                                       6.55±1.42
+
+
+
+      Speed (bits/s)
+                                                                                                                                                                                                     6.03±1.36
+                       600                                                                                                                                               6               5.52±1.34
+                       500                     424.3±50.0                                                    436.1±51.7
+                                                                                                                                                                         54.72±1.16
+                       400
+                                    294.2±41.2                                                  304.3±42.4
+                       300                                                                                                                                               4
+                         192.8±29.8                                                198.4±30.2
+                       200                                                                                                                                               3
+                              4           8         16         32        64            4            8           16           32           64                                     4          8           16          32          64
+                                          Number of streams                                         Number of streams                                                                       Number of streams
+
+Fig. 5. Embedding and extraction speed (bits/s) and number of rounds of HiTMS as the number of streams M scales over {4, 8, 16, 32, 64}, on databricks-
+dolly-15k with Llama-3.2-3b-Instruct and Discop.
+
+
+
+microservice-based video steganography [13]. However, these                                                      decoy responses enable exact recovery while concealing the
+efforts largely target image or video carriers and do not address                                                active-stream pattern. Experiments across various datasets,
+the serving cost of modern LLMs. On the systems side, batch-                                                     models, and coders show that HiTMS substantially improves
+ing is the standard technique for amortizing LLM inference                                                       throughput while reducing steganalysis detectability. Scala-
+cost, e.g., batch prompting for efficient API usage [20]. To the                                                 bility analyses further confirm sustained throughput gains as
+best of our knowledge, no prior work connects batched auto-                                                      concurrency increases. These results position HiTMS as a
+regressive LM inference with generative linguistic steganog-                                                     promising foundation for a linguistic version of steganography
+raphy: existing schemes specify one payload-bearing stream                                                       as a service (LSaaS), where multiple concurrent requests need
+per protocol instance. Although independent instances can be                                                     to be handled efficiently without sacrificing recoverability or
+co-batched at the implementation level, they do not provide                                                      imperceptibility.
+the cross-round framing, scheduling, and stream-pattern pri-
+vacy formalized by HiTMS. By fragmenting secrets across                                                                                                                          R EFERENCES
+concurrent streams, HiTMS integrates batched inference into a                                                        [1] H. Ueoka, Y. Murawaki, and S. Kurohashi, “Frustratingly easy
+multi-stream, multi-round steganographic protocol and thereby                                                            edit-based linguistic steganography with a masked language model,”
+provides the throughput required by concurrent requests for a                                                            in Proceedings of the 2021 Conference of the North American
+                                                                                                                         Chapter of the Association for Computational Linguistics: Human
+linguistic version of steganography as a service (LSaaS) in the                                                          Language Technologies, K. Toutanova, A. Rumshisky, L. Zettlemoyer,
+future.                                                                                                                  D. Hakkani-Tur, I. Beltagy, S. Bethard, R. Cotterell, T. Chakraborty,
+                                                                                                                         and Y. Zhou, Eds. Online: Association for Computational Linguistics,
+                                                                                                                         Jun. 2021, pp. 5486–5492. [Online]. Available: https://aclanthology.org/
+                                              VII. C ONCLUSION                                                           2021.naacl-main.433/
+                                                                                                                     [2] X. Zheng and H. Wu, “Autoregressive linguistic steganography based on
+   We presented HiTMS, a model- and coder-agnostic frame-                                                                BERT and consistency coding,” Security and Communication Networks,
+work that generalizes conventional single-stream linguis-                                                                vol. 2022, no. 1, p. 9092785, 2022.
+tic steganography to multi-stream, multi-round interaction.                                                          [3] Z.-L. Yang, X.-Q. Guo, Z.-M. Chen, Y.-F. Huang, and Y.-J. Zhang,
+                                                                                                                         “RNN-Stega: Linguistic steganography based on recurrent neural net-
+By distributing secret messages across concurrent response                                                               works,” IEEE Transactions on Information Forensics and Security,
+streams, HiTMS makes batched autoregressive LM inference                                                                 vol. 14, no. 5, pp. 1280–1295, 2019.
+applicable to linguistic steganography and amortizes the cost                                                        [4] Z.-L. Yang, S.-Y. Zhang, Y.-T. Hu, Z.-W. Hu, and Y.-F. Huang, “VAE-
+                                                                                                                         Stega: Linguistic steganography based on variational auto-encoder,”
+of model invocation. Its self-describing frames, encrypted                                                               IEEE Transactions on Information Forensics and Security, vol. 16, pp.
+headers, key-derived stream-to-slot mapping, filler bits, and                                                            880–895, 2021.
+UNDER REVIEW, PREPRINT, JULY 2026                                                                                                                         13
+
+
+
+ [5] M. Bai, K. Pang, G. Liao, J. Yang, and Y. Huang, “Shimmer: a provably     [20] Z. Cheng, J. Kasai, and T. Yu, “Batch prompting: Efficient inference
+     secure steganography based on entropy collecting mechanism,” in 34th           with large language model APIs,” in Proceedings of the 2023
+     USENIX Security Symposium (USENIX Security 25), 2025, pp. 5949–                Conference on Empirical Methods in Natural Language Processing:
+     5965.                                                                          Industry Track, M. Wang and I. Zitouni, Eds. Singapore: Association
+ [6] Y. Wang, G. Pei, K. Chen, J. Ding, C. Pan, W. Pang,                            for Computational Linguistics, Dec. 2023, pp. 792–810. [Online].
+     D. Hu, and W. Zhang, “SparSamp: Efficient provably secure                      Available: https://aclanthology.org/2023.emnlp-industry.74/
+     steganography based on sparse sampling,” in The 34th USENIX               [21] AI@Meta, “Llama 3 model card,” 2024. [Online]. Available:
+     Security Symposium, 2025. [Online]. Available: https://www.usenix.org/         https://github.com/meta-llama/llama3/blob/main/MODEL CARD.md
+     conference/usenixsecurity25/presentation/wang-yaofei                      [22] G. Team, “Gemma 3,” 2025. [Online]. Available: https://goo.gle/
+ [7] R. Yan, C. Chu, Z. Yang, and Y. Murawaki, “A comprehensive survey              Gemma3Report
+     on linguistic steganography: Methods, countermeasures, evaluation,        [23] M. Conover, M. Hayes, A. Mathur, J. Xie, J. Wan, S. Shah,
+     and challenges,” 2025. [Online]. Available: https://www.researchgate.          A. Ghodsi, P. Wendell, M. Zaharia, and R. Xin, “Free dolly:
+     net/publication/398488225 A Comprehensive Survey on Linguistic                 Introducing the world’s first truly open instruction-tuned llm,”
+     Steganography Methods Countermeasures Evaluation and Challenges                2023. [Online]. Available: https://www.databricks.com/blog/2023/04/12/
+ [8] K. Pang, M. Bai, J. Yang, W.-Q. Zhang, M. Jiang, and Y. Huang,                 dolly-first-open-commercially-viable-instruction-tuned-llm
+     “WinStega: An adaptive robust enhancement framework for generative        [24] N. Rajani, L. Tunstall, E. Beeching, N. Lambert, A. M. Rush, and
+     linguistic steganography,” in ICASSP 2025 - 2025 IEEE International            T. Wolf, “No robots,” https://huggingface.co/datasets/HuggingFaceH4/
+     Conference on Acoustics, Speech and Signal Processing (ICASSP), 2025,          no robots, 2023.
+     pp. 1–5.                                                                  [25] J. Nozaki and Y. Murawaki, “Addressing segmentation ambiguity in
+ [9] R. Yan, S. Meng, and Y. Murawaki, “Anchored sliding window: Toward             neural linguistic steganography,” in Proceedings of the 2nd Conference
+     robust and imperceptible linguistic steganography,” in Proceedings             of the Asia-Pacific Chapter of the Association for Computational
+     of the 64th Annual Meeting of the Association for Computational                Linguistics and the 12th International Joint Conference on Natural
+     Linguistics (Volume 1: Long Papers), M. Liakata, V. P. Moreira,                Language Processing (Volume 2: Short Papers), Y. He, H. Ji,
+     J. Zhang, and D. Jurgens, Eds. San Diego, California, United States:           S. Li, Y. Liu, and C.-H. Chang, Eds. Online only: Association
+     Association for Computational Linguistics, Jul. 2026, pp. 993–1012.            for Computational Linguistics, Nov. 2022, pp. 109–116. [Online].
+     [Online]. Available: https://aclanthology.org/2026.acl-long.44/                Available: https://aclanthology.org/2022.aacl-short.15
+[10] P. Lalbakhsh, S. Ravanbakhsh, M. N. Fesharaki, and N. Sohrabi,            [26] R. Yan, Y. Yang, and T. Song, “A secure and disambiguating approach
+     “Service oriented steganography - a novel approach towards autonomic           for generative linguistic steganography,” IEEE Signal Processing Letters,
+     secured distributed heterogeneous environments,” in 2009 International         vol. 30, pp. 1047–1051, 2023.
+     Conference on Signal Processing Systems, 2009, pp. 418–422.               [27] R. Yan, T. Song, and Y. Yang, “A near-imperceptible disambiguating
+[11] A. Y. AlKhamese, W. R. Shabana, and I. M. Hanafy, “Data security in            approach via verification for generative linguistic steganography,” in
+     cloud computing using steganography: A review,” in 2019 International          2024 IEEE International Conference on Systems, Man, and Cybernetics
+     Conference on Innovative Trends in Computer Engineering (ITCE),                (SMC), 2024, pp. 1638–1643.
+     2019, pp. 549–558.                                                        [28] Y. Qi, K. Chen, K. Zeng, W. Zhang, and N. Yu, “Provably secure
+                                                                                    disambiguating neural linguistic steganography,” IEEE Transactions on
+[12] J. A. Ajala, S. Singh, S. Mukherjee, and S. Chakraborty, “Application
+                                                                                    Dependable and Secure Computing, vol. 22, no. 3, pp. 2430–2442, 2025.
+     of steganography technique in cloud computing,” in 2019 International
+                                                                               [29] R. Yan and Y. Murawaki, “Addressing tokenization inconsistency in
+     Conference on Computational Intelligence and Knowledge Economy
+                                                                                    steganography and watermarking based on large language models,”
+     (ICCIKE), 2019, pp. 532–537.
+                                                                                    in Proceedings of the 2025 Conference on Empirical Methods in
+[13] S. Rao and U. R, “Video steganography as a service: A local microser-          Natural Language Processing, C. Christodoulopoulos, T. Chakraborty,
+     vices framework for secure cloud communication,” in 2026 International         C. Rose, and V. Peng, Eds. Suzhou, China: Association for
+     Conference on Current Trends in Advanced Computing (ICCTAC), 2026,             Computational Linguistics, Nov. 2025, pp. 7076–7098. [Online].
+     pp. 1–7.                                                                       Available: https://aclanthology.org/2025.emnlp-main.361/
+[14] Z. Ziegler, Y. Deng, and A. Rush, “Neural linguistic steganography,” in   [30] J. Gu, X. Jiang, Z. Shi, H. Tan, X. Zhai, C. Xu, W. Li, Y. Shen,
+     Proceedings of the 2019 Conference on Empirical Methods in Natural             S. Ma, H. Liu, S. Wang, K. Zhang, Y. Wang, W. Gao, L. Ni, and
+     Language Processing and the 9th International Joint Conference on              J. Guo, “A survey on LLM-as-a-judge,” 2025. [Online]. Available:
+     Natural Language Processing (EMNLP-IJCNLP), K. Inui, J. Jiang,                 https://arxiv.org/abs/2411.15594
+     V. Ng, and X. Wan, Eds. Hong Kong, China: Association for                 [31] F. Jelinek, “Perplexity—a measure of the difficulty of speech recognition
+     Computational Linguistics, Nov. 2019, pp. 1210–1215. [Online].                 tasks,” Acoustical Society of America Journal, vol. 62, no. S1, p. S63,
+     Available: https://aclanthology.org/D19-1115                                   1977.
+[15] J. Ding, K. Chen, Y. Wang, N. Zhao, W. Zhang, and N. Yu, “Dis-            [32] T. Zhang*, V. Kishore*, F. Wu*, K. Q. Weinberger, and Y. Artzi,
+     cop: Provably secure steganography in practice based on “distribution          “BERTScore: Evaluating text generation with BERT,” in International
+     copies”,” in 2023 IEEE Symposium on Security and Privacy (SP), 2023,           Conference on Learning Representations, 2020. [Online]. Available:
+     pp. 2238–2255.                                                                 https://openreview.net/forum?id=SkeHuCVFDr
+[16] R. Yan and Y. Murawaki, “Efficient provably secure linguistic             [33] J. Devlin, M. Chang, K. Lee, and K. Toutanova, “BERT: pre-training
+     steganography via range coding,” in Proceedings of the 64th Annual             of deep bidirectional transformers for language understanding,” CoRR,
+     Meeting of the Association for Computational Linguistics (Volume               vol. abs/1810.04805, 2018. [Online]. Available: http://arxiv.org/abs/
+     1: Long Papers), M. Liakata, V. P. Moreira, J. Zhang, and                      1810.04805
+     D. Jurgens, Eds. San Diego, California, United States: Association for    [34] Y. Liu, M. Ott, N. Goyal, J. Du, M. Joshi, D. Chen, O. Levy,
+     Computational Linguistics, Jul. 2026, pp. 890–907. [Online]. Available:        M. Lewis, L. Zettlemoyer, and V. Stoyanov, “RoBERTa: A robustly
+     https://aclanthology.org/2026.acl-long.39/                                     optimized BERT pretraining approach,” CoRR, vol. abs/1907.11692,
+[17] Z. Wu, J. Wen, Y. Xue, Z. Zhang, and Y. Zhou, “GTSD: Generative                2019. [Online]. Available: http://arxiv.org/abs/1907.11692
+     text steganography based on diffusion model,” in Neural Information       [35] P. He, X. Liu, J. Gao, and W. Chen, “DeBERTa: Decoding-
+     Processing, M. Mahmud, M. Doborjeh, K. Wong, A. C. S. Leung,                   enhanced bert with disentangled attention,” in International Conference
+     Z. Doborjeh, and M. Tanveer, Eds.           Singapore: Springer Nature         on Learning Representations, 2021. [Online]. Available: https:
+     Singapore, 2025, pp. 168–183.                                                  //openreview.net/forum?id=XPZIaotutsD
+[18] Y. Qi, N. Zhao, Q. Yao, B. Wu, W. Zhang, N. Yu, and K. Chen,              [36] K. Clark, M.-T. Luong, Q. V. Le, and C. D. Manning, “ELECTRA:
+     “STEAD: Robust provably secure linguistic steganography with                   Pre-training text encoders as discriminators rather than generators,”
+     diffusion language model,” in The Thirty-ninth Annual Conference               2020. [Online]. Available: https://arxiv.org/abs/2003.10555
+     on Neural Information Processing Systems, 2025. [Online]. Available:
+     https://openreview.net/forum?id=SF2POTDz2o
+[19] S. Zhang, Z. Yang, J. Yang, and Y. Huang, “Provably secure
+     generative linguistic steganography,” in Findings of the Association
+     for Computational Linguistics: ACL-IJCNLP 2021, C. Zong, F. Xia,
+     W. Li, and R. Navigli, Eds. Online: Association for Computational
+     Linguistics, Aug. 2021, pp. 3046–3055. [Online]. Available: https:
+     //aclanthology.org/2021.findings-acl.268/
+

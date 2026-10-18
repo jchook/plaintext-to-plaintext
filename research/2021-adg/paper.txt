@@ -1,0 +1,657 @@
+                                                       Provably Secure Generative Linguistic Steganography
+
+                                                      Siyu Zhang, Zhongliang Yang, Jinshuai Yang, Yongfeng Huang
+                                               Department of Electronic Engineering, Tsinghua University, Beijing 100084, China
+                                                         {zhangsiy19, yjs20}@mails.tsinghua.edu.cn
+                                                                     yangzl15@tsinghua.org.cn
+                                                                   yfhuang@mail.tsinghua.edu.cn
+
+
+
+                                                              Abstract                            losslessly through different kinds of public chan-
+                                                                                                  nels. Nevertheless, text generally has low entropy
+                                            Generative linguistic steganography mainly            and lacks sufficient redundancy for information
+                                            utilized language models and applied stegano-         hiding (Sharma et al., 2016), which often results
+
+
+
+
+arXiv:2106.02011v1 [cs.CL] 3 Jun 2021
+                                            graphic sampling (stegosampling) to gener-
+                                                                                                  in low embedding capacity of linguistic steganog-
+                                            ate high-security steganographic text (stego-
+                                            text). However, previous methods generally            raphy. For example, in traditional modification-
+                                            lead to statistical differences between the con-      based methods (such as synonym substitution (Xi-
+                                            ditional probability distributions of stegotext       ang et al., 2014, 2018) and spelling transformation
+                                            and natural text, which brings about security         (Shirali-Shahreza, 2008)), where secret informa-
+                                            risks. In this paper, to further ensure secu-         tion is encoded by slightly modifying an existing
+                                            rity, we present a novel provably secure gener-       covertext, the options for modification can be very
+                                            ative linguistic steganographic method ADG,
+                                                                                                  limited to keep the text fluent enough so as not to
+                                            which recursively embeds secret information
+                                            by Adaptive Dynamic Grouping of tokens ac-
+                                                                                                  arouse suspicions.
+                                            cording to their probability given by an off-            In recent years, powered by the advanced tech-
+                                            the-shelf language model. We not only prove           nology of deep learning and natural language pro-
+                                            the security of ADG mathematically, but also          cessing, language models based on neural networks
+                                            conduct extensive experiments on three pub-           have made significant progress in generating flu-
+                                            lic corpora to further verify its imperceptibil-      ent text (Radford et al., 2019; Brown et al., 2020),
+                                            ity. The experimental results reveal that the         which bring new vitality to linguistic steganogra-
+                                            proposed method is able to generate stegotext
+                                                                                                  phy and facilitate the investigation of generation-
+                                            with nearly perfect security.
+                                                                                                  based methods (Fang et al., 2017; Yang et al.,
+                                        1   Introduction                                          2018a; Dai and Cai, 2019; Ziegler et al., 2019;
+                                                                                                  Yang et al., 2020a; Zhou et al., 2021). The gener-
+                                        Steganography is the technology of hiding secret in-      ative linguistic steganography directly transform
+                                        formation within an innocent natural carrier (such        secret information into innocuous-looking stegano-
+                                        as image (Hussain et al., 2018), audio (Mishra            graphic text (stegotext) without any covertext. Us-
+                                        et al., 2018), video (Liu et al., 2019), text (Krishnan   ing an off-the-shelf language model, secret infor-
+                                        et al., 2017), etc) in order to avoid eavesdropping.      mation can be encoded in the selection of token at
+                                        Steganography differs from cryptography in that           each time step autoregressively during the genera-
+                                        cryptography only conceals the content of secret          tion procedure, which greatly alleviates the draw-
+                                        information, whereas steganography even conceals          back of low embedding capacity. However, previ-
+                                        its very existence, which makes it more secure and        ous methods inevitably introduce distortions during
+                                        reliable in some scenarios (Anderson and Petitco-         generation. The imperceptibility of generative lin-
+                                        las, 1998).                                               guistic steganography still needs further optimiza-
+                                           Natural language is suitable as a carrier of           tion.
+                                        steganography by virtue of its high robustness in            In this paper, we aim to further improve the im-
+                                        transmission (Ziegler et al., 2019). Unlike digi-         perceptibility of generative linguistic steganogra-
+                                        tal images or digital audio which is sensitive to         phy. The contributions of this work are the follow-
+                                        distortions like compression, cropping, blurring or       ing:
+                                        pixel-wise dropout, text can usually be transmitted         1. We present ADG (Adaptive Dynamic
+     Grouping), a novel generative linguistic            language model L and the secret message m as in-
+     steganographic method based on off-the-             put and then outputs stegotext y to transmit. They
+     shelf language models, which groups the             also share a corresponding extraction algorithm
+     tokens adaptively in accordance with their          fext , which is the inverse mapping of femb that is
+     probability at each time step to embed secret       able to recover the secret message m according to
+     information dynamically in the generated            the language model L and the received stegotext y.
+     stegotext.
+  2. We discuss the security of ADG and give             2.3    Imperceptibility
+     mathematical proof, which reveals that the          In order to avoid raising Eve’s suspicions, stegotext
+     proposed method is provably secure.                 y is required to be fluent enough and statistically
+  3. Through quantitative analysis, we derive sat-       indistinguishable from natural innocuous text x,
+     isfactory experimental results in terms of          which we call covertext. Cachin (1998) proposed
+     both imperceptibility and embedding capac-          the information-theoretic security of steganography
+     ity, which further verifies the effectiveness of    to measure the statistical imperceptibility quanti-
+     ADG.                                                tatively, which is defined as the Kullback-Leibler
+Our code is available at https://github.com/M            divergence (KL divergence) between the distribu-
+hzzzzz/ADG-steganography.                                tions of covertext x and stegotext y. The distortion
+                                                         of generative linguistic steganography is two-fold:
+2     Formalism                                          one is introduced by the bias of the language mod-
+2.1    Notation                                          els, which is the gap between the true distribution
+                                                         of natural text ptrue (x) and the modeled distribu-
+We use lowercase letters in bold type (e.g. a) to
+                                                         tion pLM (x); the other is introduced by femb . In-
+denote vectors, normal lowercase letters (e.g. a)
+                                                         stead of directly sampling from the modeled dis-
+to denote scalars and uppercase letters (e.g. A)
+                                                         tribution, the embedding algorithm femb actually
+to denote sets. We use the symbol |A| to denote
+                                                         provides a special way to sample from pLM (y),
+the size of a set. Calligraphic letters denote neural
+                                                         which we call steganographic sampling (stegosam-
+models (e.g. A). Both English letters and Greek
+                                                         pling). It is equivalent to sampling from a modified
+letters are adopted. We use p(·) and q(·) to denote
+                                                         distribution q(y) produced by an implicit language
+distributions and f (·) to denote functions, which
+                                                         model L0 . In a word, the latter distortion is the
+are usually shortened to p, q and f . Subscripts
+                                                         gap between pLM (y) and q(y), which can also be
+and superscripts are used to tell the different vari-
+                                                         regarded as the gap between the conditional dis-
+ables/distributions/functions apart.
+                                                         tributions pLM (yt |y<t ) and q(yt |y<t ). We simply
+2.2    Generative Linguistic Steganography               use pLM and q to refer to the conditional distribu-
+                                                         tions in the rest of this paper.
+Language modeling is a task to estimate the joint
+distribution of serialized natural language pLM (w),
+                                                         3     Related Work
+where w is a sequence of n tokens [w1 , w2 , ..., wn ]
+and each token belongs to the vocabulary Σ. For          In the early stage, some researchers investigated
+an autoregressive language model L, the output           rule-based approaches or using Markov Chains
+is usually factorized as a product of conditional        to achieve generative linguistic steganography
+distribution of the current token                        (Wayner, 1992; Chapman and Davida, 1997; Chap-
+                                                         man et al., 2001; Chapman and Davida, 2002; Dai
+pLM (w) = pLM (w1 , w2 , ..., wn )
+                      n
+                                                         et al., 2010; Moraldo, 2014; Luo et al., 2016; Yang
+        = pLM (w1 ) ·
+                      Y
+                           pLM (wt |w1 , ..., wt−1 ).    et al., 2018b). However, these methods followed
+                         t=2
+                                                         a simplistic pattern and are hard to guarantee the
+                                                (1)      grammatical correctness and the semantic fluency
+   According to Simmons (1984), it is usually sup-       of the generated stegotext.
+posed that Alice (sender) wants to send a secret            With the development of deep learning, language
+message m ∼ Uniform({0, 1}l ) to Bob (receiver)          models based on neural networks show great per-
+through a public channel monitored by Eve (adver-        formance on automatic text generation. The pattern
+sary). In generative linguistic steganography, they      of generating stegotext with neural language mod-
+share an embedding algorithm femb which takes a          els has been widely accepted. Fang et al. (2017)
+proposed a linguistic steganographic method that          little damage to the conditional distribution and
+randomly partitioned the vocabulary Σ into 2b bins        is nearly equivalent to directly sampling from the
+[B1 , B2 , ..., B2b ] and each one contained |Σ|/2b to-   full distribution. In this section, we investigate the
+kens. At each time step, they selected the token          security of steganography by grouping and give
+with the highest probability within the bin accord-       detailed descriptions of the proposed method.
+ing to the b−bit secret information to be embedded.
+Yang et al. (2018a) improved the embedding algo-          4.1   Steganography by Grouping
+rithm by building the mapping from secret informa-        Steganography by grouping is to group all tokens
+tion to tokens dynamically at each time step rather       in the vocabulary into several groups, so that each
+than statically in advance. Concretely, the top 2k        group represents a unique secret message. E.g. we
+tokens with the highest probability were encoded          can Tokens belonging to the target group are able
+by Huffman coding algorithm. Then they took               to make up the stegotext. In such a way, Bob reads
+the token which has the same code as the secret           each token in the sequence in turn and performs
+information. Dai and Cai (2019) proposed patient-         the same grouping operation to extrapolate which
+Huffman, which was an improved version of Yang            groups the current token belongs to, thereby ex-
+et al. (2018a) that sacrificed embedding capacity         tracting the corresponding secret information. The
+for imperceptibility. They first calculated the dis-      key question is: how to group the tokens at each
+tortion (total variation distance or KL divergence)       time step to ensure an optimal imperceptibility?
+between q and pLM and then only used Huffman              We have the following assumption.
+coding embedding algorithm to embed secret infor-         Assumption 1. For secret information in the
+mation when the distortion was less than a preset         form of uniformly distributed bitstream, adap-
+threshold δ. Otherwise they directly sampled a to-        tively grouping the vocabulary into u groups (u =
+ken to avoid high distortion occasions. Ziegler et al.    2r , r ∈ N, r ≤ log2 |Σ|) with equal probability
+(2019) employed arithmetic coding to embed secret         will ensure the optimal imperceptibility.
+information. They truncated the top h likely tokens
+and left out the low-probability long-tails. Then the     Proof. Assuming that the discrete conditional prob-
+tokens are encoded by arithmetic coding algorithm         ability distribution pLM is arbitrarily partitioned
+and selected according to the secret information.         into u groups to embed r-bit secret information.
+Compared with other coding algorithm, arithmetic          pij denotes the probability of the j-th token in the
+coding has higher compression rate, which results         i-th group. ηi and ni denote the total probability
+in less damage to conditional probability distribu-       and the size of the i-th group respectively. Then
+tion pLM and helps to improve imperceptibility.           we have
+                                                                        ni
+                                                                        X                  u
+                                                                                           X
+4   ADG Methodology                                                           pij = ηi ,         ηi = 1.        (2)
+                                                                        j=1                i=1
+According to the analysis in Section 2.3, the distor-
+                                                              Our goal is to figure out the grouping algorithm
+tion of generative linguistic steganography includes
+                                                          to achieve the best imperceptibility, i.e. to min-
+the bias of the language model L and the damage
+                                                          imize the gap between pLM and q. First of all,
+to the conditional distribution caused by the em-
+                                                          starting from the modeled distribution pLM =
+bedding algorithm femb . The former is not our
+                                                          [..., pij , ...], we calculate the equivalent distribution
+research priority. With the development of auto-
+                                                          q. The probability of each token is firstly normal-
+matic text generation, the former distortion can be
+                                                          ized within its group (1/ηi ) and then multiplied by
+gradually minimized. In this paper, we mainly pay
+                                                          the selected probability of the group, which is 1/u
+attention to the latter distortion. We aim to seek an
+                                                          since secret information is uniformly distributed.
+optimal solution theoretically and experimentally.
+                                                          Therefore, q has the following form
+   Given an off-the-shelf language model, how can
+we embed secret information to the generated to-                          q = [..., pij /uηi , ...].            (3)
+kens? Unlike previous works that encoded the con-
+ditional distribution by lossless coding algorithm,       We measured the gap between the two distributions
+we achieve this goal in a novel way by grouping.          with KL divergence, which is
+Through mathematical analysis and proof, we pro-                               X            pLM
+pose a provably secure method ADG, which does                 DKL (pLM ||q) =     pLM log
+                                                                                             q
+                            ni
+                          u X
+                          X                      pij           The equality sign holds if and only if
+                      =             pij log
+                                              pij /uηi
+                          i=1 j=1
+                                                                               η1 = η2 = ... = ηu .                (7)
+                          Xu X ni
+                      =             pij log(uηi )                                                u
+                                                                                                 X
+                          i=1 j=1                              It means that DKL (pLM ||q) =           faux (ηi ) takes
+                          u
+                          X                 ni
+                                            X                                                    i=1
+                      =         log(uηi )         pij          the minimum value 0 when each component of η
+                          i=1               j=1                is equal, in which case pLM and q are equivalent
+                          Xu                                   and that achieves the optimal information-theoretic
+                      =         ηi log(uηi ).            (4)   security defined by Cachin (1998).
+                          i=1
+
+Therefore, the KL divergence between the two                      Therefore, we basically construct the idea of our
+distributions is a function of the vector η =                  embedding algorithm, that is, to adaptively group
+[η1 , η2 , ..., ηu ].                                          the vocabulary into multiple groups at each time
+   Next, we will prove Assumption 1 in two steps.              step, so that each group is assigned approximately
+   [1].         Considering the auxiliary function             the same probability. In practice, since the probabil-
+faux (η) = η log(uη), (0 ≤ η ≤ 1), we firstly                  ity distribution is discrete, the probability of groups
+analyse its concavity and convexity on the do-                 may not be absolutely equal. Firstly, we determine
+main of definition. For every η1 , η2 ∈ (0, 1) and             the number of groups u to be its maximum value
+0 ≤ λ ≤ 1,                                                     2b− log2 pmax c , where pmax is the highest probabil-
+                                                               ity in pLM . Secondly, since the time complexity of
+ faux (λη1 + (1 − λ)η2 )                                       solving the global optimal solution of equal group-
+ − λfaux (η1 ) − (1 − λ)faux (η2 )                             ing is unacceptable, we implement a suboptimal
+ = (λη1 + (1 − λ)η2 ) log(u(λη1 + (1 − λ)η2 ))                 solution in ADG, as demonstrated in Algorithm 1.
+ − λ(η1 log(uη1 )) − (1 − λ)(η2 log(uη2 ))                     In line 10, we employ binary search algorithm to
+                                                               select the token that has the nearest probability of
+            λη1 + (1 − λ)η2                                    a given value. Our implementation enables us to
+ = λη1 log
+                   η1                                          obtain a unique grouping result for any pLM , which
+                  λη1 + (1 − λ)η2                              ensures that the secret information can be extracted
+ + (1 − λ)η2 log
+                         η2                                    accurately and completely at the receiving end.
+          λη1 + (1 − λ)η2
+ ≤ λ(η1 (                   − 1))                              4.2   Recursion and Pruning
+                 η1
+               λη1 + (1 − λ)η2                                 After obtaining the grouping results, we can select
+ + (1 − λ)η2 (                  − 1)
+                      η2                                       the group according to the next log u bits of secret
+ = λ(λη1 + (1 − λ)η2 − η1 )                                    information to be embedded and simply sample
+                                                               a token in the group to generate stegotext. As a
+ + (1 − λ)(λη1 + (1 − λ)η2 − η2 )
+                                                               matter of fact, we can also continue grouping the
+ = λ(λ − 1)η1 + λ(1 − λ)η2                                     obtained groups to further enlarge the embedding
+ + (1 − λ)λη1 − (1 − λ)λη2                                     capacity and recursively grouping the new groups
+ = 0.                                                          until it is impossible to be equally participated (the
+                                                (5)            normalized pmax of the current group is greater
+As a result, faux (η) is convex over (0, 1).                   than 0.5). In order to improve the efficiency of the
+   [2]. Then, when generalizing to u variables                 recursive grouping, we employ pruning strategy
+                    u
+                    X                                          to remove the redundant grouping operations. We
+η1 , η2 , ..., ηu ,   ηi = 1, according to Jensen’s            only need to recursively group the selected groups
+                i=1
+inequality (Jensen et al., 1906), there is                     every time in accordance with the secret informa-
+  Pu                  Pu                                       tion to be embedded. In this manner, the amount
+    i=1 faux (ηi )           ηi log(uηi )
+                   = i=1                                       of secret information embedded in each token is
+        u                      u                               adjusted dynamically according to its probability
+           Pu                u            u
+              i=1 ηi     1                                     distribution.
+                            X           X
+  ≥ faux (           )=          ηi log(     ηi ) = 0.
+               u         u                                        To sum up, at each time step, the proposed
+                            i=1          i=1
+                                                    (6)        ADG embedding algorithm first conducts the equal
+ Algorithm 1: Suboptimal solution of equal             contains the current token in the stegotext. The
+ grouping.                                             index of the selected groups reveal the embedded
+  Data: vocabulary Σ, distribution pLM                 secret information.
+  Result: set of groups G
+1 list of tokens = sorted (pLM );
+                                                       5       Experimental Results and Analysis
+2 pmax = probability of the first token;
+                                                       In this section, we evaluate the performance of
+         b− log2 pmax c
+3 u = 2                 ;                              ADG in terms of both embedding capacity and
+4 mean = 1/u;                                          imperceptibility. Details of our experiments and the
+5 for (i = 1; i ≤ u − 1; i ++) do                      analysis of the results are present in the following
+6      Gi = [the first token];                         subsections.
+7      remove the first token;
+                                                       5.1      Datasets
+              X
+8      while      probability of Gi < mean do
+                          X
+9          ε = mean −        probability of Gi ;       We evaluated the performance of ADG on three
+                                                       public corpora, namely “Large Movie Review
+10        select a token with the nearest
+                                                       Dataset” (Movie) (Maas et al., 2011), “All the
+            probability of ε;
+                                                       News” (News)1 and “Sentiment140” (Tweet) (Go
+11        if probability of the token − ε < ε
+                                                       et al., 2009). Large movie review dataset is origi-
+            then
+                                                       nally built for binary sentiment classification, con-
+12             append the token to Gi ;
+                                                       taining 100,000 movie reviews in total crawled
+13             remove the token;
+                                                       from IMDb2 . “All the news” is a collection of pub-
+14        end
+                                                       lications of mainstream news media. Sentiment140
+15        else
+                                                       is also used in sentiment analysis tasks, which con-
+16             break;
+                                                       tains 1,600,000 tweets extracted from Twitter3 .
+17        end
+                                                          We converted the raw text to lowercase and re-
+18    end
+                                                       moved HTML tags and most punctuations, then
+                probability of the rest tokens
+19    mean =                                   ;       segmented it into sentences with NLTK tools
+                             u−i
+                                                       (Loper and Bird, 2002). We filtered out sentences
+20 end
+                                                       with length below 5 or above 200. For the conve-
+21 append the rest tokens to Gu ;
+                                                       nience of training and evaluation, any token occur-
+22 G = [G1 , G2 , ..., Gu ];
+                                                       ring less than 10 times was mapped to a special
+                                                       token “ UNK”. We also added “ BOS” and “ EOS”
+                                                       at the beginning and end of each sentence to help
+grouping algorithm adaptively according to the con-    training. Sentences in a batch were padded to the
+ditional distribution, and then recursively repeats    same length with a special padding token “ PAD”.
+the operation on the selected group dynamically        Finally, we divided the preprocessed corpora into
+according to the secret information, until it is in-   training set and test set according to the ratio of 9:1.
+divisible. At last, we normalize the probability of    Statistics are demonstrated in Table 3.
+the last selected group and sample a token to gen-
+erate the stegotext. We have proved the security of    5.2      Implementation Details
+equal grouping algorithm. Obviously, it can also be
+                                                       In experiments, we utilized LSTMs (Hochreiter
+extended to the recursive manner of ADG, which
+                                                       and Schmidhuber, 1997) for word-level generation.
+means the proposed method is provably secure.
+                                                       We stacked 2 LSTM layers and the model was
+                                                       implemented with Pytorch (Paszke et al., 2017).
+4.3   Information Extraction
+                                                       The dimension of word embedding was set to be
+The extraction algorithm is basically the inverse      350. Hidden states in LSTM were set to be 512-
+process of the embedding algorithm. For an ex-         dimensional vectors. In the training procedure,
+actly successful extraction, Alice and Bob have to     we applied SGD algorithm together with Adam
+share the same language model, vocabulary and              1
+                                                            https://www.kaggle.com/snapcrack/all
+grouping algorithm. At each time step, Bob is          -the-news
+supposed to recursively operate the same grouping         2
+                                                            https://www.imdb.com/
+                                                          3
+algorithm as Alice do, and then select the group            https://twitter.com/
+                                      Table 1: Results of ER, KLD1 and KLD2 .
+
+                                         Movie                      News                      Tweet
+         METHOD
+                              ↑ER       ↓KLD1    ↓KLD2     ↑ER     ↓KLD1   ↓KLD2     ↑ER     ↓KLD1    ↓KLD2
+  Bins (b = 1)                1.000      2.497    27.595   1.000   2.742   26.331    1.000    2.431    19.519
+  Bins (b = 2)                2.000      2.338    33.206   2.000   2.593   35.207    2.000    2.421    17.604
+  Bins (b = 3)                3.000      2.319    29.778   3.000   2.592   55.781    3.000    2.429    21.286
+  Bins (b = 4)                4.000      2.439    54.155   4.000   2.550   87.441    4.000    2.314    27.230
+  Bins (b = 5)                5.000      2.503    73.075   5.000   2.500   116.857   5.000    2.482    29.171
+  Huffman (k = 1)             1.000      1.961    21.219   1.000   2.338   11.226    1.000    2.121     6.252
+  Huffman (k = 2)             1.824      1.433    13.199   1.824   1.751    8.793    1.841    1.586     5.208
+  Huffman (k = 3)             2.509      1.106     8.487   2.518   1.372    6.855    2.595    1.145     4.141
+  Huffman (k = 4)             3.145      0.819     6.334   3.224   1.084    5.419    3.266    0.880     3.197
+  Huffman (k = 5)             3.705      0.658     4.657   3.872   0.838    3.995    3.932    0.694     2.738
+  Patient-Huffman (δ = 1.0)   1.125      0.327    0.767    0.809   0.256    0.441    0.988    0.298    0.545
+  Patient-Huffman (δ = 1.5)   1.711      0.588     2.132   1.460   0.559    1.817    1.668    0.621     1.280
+  Patient-Huffman (δ = 2.0)   2.129      0.819     4.564   1.905   0.808    3.497    2.201    0.908     2.445
+  Arithmetic (h = 100)        4.224      0.362     2.956   4.412   0.425    2.269    4.308    0.333     1.508
+  Arithmetic (h = 200)        4.651      0.240     2.321   4.908   0.295    1.688    4.805    0.253     1.749
+  Arithmetic (h = 300)        4.903      0.205     1.903   5.127   0.245    1.426    4.942    0.206     1.242
+  ADG                         5.147      0.033    1.946    5.650   0.027    0.866    5.411    0.048    1.189
+
+
+
+(Kingma and Ba, 2014) to train the language model.         Embedding Rate (ER): It is the average amount
+Learning rate was set to be 0.001. The SGD update          of information that one single token can carry, and
+direction was computed using a batch of 32 training        is in unit of bits per word (bpp). Embedding rate is
+samples. They were both trained for 30 epochs on           a metric to indicate the embedding capacity. Higher
+one GeForce GTX 1080 GPU. In the generation                is better.
+procedure, we adopted the model performing best
+on test sets. All generated sentences must be longer       KL Divergence between the implicit distribution
+than 5 and shorter than 200.                               q and the modeled distribution pLM (KLD1 ): It
+                                                           reflects the gap introduced by the embedding algo-
+5.3   Baselines                                            rithm. Lower is better and the unit is bit.
+We rebuilt Fang et al. (2017) (Bins), Yang et al.
+(2018a) (Huffman), Dai and Cai (2019) (Patient-            KL Divergence between the statistical distribu-
+Huffman) and Ziegler et al. (2019) (Arithmetic)            tions of the sentence embedding of covertext and
+as baselines. For fair comparison, we rebuilt all          stegotext (KLD2 ): It indirectly reflects the overall
+the baselines with the same language models. For           information-theoretic security. We mapped all ste-
+Bins, we set b to be 1, 2, 3, 4, 5 and the corre-          gotext and covertext to fixed length dense vectors
+sponding number of bins was 2, 4, 8, 16, 32. For           vx and vy by third-party sentence vectorization
+Huffman, we built Huffman tree with the top 2,             tool (Le and Mikolov, 2014), and assumed that the
+4, 8, 16, 32 likely tokens. For Patient-Huffman,           resulting vectors of covertext and stegotext both
+we measured the distortion by KL divergence and            obey isotropic Gaussian distribution. Then KLD2
+restricted the threshold δ to 1, 1.5, 2 with top 8         is computed by
+tokens. For Arithmetic, we truncated the condi-
+                                                               DKL (p(vx )||p(vy ))
+tional distribution at h = 100, 200, 300. In each                 X          σy   σx 2 + (µx − µy )2 1
+case, we generated 1,000 stegotext. We randomly                ≈        (log    +                     − ),
+                                                                             σx          2σy 2           2
+chose same amount of covertext from the test sets                                                          (8)
+for further evaluation.                                    where µ and σ are the mean and standard devia-
+                                                           tion of sentence vectors. We set the dimension of
+5.4   Metrics
+                                                           sentence vectors to be 100. Lower is better and the
+The metrics we utilized to evaluate the performance        unit is bit.
+on embedding capacity and imperceptibility are
+listed as follows.                                         Detection Accuracy:          It reflects the anti-
+                                                           steganalysis ability of steganographic methods. Ste-
+                                          Table 2: Results of ER, Acc1 and Acc2 .
+
+                                            Movie                         News                      Tweet
+           METHOD
+                                  ↑ER       Acc1      Acc2      ↑ER       Acc1      Acc2    ↑ER     Acc1     Acc2
+  Bins (b = 1)                   1.000      0.873     0.854     1.000     0.887     0.856   1.000   0.787    0.814
+  Bins (b = 2)                   2.000      0.812     0.802     2.000     0.855     0.830   2.000   0.739    0.753
+  Bins (b = 3)                   3.000      0.810     0.789     3.000     0.833     0.819   3.000   0.720    0.733
+  Bins (b = 4)                   4.000      0.825     0.832     4.000     0.843     0.852   4.000   0.748    0.760
+  Bins (b = 5)                   5.000      0.876     0.872     5.000     0.877     0.882   5.000   0.750    0.786
+  Huffman (k = 1)                1.000      0.891     0.891     1.000     0.891     0.885   1.000   0.785    0.806
+  Huffman (k = 2)                1.824      0.838     0.836     1.824     0.851     0.826   1.841   0.749    0.758
+  Huffman (k = 3)                2.509      0.796     0.760     2.518     0.816     0.785   2.595   0.684    0.702
+  Huffman (k = 4)                3.145      0.713     0.690     3.224     0.768     0.718   3.266   0.634    0.632
+  Huffman (k = 5)                3.705      0.673     0.645     3.872     0.710     0.664   3.932   0.602    0.593
+  Patient-Huffman (δ = 1.0)      1.125      0.588     0.578     0.809     0.559     0.542   0.988   0.528    0.552
+  Patient-Huffman (δ = 1.5)      1.711      0.654     0.683     1.460     0.674     0.683   1.668   0.589    0.581
+  Patient-Huffman (δ = 2.0)      2.129      0.722     0.714     1.905     0.725     0.726   2.201   0.650    0.661
+  Arithmetic (h = 100)           4.224      0.601     0.582     4.412     0.630     0.608   4.308   0.547    0.554
+  Arithmetic (h = 200)           4.651      0.565     0.556     4.908     0.594     0.559   4.805   0.537    0.561
+  Arithmetic (h = 300)           4.903      0.571     0.562     5.127     0.558     0.566   4.942   0.532    0.534
+  ADG                            5.147      0.548     0.544     5.650     0.543     0.519   5.411   0.496    0.497
+
+
+   Table 3: Statistics of the preprocessed datasets.            the contrary, stegocarriers with 100% detection ac-
+                                                                curacy cannot carry a single bit. We calculated this
+ DATASET        |Σ|      |TRAINING|             |TEST|
+                                                                metric with the accuracy results obtained by the
+   Movie       37,800         1,002,609         111,402         two aforementioned steganalysis method (EER1 ,
+   News        50,178         1,461,567         162,397
+   Tweet       30,152         1,572,599         174,734         EER2 ). Higher is better and the unit is bpp.
+
+                                                                5.5     Results and Analysis
+ganalysis is the technology used by Eve to de-
+                                                                The results of KLD1 and KLD2 are listed in Table 1.
+tect hidden information in stegocarriers, which is
+                                                                KLD1 measures the distortion between q and pLM ,
+the opposite direction of steganography. In our
+                                                                which is introduced by the embedding algorithm
+experiment, we employed linguistic steganalysis
+                                                                ADG. KLD2 estimates the overall information-
+approaches based on Fasttext (Yang et al., 2019)
+                                                                theoretic security that also considers the deviation
+(Acc1 ) and TextCNN (Yang et al., 2020b) (Acc2 ).
+                                                                of language models. In terms of KLD1 , we found
+We took stegotext as positive samples and cover-
+                                                                that the proposed method ADG outperforms all
+text as negative samples. We conducted 10-fold
+                                                                baselines and it is very close to the optimal value
+cross validation and reported the average accuracy.
+                                                                0 (stochastic sampling), which means generating
+Closer to 50% is better.
+                                                                stegotext by ADG is almost equivalent to normal
+                                                                generation with the language models. The results
+Effective Embedding Rate: It is a new metric
+                                                                of KLD2 are also advantageous, indicating that the
+we proposed to evaluate the comprehensive perfor-
+                                                                generated stegotext is statistically consistent with
+mance of steganographic algorithms. It is defined
+                                                                the covertext. We noticed that some baselines can
+to be calculated by
+                                                                also perform well on KLD2 (e.g. Patient-Huffman
+           EER = 2 × (1 − Acc) × ER,                      (9)   (δ = 1.0)). However, they have a crucial flaw in
+                                                                embedding capacity.
+meaning that if the stegotext has a certain prob-                  Table 2 demonstrates the results of anti-
+ability of being detected, the average amount of                steganalysis, where we found the tendency co-
+secret information actually transmitted should be               heres with that of KLD1 and KLD2 . The proposed
+discounted accordingly. For mathematical rigor-                 method ADG outperforms all baselines on the three
+ousness and completeness, if Acc < 0.5, we assign               corpora and it is very close to the optimal value 0.5,
+1 − Acc to Acc. In extreme cases where the stego-               which further confirms its imperceptibility. Be-
+carriers are completely natural, the detection accu-            sides, we also illustrated some examples of stego-
+racy should be 50% and EER is equal to ER. On                   text generated by ADG in Table 5 for qualitative
+                                         Table 4: Results of ER, EER1 and EER2 .
+
+                                            Movie                        News                          Tweet
+            METHOD
+                                 ↑ER       ↑EER1    ↑EER2      ↑ER      ↑EER1     ↑EER2       ↑ER     ↑EER1     ↑EER2
+    Bins (b = 1)                 1.000      0.254    0.292     1.000     0.226     0.287     1.000     0.425     0.373
+    Bins (b = 2)                 2.000      0.752    0.794     2.000     0.582     0.680     2.000     1.044     0.988
+    Bins (b = 3)                 3.000      1.137    1.266     3.000     0.999     1.089     3.000     1.683     1.605
+    Bins (b = 4)                 4.000      1.396    1.344     4.000     1.252     1.180     4.000     2.020     1.924
+    Bins (b = 5)                 5.000      1.245    1.280     5.000     1.230     1.180     5.000     2.500     2.135
+    Huffman (k = 1)              1.000      0.218    0.219     1.000     0.219     0.231     1.000     0.430     0.387
+    Huffman (k = 2)              1.824      0.593    0.600     1.824     0.546     0.635     1.841     0.924     0.893
+    Huffman (k = 3)              2.509      1.024    1.202     2.518     0.927     1.083     2.595     1.638     1.549
+    Huffman (k = 4)              3.145      1.809    1.950     3.224     1.496     1.821     3.266     2.387     2.404
+    Huffman (k = 5)              3.705      2.427    2.627     3.872     2.249     2.602     3.932     3.133     3.200
+    Patient-Huffman (δ = 1.0)    1.125      0.927    0.949     0.809     0.713     0.740     0.988     0.933     0.886
+    Patient-Huffman (δ = 1.5)    1.711      1.182    1.083     1.460     0.952     0.925     1.668     1.369     1.400
+    Patient-Huffman (δ = 2.0)    2.129      1.184    1.220     1.905     1.050     1.044     2.201     1.541     1.490
+    Arithmetic (h = 100)         4.224      3.371    3.527     4.412     3.269     3.459     4.308     3.908     3.843
+    Arithmetic (h = 200)         4.651      4.051    4.125     4.908     3.981     4.324     4.805     4.449     4.219
+    Arithmetic (h = 300)         4.903      4.207    4.290     5.127     4.532     4.450     4.942     4.630     4.606
+    ADG                          5.147      4.648    4.699     5.650     5.164     5.435     5.411     5.373     5.384
+
+                       Table 5: Examples of stegotext generated by ADG on the three corpora.
+
+             The supporting cast was also excellent.
+             But I guess you ’ve seen the many silent movies along with his other films.
+    Movie    And this movie was a precursor of val kilmer in the extreme.
+             It ’s a unique wonderful movie that deserves all the recognition it deserved.
+             This is the worst movie I have ever seen.
+             The FBI estimated its total wealth on Thursday.
+             Remember this is in part because of the actual policies of Donald Trump.
+    News     He said he did not care about any counterintelligence investigation.
+             Today however the process could not change even if he doesnt agree with Trumps rhetoric.
+             More than 100 000 people have been detained and another 30 000 civilians have been wounded early on Sunday.
+             Worst headache everrrr I dunno why but it was so scary.
+             I had a blast today in the MTV Movie Awards.
+    Tweet    Ahhh some brothers do n’t play sports!
+             Sadly you will be missing so much.
+             I do n’t think the peach ice cream last night was good.
+
+
+
+study. We found that the stegotext is fluent enough,           cure generative linguistic steganography during the
+with correct grammar and coherent semantics.                   procedure of stegotext generation. We proposed
+   Finally, taking both embedding capacity and im-             ADG, which embeds secret information by adap-
+perceptibility into account, we investigated effec-            tive dynamic grouping. According to the mathe-
+tive embedding rate listed in Table 4. It can be               matical proof and extensive experiments conducted
+concluded that our method has excellent compre-                on three public corpora, we found that the pro-
+hensive performance, which outperforms all base-               posed method is provably secure and capable of
+lines. In general, the experimental results indicate           generating fluent stegotext with high embedding
+that the proposed method ADG is able to resist                 capacity and high imperceptibility. We hope our in-
+both perceptual and statistical steganalysis of Eve,           vestigation of provably secure generative linguistic
+meanwhile ensure a remarkable embedding rate,                  steganography can be leveraged as a building block
+which reveals its effectiveness.                               for future research.
+
+6     Conclusion                                               Acknowledgments
+Previous works of generative linguistic steganog-              This work is supported in part by the National
+raphy inevitably introduce distortions to the distri-          Key Research and Development Program of China
+bution estimated by off-the-shelf language models.             under Grant U1936216, Grant 61862002, Grant
+In this paper, we attempted to achieve provably se-            6200197 and Grant U1705261. The authors thank
+anonymous reviewers for their insightful sugges-            Johan Ludwig William Valdemar Jensen et al. 1906.
+tions.                                                        Sur les fonctions convexes et les inégalités entre les
+                                                              valeurs moyennes. Acta mathematica, 30:175–193.
+
+                                                            Diederik P Kingma and Jimmy Ba. 2014. Adam: A
+References                                                    method for stochastic optimization. arXiv preprint
+Ross J Anderson and Fabien AP Petitcolas. 1998. On            arXiv:1412.6980.
+  the limits of steganography. IEEE Journal on se-
+  lected areas in communications, 16(4):474–481.            R Bala Krishnan, Prasanth Kumar Thandra, and M Sai
+                                                              Baba. 2017. An overview of text steganography.
+Tom B Brown, Benjamin Mann, Nick Ryder, Melanie               In 2017 Fourth International Conference on Signal
+  Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind            Processing, Communication and Networking (IC-
+  Neelakantan, Pranav Shyam, Girish Sastry, Amanda            SCN), pages 1–6. IEEE.
+  Askell, et al. 2020. Language models are few-shot
+  learners. arXiv preprint arXiv:2005.14165.                Quoc Le and Tomas Mikolov. 2014. Distributed repre-
+                                                              sentations of sentences and documents. In Interna-
+Christian Cachin. 1998. An information-theoretic              tional conference on machine learning, pages 1188–
+  model for steganography. In International Work-             1196.
+  shop on Information Hiding, pages 306–318.
+  Springer.                                                 Yunxia Liu, Shuyang Liu, Yonghao Wang, Hongguo
+                                                              Zhao, and Si Liu. 2019. Video steganography: A
+Mark Chapman and George Davida. 1997. Hiding the              review. Neurocomputing, 335:238–250.
+ hidden: A software system for concealing ciphertext
+ as innocuous text. In International Conference on          Edward Loper and Steven Bird. 2002. Nltk: the natural
+ Information and Communications Security, pages               language toolkit. arXiv preprint cs/0205028.
+ 335–345. Springer.
+                                                            Yubo Luo, Yongfeng Huang, Fufang Li, and Chinchen
+Mark Chapman and George Davida. 2002. Plausible               Chang. 2016. Text steganography based on ci-
+ deniability using automated linguistic stegonagra-           poetry generation using markov chain model. KSII
+ phy. In International Conference on Infrastructure           Transactions on Internet and Information Systems
+ Security, pages 276–287. Springer.                           (TIIS), 10(9):4568–4584.
+Mark Chapman, George I Davida, and Marc Rennhard.           Andrew Maas, Raymond E Daly, Peter T Pham, Dan
+ 2001. A practical and effective approach to large-           Huang, Andrew Y Ng, and Christopher Potts. 2011.
+ scale automated linguistic steganography. In Inter-          Learning word vectors for sentiment analysis. In
+ national Conference on Information Security, pages           Proceedings of the 49th annual meeting of the as-
+ 156–165. Springer.                                           sociation for computational linguistics: Human lan-
+                                                              guage technologies, pages 142–150.
+Falcon Dai and Zheng Cai. 2019. Towards near-
+  imperceptible steganographic text. In Proceedings         Shilpi Mishra, Virendra Kumar Yadav, Munesh Chan-
+  of the 57th Annual Meeting of the Association for           dra Trivedi, and Tarun Shrimali. 2018. Audio
+  Computational Linguistics, pages 4303–4308.                 steganography techniques: A survey. In Advances in
+Weihui Dai, Yue Yu, Yonghui Dai, and Bin Deng. 2010.          Computer and Computational Sciences, pages 581–
+ Text steganography system using markov chain                 589. Springer.
+  source model and des algorithm. JSW, 5(7):785–            H Hernan Moraldo. 2014. An approach for text
+ 792.                                                         steganography based on markov chains. arXiv
+Tina Fang, Martin Jaggi, and Katerina Argyraki. 2017.         preprint arXiv:1409.0915.
+  Generating steganographic text with lstms. In Pro-
+  ceedings of ACL 2017, Student Research Workshop,          Adam Paszke, Sam Gross, Soumith Chintala, Gregory
+  pages 100–106.                                              Chanan, Edward Yang, Zachary DeVito, Zeming
+                                                              Lin, Alban Desmaison, Luca Antiga, and Adam
+Alec Go, Richa Bhayani, and Lei Huang. 2009. Twit-            Lerer. 2017. Automatic differentiation in pytorch.
+  ter sentiment classification using distant supervision.
+  CS224N project report, Stanford, 1(12):2009.              Alec Radford, Jeffrey Wu, Rewon Child, David Luan,
+                                                              Dario Amodei, and Ilya Sutskever. 2019. Language
+Sepp Hochreiter and Jürgen Schmidhuber. 1997.                models are unsupervised multitask learners. OpenAI
+  Long short-term memory. Neural computation,                 blog, 1(8):9.
+  9(8):1735–1780.
+                                                            Shivani Sharma, Avadhesh Gupta, Munesh Chandra
+Mehdi Hussain, Ainuddin Wahid Abdul Wahab, Ya-                Trivedi, and Virendra Kumar Yadav. 2016. Analysis
+ mani Idna Bin Idris, Anthony TS Ho, and Ki-Hyun              of different text steganography techniques: a survey.
+ Jung. 2018. Image steganography in spatial domain:           In 2016 Second International Conference on Compu-
+ A survey. Signal Processing: Image Communica-                tational Intelligence & Communication Technology
+ tion, 65:46–66.                                              (CICT), pages 130–133. IEEE.
+Mohammad Shirali-Shahreza. 2008. Text steganogra-
+ phy by changing words spelling. In 2008 10th in-
+ ternational conference on advanced communication
+ technology, volume 3, pages 1912–1913. IEEE.
+Gustavus J Simmons. 1984. The prisoners’ problem
+  and the subliminal channel. In Advances in Cryptol-
+  ogy, pages 51–67. Springer.
+Peter Wayner. 1992. Mimic functions. Cryptologia,
+  16(3):193–214.
+
+Lingyun Xiang, Yan Li, Wei Hao, Peng Yang, and Xi-
+  aobo Shen. 2018. Reversible natural language water-
+  marking using synonym substitution and arithmetic
+  coding. Comput. Mater. Continua, 55(3):541–559.
+Lingyun Xiang, Xingming Sun, Gang Luo, and Bin
+  Xia. 2014. Linguistic steganalysis using the features
+  derived from synonym frequency. Multimedia tools
+  and applications, 71(3):1893–1911.
+Zhong-Liang Yang, Xiao-Qing Guo, Zi-Ming Chen,
+  Yong-Feng Huang, and Yu-Jin Zhang. 2018a. Rnn-
+  stega: Linguistic steganography based on recurrent
+  neural networks. IEEE Transactions on Information
+  Forensics and Security, 14(5):1280–1295.
+Zhong-Liang Yang, Si-Yu Zhang, Yu-Ting Hu, Zhi-
+  Wen Hu, and Yong-Feng Huang. 2020a. Vae-stega:
+  Linguistic steganography based on variational auto-
+  encoder. IEEE Transactions on Information Foren-
+  sics and Security, 16:880–895.
+Zhongliang Yang, Yongfeng Huang, and Yu-Jin Zhang.
+  2019. A fast and efficient text steganalysis method.
+  IEEE Signal Processing Letters, 26(4):627–631.
+Zhongliang Yang, Yongfeng Huang, and Yu-Jin Zhang.
+  2020b.    Ts-csw: text steganalysis and hidden
+  capacity estimation based on convolutional slid-
+  ing windows. Multimedia Tools and Applications,
+  79(25):18293–18316.
+Zhongliang Yang, Shuyu Jin, Yongfeng Huang, Yujin
+  Zhang, and Hui Li. 2018b. Automatically gener-
+  ate steganographic text based on markov model and
+  huffman coding. arXiv preprint arXiv:1811.04720.
+Xuejing Zhou, Wanli Peng, Boya Yang, Juan Wen,
+  Yiming Xue, and Ping Zhong. 2021. Linguistic
+  steganography based on adaptive probability distri-
+  bution. IEEE Transactions on Dependable and Se-
+  cure Computing.
+Zachary Ziegler, Yuntian Deng, and Alexander M Rush.
+  2019. Neural linguistic steganography. In Proceed-
+  ings of the 2019 Conference on Empirical Methods
+  in Natural Language Processing and the 9th Inter-
+  national Joint Conference on Natural Language Pro-
+  cessing (EMNLP-IJCNLP), pages 1210–1215.
+

@@ -1,0 +1,42 @@
+{
+  "id": "2026-adaptive-dynamic-sampling",
+  "title": "Provable Secure Steganography Based on Adaptive Dynamic Sampling",
+  "status": "USENIX Security 2026",
+  "kind": "paper",
+  "source": "https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi",
+  "pdf": "https://www.usenix.org/system/files/usenixsecurity26-pang-kaiyi_0.pdf",
+  "why": "Investigates a model API that accepts a seed without exposing full probabilities. Relevant if we want to work through a constrained serving API rather than a custom logits interface.",
+  "caveat": "The API must reproduce samples for supplied seeds. The authors identify provider nondeterminism as a limitation, so this does not eliminate the need for controlled execution.",
+  "repo": null,
+  "priority": "deployment",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-adaptive-dynamic-sampling/paper.pdf",
+      "requested_url": "https://www.usenix.org/system/files/usenixsecurity26-pang-kaiyi_0.pdf",
+      "resolved_url": "https://www.usenix.org/system/files/usenixsecurity26-pang-kaiyi_0.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:58.969633+00:00",
+      "bytes": 2057083,
+      "sha256": "5c7482d0e021abaddb2fe1dc06cc12d707696faa2a6cb57167aa0d0b9083cfcd"
+    },
+    {
+      "path": "2026-adaptive-dynamic-sampling/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 117163,
+      "sha256": "e99e267439aed9baf8e6c037b352923e27fbf3ef6cb5ce069f1c1457c1f26deb"
+    },
+    {
+      "path": "2026-adaptive-dynamic-sampling/source.html",
+      "requested_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi",
+      "resolved_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:59.566358+00:00",
+      "bytes": 36341,
+      "sha256": "b71ddb231c64f2a38a6c07eed1ec17247aca8bc9df2953e46da971c98894127f"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 18
+}

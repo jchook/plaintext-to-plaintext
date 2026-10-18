@@ -1,0 +1,984 @@
+                                                                                                                                                                                                      1
+
+
+
+
+                                                 A High-Capacity and Secure Disambiguation
+                                                Algorithm for Neural Linguistic Steganography
+                                                                                 Yapei Feng1 ,Feng Jiang1 ,Shanhao Wu2 ,and Hua Zhong1
+
+
+
+                                             Abstract—Neural linguistic steganography aims to embed infor-
+                                         mation into natural text while preserving statistical undetectability.
+                                         A fundamental challenge in this field stems from tokenization
+                                         ambiguity in modern tokenizers, which can lead to catastrophic
+                                         decoding failures. The recent method, SyncPool, addresses this am-
+
+
+
+
+arXiv:2510.02332v1 [cs.CL] 26 Sep 2025
+                                         biguity by employing a coarse-grained synchronization mechanism
+                                         over groups of ambiguous candidates. However, SyncPool sacrifices
+                                         embedding capacity, as it utilizes the entire Shannon entropy of
+                                         an ambiguous group solely for synchronization rather than for
+                                         payload embedding. We propose a method named look-ahead
+                                         Sync, which overcomes the capacity limitation of SyncPool while
+                                         retaining its provable security guarantees. Our approach performs                Fig. 1. A toy example of tokenization ambiguity. The detokenizer φ is not
+                                         minimal synchronized sampling only on truly indistinguishable                    injective, so identical text (mistrust) can correspond to [278] or [377, 245].
+                                         token sequences, while strategically preserving all other discernible            If bits are embedded at the token level without resolving this ambiguity, the
+                                         paths to maximize embedding capacity. We provide theoretical                     receiver may decode the wrong bits from the same visible string.
+                                         proofs for the security of our method and analyze the gap between
+                                         its achievable embedding capacity and the theoretical upper bound.
+                                         Experiments on English (using Llama 3) and Chinese (using Qwen                   critical challenge of tokenization ambiguity, where a single
+                                         2.5) benchmarks show that our method consistently approaches                     visible string can correspond to multiple token sequences
+                                         the theoretical capacity upper bound and significantly outperforms               [17]. For example, the string mistrust may be tokenized as
+                                         SyncPool. The improvement in embedding rate exceeds 160% in                      [ mistrust] or as [ mis, trust] (see Fig. 1). In autoregressive
+                                         English and 25% in Chinese, particularly in settings with larger
+                                         candidate pools. This work represents a significant step toward                  generation, if the receiver reconstructs a different token path
+                                         practical high-capacity provably secure linguistic steganography.                than the sender, the conditional distributions for subsequent
+                                                                                                                          steps become desynchronized, making the remaining payload
+                                            Index Terms—linguistic steganography, provably secure
+                                         steganography, zero KL divergence, tokenization ambiguity,                       unrecoverable and causing catastrophic decoding failure [18].
+                                         embedding capacity                                                                  Addressing this ambiguity requires a dedicated disambigua-
+                                                                                                                          tion module. Early generative approaches by Nozaki and
+                                                                                                                          Murawaki [17] enforced a unique decoding path by pruning
+                                                                   I. I NTRODUCTION                                       any token that is a prefix of another candidate. Although this
+                                                                                                                          guarantees decodability, pruning irreversibly alters the model’s
+                                         L     INGUISTIC steganography hides data in ordinary text
+                                               to enable covert communication while concealing the
+                                         existence of the message. The effectiveness of such systems
+                                                                                                                          distribution. Variants based on a maximum-weight independent
+                                                                                                                          set (MWIS) [19] can reduce but not eliminate this deviation
+                                         is assessed along two often competing objectives, embedding                      and therefore do not satisfy the zero-KL requirement [10], [11],
+                                         capacity and statistical security [1]–[3]. Capacity, measured in                 [18]. A recent breakthrough, SyncPool [18], achieves provable
+                                         bits per token (BPT), quantifies how much secret information                     security by replacing pruning with synchronization. However,
+                                         a covertext can carry and is critical for practical utility [4],                 its coarse-grained intra-pool synchronization imposes a high
+                                         [5]. Security measures resistance to detection. [6]–[9] The                      cost. It systematically discards the Shannon entropy of non-
+                                         strongest standard is zero Kullback–Leibler (KL) divergence,                     selected candidates, which substantially reduces embedding
+                                         which requires the distribution of stegotext to equal that of                    capacity. The loss grows as candidate pools become larger,
+                                         covertext [10]. Under this standard, no statistical test of any                  and this severely limits practicality for short-form covert
+                                         power can distinguish the two [10]. The central challenge is                     communication [18], [20].
+                                         therefore to maximize capacity without relaxing this criterion                      To address this trade-off between security and capacity,
+                                         [11].                                                                            we introduce Look-ahead Sync, a recursive disambiguation
+                                            The advent of large language models (LLMs) provides fluent                    algorithm that remains within the synchronization paradigm
+                                         covertext [12]–[14], yet their subword tokenization schemes,                     while recovering capacity. Instead of synchronizing an entire
+                                         such as Byte Pair Encoding (BPE) [15], [16], introduce the                       ambiguous group, Look-ahead Sync performs a minimal syn-
+                                                                                                                          chronized sample only over sequences that are indistinguishable
+                                           1 The authors are with the School of Cyberspace, Hangzhou Dianzi University,
+                                                                                                                          to the receiver at the current visible step. The algorithm
+                                         Hangzhou 310018, P. R. China (email: fengyapei@hdu.edu.cn).                      preserves all other discernible paths so that their entropy
+                                           2 Shanhao Wu is with the Bridge and Wind Engineering Laboratory,
+                                         Department of Civil Engineering, School of Engineering, University of Tokyo,     remains available for subsequent embedding. Our contributions
+                                         Tokyo 113-8656, Japan.                                                           are threefold:
+                                                                                                                                   2
+
+
+
+(1) We design Look-ahead Sync, a recursive disambiguation where s ∼ Ps , t ∼ PT , and A is any PPT adversary. Therefore,
+     algorithm, and prove its computational zero-KL security. a primary objective for provably secure steganography in
+(2) We derive the theoretical capacity upper bound for zero-KL practice is to achieve a computational zero-KL guarantee,
+     disambiguation and analyze the sources of gap between which ensures that the perfect security property of Eq. (1)
+     this bound and Look-ahead Sync.                                holds against any computationally bounded adversary.
+(3) Using modern large language models, we have demon-
+     strated that Look-ahead Sync consistently approaches the B. Secure Steganography in Autoregressive Models
+     capacity upper bound and substantially outperforms state-          The widespread adoption of large language models (LLMs)
+     of-the-art baselines in embedding capacity.                    has revolutionized linguistic steganography. By generating
+                                                                    fluent and contextually coherent text, these models provide an
+                       II. BACKGROUND
+                                                                    ideal source of covertext [12]–[14], [23] that can mimic human
+   This section establishes the formal framework for our work writing. [24], [25] The core embedding principle is a process
+by covering three key areas. First, we formalize the security known as message-driven sampling. In this process, an entropy
+standards that govern linguistic steganography. Second, we encoder uses the model’s output probability distribution and the
+provide an in-depth account of the system architecture prevalent secret bitstream at each step to select the next token, continuing
+in modern ambiguity-aware methods. Finally, we review prior autoregressively [3]–[5].
+disambiguation architectures to situate our contribution within         However, this steganographic paradigm is complicated by
+the current state of the art.                                       the practical necessity of tokenization. For transmission, the
+                                                                    sender must detokenize the generated token sequence into a
+A. Security Definitions in Steganography                            human-readable string. The receiver, in turn, must retokenize
+   The foundational goal of linguistic steganography is to this string to recover the underlying message. Due to the
+remain invisible to a watchful adversary. This adversarial setting nature of subword tokenizers, however, this retokenization is
+is classically modeled by Simmons’ Prisoners’ Problem, where not guaranteed to reproduce the sender’s original sequence.
+two parties must communicate covertly under the surveillance This potential for discrepancy is the core of the tokenization
+of a warden [21], [22]. In this scenario, every transmission ambiguity problem [17]. Any such desynchronization corrupts
+attempted by the prisoners is inspected. For each observed the conditional probabilities for all subsequent steps, leading
+message, the warden must decide whether it is an ordinary letter to a catastrophic decoding failure [18].
+or a coded note carrying concealed information. From a formal           To manage this challenge, modern ambiguity-aware systems
+perspective, this is equivalent to a hypothesis test between the    adopt    the modular pipeline depicted in Figure 2. A single
+covertext distribution, PT , and the stegotext distribution, Ps .   generation    step is decomposed into three distinct stages:
+A steganographic system is considered secure if it can render           (i) LLM Generation. The base language model takes the
+these two distributions statistically indistinguishable, and this           current context and produces a raw, and potentially
+requirement is formalized by two primary standards of security.             ambiguous, probability distribution over its vocabulary.
+      a) Information-Theoretic Security: This standard repre-          (ii) Disambiguation Module. A dedicated module trans-
+sents the most stringent security guarantee, mandating that                 forms this raw distribution into a new, well-defined
+the stegotext and covertext distributions be mathematically                 distribution over a set of unambiguous candidate choices,
+identical. This is quantified by requiring the Kullback–Leibler             resolving all token-level conflicts before encoding.
+(KL) divergence between them to be exactly zero [10]:                 (iii) Secure Encoding Module. The entropy coder, guided by
+                              X              Ps (x)                         the secret message, samples a choice from the structured
+          DKL (Ps ∥ PT ) =        Ps (x) log        = 0,        (1)         distribution provided by the disambiguation module to
+                                             PT (x)
+                             x∈X                                            select the token(s) for the current step.
+where X is the set of all possible (terminal) messages, PT              For the end-to-end system to achieve zero-KL security,
+denotes the distribution of genuine covertext, and Ps denotes both the Secure Encoding and Disambiguation modules must
+the distribution of stegotext induced by the stegosystem independently be distribution-preserving. The Secure Encoding
+under the same conditions. A system satisfying this condition module must function as a perfect sampler, drawing from its
+achieves perfect security, as no adversary, regardless of their input distribution without statistical bias. This challenge has
+computational power, can gain an advantage in the decision been effectively addressed by state-of-the-art entropy coders
+problem.                                                            such as iMEC and Discop [2], [3]. The Disambiguation Module
+      b) Computational Security: This standard offers a prac- faces the more recent challenge of structuring the choices so
+tical and rigorous guarantee for systems that employ cryp- that the resulting probability space remains mathematically
+tographic primitives. It defines security in the context of an equivalent to the original. Methods such as SyncPool have
+adversary restricted to probabilistic polynomial-time (PPT) shown that this is achievable [18], setting the stage for further
+computations [11]. A system is considered computationally architectural improvements.
+secure if the advantage any such adversary has in distinguishing
+between Ps and PT is negligible, denoted as negl(κ) for a C. Prior Disambiguation Architectures
+security parameter κ:
+                                                                        Existing designs for the disambiguation module can be
+           |Pr[A(s) = 1] − Pr[A(t) = 1]| < negl(κ),             (2) categorized into two competing architectures.
+                                                                                                                                                  3
+
+
+
+                                                                                 sampler uses a cryptographically secure pseudorandom num-
+               Previous Text                                                     ber generator (CSPRNG), seeded with a shared secret key,
+               (Context)                                                         to choose a representative token according to its original
+                                                                                 probability distribution. While provably secure, this design
+                                                                                 consumes the Shannon entropy of the intra-pool selection for
+                                                                                 synchronization rather than for payload. This architectural
+                                                                                 inefficiency establishes the central technical challenge our work
+         (i) LLM Generation                                                      aims to solve.
+                                                                                    This trade-off between provable security and embedding
+                                                                                 capacity defines the critical frontier for modern linguistic
+                           Raw & Ambiguous                                       steganography. Addressing this architectural inefficiency is
+                         Candidate Probabilities                                 the primary motivation for our work. In the subsequent
+                                                                                 sections, we introduce Look-ahead Sync, a disambiguation
+                                                                                 algorithm designed to retain the rigorous security guarantees
+                                                        Secret Message           of the synchronization-based paradigm while systematically
+   ( ii ) D is am b ig ua t i o n M o d u l e
+                                                        (Bitstream)              recovering the capacity lost by existing methods.
+
+                                                                                          III. T HE L OOK - AHEAD S YNC A LGORITHM
+                        Structured & Unambiguous                                    The primary challenge for current provably secure steganog-
+                            Choice Probabilities                                 raphy is resolving tokenization ambiguity. Existing secure
+                                                                                 methods, while avoiding statistical alterations, achieve this by
+                                                                                 aggressively discarding Shannon entropy, which leads to sub-
+                         (iii) Secure Encoding Module                            optimal embedding capacity. To overcome this limitation, we
+                                                                                 present Look-ahead Sync, an algorithm designed to maximize
+                                                                                 capacity while upholding strict security guarantees. The core is
+                                                                                 a look-ahead resolution strategy that resolves only the necessary
+                                                                                 ambiguous cases, thereby preserving the information capacity
+                                    Selected Token(s)                            of other distinguishable paths for subsequent embedding steps.
+                                    for Current Step                                This strategy is implemented within an iterative, state-driven
+                                                                                 architecture, as depicted in Figure 3. The loop begins from
+                                                                                 the first set of candidates produced by the base model under
+Fig. 2. A schematic of the modular pipeline for a single generation step in an   a prompt shared between the sender and the receiver. In each
+ambiguity-aware steganographic system, where the Disambiguation Module           iteration, the algorithm embeds part of the secret bit and
+transforms the LLM’s raw output into a structured set of choices for secure
+encoding.                                                                        prepares the next round by executing three phases:
+                                                                                 • Candidate Partitioning. Group the model’s candidate
+                                                                                    continuations by shared visible prefixes to obtain pools that
+      a) Distribution-Altering Architectures: This approach,                        are unambiguously distinguishable from one another, and
+first proposed for generative models by Nozaki and Mu-                              aggregate within-pool probability mass to form an inter-group
+rawaki [17], resolves ambiguity by directly pruning the                             distribution.
+                                                                                 • Inter-Group Entropy Coding. Embed a portion of the
+candidate set. The mechanism removes any token that serves
+as a prefix for another candidate. Although this ensures                            secret by selecting exactly one pool according to the inter-
+decodability, it fundamentally alters the probability distribution.                 group distribution at the sender, and recover the same bits
+More sophisticated variants that employ a maximum-weight                            by identifying the selected visible prefix at the receiver. This
+independent set (MWIS) to minimize the probability mass of                          is the only payload-bearing step.
+                                                                                 • Look-ahead Resolution. Resolve any remaining ambiguity
+the pruned tokens [19] suffer from the same inherent flaw,
+since the act of deleting valid candidates creates a nonzero KL                     inside the selected pool by synchronizing only among truly
+divergence and renders the entire architectural class insecure                      indistinguishable sequences and performing a minimal look-
+by definition. [1].                                                                 ahead expansion, while preserving all already discernible
+                                                                                    continuations so their information remains available for future
+      b) Distribution-Preserving Architectures: This architec-                      embedding.
+ture was introduced by SyncPool [18], the first module to
+                                                                                    We next detail these three operations and then present an
+achieve computational zero-KL security. The design involves
+                                                                                 end-to-end description of how they compose at the sender and
+a two-stage process. First, it groups all candidates with prefix
+                                                                                 the receiver.
+relationships into ambiguity pools (e.g., { B, BB, BBD}).
+The encoder module embeds the payload by selecting one
+of these pools, which is an unambiguous choice. Second,                          A. Candidate Partitioning
+to resolve the selection within the chosen pool, the module                        The first operation in iteration t partitions the global
+employs a non-payload-bearing synchronized sampler. This                         candidate set St to prepare it for secure payload embedding.
+                                                                                                                                                                                 4
+
+
+
+
+                                        Input: Prompt c
+                                                                                                 and collect these components, in the same order as the groups,
+                 Initialization
+                                        Action: Generate an initial set of candidates
+                                        based on the user-provided prompt
+                                                                                                 into the vector
+                                        Output: Initial State (S0, P0)
+                                                                                                                    P inter := (pinter inter       inter
+                                                                                                                                 0 , p1 , . . . , pM −1 ).                     (5)
+    yes    Is terminal state reached?                                                                      intra M −1
+                        no
+                                                                                                 Since {Sm      }m=0 is a partition  of St and Pt is a probability
+                                                                                                                                    PM −1
+                                                                                                 distribution over St , we have m=0 pinter m = 1. For decoding,
+            Current State (St, Pt)                                                               we also record the ordered list of group keys (visible prefixes),
+                                                                                                 denoted V = [v0 , . . . , vM −1 ].
+                                             Input: State (St, Pt)
+           Candidate Partitioning            Action: Group all candidate sequences
+                                             into unambiguously distinguishable pools            Algorithm 1 PARTITION B Y P REFIX(St , Pt )
+                                             Output: Pools G, Distribution Pinter
+                                                                                                 Require: Candidate sequence set St ; probability mapping Pt
+                                               Sender (Encode):                                  Ensure: Collection of disjoint groups S inter ; inter-group distribution P inter ;
+                                               Input: Pinter, Secret Bitstream b
+                                               Action: Embed a portion of the secret
+                                                                                                     list of group keys V
+                                               message by selecting a single preﬁx pool           1: Sort St (and carry Pt along) by the visible strings φ(s) so that any shorter
+                                               Output: Visible Text vm
+          Inter-Pool Entropy Coding            ---                                                   prefix appears before longer strings starting with it.
+                                               Receiver (Decode):                                 2: S inter ← ∅; P inter ← ∅; V ← ∅
+                                               Input: Pinter, Stegotext preﬁx vm
+                                               Action: Identify the selected pool from            3: if St is not empty then
+                                               text and recover the embedded secret bits
+                                               Output: Recovered bits β
+                                                                                                  4:      vprefix ← φ(St [0])                               ▷ current group key
+                                                                                                  5:        intra ← {S [0]}
+                                                                                                          Scurrent           t
+                                         Input: Selected pool index m, State (St, Pt)             6:      for i ← 1 to |St | − 1 do
+               LookAheadSync
+                                         Action: Resolve internal ambiguity via sync              7:           if φ(St [i]) starts with vprefix then
+                                         and compute the state for the next step                                                          intra
+                                         Output: Next State (St+1, Pt+1)                          8:               Add St [i] to Scurrent
+                                                                                                  9:           else
+                                                                                                 10:                Append Scurrentintra to S inter
+            Next State (St+1, Pt+1)                                                              11:                Append vprefix to V
+                                                                                                 12:                  intra ← {S [i]}
+                                                                                                                    Scurrent                                  ▷ start new group
+                                                                                                                                        t
+                                                                                                 13:                vprefix ← φ(St [i])
+                                                                                                 14:           end if
+    Final Stegotext / Recovered Bitstream
+                                                                                                 15:      end for
+                                                                                                 16:                    intra to S inter
+                                                                                                          Append Scurrent
+                                                                                                 17:      Append vprefix to V
+                                                                                                 18: end if
+Fig. 3. The iterative architecture of Look-ahead Sync. The process begins with                                               intra         inter do
+                                                                                                 19: for each group P Sm in S
+initialization and then enters a main loop that repeatedly executes three steps,                 20:      pm ← s∈S intra Pt (s)
+                                                                                                                              m
+namely partitioning candidates, embedding payload, and resolving ambiguity
+                                                                                                 21:      Append pm to P inter
+via a look-ahead mechanism to compute the next state. The loop continues
+                                                                                                 22: end for
+until a terminal state is reached.
+                                                                                                 23: return (S inter , P inter , V )
+
+
+All candidate sequences are organized into disjoint groups                                       B. Inter-Group Entropy Coding
+according to their visible string prefixes. This partition ensures
+that each group is unambiguously distinguishable from the                                          With the candidate space partitioned into S inter , the second
+others, which is required by the subsequent encoding stage.                                      operation embeds a segment of the secret payload by selecting
+   The mechanism proceeds in two steps. First, the algorithm                                     one group. This is performed with a state-of-the-art entropy
+applies the detokenization function φ(·) to each candidate                                       encoder, such as iMEC [3] or Discop [2], which we denote
+sequence in St to obtain its visible string representation. Second,                              abstractly by E. The sender applies E to the inter-group distri-
+it groups the original candidate sequences based on these strings.                               bution P inter and the secret bitstream b, yielding the selected
+We form groups keyed by a visible string v and assign to that                                    group’s index m and the consumed bits β. Symmetrically, the
+group every candidate whose visible string starts with v (if no                                  receiver identifies the index m from the visible string and
+other item shares the prefix, the group has one element). To                                     applies the inverse function E −1 to recover β:
+enable a single linear pass, we sort candidates by their visible                                                    (m, β) ← E P inter , b ,
+                                                                                                                                             
+                                                                                                                                                               (6)
+strings so that a shorter prefix appears before any longer string                                                               −1     inter
+                                                                                                                                               
+                                                                                                                         β := E      P ,m .                    (7)
+that starts with it; this guarantees that all items sharing the
+same prefix are contiguous.                                                                      Selecting group m identifies the unique group key vm that is
+   Formally, the outcome is a partition of St into M disjoint                                    a prefix of the final stegotext T . The decoder finds vm as a
+groups, denoted by                                                                               prefix of the T , uses Eq. (7) to recover β.
+                                                                                                                       intra
+                                                                                                    While selecting Sm       completes the payload-bearing choice
+                    S inter := {S0intra , S1intra , . . . , SM
+                                                             intra
+                                                                −1 }.                      (3)   for this step, the ambiguity within the chosen group remains
+                                                                                                 unresolved. To prepare this group for the final resolution stage,
+With the candidates organized into these groups, we define                                       its sub-distribution must be normalized so that subsequent
+the inter-group probability distribution P inter , where each                                    choices are probabilistically sound. The inputs to the next
+component pinter                                         intra
+             m is the total probability mass of group Sm :                                       stage are the chosen intra-group candidate set Sm       intra
+                                                                                                                                                               and its
+                                                                                                                              intra
+                             X                                                                   normalized distribution Pm :
+                   pinter
+                    m :=          Pt (s),                   (4)
+                                                                                                             intra                               intra
+                                                                                                                                                        
+                                                 intra
+                                              s∈Sm                                                          Pm     := normalize { Pt (s) | s ∈ Sm      } ,         (8)
+                                                                                                                                                                 5
+
+
+
+                                                                                               intra    intra
+                                                                                            (Sm      , Pm     ) into a new, unambiguous state (St+1 , Pt+1 ) on
+                                                                                            which the next payload-bearing decision can safely proceed.
+                                                                                               We address the ambiguity at its source. Let vm denote
+                                                                                                                                                       intra
+                                                                                            the common visible prefix of all sequences in Sm                 . The
+                                                                                            indistinguishability arises precisely from those sequences that
+                                                                                            decode exactly to vm . The look-ahead mechanism resolves
+                                                                                            this by generating new, distinct continuations from that source,
+                                                                                            thereby separating paths that were previously identical at the
+                                                                                            visible level while preserving probability mass.
+                                                                                                                                            intra
+                                                                                               Formally, the algorithm first partitions Sm        into two func-
+                                                                                            tionally distinct subsets. The Prefix Set collects the exact-prefix
+                                                                                            items that decode to vm and will serve as the input context
+Fig. 4. Inter-group encoding. Candidate token sequences are grouped by                      for look-ahead; the Partial Set contains longer continuations
+a common visible prefix and their probabilities are aggregated. An entropy                  that are already distinguishable and will be preserved to the
+encoder then maps a segment of the secret bitstream to a unique group
+according to the aggregated probabilities.                                                  next round:
+                                                                                                                               intra
+                                                                                                                         
+                                                                                                               Sprefix := s ∈ Sm     φ(s) = vm ,               (10)
+                                                                                                                       intra
+which is equivalently given by                                                                            Spartial := Sm     \ Sprefix .                      (11)
+                 intra             Pt (s)                   intra                             To remain faithful to the original distribution while avoiding
+                Pm     (s) =                   for all s ∈ Sm     ,                 (9)
+                                   pinter
+                                    m                                                       a combinatorial explosion, we select a single synchronized
+                                                                                            representative from the Prefix Set using a non-payload-bearing
+where pinter
+       m is defined in Eq. (4).
+                                                                                            sampler. Concretely, we normalize the intra-set probabilities to
+Algorithm 2 L OOK A HEAD                                                                    obtain a valid sampling distribution Pprefix and then draw ssync
+                                  intra ; normalized distribution P intra ; shared key K;   with a CSPRNG-seeded synchronized procedure:
+Require: Intra-group set Sm                                         m
+    language model LLM                                                                                                     intra
+                                                                                                                                                    
+Ensure: Next-round state (St+1 , Pt+1 ) or a terminal sequence send
+                                                                                                  Pprefix := normalize { Pm      (s) | s ∈ Sprefix } ,  (12)
+ 1: vm ← V ISIBLE P REFIX(Sm            intra )
+ 2: Sprefix ← { s ∈ Sm    intra | φ(s) = v }                                                           ssync := SyncSample(Sprefix , Pprefix , K) .           (13)
+                                                 m
+ 3: Spartial ← Sm intra \ S
+                             prefix
+                                       intra (s) : s ∈ S
+                                                                                           where SyncSample(S, P, K) denotes a shared, distribution-
+ 4: Pprefix ← normalize {Pm                             prefix }
+ 5: ssync ← SyncSample(Sprefix , Pprefix , K)                                               preserving sampler driven by a CSPRNG initialized with the
+ 6: if I S EOS(ssync ) and Spartial = ∅ then                                                shared key K.
+ 7:      return E ND(ssync )                     ▷ terminate; wrapper for IsEnd/EndSeq         With ssync fixed, the algorithm performs a single deterministic
+ 8: end if
+ 9: if I S EOS(ssync ) then                                                                 forward pass of the base model conditioned on this represen-
+10:      Anext ← ∅; Pnext ← ∅                                                               tative. This yields a set of next-token candidates and their
+11: else                                                                                    conditional probabilities:
+12:      (Anext , Pnext ) ← LLM(· | ssync )
+13: end if P                                                                                                 (Anext , Pnext ) := LLM(· | ssync ),             (14)
+14: psum ← s∈Sprefix Pm         intra (s)
+
+15: St+1 ← Spartial
+16: for all x ∈ Anext do                                                                             P is a probability distribution over x ∈ Anext and
+                                                                                            where Pnext
+17:      St+1 ← St+1 ∪ { ssync ⊕ x }                                                        satisfies x∈Anext Pnext (x) = 1.
+18: end for                                                                                    We then merge the preserved partials with the freshly
+19: Define Pt+1 as a mapping as follows:                                                    expanded continuations to construct the next state. Let
+20: for all s ∈ Spartial do                                                                                              X
+21:      Pt+1 (s) ← Pm     intra (s)                                                                                           intra
+                                                                                                               psum :=       Pm      (s),           (15)
+22: end for
+23: for all x ∈ Anext do                                                                                                    s∈Sprefix
+24:      Pt+1 (ssync ⊕ x) ← psum · Pnext (x)                                                                                                        intra
+25: end for                                                                                 be the total probability mass of the Prefix Set under Pm      .
+26: return (St+1 , Pt+1 )                                                                   The next candidate set concatenates each x ∈ Anext to the
+                                                                                            synchronized representative and unions the result with the
+                                                                                            Partial Set:
+C. Look-ahead Resolution                                                                                                
+                                                                                                      St+1 := Spartial ∪ ssync ⊕ x x ∈ Anext ,     (16)
+  While the selection of a group in the previous step is an
+unambiguous, payload-bearing choice, the ambiguity within where ⊕ denotes sequence concatenation. The corresponding
+                      intra
+the chosen group Sm         remains unresolved. All candidate probabilities follow the law of total probability. We carry over
+sequences in this set share the same visible prefix, which masses for preserved partials and reallocate the entire Prefix-Set
+makes them indistinguishable to the receiver at the current step. mass onto the new continuations by scaling Pnext :
+This indistinguishability blocks further secure embedding and                  ( intra
+                                                                                Pm (s),           if s ∈ Spartial ,
+must be resolved before the next round. The objective in this      Pt+1 (s) :=
+operation is to perform a distribution-preserving transformation                psum · Pnext (x), if s = ssync ⊕ x, x ∈ Anext .
+of the candidate space, converting the ambiguous input state                                                               (17)
+                                                                                                                                                                                 6
+
+
+
+
+         Input: Selected                                                                                                                             Output: Updated State
+         Ambiguity Pool             Intra-Pool Candidate Partition                                                Candidate Recombination              for Next Iteration
+
+                                              S                       P                                                  S(t+1)            P(t+1)
+                                                                                   Preserve S_partial
+                                         [X,Y,Z,ABC]                  0.2                                             [X,Y,Z,ABC]            0.2
+
+                                         [X,Y,Z,A,B]                  0.6                                            [X,Y,Z,A,B,A]         0.8*0.4
+
+                                          [X,Y,Z,AB]                  0.2                                            [X,Y,Z,A,B,B]         0.8*0.1
+
+                                                                                                                     [X,Y,Z,A,B,C]         0.8*0.5
+
+        Resolve
+        S_prefix
+                                       Synchronized Sampling
+                                                                                                                     Look-ahead generate
+                                          [X,Y,Z,A,B]               0.75
+
+                                                                                                                                             Q       X
+                                          [X,Y,Z,AB]                0.25
+                                                                               Use S_sync as input
+                                                                                                         Large language           output     A       0.4
+                                  Probabilistic sync via PRNG (shared K)
+                                                                                                          Model(LLM)
+                                                                                                                                             B       0.1
+                                       PRNG                  0.23
+                                                    Choose
+                                                                                                                                             C       0.5
+                                             0.75              0.25
+
+
+
+
+Fig. 5. Look-ahead disambiguation. The selected intra-group candidates are partitioned into a prefix set and a partial set. A synchronized sampler selects a
+representative ssync from the prefix set, which is then expanded via an LLM call. The new candidate set for the next round is obtained by combining the
+preserved partial set with the new expansions, thereby reallocating probability mass to new continuations.
+
+
+                  intra
+       P                                   P
+Since s∈Spartial Pm     (s) = 1−psum and x∈Anext Pnext (x) = 1,       Having detailed the constituent modules of a single genera-
+               P
+it follows that s∈St+1 Pt+1 (s) = (1 − psum ) + psum = 1.          tion step, we now present the complete, end-to-end stegano-
+   The resulting state (St+1 , Pt+1 ) is thus a new, probabilisti- graphic pipeline. These modules are integrated into the iterative
+cally sound candidate space in which the immediate ambiguity loop described above and are specified for the sender in
+tied to vm has been eliminated without altering the overall Algorithm 3 and for the receiver in Algorithm 4. Let T denote
+distribution. We treat EOS as a visible string that cannot be the final stegotext observed by the decoder; write ϵ for the
+extended; termination occurs if and only if the synchronized empty bitstring and use ∥ for bit concatenation. We also use
+choice is EOS and the partial set is empty. All forward ρ to denote either a terminal marker or the next-state pair
+passes are deterministic; the only randomness arises from the (St+1 , Pt+1 ).
+synchronized sampler and the entropy coder, which are shared
+between sender and receiver.                                       Algorithm 4 D ECODE L OOP
+                                                                                               Require: Prompt c, stegotext T                                   ▷ T is immutable
+                                                                                               Ensure: Recovered bitstream b̂
+D. End-to-End Steganographic Pipeline                                                           1: (St , Pt ) ← LLM(c)                                             ▷ initialization
+                                                                                                2: b̂ ← ϵ                                                       ▷ empty bitstream
+                                                                                                3: while true do
+Algorithm 3 E MBED L OOP                                                                        4:     (S inter , P inter , V ) ← PARTITION B Y P REFIX(St , Pt )
+Require: Prompt c, secret bitstream b                                                           5:     m ← M ATCH P REFIX I NDEX(V, T ) ▷ find the unique vm ∈ V that
+Ensure: Stegotext                                                                                  prefixes the same T
+ 1: (St , Pt ) ← LLM(c)                                                     ▷ initialization    6:     β ← I NTER G ROUP D ECODE(P inter , m)
+ 2: while true do                                                                               7:     b̂ ← b̂∥β
+ 3:     (S inter , P inter , V ) ← PARTITION B Y P REFIX(St , Pt )                              8:     Sm intra ← S inter [m]
+ 4:     (m, β) ← I NTER G ROUP E NCODE(P inter , b)                                             9:     Pm  intra ← normalize({P (s) | s ∈ S intra })
+                                                                                                                                      t                 m
+ 5:     b ← C ONSUME(b, β)                                                                     10:     ρ ← L OOK A HEAD(Sm         intra , P intra , K, LLM)
+          intra ← S inter [m]                                                                                                               m
+ 6:     Sm                                                                                     11:     if I S E ND(ρ) then
+ 7:     Pm intra ← normalize({P (s) | s ∈ S intra })
+                                        t                m
+                                    intra , P intra , K, LLM)
+                                                                                               12:            return b̂
+ 8:     ρ ← L OOK A HEAD(Sm                  m                                                 13:     else
+ 9:     if I S E ND(ρ) then                                                                    14:            (St+1 , Pt+1 ) ← ρ
+10:           return φ(E ND S EQ(ρ))                                                           15:            St ← St+1 ; Pt ← Pt+1
+11:     else                                                                                   16:     end if
+12:           (St+1 , Pt+1 ) ← ρ                                                               17: end while
+13:           St ← St+1 ; Pt ← Pt+1
+14:     end if
+15: end while
+                                                                                                  The structural identity of the embedding and decoding
+                                                                                                                                             7
+
+
+
+loops is the foundation of the system’s reliability. The only of candidate sequences and Pt is a probability mapping over
+functional difference lies in their interaction with the entropy St . As this state is determined by the history of probabilistic
+coder. The E MBED L OOP calls an encoder to consume bits, choices, both St and Pt are random variables. For clarity in this
+whereas the D ECODE L OOP calls a decoder to recover bits proof, we use the functional notation Pt (s) to denote the weight
+from the visible string. All other state transitions, including corresponding to a sequence s ∈ St . A single instance of the
+candidate partitioning and the synchronized sampling inside state will therefore not align with the base model’s distribution.
+L OOK A HEAD, are deterministic functions of the public model To prove the security of the overall generative process, our
+state and the shared secret key K. This ensures that the receiver analysis instead focuses on its behavior in expectation.
+follows the same execution path as the sender and that the            The invariant is defined over the expected values of these
+recovered bitstream b̂ is identical to the original bitstream b.   weights.   It asserts that for any candidate sequence s ∈ St ,
+   In summary, Look-ahead Sync operates as a recursive, the expectation of its corresponding weight Pt (s) is computa-
+state-driven process that separates payload embedding from tionally indistinguishable from the sequence’s true probability
+ambiguity resolution. Payload is embedded only during the under the base model Pθ :
+unambiguous inter-group selection, whereas the subsequent                                          
+                                                                                          E Pt (s) ≈c Pθ (s | c).                          (18)
+intra-group resolution is handled by the look-ahead mechanism.
+This mechanism preserves distinguishable continuations and Throughout this section, ≈c is interpreted in the sense of
+uses a single, non-payload-bearing synchronized sample to computational indistinguishability defined in Eq. (2). When
+resolve only the core source of ambiguity. The architecture is applied to real-valued quantities such as expectations, it
+designed to minimize the loss of Shannon entropy compared indicates that the absolute deviation is bounded by a negligible
+with prior work and thereby substantially improves embedding function negl(κ). The expectation E is taken over the space of
+capacity.                                                          all possible random histories up to step t, which are determined
+                                                                   by the probabilistic choices made by the entropy encoder and
+          IV. S ECURITY AND C APACITY A NALYSIS                    the synchronized sampler in all preceding steps.
+                                                                      The invariant holds for the base case (t = 0), as the initial
+   Having detailed the mechanics of the Look-ahead Sync
+                                                                   state (S0 , P0 ) is generated directly by the language model via
+algorithm, we now present the theoretical analysis that supports
+                                                                   LLM(c). In this case, there is no random history, and for any
+its design and guarantees.
+                                                                   s ∈ S0 , the equality E[P0 (s)] = P0 (s) = Pθ (s | c) holds
+• Security Analysis. We prove that the algorithm upholds
+                                                                   exactly.
+   the standard of computational zero-KL security, ensuring its       For the inductive step, we assume the invariant holds for
+   output is statistically indistinguishable from genuine text.    step t and demonstrate that it also holds for step t + 1. Any
+• Capacity Analysis. We derive the embedding-capacity upper        sequence s′ ∈ St+1 is formed in one of two ways:
+   bound for zero-KL disambiguation and quantify the gap             (i) Preservation: If s′ is preserved from a partial set, its weight
+   between this bound and Look-ahead Sync.                               Pt+1 (s′ ) is non-zero only if its containing group m is
+   To ensure consistency and rigor in subsequent analyses, we            selected. By applying the law of total expectation over all
+first formalize the notation employed in this section:                   possible group selections and substituting the definitions
+   Let V denote the set of all terminal visible strings.                 for pinter        intra ′
+                                                                               m and Pm (s ), the expression for the expected
+   Let φ(·) denote the detokenization function that maps a               weight simplifies directly to its value from the previous
+token sequence to a visible string.                                      step:
+   All text generation is conditioned on an initial prompt                                 E[Pt+1 (s′ )] = E[Pt (s′ )].                    (19)
+c; equivalently, all probabilities (e.g., Pθ (· | c)) are taken
+                                                                         By the inductive hypothesis, E[Pt (s′ )] ≈c Pθ (s′ | c), thus
+conditional on c throughout.
+                                                                         preserving the invariant.
+                                                                    (ii) Generation: If s′ is newly generated as an expansion
+A. Computational Zero-KL Security                                        s′ := ssync ⊕ x, its weight is defined as Pt+1 (s′ ) :=
+   The central security guarantee of Look-ahead Sync is its              psum · Pθ (x | ssync ). The expectation is taken over the
+computational security, which we formally prove in this section.         choice of group m and the choice of ssync . The selection
+The proof analyzes the algorithm’s end-to-end generative                 of ssync via SyncSample is driven by the CSPRNG, making
+process. We demonstrate that the probability of any given                its expected behavior computationally indistinguishable
+terminal sequence send being generated by the algorithm is com-          from a true random sample over the prefix set Sprefix,m .
+putationally indistinguishable from its true probability under the       This allows us to express the expectation as a sum over the
+base language model, Pθ (send | c). The validity of this proof is        members of that prefix set. By the linearity of expectation,
+contingent on the standard cryptographic assumption that the             we can move the summation outside:
+output of a cryptographically secure pseudorandom number                                          X
+                                                                            E[Pt+1 (s′ )] ≈c                 E [Pt (sp ) · Pθ (x | sp )] . (20)
+generator (CSPRNG) is computationally indistinguishable from
+                                                                                              sp ∈Sprefix,m
+a truly random sequence to any probabilistic polynomial-time
+(PPT) adversary. [26]                                                    Since Pθ (x | sp ) is a constant with respect to the outer
+   The proof proceeds by induction on an invariant that holds            expectation, it can be factored out:
+                                                                                                   X
+throughout the algorithm’s state-driven execution. At each step             E[Pt+1 (s′ )] ≈c                 E[Pt (sp )] · Pθ (x | sp ). (21)
+t, the algorithm maintains a state (St , Pt ), where St is the set                             sp ∈Sprefix,m
+                                                                                                                                             8
+
+
+
+      By the inductive hypothesis, E[Pt (sp )] ≈c Pθ (sp | c). we employ the theoretical construct of an ideal entropy encoder.
+      Substituting this in and applying the chain rule of [27] Such a coder is perfectly efficient, meaning the expected
+      probability, we get:                                                    number of bits it embeds is exactly equal to the Shannon
+                    ′
+                                   X                                          entropy of the target distribution. [28] Since a secure system
+         E[Pt+1 (s )] ≈c                      Pθ (sp | c) · Pθ (x | sp ) (22)
+                                                                              must sample from the distribution of visible string PVend ,
+                               sp ∈Sprefix,m
+                                                                              Shannon’s source coding theorem dictates that the maximum
+                         = Pθ (s′ | c).                                  (23) average number of bits that can be encoded is bounded by the
+      The invariant is therefore maintained for newly generated entropy of this distribution,
+      sequences.
+                                                                                                           X
+                                                                                          H(Vend ) = −         PVend (v) log2 PVend (v),
+Since the invariant holds for both cases, it holds for all                                                 v∈V
+sequences in St+1 . By induction, the probability of generating see, e.g., [29]. This yields the upper bounds:
+any terminal sequence send is computationally indistinguishable
+from its true model probability. Therefore, the overall output                                     BPS ≤ H(Vend ),                        (28)
+distribution of Look-ahead Sync is computationally secure.                                                      H(Vend )
+                                                                                                   BPT ≤                         .        (29)
+                                                                                                             Esend ∼Pθ [|send |]
+B. Theoretical Capacity Upper Bound                                           These bounds represent the maximum embedding rates achiev-
+   A rigorous analysis of the embedding capacity for provably able by any disambiguation algorithm that satisfies the zero-KL
+secure linguistic steganography necessitates an understanding security criterion.
+of its theoretical limits. This section derives the capacity upper
+bound for any steganographic system that resolves tokenization C. Analysis of Look-ahead Sync’s Capacity
+ambiguity while adhering to the zero-KL security standard.                       Having established the theoretical capacity upper bound,
+The bound provides a benchmark against which such methods, we now analyze the performance of the Look-ahead Sync
+including our own, can be measured.                                           algorithm against this benchmark. The payload capacity of our
+   Perfect security dictates that the distribution of generated ter- method is derived exclusively from the entropy of the inter-
+minal sequences, Pembed , must be identical (or computationally group selection process at each step t. However, a gap exists
+indistinguishable) to the distribution induced by the original between the achieved capacity and this theoretical optimum.
+language model. A critical implication is that the distribution This discrepancy is an inherent consequence of the non-payload-
+over the final, visible strings must also be preserved. Recall bearing synchronization mechanism required to resolve intra-
+that V denotes the set of all possible terminal visible strings, group ambiguity.
+and define the probability of generating a specific visible string               This capacity gap materializes during the SyncSample step.
+v ∈ V as:                                                                     Although   the member sequences of the prefix set Sprefix are
+                                       X
+               PVend (v) :=                       Pθ (send | c).         (24) mapped    to   an identical visible string at the current step,
+                                send : φ(send )=v                             they  function   as distinct contexts for subsequent generation.
+                                                                              The statistical divergence in their future outcomes could, in
+The zero-KL security constraint requires that the distribution
+                                                                              principle, be leveraged to encode information. To exploit
+over visible string produced by the steganographic system,
+                                                                              this, a globally optimal algorithm would need to recursively
+Pembed (v), equals PVend (v):
+                             X                                                expand every sequence within Sprefix to explore all possible
+     Pembed (v) =                        Pembed (send )                       futures, leading to a combinatorial explosion of candidate
+                      send : φ(send )=v                                       paths. In contrast, our algorithm deliberately forgoes this
+                             X                                                exhaustive expansion, instead using SyncSample to select a
+                  =                      Pθ (send | c) = PVend (v).      (25)
+                                                                              single representative path for feasibility.
+                      send : φ(send )=v
+                                                                                 To analyze this forgone capacity, we define the synchroniza-
+Any secure system is thus a perfect sampler from the model’s tion loss as the difference between the maximum theoretical
+distribution over observable, visible string. To quantify the capacity available at a given step and the actual capacity
+embedding performance of such a system, we employ two achieved by our algorithm. At a step where a group with
+standard metrics. Let B(send ) be the total number of bits visible prefix vm is chosen, the maximum future capacity is
+embedded during the generation of a terminal sequence send . the entropy of the subsequent visible outcomes Vend conditioned
+The expected number of bits per sequence (BPS) and bits per only on this public information, namely H(Vend | vm ). Our
+token (BPT) are:                                                              algorithm’s actual capacity, however, is further conditioned
+                                                                         (26) on the specific choice made by SyncSample. We model this
+                                                        
+                      BPS := Esend ∼Pθ B(send ) ,
+                                                                              choice as a random variable Sprefix over the prefix set Sprefix .
+                                           BPS
+                     BPT :=                            .                 (27) Thus, the actual capacity is the expected conditional entropy,
+                                   Esend ∼Pθ [|send |]                        averaged over all possible synchronized choices:
+where |send | denotes the number of tokens in the terminal                               sync
+                                                                                       Hloss  := H(Vend | vm ) − H(Vend | Sprefix , vm ). (30)
+sequence send .
+   To analyze the capacity bounds of the disambiguation                          This definition has a direct interpretation in information
+strategy itself, independent of a specific coder’s implementation, theory. Based on the chain rule for conditional entropy, this
+                                                                                                                                      9
+
+
+
+difference is the conditional mutual information between the        probability distribution. The temperature is consistently fixed at
+synchronized choice Sprefix and the future visible outcomes         1.0, as it does not directly affect the number of tokens. In our
+Vend , given the common prefix vm [30]:                             experiments, we set the truncation parameter k ∈ {16, 32, 128}.
+                                 X                                     For evaluation data, we sample 50 unique reviews from
+   H(Vend | Sprefix , vm ) :=             P (sp | vm )              the IMDB movie review dataset for English tasks and 50
+                              sp ∈Sprefix                     (31)  unique short-comments from the Douban dataset for Chinese
+                             × H(Vend | Sprefix = sp , vm ) .       tasks. Each sampled review or comment is truncated to
+The synchronization loss at this step is therefore                  serve as an initial context. This context is then provided
+                     sync
+                                                                    as a prompt to the corresponding language model, which is
+                  Hloss   ≡ I(Sprefix ; Vend | vm ).           (32) tasked with generating a continuation. For each of these 50
+This equivalence provides a formal tool to reason about the unique prompts and for every top-k setting, we generate 100
+capacity gap by revealing that the loss is the amount of steganographic messages. Each message is embedded using a
+information about the final outcome revealed by the non- new, independently generated random bitstream as the secret
+payload-bearing synchronization process itself. The total gap payload, ensuring that our results are averaged over a diverse
+between our algorithm’s performance and the theoretical bound set of contexts and messages.
+is the sum of these expected losses over the entire generation         We benchmark Look-ahead Sync against a carefully selected
+process.                                                            set  of baselines. These include MWIS Pruning [19], a state-
+   An analysis of the synchronization loss in Eq. (32) shows that   of-the-art  distribution-altering method, and SyncPool [18],
+its magnitude is determined by the statistical divergence among     which   represents   the current state of the art in provably secure
+the future text distributions conditioned on different sequences    disambiguation.     Additionally, we include results from applying
+within the ambiguous prefix set Sprefix . A significant loss arises the  entropy  encoder    directly  to the raw LLM output without
+only when the distributions that follow semantically equivalent     any   disambiguation,     serving   as a practical upper bound for
+but tokenization distinct sequences, such as [ mis, trust] versus   capacity.  To  demonstrate    broad   compatibility, all methods are
+[ mistrust], differ substantially. This observation motivates the   implemented    on   top of two  distinct back-end entropy encoders:
+Linguistic Smoothness Hypothesis, which states that a model’s       iMEC    [3] and  Discop    [2]. All  experiments  are carried out on
+semantic understanding yields statistically similar conditional     NVIDIA     RTX    4090   GPUs.
+distributions for such semantically equivalent sequences, so           In a separate experiment designed to empirically test our
+the divergence is small and the resulting conditional mutual        Linguistic   Smoothness Hypothesis, we analyze the statistical
+information in Eq. (32) is negligible. We provide empirical         divergence    within real-world ambiguity scenarios. For each
+evidence in Section V.                                              model,   we  collect  1,000 instances where an ambiguity pool, or
+                                                                    prefix set Sprefix , contains at least two distinct token sequences
+                        V. E XPERIMENTS                             that decode to the same visible string. For each instance,
+                                                                    we then compute the generalized Jensen-Shannon Divergence
+   Following the theoretical analysis of Look-ahead Sync’s (JSD) [34] among the next-token probability distributions
+security and capacity limits in Section IV, we now turn to its conditioned on each of these ambiguous sequences. This
+empirical evaluation. This section presents a set of experiments process yields an empirical distribution of JSD scores, which
+to validate our central theoretical claims. The evaluation is allows us to quantify the practical impact of the Synchronization
+designed to confirm that Look-ahead Sync maintains zero-KL Loss.
+security while achieving a high embedding capacity. We assess
+our method against key baselines on both English and Chinese B. Evaluation Metrics
+benchmarks. The experiments also provide direct empirical              We evaluate all methods based on four key metrics, each
+support for the Linguistic Smoothness Hypothesis, which, as designed to assess a critical aspect of the steganographic
+we have argued, underpins our algorithm’s high efficiency.          system’s performance.
+                                                                    • Embedding Capacity (BPT ↑): The primary metric for
+A. Experimental Setup                                                  steganographic efficiency is bits Per Token (BPT). It is
+   To empirically evaluate our proposed method, we conduct             calculated by dividing the total number of embedded secret
+steganography experiments on both English and Chinese. These           bits by the total number of tokens in the generated stegotext.
+languages were chosen to ensure a robust assessment across            A higher BPT value signifies a more efficient utilization of
+different linguistic characteristics.                                  the language channel for data hiding.
+   For English tasks, we employ the Llama3-8b model, and • Statistical Security (KL ↓): We quantify the statistical
+for Chinese, we utilize the Qwen2.5-7b model. [31], [32]               security by measuring the Kullback-Leibler (KL) Divergence
+Both models are large language models based on Transformer             between the probability distribution used for steganographic
+architectures [12], and their tokenizers are implemented based         sampling and the original distribution from the base model.
+on subwords [15], [16], which is critical for the tokenization        A KL divergence of zero indicates that the stego and cover
+ambiguity problem addressed in this work. To intuitively assess        distributions are identical, satisfying the requirement for
+how performance is affected by the number of elements in               perfect (provably secure) steganography. Any non-zero value
+the candidate pool, we exclusively use top-k sampling [33]             implies a statistical deviation that could be exploited by an
+to constrain the size of the initial candidate pool and its            adversary.
+                                                                                                                                               10
+
+
+
+                                                       TABLE I
+        QUANTITATIVE COMPARISON OF L OOK - AHEAD S YNC WITH SYNCPOOL AND MWIS ON THE ENGLISH BENCHMARK
+                                                 (LLAMA3-8B/IMDB)
+
+
+
+  Method            top-k   BPT (↑)   Tok/Call (↑)   PPL (↓)   KL (↓)   Method             top-k   BPT (↑)   Tok/Call (↑)    PPL (↓)   KL (↓)
+  Baseline            16      1.51        1.00         7.13     0.00    Baseline             16      1.72        1.00          6.84     0.00
+                     32       1.86        1.00        9.18      0.00                         32      2.14        1.00          8.64     0.00
+                     128      2.33        1.00        12.90     0.00                        128      2.82        1.00         12.12     0.00
+  MWIS [19]           16      1.59        1.00         8.80     1.80    MWIS [19]            16      1.75        1.00          8.77     1.79
+                     32       1.75        1.00        12.93     2.70                         32      2.25        1.00         12.35     2.75
+                     128      2.24        1.00        27.44     5.91                        128      2.92        1.00         28.94     6.25
+  SyncPool [18]       16      1.30        1.00         6.81     0.00    SyncPool [18]        16      1.36        1.00          6.42     0.00
+                     32       1.39        1.00        8.11      0.00                         32      1.63        1.00          8.90     0.00
+                     128      0.87        1.00        12.15     0.00                        128      0.95        1.00         12.16     0.00
+  Look-ahead Sync     16      1.49        0.63         6.89     0.00    Look-ahead Sync      16      1.67        0.63          6.95     0.00
+                     32       1.83        0.59        9.00      0.00                         32      2.07        0.58          8.71     0.00
+                     128      2.32        0.42        12.68     0.00                        128      2.66        0.42         12.82     0.00
+                    (a) Results with iMEC encoder.                                        (b) Results with Discop encoder.
+
+
+
+• Text Quality (PPL ↓): The fluency and naturalness of the             1) Security: A steganographic method’s claim to be provably
+  generated text are assessed using perplexity (PPL). Perplexity    secure rests on its ability to maintain a probability distribution
+  measures how well the language model’s probability distri-        identical to the original cover source, which is quantified by a
+  bution predicts the generated text. A lower PPL suggests          zero Kullback-Leibler (KL) divergence. Existing ambiguity
+  that the stegotext is closer to what the model would naturally    resolution methods that rely on pruning candidates, such
+  produce, indicating less degradation in text quality.             as MWIS, fundamentally disrupt this property. By altering
+• Computational Efficiency (Tok/Call ↑): To specifically            the candidate pool, they inevitably introduce a non-zero KL
+  measure the computational overhead introduced by our look-        divergence (up to 6.25 in our experiments), thereby forfeiting
+  ahead mechanism, we define the metric Tokens per LLM              the guarantee of provable security. In contrast, as shown in
+  Call (Tok/Call). This is the ratio of the total number of tokens  Tables I and II, Look-ahead Sync consistently maintains a
+  in the final sequence to the total number of forward passes       KL divergence of 0.00. This confirms that its look-ahead
+  through the language model. A value of 1.0 corresponds            mechanism is a distribution-preserving transformation, making
+  to traditional single-pass generation methods, while a value      it fully compatible with the strict requirements of a provably
+  less than 1.0 quantifies the additional computational cost of     secure framework.
+  the recursive calls in our algorithm. We adopt this metric           In terms of text quality, perplexity (PPL) measures the
+  instead of wall-clock time to provide a more robust and           fluency of the generated stegotext. However, the ideal PPL is not
+  hardware-independent measure of efficiency. Since factors         necessarily the lowest possible value, but rather one that closely
+  such as the specific model, prompt, and GPU hardware              matches the PPL of the Baseline method. The Baseline reflects
+  can significantly affect execution time, and because all          the statistical properties of text generated via standard random
+  disambiguation methods share a common baseline cost (one          sampling from the model’s true distribution. Any significant
+  LLM call plus ambiguity detection), Tok/Call directly isolates    deviation from this PPL, whether higher or lower, suggests an
+  the core computational trade-off of our look-ahead strategy,      unnatural generation process. The tables show that while MWIS
+  which is directly proportional to its real-world runtime.         can sometimes yield a lower PPL, it does so by altering the
+                                                                    underlying probabilities. Look-ahead Sync, on the other hand,
+C. Results and Analysis                                             produces PPL values that are consistently and remarkably close
+   To empirically evaluate the performance of Look-ahead Sync, to the Baseline across all settings. This indicates that the text
+we benchmark it against a carefully selected set of baselines generated by Look-ahead Sync is statistically indistinguishable
+across both English and Chinese tasks. The comprehensive in quality and naturalness from that of an unmodified language
+results are presented in Tables I and II. In these tables, Baseline model, making it perceptually secure.
+represents the direct application of the entropy encoder to the        2) Embedding Capacity: A key contribution of this work is
+raw model output, serving as a theoretical capacity upper bound. the high embedding capacity of Look-ahead Sync, measured in
+The MWIS method denotes the state-of-the-art distribution- bits Per Token (BPT). The method is designed to overcome the
+altering approach from Yan et al. [19], while SyncPool is structural limitations of prior secure disambiguation techniques.
+the current state-of-the-art provably secure disambiguation As shown in Tables I and II, the BPT of Look-ahead Sync
+algorithm from Qi et al. [18]. Finally,Look-ahead Sync refers scales effectively with the candidate pool size (k), closely
+to our proposed algorithm. This setup enables a direct and following the trend of the theoretical maximum defined by the
+comprehensive comparison of capacity, security, and efficiency Baseline.
+across the spectrum of existing approaches.                            This scaling behavior differs from that of SyncPool. The ca-
+                                                                                                                                                                                                                                                                                                11
+
+
+
+                                                        TABLE II
+         QUANTITATIVE COMPARISON OF L OOK - AHEAD S YNC WITH SYNCPOOL AND MWIS ON THE CHINESE BENCHMARK
+                                                (QWEN2.5-7B/DOUBAN)
+
+
+
+  Method              top-k   BPT (↑)   Tok/Call (↑)   PPL (↓)   KL (↓)                            Method                                                                  top-k       BPT (↑)                     Tok/Call (↑)                          PPL (↓)               KL (↓)
+  Baseline              16      1.56        1.00         4.39      0.00                            Baseline                                                                  16               1.66                          1.00                            4.31                     0.00
+                       32       1.74        1.00         5.44      0.00                                                                                                      32               1.97                          1.00                            5.40                     0.00
+                       128      2.09        1.00         7.85      0.00                                                                                                     128               2.53                          1.00                            7.67                     0.00
+  MWIS [19]             16      1.19        1.00         4.02      2.21                            MWIS [19]                                                                 16               1.30                          1.00                            3.92                     2.25
+                       32       1.47        1.00         4.90      2.75                                                                                                      32               1.61                          1.00                            5.02                     2.57
+                       128      1.75        1.00         7.00      2.97                                                                                                     128               2.17                          1.00                            7.02                     3.03
+  SyncPool [18]         16      1.21        1.00         4.44      0.00                            SyncPool [18]                                                             16               1.27                          1.00                            4.29                     0.00
+                       32       1.43        1.00         5.53      0.00                                                                                                      32               1.44                          1.00                            5.47                     0.00
+                       128      1.61        1.00         7.42      0.00                                                                                                     128               1.88                          1.00                            7.29                     0.00
+  Look-ahead Sync       16      1.53        0.75         4.47      0.00                            Look-ahead Sync                                                           16               1.57                          0.75                            4.37                     0.00
+                       32       1.74        0.71         5.49      0.00                                                                                                      32               1.85                          0.70                            5.24                     0.00
+                       128      2.07        0.66         7.72      0.00                                                                                                     128               2.38                          0.65                            7.72                     0.00
+                      (a) Results with iMEC encoder.                                                                                                                  (b) Results with Discop encoder.
+
+
+
+
+                      (a) Llama3 on IMDB (English)                                                                                                                         (b) Qwen on Douban (Chinese)
+Fig. 6. Empirical distribution of Jensen-Shannon Divergence (JSD) scores for ambiguity scenarios on (a) Llama3 and (b) Qwen.
+
+
+
+pacity of SyncPool diminishes as k increases, a consequence of                                                                                                                         / R R N  D K H D G  6 \ Q F                           6 \ Q F 3 R R O
+its coarse-grained synchronization mechanism which discards
+the entire entropy of each selected ambiguity pool. A larger                                                                                      
+                                                                                                                                                                                    
+                                                                                                                                                                                                                                
+candidate pool size leads to more frequent and larger ambiguity                                                                                                                                                                                                      
+
+
+
+
+                                                                             $ Y D L O D E O H  ( Q W U R S \  5 D W L R    
+pools, thus amplifying this entropy loss. For example, in the                                                                            
+English/Discop experiment at k = 128 (Table IIb), Look-ahead
+Sync achieves a BPT of 2.66, which is a 180% increase over                                                                               
+SyncPool’s 0.95 BPT.
+                                                                                                                                         
+   The underlying mechanism for this performance is empiri-                                                                                                         
+cally illustrated in Figure 7, which plots the ratio of Shannon                                                                                                                                                                             
+entropy available for encoding. The available entropy for Look-                                                                                                                                                                                                                          
+                                                                                                                                         
+ahead Sync remains above 97% and is stable across different
+values of k. In contrast, the ratio for SyncPool drops below
+76% as ambiguity becomes more prevalent. This confirms                                                                                                                                                                                                                   
+that Look-ahead Sync’s look-ahead mechanism successfully                                                                                                                                                         W R S k
+preserves and utilizes the entropy of non-terminal ambiguous
+paths, converting what would otherwise be lost information                  Fig. 7. Comparison of the Available Entropy Ratio for different methods on
+                                                                            the Qwen model as top-k varies.
+into usable embedding capacity.
+   The ability of Look-ahead Sync to achieve a capacity
+close to the theoretical limit is further explained by the JSD
+distributions shown in Figure 6. The low Jensen-Shannon                     Divergence (JSD) scores (median ¡ 0.003) between the future
+                                                                                                                                                 12
+
+
+
+conditional distributions of ambiguous sequences indicate                                      VII. C ONCLUSION
+that the information loss from the synchronized sampling             A critical barrier to the practical use of provably secure
+step is minimal in practice. This allows the computationally      linguistic steganography has been the substantial embedding
+tractable, local resolution strategy to achieve a high capacity   capacity sacrificed by existing secure algorithms. In this paper,
+that approaches the theoretical capacity limit.                   we identify the root of this limitation in the state-of-the-
+   3) Computational Efficiency: The look-ahead mechanism          art method, SyncPool, whose coarse-grained synchronization
+that enables the high capacity of Look-ahead Sync introduces      mechanism systematically discards valuable Shannon entropy.
+additional computational overhead. This is quantified by the      To overcome this critical bottleneck, we introduce Look-ahead
+Tokens per LLM Call (Tok/Call) metric, which measures the         Sync, a novel, recursive disambiguation algorithm. The core of
+average number of final tokens generated per forward pass of      our method is a look-ahead resolution strategy that performs
+the language model. As shown in Tables I and II, the Tok/Call     minimal synchronized sampling only on truly indistinguishable
+for Look-ahead Sync is less than 1.0. This is a direct result of  token sequences.
+the additional LLM calls that are triggered when ambiguity is        By strategically preserving all other discernible candidate
+encountered in the candidate pool.                                paths and reallocating their probability mass, Look-ahead Sync
+   This computational overhead is a key characteristic of the     maintains the rigorous zero-KL divergence guarantee of the
+method. In steganographic applications where maximizing           synchronization paradigm while systematically eliminating the
+embedding capacity is the primary objective, Look-ahead Sync      capacity constraints of prior work. Our approach ensures a
+makes it possible to achieve substantial BPT gains, and this is   uniquely determined decoding result for the receiver without
+associated with an increase in the number of LLM calls. The       forfeiting the informational content of distinguishable future
+extent of this overhead is influenced by the sampling parameter   paths.
+k; larger values tend to increase the frequency of ambiguity,        Extensive experiments conducted on both English and
+leading to a lower Tok/Call.                                      Chinese language models validate our approach. The results
+                                                                  demonstrate that Look-ahead Sync’s embedding rate con-
+                                                                  sistently approaches the theoretical capacity upper bound
+                       VI. D ISCUSSION                            and substantially outperforms existing secure methods, with
+                                                                  capacity gains exceeding 160% in some settings. These gains
+                                                                  are achieved without compromising the strict zero-KL security
+   While the Look-ahead Sync algorithm successfully enhances
+                                                                  standard or the perceptual quality of the generated text. This
+embedding capacity under a provably secure framework, two
+                                                                  work represents a significant step toward making high-capacity,
+primary limitations warrant discussion. The first is the computa-
+                                                                  provably secure linguistic steganography a practical and viable
+tional overhead introduced by the look-ahead mechanism, and
+                                                                  technology for covert communication.
+the second is that the embedding capacity, while significantly
+improved, does not yet reach the theoretical upper bound
+established in our analysis.                                                               R EFERENCES
+   The computational overhead stems from the additional               [1] S. Zhang, Z. Yang, J. Yang, and Y. Huang, “Provably secure generative
+                                                                          linguistic steganography,” arXiv preprint arXiv:2106.02011, 2021.
+language model forward passes required to execute the look-           [2] J. Ding, K. Chen, Y. Wang, N. Zhao, W. Zhang, and N. Yu, “Discop:
+ahead strategy. This increase in computation is a direct trade-off        Provably secure steganography in practice based on” distribution copies”,”
+for the algorithm’s capacity gains, as each additional call serves        in 2023 IEEE Symposium on Security and Privacy (SP). IEEE, 2023,
+                                                                          pp. 2238–2255.
+to preserve and transform the Shannon entropy that is otherwise       [3] C. S. de Witt, S. Sokota, J. Z. Kolter, J. Foerster, and M. Strohmeier,
+discarded by prior secure methods. For steganographic applica-            “Perfectly secure steganography using minimum entropy coupling,” arXiv
+tions where achieving high embedding capacity is the principal            preprint arXiv:2210.14889, 2022.
+                                                                      [4] Z. M. Ziegler, Y. Deng, and A. M. Rush, “Neural linguistic steganography,”
+objective, such as embedding substantial payloads within                  arXiv preprint arXiv:1909.01496, 2019.
+concise covertexts, this increased demand on computational            [5] Z.-L. Yang, X.-Q. Guo, Z.-M. Chen, Y.-F. Huang, and Y.-J. Zhang,
+resources may be an acceptable compromise.                                “Rnn-stega: Linguistic steganography based on recurrent neural networks,”
+                                                                          IEEE Transactions on Information Forensics and Security, vol. 14, no. 5,
+   The second limitation, the residual gap to the theoretical             pp. 1280–1295, 2018.
+capacity limit, originates from the information loss inherent in      [6] H. Yang, Y. Bao, Z. Yang, S. Liu, Y. Huang, and S. Jiao, “Linguistic
+the non-payload-bearing SyncSample step. A clear avenue for               steganalysis via densely connected lstm with feature pyramid,” in
+                                                                          Proceedings of the 2020 ACM Workshop on Information Hiding and
+future research to mitigate this loss lies in the development             Multimedia Security, 2020, pp. 5–10.
+of adaptive look-ahead strategies. A more sophisticated imple-        [7] Z.-L. Yang, S.-Y. Zhang, Y.-T. Hu, Z.-W. Hu, and Y.-F. Huang, “Vae-
+mentation could employ a heuristic, such as the entropy of the            stega: linguistic steganography based on variational auto-encoder,” IEEE
+                                                                          Transactions on Information Forensics and Security, vol. 16, pp. 880–895,
+prefix set, H(Sprefix ), to dynamically guide its operations. For         2020.
+instance, a system could trigger a look-ahead call only when          [8] H. Wang, Z. Yang, J. Yang, C. Chen, and Y. Huang, “Linguistic
+the potential capacity gain is significant, or even perform a             steganalysis in few-shot scenario,” IEEE Transactions on Information
+                                                                          Forensics and Security, vol. 18, pp. 4870–4882, 2023.
+more resource-intensive multi-path expansion for particularly         [9] J. Yang, Z. Yang, J. Zou, H. Tu, and Y. Huang, “Linguistic steganalysis
+high-entropy prefix sets. Such an approach could lead to a                toward social network,” IEEE Transactions on Information Forensics
+more optimal allocation of computational resources, further               and Security, vol. 18, pp. 859–871, 2022.
+                                                                     [10] C. Cachin, “An information-theoretic model for steganography,” in
+closing the gap to the theoretical capacity limit and enhancing           International Workshop on Information Hiding. Springer, 1998, pp.
+the practical utility of the look-ahead paradigm.                         306–318.
+                                                                                  13
+
+
+
+[11] N. J. Hopper, J. Langford, and L. Von Ahn, “Provably secure steganog-
+     raphy,” in Annual International Cryptology Conference. Springer, 2002,
+     pp. 77–92.
+[12] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+     Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in
+     neural information processing systems, vol. 30, 2017.
+[13] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal,
+     A. Neelakantan, P. Shyam, G. Sastry, A. Askell et al., “Language models
+     are few-shot learners,” Advances in neural information processing systems,
+     vol. 33, pp. 1877–1901, 2020.
+[14] H. Touvron, T. Lavril, G. Izacard, X. Martinet, M.-A. Lachaux, T. Lacroix,
+     B. Rozière, N. Goyal, E. Hambro, F. Azhar, A. Rodriguez, A. Joulin,
+     E. Grave, and G. Lample, “LLaMA: Open and efficient foundation
+     language models,” arXiv preprint arXiv:2302.13971, Feb. 2023.
+[15] R. Sennrich, B. Haddow, and A. Birch, “Neural machine translation of
+     rare words with subword units,” arXiv preprint arXiv:1508.07909, 2015.
+[16] T. Kudo and J. Richardson, “Sentencepiece: A simple and language
+     independent subword tokenizer and detokenizer for neural text processing,”
+     arXiv preprint arXiv:1808.06226, 2018.
+[17] J. Nozaki and Y. Murawaki, “Addressing segmentation ambiguity in
+     neural linguistic steganography,” arXiv preprint arXiv:2211.06662, 2022.
+[18] Y. Qi, K. Chen, K. Zeng, W. Zhang, and N. Yu, “Provably secure
+     disambiguating neural linguistic steganography,” IEEE Transactions on
+     Dependable and Secure Computing, 2024.
+[19] R. Yan, Y. Yang, and T. Song, “A secure and disambiguating approach
+     for generative linguistic steganography,” IEEE Signal Processing Letters,
+     vol. 30, pp. 1047–1051, 2023.
+[20] F. Li, P. Wei, T. Fu, Y. Lin, and W. Zhou, “Imperceptible text steganog-
+     raphy based on group chat,” in 2024 IEEE International Conference on
+     Multimedia and Expo (ICME). IEEE, 2024, pp. 1–6.
+[21] G. J. Simmons, “The prisoners’ problem and the subliminal channel,” in
+     Advances in Cryptology: Proceedings of Crypto 83. Springer, 1984, pp.
+     51–67.
+[22] F. A. Petitcolas and S. Katzenbeisser, Information hiding techniques
+     for steganography and digital watermarking (Artech House Computer
+     Security Series). Artech House, 2000.
+[23] Y. Li, K. Chen, Y. Wang, X. Zhang, G. Wang, W. Zhang, and
+     N. Yu, “Coas: Composite audio steganography based on text and speech
+     synthesis,” IEEE Transactions on Information Forensics and Security,
+     2025.
+[24] K. Lin, Y. Luo, Z. Zhang, and P. Luo, “Zero-shot generative linguistic
+     steganography,” arXiv preprint arXiv:2403.10856, 2024.
+[25] Y.-S. Huang, P. Just, K. Narayanan, and C. Tian, “Od-stega: Llm-based
+     near-imperceptible steganography via optimized distributions,” arXiv
+     preprint arXiv:2410.04328, 2024.
+[26] J. Håstad, R. Impagliazzo, L. A. Levin, and M. Luby, “A pseudorandom
+     generator from any one-way function,” SIAM Journal on Computing,
+     vol. 28, no. 4, pp. 1364–1396, 1999.
+[27] J. J. Rissanen, “Generalized kraft inequality and arithmetic coding,” IBM
+     Journal of research and development, vol. 20, no. 3, pp. 198–203, 1976.
+[28] C. E. Shannon, “A mathematical theory of communication,” The Bell
+     system technical journal, vol. 27, no. 3, pp. 379–423, 1948.
+[29] T. M. Cover, Elements of information theory. John Wiley & Sons, 1999.
+[30] W. McGill, “Multivariate information transmission,” Transactions of the
+     IRE Professional Group on Information Theory, vol. 4, no. 4, pp. 93–111,
+     1954.
+[31] A. Grattafiori, A. Dubey, A. Jauhri, A. Pandey, A. Kadian, A. Al-Dahle,
+     A. Letman, A. Mathur, A. Schelten, A. Vaughan et al., “The llama 3
+     herd of models,” arXiv preprint arXiv:2407.21783, 2024.
+[32] B. Hui, J. Yang, Z. Cui, J. Yang, D. Liu, L. Zhang, T. Liu, J. Zhang,
+     B. Yu, K. Lu et al., “Qwen2. 5-coder technical report,” arXiv preprint
+     arXiv:2409.12186, 2024.
+[33] A. Holtzman, J. Buys, L. Du, M. Forbes, and Y. Choi, “The curious case
+     of neural text degeneration,” arXiv preprint arXiv:1904.09751, 2019.
+[34] J. Lin, “Divergence measures based on the shannon entropy,” IEEE
+     Transactions on Information theory, vol. 37, no. 1, pp. 145–151, 2002.
+

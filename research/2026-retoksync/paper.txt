@@ -1,0 +1,1255 @@
+                                         ReTokSync: Self-Synchronizing Tokenization Disambiguation for
+                                                     Generative Linguistic Steganography
+                                                               Yaofei Wang                                                       Rui Wang                                     Weilong Pang
+                                                  Hefei University of Technology                                  Hefei University of Technology                     Hefei University of Technology
+                                                           Hefei, China                                                    Hefei, China                                       Hefei, China
+                                                         wyf@hfut.edu.cn                                          2025170799@mail.hfut.edu.cn                          pangwl@mail.hfut.edu.cn
+
+                                                              JiaLiang Han                                                        Yuan Qi                                      Donghui Hu
+                                                  Hefei University of Technology                             University of Science and Technology                    Hefei University of Technology
+                                                           Hefei, China                                                     of China                                          Hefei, China
+
+
+
+
+arXiv:2604.25486v1 [cs.CR] 28 Apr 2026
+                                                     hanjl@mail.hfut.edu.cn                                              Hefei, China                                      hudh@hfut.edu.cn
+                                                                                                                  qya7ya@mail.ustc.edu.cn
+
+                                                                                                                             Kejiang Chen
+                                                                                                             University of Science and Technology
+                                                                                                                            of China
+                                                                                                                         Hefei, China
+                                                                                                                     chenkj@ustc.edu.cn
+                                         Abstract                                                                                        on this property, we further develop a two-channel covert com-
+                                         Generative linguistic steganography (GLS) enables covert com-                                   munication mechanism in which ReTokSync serves as the primary
+                                         munication by embedding secret messages into the natural lan-                                   channel and a reliable auxiliary channel corrects the remaining
+                                         guage generation process. In practical deployment, however, GLS                                 errors, achieving 100% end-to-end recovery across all evaluated
+                                         is vulnerable to tokenization ambiguity: the same surface text may                              configurations.
+                                         be re-tokenized into a different token sequence at the receiver,
+                                         breaking the shared decoding state between the communicating                                    CCS Concepts
+                                         parties so that a single local mismatch can propagate into com-                                 • Security and privacy → Domain-specific security and privacy
+                                         plete extraction failure. Existing solutions either remove ambiguous                            architectures; • Computing methodologies → Natural language
+                                         tokens—distorting the generation distribution and compromising                                  generation.
+                                         security—or preserve the distribution at the cost of substantially
+                                         reduced embedding capacity or prohibitive runtime overhead. To                                  Keywords
+                                         address this issue, we propose ReTokSync (Re-Tokenization Syn-                                  generative linguistic steganography, tokenization ambiguity, large
+                                         chronization), a self-synchronizing disambiguation framework that                               language models, self-synchronization, covert communication
+                                         monitors the receiver-view tokenization during generation and
+                                         triggers a corrective reset only when ambiguity actually occurs. By                             ACM Reference Format:
+                                                                                                                                         Yaofei Wang, Rui Wang, Weilong Pang, JiaLiang Han, Yuan Qi, Donghui
+                                         confining the effect of tokenization ambiguity to sparse residual
+                                                                                                                                         Hu, and Kejiang Chen. 2018. ReTokSync: Self-Synchronizing Tokenization
+                                         bit errors rather than global desynchronization, ReTokSync leaves
+                                                                                                                                         Disambiguation for Generative Linguistic Steganography. In Proceedings of
+                                         ambiguity-free positions entirely untouched and remains compat-                                 Make sure to enter the correct conference title from your rights confirmation
+                                         ible with the underlying steganographic algorithm. Experiments                                  email (Conference acronym ’XX). ACM, New York, NY, USA, 20 pages. https:
+                                         on both English and Chinese settings show that ReTokSync stays                                  //doi.org/XXXXXXX.XXXXXXX
+                                         closest to the steganographic baseline in distributional security
+                                         (zero KL divergence), text quality, embedding capacity, and run-                                1    Introduction
+                                         time, while achieving extraction accuracy above 99.7%. Building
+                                                                                                                                         Recent advances in large language models (LLMs) [1, 6, 19, 25] have
+                                                                                                                                         substantially improved the practical viability of generative linguistic
+                                                                                                                                         steganography (GLS) [2, 4, 9, 13, 28, 29, 38, 39]. Unlike traditional
+                                         Permission to make digital or hard copies of all or part of this work for personal or
+                                         classroom use is granted without fee provided that copies are not made or distributed           text steganography, which embeds information by modifying an
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       existing carrier, GLS encodes secret messages directly into the
+                                         on the first page. Copyrights for components of this work owned by others than the              autoregressive generation process of a language model. At each
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   generation step, the steganographic algorithm selects a token from
+                                         and/or a fee. Request permissions from permissions@acm.org.                                     the model’s next-token distribution such that the resulting text
+                                         Conference acronym ’XX, Woodstock, NY                                                           remains natural while implicitly conveying hidden information.
+                                         © 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                         ACM ISBN 978-1-4503-XXXX-X/2018/06                                                                 A central obstacle to the practical deployment of GLS is tokeniza-
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 tion ambiguity [18]. Modern language models commonly rely on
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                             Trovato et al.
+
+
+subword tokenization schemes such as BPE, whose vocabularies
+contain many prefix-related units [10, 11, 24, 30]. Consequently, the
+same surface string may admit multiple valid tokenization paths.
+In GLS, however, correct extraction requires the sender and the
+receiver to follow the same token sequence. Once the receiver re-
+tokenizes the stegotext differently from the sender, the two parties
+no longer share the same decoding state, and the resulting mismatch
+can propagate through subsequent probability reconstruction and
+message extraction, ultimately causing extraction failure [26]. Ef-
+fective handling of tokenization ambiguity is therefore essential for
+reliable and deployable generative steganography [3].
+   Existing studies on tokenization disambiguation in GLS can
+be broadly divided into two categories: token-removal methods
+and distribution-preserving disambiguation methods. Token-removal        Figure 1: Impact of tokenization ambiguity in generative
+methods improve decodability by excluding risky candidates from          linguistic steganography. Although ambiguity is pervasive
+the sender-side candidate set, but they explicitly alter the model’s     at the sample level, the tokens that trigger it are sparse. Once
+original next-token distribution and therefore cannot provide strict     triggered, a single local mismatch can cause global extraction
+distributional security [18, 31, 34]. Distribution-preserving methods    failure.
+instead seek to maintain the original generation distribution while
+ensuring reliable recovery. Pool-based methods achieve this goal by
+synchronizing over ambiguity-aware token groups, but at the cost
+of reduced embedding capacity [20]. Verification-based methods               (1) We identify a key limitation of existing disambiguation meth-
+are more flexible, yet their receiver-side checking incurs substantial           ods for GLS: tokenization ambiguity is triggered only at
+runtime overhead in realistic settings [33]. Taken together, exist-              sparse local positions, yet existing methods impose global
+ing approaches reveal a persistent tension between security and                  intervention at every generation step. We provide empiri-
+efficiency.                                                                      cal evidence that ambiguity-triggering tokens consistently
+   We argue that this tension stems from two insufficiently ex-                  account for less than 1% of the generated sequence, even
+ploited properties of tokenization ambiguity. First, ambiguity is                as sample-level ambiguity frequency grows with sequence
+typically triggered only at sparse local positions, yet existing meth-           length.
+ods impose global intervention at every step. Second, the main               (2) We propose ReTokSync, a self-synchronizing disambigua-
+damage is not the local error itself but the subsequent sender–                  tion framework that performs sender-side online ambiguity
+receiver desynchronization that propagates to all later extraction               detection and corrective reset only when needed, thereby
+steps. As illustrated in Figure 1, even a single local mismatch may              preventing local mismatch from propagating into global ex-
+suffice to invalidate all subsequent extraction results.                         traction failure. ReTokSync achieves zero KL divergence from
+   To address this problem, we propose ReTokSync, a self-synchro-                the baseline distribution with less than 2% relative time over-
+nizing framework for tokenization disambiguation in GLS. Re-                     head, while reducing ambiguity-induced failures to sparse
+TokSync tracks the receiver-view tokenization result during gener-               residual bit errors.
+ation, detects ambiguity online, and immediately resets the sender’s         (3) We further develop a two-channel communication mecha-
+embedding state using the corresponding decoding result. By doing                nism for continuous interaction, which combines ReTokSync
+so, it confines the effect of tokenization ambiguity to local residual           as a high-efficiency primary channel with a low-rate auxil-
+deviations instead of allowing it to escalate into persistent desyn-             iary channel for residual-error correction, achieving 100%
+chronization and global extraction failure. Because correction is                end-to-end recovery across all evaluated configurations.
+triggered only when ambiguity actually occurs, ReTokSync leaves
+ambiguity-free positions unchanged and remains compatible with
+the underlying steganographic algorithm. Building on this property,      2    Related Work
+we further develop a two-channel communication mechanism for             Existing approaches to tokenization disambiguation in generative
+continuous interaction, in which ReTokSync serves as the primary         linguistic steganography can be broadly grouped into two cate-
+channel and Syncpool serves as a reliable auxiliary channel for          gories: token-removal methods and distribution-preserving meth-
+correcting residual errors [20].                                         ods.
+   Experiments on both English and Chinese settings show that Re-           Token-removal methods resolve ambiguity by excluding candi-
+TokSync remains closest to the underlying steganographic baseline        date tokens that may induce inconsistent re-tokenization at the
+in distributional security, text quality, embedding capacity, and run-   receiver. Nozaki and Murawaki [18] remove prefix-conflicting to-
+time, while reducing ambiguity-induced failures to sparse residual       kens to prevent multiple tokenization outcomes for the same surface
+errors. Under the proposed two-channel communication mecha-              string. Yan et al. [34] further propose MWIS, which formulates dis-
+nism, these residual errors can be fully repaired, enabling reliable     ambiguation as a maximum weight independent set problem so as
+end-to-end recovery.                                                     to retain as much probability mass as possible under token-conflict
+   The main contributions of this paper are summarized as follows:       constraints. Yan and Murawaki subsequently introduce Stepwise
+ReTokSync: Tokenization Disambiguation                                                       Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+Verification [31, 32], which identifies risky candidates through step-   when ambiguity is actually introduced, ReTokSync leaves ambiguity-
+wise re-encoding and disables tokens that may cause ambiguity            free generation steps unchanged and avoids unnecessary inter-
+at the current generation step. Although these methods improve           ference with the underlying steganographic process. As a result,
+decodability, they all rely on modifying the sender-side candidate       the framework remains compatible with the base steganographic
+set before sampling. As a consequence, they cannot preserve the          scheme and is designed to preserve its security and efficiency as
+original next-token distribution exactly. From the perspective of        much as possible while preventing local mismatch from escalating
+distributional security, this means that ambiguity is avoided by in-     into global extraction failure. The complete procedure is given in
+troducing distribution distortion, which can be reflected in non-zero    Algorithm 1.
+KL divergence from the underlying model distribution. Therefore,
+token-removal methods are difficult to reconcile with the strict se-     3.2    Re-tokenization
+curity requirement of provably secure steganographic generation.         During generation, the sender maintains two token sequences: the
+   Distribution-preserving methods instead seek to maintain the          true sequence 𝑥 and the re-tokenized sequence ˜𝑥. The true sequence
+original generation distribution while still enabling reliable recov-    𝑥 records the tokens actually generated by the sender, while the
+ery. Qi et al. [20] propose SyncPool, which constructs ambiguity-        re-tokenized sequence 𝑥˜ represents the tokenization result that
+aware token pools and uses these pools, rather than individual           would be obtained by the receiver from the visible text. Formally,
+tokens, as the embedding unit. This design preserves distributional      after appending a newly generated token 𝑥𝑡 to the current true
+security, but sacrifices embedding capacity because part of the          sequence, the sender updates
+available entropy must be reserved for synchronization within
+the pool. Yan et al. [33] propose a verification-based method that                               𝑥˜ = Tok(Detok(𝑥)).                             (1)
+shifts disambiguation to the receiver by enumerating possible re-           Crucially, subsequent generation is conditioned on 𝑥˜ rather than
+tokenization paths and verifying which path matches the sender’s         on 𝑥. This design ensures that the sender always uses the same
+actual token sequence. This strategy avoids direct distortion of the     token context as the receiver, because 𝑥˜ is exactly the sequence
+sender-side distribution, but incurs substantial decoding overhead,      obtained by re-tokenizing the visible text decoded from 𝑥. As a
+especially when the candidate space becomes large. Thus, even            result, both parties rely on the same conditional distribution at
+among distribution-preserving methods, the cost of disambiguation        each step:
+remains significant: one line of work pays with reduced embed-                                 𝑝𝜃 (· | ˜𝑥) = 𝑝𝜃 (· | 𝑥 (𝑅) ),              (2)
+ding efficiency, whereas the other pays with prohibitive runtime
+overhead.                                                                where 𝑥 (𝑅) = Tok(Detok(𝑥)) denotes the receiver-side tokeniza-
+   Overall, existing methods reveal that the central difficulty lies     tion result for the same visible text. Sharing the same conditional
+not in whether ambiguity can be removed, but in how to do so with-       distribution is the prerequisite for maintaining correct synchroniza-
+out distorting the generation distribution or incurring excessive        tion under tokenization ambiguity.
+overhead. Motivated by the observation that ambiguity is globally
+possible but locally sparse, and that its primary damage stems from      3.3    Ambiguity Detection
+desynchronization rather than the local error itself, we design a        At each generation step, let 𝑥𝑡 denote the newly sampled token.
+self-synchronizing framework that intervenes only when ambiguity         Before re-tokenization, the sender constructs the predicted receiver-
+actually occurs.                                                         view sequence
+                                                                                                   𝑥˜ pred = 𝑥˜ ∥ [𝑥𝑡 ],                   (3)
+                                                                         where ∥ denotes concatenation. After appending 𝑥𝑡 to the true
+                                                                         sequence, the sender re-tokenizes the updated text and obtains the
+3 Method                                                                 actual receiver-view sequence
+3.1 The ReTokSync Framework                                                                   𝑥˜ retok = Tok(Detok(𝑥)).                          (4)
+Guided by the above observation, we present ReTokSync, a self-             Tokenization ambiguity is detected by the consistency check
+synchronizing framework for tokenization disambiguation in GLS.
+                                                                                                             ?
+Unlike existing approaches that either impose global constraints on                                  𝑥˜ pred = 𝑥˜ retok .                        (5)
+the generation process or rely on receiver-side verification over mul-
+                                                                         If Eq. (5) holds, the new token does not alter the receiver’s tok-
+tiple tokenization paths, ReTokSync addresses ambiguity through
+                                                                         enization structure beyond direct appending. Otherwise, ambiguity
+targeted synchronization maintenance. During generation, it con-
+                                                                         has been introduced, and the sender must perform a corrective
+tinuously tracks the token sequence that the receiver would obtain
+                                                                         reset. This criterion directly matches the operational test used in
+by re-tokenizing the current surface text. Whenever this receiver-
+                                                                         Algorithm 1.
+view sequence diverges from the sender’s predicted sequence, Re-
+TokSync performs a corrective reset based on the corresponding
+receiver-view decoding result, so that subsequent embedding can
+                                                                         3.4    Corrective Reset
+proceed from a synchronized state.                                       When ambiguity is detected, the sender decodes the current receiver-
+   This design directly targets the practical consequence of tok-        view sequence 𝑥˜ retok and uses the decoding result to reset its em-
+enization ambiguity, namely error propagation caused by sender–          bedding state:
+receiver desynchronization. Because intervention is triggered only                            (𝑚ˆ 1: 𝑗ˆ, ˆ𝑠) ← Dec(𝑥˜ retok, 𝑠 0 ),        (6)
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                          Trovato et al.
+
+
+
+
+Figure 2: Illustration of ReTokSync. When tokenization ambiguity is detected, the sender performs corrective reset to prevent
+ambiguity-induced errors from propagating to subsequent positions; when no ambiguity occurs, no corrective reset is needed.
+
+
+followed by                                                              Algorithm 1 ReTokSync: Correction-and-Reset under Tokenization
+                                                                         Ambiguity
+                            𝑗 ← 𝑗ˆ,      𝑠 ← ˆ𝑠.                  (7)
+                                                                          1: Require: payload bitstring m, tokenizer Tok/Detok, stego en-
+                                                                               coder Enc, stego decoder Dec, initial state 𝑠 0
+Here, 𝑗ˆ denotes the message pointer recovered from the receiver-
+                                                                          2: 𝑥 ← [ ], 𝑥˜ ← [ ], 𝑗 ← 0, 𝑠 ← 𝑠 0
+view sequence, and 𝑠ˆ denotes the corresponding internal decoding
+                                                                          3: for 𝑡 = 1, 2, . . . do
+state. The sender then continues generation from the reset state
+                                                                          4:   (𝑥𝑡 , 𝑗, 𝑠) ← Enc( ˜𝑥, m, 𝑗, 𝑠)
+while replacing 𝑥˜ with 𝑥˜ retok .
+                                                                          5:   𝑥 ← 𝑥 ∥ [𝑥𝑡 ]
+   As illustrated in Figure 2, when the tokens any and thing are re-
+                                                                          6:   𝑥˜ pred ← 𝑥˜ ∥ [𝑥𝑡 ]
+tokenized as anything, ambiguity is detected and ReTokSync resets
+                                                                          7:   𝑥˜ retok ← Tok(Detok(𝑥))
+the token sequence, PRNG state, and embedding pointer according
+                                                                          8:   if 𝑥˜ pred ≠ 𝑥˜ retok then
+to the receiver-view result. Because message extraction is then
+                                                                          9:        (𝑚ˆ 1: 𝑗ˆ, ˆ𝑠) ← Dec(𝑥˜ retok, 𝑠 0 )
+performed on anything, this step may introduce a local 1-bit error.
+In the subsequent generation, no further ambiguity is detected, and      10:        𝑗 ← 𝑗ˆ, 𝑠 ← 𝑠ˆ
+thus no additional reset is required.                                    11:   end if
+                                                                         12:   𝑥˜ ← 𝑥˜ retok
+   Security analysis. Two properties underpin ReTokSync’s distri-        13: end for
+butional security. First, because generation is always conditioned
+on 𝑥˜ (Eq. 2), the conditional distribution at every step is identical
+to the one the receiver observes; this holds regardless of whether a
+reset has just occurred. Second, the corrective reset operates exclu-
+sively on the internal embedding state (𝑗, 𝑠) and does not modify the
+                                                                         3.5     A Covert Communication Mechanism for
+next-token distribution seen by an external observer. Consequently,              Continuous Interaction
+the token-level generation distribution under ReTokSync coincides        Building on the ReTokSync framework, we develop a covert com-
+with that of the underlying steganographic scheme, yielding zero         munication mechanism that extends single-sample disambiguation
+KL divergence. A formal analysis is provided in the supplementary        to practical continuous interaction, enabling system-level handling
+material.                                                                of tokenization ambiguity.
+ReTokSync: Tokenization Disambiguation                                                        Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+
+
+                                                                          Figure 4: Tokenization-ambiguity frequency analysis on
+                                                                          IMDB using Llama-3.1-8B and Qwen3-8B.
+
+Figure 3: An example of covert communication under contin-
+uous interaction. ReTokSync is used as the main channel to
+transmit the primary secret payload, while Syncpool serves
+as an auxiliary reliable channel that periodically carries cor-
+rection information in later interaction rounds, enabling
+accurate end-to-end recovery.
+
+
+3.5.1 Background and Design Basis. Existing research on genera-
+tive steganography typically models communication as a one-shot
+process of text generation and message extraction [4]. In realistic       Figure 5: Frequency analysis of ambiguity-triggering tokens
+public channels, however, covert information transmission more            on IMDB using Llama-3.1-8B and Qwen3-8B.
+often takes place through continuous language interaction—email
+exchanges, instant messaging, or multi-turn online conversations.
+Covert communication may likewise arise in multi-agent interac-           errors and the correct message fragments that should replace them.
+tion [14, 16]. To handle tokenization ambiguity reliably without          The correction message is composed of a set of correction items,
+sacrificing security or efficiency, we construct a two-channel com-       each corresponding to a token carrying erroneous bits and speci-
+munication mechanism: ReTokSync serves as the primary channel             fying the correct message fragment used to replace its erroneous
+for transmitting the main secret payload, while Syncpool serves as        extraction result.
+an auxiliary reliable channel for correction [20].                           As illustrated in Figure 3, each correction message contains the
+   This design rests on three observations. First, ReTokSync con-         number of corrections, the token positions to be corrected, and the
+fines ambiguity-induced damage to a very small number of bit flips        corresponding replacement message fragments. The detailed mes-
+rather than global desynchronization, substantially reducing the          sage format and its construction are described in the supplementary
+correction payload. Second, because the sender maintains synchro-         material.
+nization with the receiver, it can predict the receiver’s extraction         On the receiver side, standard extraction is first performed on all
+result at each token, making structured correction feasible. Third,       samples in the group, and the corresponding token-level message
+ReTokSync and Syncpool are complementary: the former provides             fragments are recorded in the same order. The receiver then parses
+high embedding efficiency with sparse residual errors, while the          the correction message transmitted through the auxiliary chan-
+latter guarantees error-free disambiguation at lower embedding            nel, locates the tokens to be corrected, and replaces the originally
+capacity. Together, they enable efficient primary transmission with       extracted erroneous fragments with the corrected ones specified
+lightweight residual-error repair.                                        in the message. After all corrections are applied, the receiver ob-
+                                                                          tains the correct group-level message stream, which can then be
+3.5.2 Workflow. In operation, we adopt a group-wise correction            mapped back to the extraction results of individual samples, thereby
+strategy. After transmitting 𝑛 steganographic samples through the         recovering the final secret message for each sample.
+primary channel, the sender sends one additional correction mes-
+sage for that group through the auxiliary channel. This message           4 Experiments
+provides a unified description of all residual errors within the group.
+   On the sender side, the receiver-view token sequences of all           4.1 Experimental Setup
+samples in the group are first concatenated in order to form a            We primarily evaluate our method on the Llama-3.1-8B model [7]
+group-level token sequence. For each token, the sender records the        using the IMDB English dataset [15]. To further assess the gen-
+message fragment that would actually be extracted by the receiver         erality of the proposed disambiguation strategy, we also conduct
+during decoding. Since the sender also knows the original target          experiments with Qwen3-8B [35] on a Chinese-translated version
+payload, it can align the extracted message stream with the intended      of the IMDB dataset. For the steganographic task, the secret mes-
+one at the token level, thereby identifying the tokens that contain       sage is a randomly generated binary bitstream. In each run, we use
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                            Trovato et al.
+
+
+the first three sentences of a dataset example as the initial context    baseline:
+and generate 100 subsequent tokens.                                                               𝑇method − 𝑇baseline
+   We adopt top-𝑘 truncation [8] during generation, using 𝑘 = 32,                         RTO =                       × 100%,                (9)
+                                                                                                       𝑇baseline
+128, and 512 to directly examine how candidate-pool size affects
+disambiguation behavior and overall performance.                         where 𝑇method and 𝑇baseline denote the total runtime of the evaluated
+   We adopt Discop [4] as the main baseline, as it is a secure and       method and its corresponding baseline, respectively.
+efficient steganographic scheme that preserves the underlying gen-
+eration distribution. Note that Discop does not perform any dis-         4.3    Ambiguity Frequency
+ambiguation; its extraction accuracy is marked “–” in Tables 1–2
+                                                                         To investigate the frequency of tokenization ambiguity, we con-
+because, without disambiguation, tokenization ambiguity causes
+                                                                         duct experiments in both Chinese and English settings. Specifically,
+the receiver to lose synchronization and subsequent extraction
+                                                                         we use Llama-3.1-8B and Qwen3-8B to evaluate on the English
+becomes unreliable (see Section 4.3 for the high sample-level am-
+                                                                         and Chinese versions of the IMDB dataset, respectively. For each
+biguity frequency). Beyond our proposed ReTokSync, we further
+                                                                         configuration of generation length and top-𝑘, we test 100 samples.
+compare with three token-removal-based disambiguation meth-
+                                                                            We report two statistics: the proportion of samples in which
+ods, including Basic [18], MWIS [34], and Stepwise Verification
+                                                                         ambiguity occurs, and the proportion of tokens that trigger ambi-
+[31, 32], as well as two distribution-preserving disambiguation
+                                                                         guity. The sample-level ratio reflects how frequently tokenization
+strategies, including Syncpool [20], and Verification-based [33].
+                                                                         ambiguity may arise when the receiver re-encodes the received
+This setup enables a comprehensive evaluation across different
+                                                                         text, whereas the token-level ratio measures the fraction of tokens
+classes of ambiguity-handling methods. For completeness, we also
+                                                                         that actually induce ambiguity among all generated tokens.
+evaluate ReTokSync on additional steganographic algorithms; de-
+                                                                            Fig. 4 and Fig. 5 show that tokenization ambiguity is a perva-
+tailed results are provided in the supplementary material.
+                                                                         sive phenomenon, and its frequency consistently increases with
+   All experiments are implemented in PyTorch 2.5 with CUDA 11.8
+                                                                         the generation length. In contrast, the proportion of ambiguity-
+and are run on a machine equipped with an Intel Xeon Gold 6330
+                                                                         triggering tokens remains consistently low. This indicates that,
+CPU and an NVIDIA RTX 4090 GPU.
+                                                                         although tokenization ambiguity occurs frequently at the sample
+                                                                         level, its triggering positions are distributed sparsely in the token
+4.2     Evaluation Metrics
+                                                                         sequence. This observation further suggests that existing strate-
+To evaluate disambiguation strategies in generative steganography,       gies that continuously intervene at every generation position are
+we assess three dimensions: effectiveness, security, and efficiency.     inherently inefficient, since most positions do not actually lead to
+   Effectiveness. Extraction accuracy measures whether the re-           tokenization ambiguity.
+ceiver can correctly recover the embedded secret message. We                Motivated by this observation, ReTokSync adopts a post-processing
+report bit-wise accuracy between the extracted bitstream and the         perspective: it detects ambiguity in real time and performs cor-
+ground-truth message.                                                    rection only when necessary. Because ambiguity-triggering posi-
+                                                                         tions account for only a small fraction of the sequence, ReTokSync
+   Security. Kullback–Leibler divergence (KLD) measures how              requires only lightweight detection at the vast majority of non-
+much the token distribution under a disambiguation method devi-          ambiguous positions, avoiding unnecessary overhead while pre-
+ates from the model’s original generation distribution. Lower KLD        serving normal generation behavior.
+indicates less perturbation to the original distribution and therefore
+stronger distributional security.                                        4.4    Results and Analysis
+   Average KLD and Maximum KLD capture such perturbation
+from the perspectives of average-case and worst-case distortion,         We compare two mainstream categories of disambiguation strate-
+respectively.                                                            gies, together with ReTokSync, from three perspectives: effective-
+   Perplexity (PPL) evaluates the fluency and naturalness of the         ness, security, and efficiency. Results for the English and Chinese
+generated text:                                                          settings are reported in Table 1 and Table 2, respectively. Here, To-
+                                                                         ken Removal denotes strategies that resolve ambiguity by pruning
+                                 1 Í𝑁 log Pr(𝑥 |𝑥 )
+                      PPL = 2− 𝑁    𝑖=1  2    𝑖 <𝑖    .           (8)    candidate tokens, whereas Distribution Preserving denotes methods
+                                                                         that preserve the original generation distribution during disam-
+A PPL closer to that of the original stego generation indicates
+                                                                         biguation.
+stronger security.
+                                                                             Token-removal strategies cannot provide strict security.
+   Efficiency. Capacity measures the average number of embedded          These methods consistently yield non-zero KL divergence, indicat-
+bits per generated token.                                                ing unavoidable distortion of the original generation distribution.
+   Entropy utilization measures how effectively the available            In particular, Basic [18] causes a clear PPL shift, suggesting de-
+embedding entropy is converted into payload bits.                        graded text quality, while MWIS [34] reduces this effect but still
+   Time efficiency reports the computational overhead of embed-          introduces non-negligible distributional distortion. Stepwise Verifi-
+ding and extraction. We measure the actual wall-clock time of the        cation [31, 32] further lowers KL divergence, but does not eliminate
+complete embedding and extraction process. In addition, we intro-        it; moreover, as the candidate-pool size increases, the number of
+duce Relative Time Overhead (RTO) to characterize the time               candidate tokens that must be checked grows substantially, leading
+cost of each disambiguation method relative to its corresponding         to higher time overhead.
+ReTokSync: Tokenization Disambiguation                                                               Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+Table 1: Comparison of disambiguation strategies on Llama-3.1-8B across different top-𝑘 settings on the English IMDB dataset.
+
+                    Method                       𝑘     Ave PPL   Ave KLD   Max KLD     Capacity        Utilization   Total Time       RTO       Accuracy
+                                                                                      (bits/token)                       (s)           (%)
+                                                 32      7.26      0.00      0.00         2.28             0.88           4.90        0.00          –
+                   Discop [4]                    128    11.33      0.00      0.00         2.95             0.91           4.98        0.00          –
+                                                 512    17.29      0.00      0.00         3.50             0.91           5.18        0.00          –
+                                                 32     19.93      0.96      9.15         2.72             0.96          7.64        55.92         1.00
+                                Basic [18]       128    59.05      1.24      8.77         4.05             0.98          8.75        75.70         1.00
+                                                 512   219.67      1.36      7.58         5.72             0.98         21.69        318.73        1.00
+
+       Token                                     32      6.87      0.09      0.75         2.12             0.81          7.64        55.92         1.00
+      Removal                   MWIS [34]        128     9.34      0.11      0.75         2.61             0.82          9.01        80.92         1.00
+                                                 512    11.74      0.15      0.83         2.93             0.80         23.89        361.20        1.00
+                                                 32      7.36      0.00      0.05         2.31             0.89          6.65        35.71         1.00
+                               Stepwise
+                                                 128    11.93      0.00      0.15         3.06             0.91         11.82        137.35        1.00
+                         Verification [31, 32]
+                                                 512    16.37      0.00      0.01         3.45             0.91         32.39        525.29        1.00
+                                                 32      7.65      0.00      0.00         1.68             0.64           5.05        3.06         1.00
+                            Syncpool [20]        128    11.98      0.00      0.00         1.01             0.33           5.15        3.41         1.00
+    Distribution                                 512    17.06      0.00      0.00         0.53             0.14           5.21        0.58         1.00
+    Preserving
+                                                 32      6.58      0.00      0.00         2.32             0.86         15.17        209.59        1.00
+                             Verification
+                                                 128    11.00      0.00      0.00         2.82             0.86        441.21       8759.64        1.00
+                             -based [33]
+                                                 256    13.54      0.00      0.00         3.13             0.87        552.64       10714.87       1.00
+                                                 32      7.26      0.00      0.00         2.28             0.88           4.94        0.82         1.00
+        Ours                  ReTokSync          128    11.36      0.00      0.00         2.95             0.91           5.05        1.41         0.999
+                                                 512    17.29      0.00      0.00         3.50             0.91           5.27        1.74         1.00
+
+
+   Distribution-preserving strategies still face efficiency trade-           4.5     Communication-Scenario Evaluation
+offs. Syncpool [20] maintains zero KL divergence through synchro-           We further evaluate the proposed framework in a realistic commu-
+nized sampling over ambiguity pools, but does so at the cost of lower       nication scenario. Using the same backbone models and datasets
+embedding capacity and entropy utilization. Verification-based [33]         as above, we employ ReTokSync as the primary communication
+performs well in security and capacity, but incurs substantially            mechanism and use Syncpool as an auxiliary reliable channel to
+higher decoding time, which increases rapidly with the candidate-           transmit correction information. For each setting, we generate 500
+pool size.                                                                  steganographic samples of length 100 and group every 10 samples
+   ReTokSync preserves both security and efficiency while en-               for joint correction. In the primary channel, the top-𝑘 value is set to
+suring reliable disambiguation. ReTokSync remains nearly iden-              32, 64, 128, 256, and 512, while the correction channel consistently
+tical to the baseline in both security and efficiency, while preventing     uses Syncpool with top-𝑘 = 64.
+local tokenization mismatches from escalating into complete extrac-            Table 9 summarizes the group-level correction performance un-
+tion failure. Compared with the closest competitor Stepwise Verifi-         der different top-𝑘 settings, including the average number of resid-
+cation, ReTokSync achieves strictly zero average and maximum KL             ual bit errors per group, the average correction-message length,
+divergence (vs. non-zero for Stepwise Verification in most settings),       and the final correction success rate. Table 4 complements this view
+higher embedding capacity, and dramatically lower time overhead—            by reporting the corresponding bit error ratio, token error ratio,
+for example, at 𝑘=512 on the English dataset, ReTokSync incurs              and correction-to-embedding ratio.
+only 1.74% RTO compared with 525.29% for Stepwise Verification.                Several consistent observations emerge. First, the correction
+Compared with the distribution-preserving Syncpool, ReTokSync               success rate remains at 100% for all evaluated settings, confirming
+achieves substantially higher embedding capacity (e.g., 3.50 vs. 0.53       that the residual errors produced by the primary channel can be
+bits/token at 𝑘=512). As a result, ambiguity-induced errors are re-         fully repaired under the proposed two-channel design. Second,
+duced to sparse and localized residual bit flips, yielding extraction       the residual error remains small and the associated correction-
+accuracy above 99.7%. Under the proposed two-channel commu-                 message length is correspondingly limited; although the required
+nication mechanism, these residual errors can be fully corrected            correction length generally increases with the primary top-𝑘, it
+with a single additional sample, restoring system-level extraction          stays well controlled across all settings. Third, Table 4 shows that
+accuracy to 100%.                                                           these residual deviations remain highly sparse even in the more
+                                                                            difficult configurations: the bit error ratio stays within 0.033%–
+                                                                            0.083% for Llama-3.1-8B and 0.064%–0.199% for Qwen3-8B, while
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                                       Trovato et al.
+
+
+Table 2: Comparison of disambiguation strategies on Qwen3-8B across different top-𝑘 settings on the Chinese IMDB dataset.
+
+                      Method                          𝑘     Ave PPL          Ave KLD   Max KLD       Capacity        Utilization    Total Time    RTO         Accuracy
+                                                                                                    (bits/token)                        (s)        (%)
+                                                     32           5.58         0.00      0.00            1.85             0.87         6.85        0.00            –
+                   Discop [4]                        128          8.70         0.00      0.00            2.47             0.90         7.00        0.00            –
+                                                     512         11.61         0.00      0.00            2.77             0.91         7.07        0.00            –
+                                                     32      21.10             1.64     15.32            2.22             0.96        11.92       74.01            1.00
+                                Basic [18]           128     56.47             2.18     15.46            3.07             0.98        23.22       231.71           1.00
+                                                     512    104.79             2.29     16.82            3.62             0.99        27.01       282.04           1.00
+
+       Token                                         32           5.60         0.16      1.15            1.69             0.74        10.61       54.89            1.00
+      Removal                   MWIS [34]            128          7.69         0.18      1.16            2.21             0.77        23.73       239.00           1.00
+                                                     512          9.93         0.19      1.16            2.53             0.78        29.28       314.14           1.00
+                                                     32           5.54         0.04      1.28            1.87             0.83        10.10       47.45            1.00
+                               Stepwise
+                                                     128         16.76         0.04      1.48            2.34             0.85        19.19       174.14           1.00
+                         Verification [31, 32]
+                                                     512         21.64         0.04      1.39            2.76             0.86        55.51       685.15           1.00
+                                                     32           6.43         0.00      0.00            1.60             0.69         6.93        1.17            1.00
+                               Syncpool [20]         128          8.56         0.00      0.00            1.95             0.69         8.49       21.29            1.00
+    Distribution                                     512         11.71         0.00      0.00            2.24             0.70        15.83       123.90           1.00
+    Preserving
+                                                     32           5.78         0.00      0.00            1.61             0.83        45.51       564.38           1.00
+                                Verification
+                                                     128          9.17         0.00      0.00            2.32             0.87       400.13      5616.14           1.00
+                                -based [33]
+                                                     256         10.46         0.00      0.00            2.54             0.86       741.34      10770.09          1.00
+                                                     32           5.53         0.00      0.00            1.85             0.87         8.16       19.12            0.998
+        Ours                    ReTokSync            128          8.70         0.00      0.00            2.47             0.90         7.40        5.71            0.998
+                                                     512         11.00         0.00      0.00            2.77             0.91         8.07       14.14            0.997
+
+
+Table 3: Grouped-correction performance under different                                 Table 4: Residual error sparsity and correction overhead un-
+top-𝑘 settings.                                                                         der different top-𝑘 settings.
+
+                                Avg. Error     Avg. Corr. Len.     Success                                                Bit Error Token Error  Correction-to-
+       Model           Top-𝑘                                                                   Model              Top-𝑘
+                                (bit/group)         (bit)            (%)                                                   Ratio       Ratio    Embedding Ratio
+       Llama-3.1-8B     32          0.78            10.28            100                                            32     0.033%      0.030%             0.435%
+       Llama-3.1-8B     64          1.40            14.82            100                                            64     0.052%      0.062%             0.547%
+                                                                                               Llama-3.1-8B [7]
+       Llama-3.1-8B     128         1.82            16.44            100                                           128     0.061%      0.072%             0.551%
+                                                                                                  (English)
+       Llama-3.1-8B     256         2.06            17.98            100                                           256     0.063%      0.080%             0.549%
+       Llama-3.1-8B     512         2.96            21.30            100                                           512     0.083%      0.090%             0.596%
+
+       Qwen3-8B         32          1.22            12.84            100                                            32     0.064%      0.050%             0.671%
+       Qwen3-8B         64          1.52            14.22            100                                            64     0.070%      0.054%             0.658%
+                                                                                               Qwen3-8B [35]
+                                                                                                                   128     0.120%      0.100%             0.875%
+       Qwen3-8B         128         2.92            21.22            100                         (Chinese)
+                                                                                                                   256     0.199%      0.140%             1.148%
+       Qwen3-8B         256         5.22            30.16            100
+                                                                                                                   512     0.155%      0.116%             0.912%
+       Qwen3-8B         512         4.40            25.94            100
+
+
+                                                                                         4.6      Security Against Steganalysis
+                                                                                        For steganalysis evaluation, we consider three neural detectors with
+the correction-to-embedding ratio remains below 1% in almost                            different architectural characteristics: FCN [37], BiLSTM-DENSE
+all settings. Additional experimental details are provided in the                       [36], and RBILSTMC [17]. Each experiment is conducted on a bal-
+supplementary material.                                                                 anced dataset consisting of 10,000 cover texts generated by Llama-
+   These results confirm the complementarity of the two chan-                           3.1-8B and 10,000 stego texts. The dataset is split into training,
+nels: ReTokSync keeps the residual deviations sufficiently sparse                       validation, and test sets with a ratio of 60%/20%/20%, and all de-
+for the auxiliary Syncpool channel to repair them with a small                          tectors are trained for 20 epochs. Table 5 reports the detection
+amount of structured correction information. The primary chan-                          accuracies of the Baseline and ReTokSync under the three steganal-
+nel preserves efficient and secure payload transmission, while the                      ysis models. Across all three detectors, the accuracies remain close
+auxiliary channel converts sparse residual errors into fully recover-                   to chance level (50%), suggesting that ReTokSync preserves the
+able system-level communication—a favorable operating point for                         security properties of the underlying steganographic scheme under
+continuous interaction scenarios.                                                       the present evaluation protocol.
+ReTokSync: Tokenization Disambiguation                                                                             Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+                    Table 5: Steganalysis Accuracy.                                             Papers). Association for Computational Linguistics, Melbourne, Australia, 66–75.
+                                                                                                doi:10.18653/v1/P18-1007
+                                                                                           [11] Taku Kudo and John Richardson. 2018. SentencePiece: A Simple and Language
+     Scheme        Steganalysis Model Architecture            Detection Accuracy                Independent Subword Tokenizer and Detokenizer for Neural Text Processing.
+                                                                                                In Proceedings of the 2018 Conference on Empirical Methods in Natural Language
+                               FCN [37]                               49.60%                    Processing: System Demonstrations. Association for Computational Linguistics,
+     Baseline             BiLSTM-DENSE [36]                           49.70%                    Brussels, Belgium, 66–71. doi:10.18653/v1/D18-2012
+                            RBILSTMC [17]                             49.77%               [12] Sander Land and Max Bartolo. 2024. Fishing for Magikarp: Automatically
+                                                                                                Detecting Under-trained Tokens in Large Language Models. In Proceedings
+                               FCN [37]                               49.47%                    of the 2024 Conference on Empirical Methods in Natural Language Processing.
+    ReTokSync             BiLSTM-DENSE [36]                           50.40%                    Association for Computational Linguistics, Miami, Florida, USA, 11631–11646.
+                                                                                                doi:10.18653/v1/2024.emnlp-main.649
+                            RBILSTMC [17]                             49.42%               [13] Guorui Liao, Jinshuai Yang, Weizhi Shao, and Yongfeng Huang. 2025. A Frame-
+                                                                                                work for Designing Provably Secure Steganography. In 34th USENIX Security
+                                                                                                Symposium (USENIX Security 25). USENIX Association, Seattle, WA, USA, 6837–
+                                                                                                6856. https://www.usenix.org/conference/usenixsecurity25/presentation/liao
+5     Conclusion                                                                           [14] Wei Liu, Chenxi Wang, Yifei Wang, Zihao Xie, Rennai Qiu, Yufan Dang, Zhuoyun
+                                                                                                Du, Weize Chen, Cheng Yang, and Chen Qian. 2024. Autonomous Agents for Col-
+We studied tokenization ambiguity in generative linguistic steganog-                            laborative Task under Information Asymmetry. In Advances in Neural Information
+raphy and proposed ReTokSync, a self-synchronizing framework                                    Processing Systems, Vol. 37. Curran Associates, Inc. doi:10.52202/079017-0090
+that detects ambiguity online and performs corrective reset only                           [15] Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng,
+                                                                                                and Christopher Potts. 2011. Learning Word Vectors for Sentiment Analysis.
+when needed. By treating ambiguity as a locally triggered, inher-                               In Proceedings of the 49th Annual Meeting of the Association for Computational
+ently sparse phenomenon, ReTokSync prevents local tokenization                                  Linguistics: Human Language Technologies. Association for Computational Lin-
+                                                                                                guistics, Portland, Oregon, USA, 142–150. https://aclanthology.org/P11-1015/
+mismatch from propagating into persistent desynchronization and                            [16] Sumeet Ramesh Motwani, Mikhail Baranchuk, Martin Strohmeier, Vijay Bolina,
+global extraction failure while preserving zero KL divergence and                               Philip H. S. Torr, Lewis Hammond, and Christian Schroeder de Witt. 2024. Se-
+near-baseline efficiency. Experiments on both English and Chinese                               cret Collusion among AI Agents: Multi-Agent Deception via Steganography. In
+                                                                                                Advances in Neural Information Processing Systems, Vol. 37. Curran Associates,
+settings confirm that ReTokSync remains closest to the baseline                                 Inc., 73439–73486. doi:10.52202/079017-2336
+across all evaluated metrics, with residual bit error ratios below                         [17] Yan Niu, Juan Wen, Ping Zhong, and Yiming Xue. 2019. A Hybrid R-BILSTM-C
+0.2%. Building on this property, we further developed a two-channel                             Neural Network Based Text Steganalysis. IEEE Signal Processing Letters 26, 12
+                                                                                                (2019), 1907–1911. doi:10.1109/LSP.2019.2953953
+communication mechanism that fully repairs these residual er-                              [18] Jumon Nozaki and Yugo Murawaki. 2022. Addressing Segmentation Ambiguity
+rors, achieving 100% end-to-end recovery. Future work will extend                               in Neural Linguistic Steganography. In Proceedings of the 2nd Conference of the
+                                                                                                Asia-Pacific Chapter of the Association for Computational Linguistics and the
+the framework to broader model families, alternative tokenization                               12th International Joint Conference on Natural Language Processing (Volume 2:
+schemes, and stronger adversarial security evaluations.                                         Short Papers). Association for Computational Linguistics, Online only, 109–116.
+                                                                                                doi:10.18653/v1/2022.aacl-short.15
+                                                                                           [19] OpenAI. 2023. GPT-4 Technical Report. arXiv:2303.08774 doi:10.48550/arXiv.2303.
+References                                                                                      08774
+ [1] Anthropic. 2024. The Claude 3 Model Family: Opus, Sonnet, Haiku. Technical            [20] Yuang Qi, Kejiang Chen, Kai Zeng, Weiming Zhang, and Nenghai Yu. 2025. Prov-
+     Report. Anthropic. https://assets.anthropic.com/m/61e7d27f8c8f5919/original/               ably Secure Disambiguating Neural Linguistic Steganography. IEEE Transactions
+     Claude-3-Model-Card.pdf                                                                    on Dependable and Secure Computing 22, 3 (2025), 2430–2442. doi:10.1109/TDSC.
+ [2] Minhao Bai, Kaiyi Pang, Guorui Liao, Jinshuai Yang, and Yongfeng Huang. 2025.              2024.3519322
+     Shimmer: a Provably Secure Steganography Based on Entropy Collecting Mech-            [21] Qwen Team. 2025. Qwen2.5 Technical Report. arXiv:2412.15115 [cs.CL] doi:10.
+     anism. In 34th USENIX Security Symposium (USENIX Security 25). USENIX As-                  48550/arXiv.2412.15115
+     sociation, Seattle, WA, USA, 5949–5965. https://www.usenix.org/conference/            [22] Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, and Ilya
+     usenixsecurity25/presentation/bai-minhao                                                   Sutskever. 2019. Language Models are Unsupervised Multitask Learners. Technical
+ [3] Luke A. Bauer, James K. Howes IV, Sam A. Markelon, Vincent Bindschaedler, and              Report. OpenAI. https://cdn.openai.com/better-language-models/language_
+     Thomas Shrimpton. 2024. Leveraging Generative Models for Covert Messaging:                 models_are_unsupervised_multitask_learners.pdf
+     Challenges and Tradeoffs for “Dead-Drop” Deployments. In Proceedings of the           [23] Craig W Schmidt, Varshini Reddy, Haoran Zhang, Alec Alameddine, Omri Uzan,
+     Fourteenth ACM Conference on Data and Application Security and Privacy (Porto,             Yuval Pinter, and Chris Tanner. 2024. Tokenization Is More Than Compression.
+     Portugal). ACM, New York, NY, USA, 67–78. doi:10.1145/3626232.3653264                      In Proceedings of the 2024 Conference on Empirical Methods in Natural Language
+ [4] Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao, Weiming Zhang, and Neng-                 Processing. Association for Computational Linguistics, Miami, Florida, USA, 678–
+     hai Yu. 2023. Discop: Provably Secure Steganography in Practice Based on                   702. doi:10.18653/v1/2024.emnlp-main.40
+     “Distribution Copies”. In Proceedings of the 2023 IEEE Symposium on Security and      [24] Rico Sennrich, Barry Haddow, and Alexandra Birch. 2016. Neural Machine
+     Privacy (SP). IEEE, San Francisco, CA, USA, 2238–2255. doi:10.1109/SP46215.2023.           Translation of Rare Words with Subword Units. In Proceedings of the 54th Annual
+     10179287                                                                                   Meeting of the Association for Computational Linguistics (Volume 1: Long Papers).
+ [5] Kazuki Fujii, Taishi Nakamura, Mengsay Loem, Hiroki Iida, Masanari Ohi, Kakeru             Association for Computational Linguistics, Berlin, Germany, 1715–1725. doi:10.
+     Hattori, Hirai Shota, Sakae Mizuki, Rio Yokota, and Naoaki Okazaki. 2024. Contin-          18653/v1/P16-1162
+     ual Pre-Training for Cross-Lingual LLM Adaptation: Enhancing Japanese Language        [25] Hugo Touvron, Louis Martin, Kevin Stone, et al. 2023. Llama 2: Open Foundation
+     Capabilities. arXiv:2404.17790 [cs.CL] doi:10.48550/arXiv.2404.17790                       and Fine-Tuned Chat Models. arXiv:2307.09288 doi:10.48550/arXiv.2307.09288
+ [6] Gemini Team. 2023. Gemini: A Family of Highly Capable Multimodal Models.              [26] Honai Ueoka, Yugo Murawaki, and Sadao Kurohashi. 2021. Frustratingly Easy
+     Technical Report. Google. https://storage.googleapis.com/deepmind-media/                   Edit-based Linguistic Steganography with a Masked Language Model. In Proceed-
+     gemini/gemini_1_report.pdf                                                                 ings of the 2021 Conference of the North American Chapter of the Association for
+ [7] Aaron Grattafiori et al. 2024. The Llama 3 Herd of Models. arXiv:2407.21783 [cs.AI]        Computational Linguistics: Human Language Technologies. Association for Com-
+     doi:10.48550/arXiv.2407.21783                                                              putational Linguistics, Online, 5486–5492. doi:10.18653/v1/2021.naacl-main.433
+ [8] Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and Yejin Choi. 2020. The              [27] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+     Curious Case of Neural Text Degeneration. In International Conference on Learning          Aidan N. Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention
+     Representations. https://openreview.net/forum?id=rygGQyrFvH                                Is All You Need. In Advances in Neural Information Processing Systems 30
+ [9] Gabriel Kaptchuk, Tushar M. Jois, Matthew Green, and Aviel Rubin. 2021. Meteor:            (NeurIPS 2017). https://proceedings.neurips.cc/paper_files/paper/2017/hash/
+     Cryptographically Secure Steganography for Realistic Distributions. In Proceed-            3f5ee243547dee91fbd053c1c4a845aa-Abstract.html
+     ings of the 2021 ACM SIGSAC Conference on Computer and Communications                 [28] Yaofei Wang, Weilong Pang, Kejiang Chen, Jinyang Ding, Donghui Hu, Weiming
+     Security. ACM, New York, NY, USA, 1529–1548. doi:10.1145/3460120.3484550                   Zhang, and Nenghai Yu. 2026. Breaking the Generative Steganography Trilemma:
+[10] Taku Kudo. 2018. Subword Regularization: Improving Neural Network Trans-                   ANStega for Optimal Capacity, Efficiency, and Security. In Proceedings of the
+     lation Models with Multiple Subword Candidates. In Proceedings of the 56th                 Network and Distributed System Security Symposium (NDSS) 2026. The Internet
+     Annual Meeting of the Association for Computational Linguistics (Volume 1: Long            Society, San Diego, CA, USA. doi:10.14722/ndss.2026.240605
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                    Trovato et al.
+
+
+[29] Yaofei Wang, Gang Pei, Kejiang Chen, Jinyang Ding, Chao Pan, Weilong Pang,
+     Donghui Hu, and Weiming Zhang. 2025. SparSamp: Efficient Provably Secure
+     Steganography Based on Sparse Sampling. arXiv:2503.19499 doi:10.48550/arXiv.
+     2503.19499
+[30] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V. Le, Mohammad Norouzi,
+     Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Klaus Macherey, Jeff
+     Klingner, Apurva Shah, Melvin Johnson, Xiaobing Liu, Łukasz Kaiser, Stephan
+     Gouws, Yoshikiyo Kato, Taku Kudo, Hideto Kazawa, Keith Stevens, George Kurian,
+     Nishant Patil, Wei Wang, Cliff Young, Jason Smith, Jason Riesa, Alex Rudnick,
+     Oriol Vinyals, Greg Corrado, Macduff Hughes, and Jeffrey Dean. 2016. Google’s
+     Neural Machine Translation System: Bridging the Gap between Human and
+     Machine Translation. CoRR abs/1609.08144 (2016). https://arxiv.org/abs/1609.
+     08144
+[31] Ruiyi Yan and Yugo Murawaki. 2025. Addressing Tokenization Inconsistency
+     in Steganography and Watermarking Based on Large Language Models. In Pro-
+     ceedings of the 2025 Conference on Empirical Methods in Natural Language Pro-
+     cessing. Association for Computational Linguistics, Suzhou, China, 7076–7098.
+     doi:10.18653/v1/2025.emnlp-main.361
+[32] Ruiyi Yan and Yugo Murawaki. 2025. Low-Overhead Disambiguation for Genera-
+     tive Linguistic Steganography via Tokenization Consistency. In Proceedings of
+     the Thirty-first Annual Meeting of the Association for Natural Language Processing.
+     The Association for Natural Language Processing, Nagasaki, Japan, 2053–2056.
+     https://www.anlp.jp/proceedings/annual_meeting/2025/pdf_dir/Q5-1.pdf
+[33] Ruiyi Yan, Tian Song, and Yating Yang. 2024. A Near-Imperceptible Disambiguat-
+     ing Approach via Verification for Generative Linguistic Steganography. In 2024
+     IEEE International Conference on Systems, Man, and Cybernetics (SMC). IEEE,
+     Kuching, Malaysia, 1638–1643.
+[34] Ruiyi Yan, Yating Yang, and Tian Song. 2023. A Secure and Disambiguating
+     Approach for Generative Linguistic Steganography. IEEE Signal Processing Letters
+     30 (2023), 1047–1051. doi:10.1109/LSP.2023.3302749
+[35] An Yang et al. 2025. Qwen3 Technical Report. arXiv:2505.09388 [cs.CL] doi:10.
+     48550/arXiv.2505.09388
+[36] Hao Yang, YongJian Bao, Zhongliang Yang, Sheng Liu, Yongfeng Huang, and
+     Saimei Jiao. 2020. Linguistic Steganalysis via Densely Connected LSTM with
+     Feature Pyramid. In Proceedings of the 2020 ACM Workshop on Information Hiding
+     and Multimedia Security. Association for Computing Machinery, New York, NY,
+     USA, 5–10. doi:10.1145/3369412.3395067
+[37] Zhongliang Yang, Yongfeng Huang, and Yu-Jin Zhang. 2019. A Fast and Efficient
+     Text Steganalysis Method. IEEE Signal Processing Letters 26, 4 (2019), 627–631.
+     doi:10.1109/LSP.2019.2902095
+[38] Siyu Zhang, Zhongliang Yang, Jinshuai Yang, and Yongfeng Huang. 2021. Prov-
+     ably Secure Generative Linguistic Steganography. In Findings of the Association
+     for Computational Linguistics: ACL-IJCNLP 2021. Association for Computational
+     Linguistics, Online, 3046–3055. doi:10.18653/v1/2021.findings-acl.268
+[39] Zachary M. Ziegler, Yuntian Deng, and Alexander M. Rush. 2019. Neural Linguis-
+     tic Steganography. In Proceedings of the 2019 Conference on Empirical Methods
+     in Natural Language Processing and the 9th International Joint Conference on
+     Natural Language Processing (EMNLP-IJCNLP). Association for Computational
+     Linguistics, Hong Kong, China, 1210–1215. doi:10.18653/v1/D19-1115
+ReTokSync: Tokenization Disambiguation                                                        Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+A Additional Details of ReTokSync                                         Algorithm 2 Decoding with Skip-X
+A.1 Skip-X Mechanism                                                      Require: Receiver-view sequence 𝑥˜ 1:𝑡˜ , initial state 𝑠 0
+                                                                          Ensure: Extracted message prefix 𝑚ˆ 1: 𝑗ˆ, final state 𝑠ˆ
+When truncated sampling strategies such as top-𝑘 and top-𝑝 are
+used, tokenization ambiguity may cause the re-tokenized sequence           1: 𝑚ˆ ← ∅, 𝑗ˆ ← 0, 𝑠ˆ ← 𝑠 0
+to contain tokens that lie outside the support of the original trun-       2: for 𝑢 = 1 to 𝑡˜ do
+
+cated distribution [8, 31]. We refer to such tokens as X-tokens. More      3:    Compute the truncated candidate set 𝐶𝑢 from 𝑝𝜃 (· | 𝑥˜ 1:𝑢 −1 )
+concretely, let                                                            4:    if 𝑥˜𝑢 ∉ 𝐶𝑢 then
+                       𝑥˜ 1:𝑡˜ = Tok(Detok(𝑥 1:𝑡 ))                        5:       continue
+                                                                           6:    end if
+denote the receiver-view token sequence defined in the main paper.         7:    (Δ𝑚, ˆ𝑠) ← DecStep(𝑥˜𝑢 , 𝐶𝑢 , ˆ𝑠)
+For each receiver-view step 𝑢 ∈ {1, . . . , 𝑡˜}, let                       8:    𝑚ˆ ← ˆ 𝑚∥Δ𝑚
+                                    C𝑢                                     9:    𝑗ˆ ← 𝑗ˆ + |Δ𝑚|
+                                                                          10: end for
+denote the truncated candidate set determined by the shared condi-
+                                                                          11: return (𝑚  ˆ 1: 𝑗ˆ, ˆ𝑠)
+tional distribution
+                          𝑝𝜃 (· | 𝑥˜ 1:𝑢 −1 ).
+If 𝑥˜𝑢 ∉ C𝑢 , then 𝑥˜𝑢 is an X-token.
+    X-tokens are introduced by re-tokenization rather than by the         show that such tokens often manifest themselves as temporary in-
+sender’s actual sampling decision at the corresponding step. There-       consistency in generative steganography and watermarking [31].
+fore, directly applying the standard extraction rule to such tokens       Although the token-level inconsistency rate on 100-token texts is
+may produce spurious message bits and incorrect state transitions.        usually below 0.5%, the temporary inconsistency rates on Swallow-
+To address this issue, we augment the decoding procedure Dec with         7b and Qwen2.5-7b still reach 81.98% and 87.93%, respectively, and
+a simple Skip-X rule: whenever the current token is an X-token,           most of these inconsistencies naturally disappear within the next
+the decoder performs neither message extraction nor state update,         two generated tokens [5, 21, 31]. In other words, some tokens cor-
+and directly proceeds to the next receiver-view step.                     respond only to locally unfinished encoding units at the time they
+    Formally, suppose ambiguity is detected at generation step 𝑡, and     are generated, and become normal text only after being combined
+the sender runs                                                           with subsequent tokens.
+                          (𝑚ˆ 1: 𝑗ˆ, ˆ𝑠) ← Dec(𝑥˜ 1:𝑡˜ , 𝑠 0 )               Motivated by this observation, we refer to tokens that cannot be
+                                                                          independently decoded into normal text and require subsequent
+on the current receiver-view sequence. Under Skip-X, if the token         tokens to form a complete textual unit as incomplete tokens. In
+at receiver-view step 𝑢 satisfies 𝑥˜𝑢 ∉ C𝑢 , then the decoder skips       ReTokSync, since re-tokenization and ambiguity detection are per-
+this position and keeps the current extraction status unchanged.          formed after each generated token, directly re-tokenizing an un-
+That is, no new message bits are appended, and the internal state is      finished combination of incomplete tokens may produce a mis-
+preserved. Since the receiver applies the same rule during extraction,    match between sequences that does not correspond to genuine
+both parties remain strictly aligned after corrective reset.              tokenization ambiguity, but merely reflects a temporary inconsis-
+   This mechanism is particularly important when a locally ambigu-        tency caused by incomplete generation.
+ous tokenization introduces a non-original token. For example, two           Although Yan and Murawaki provide a systematic analysis of
+tokens any and thing may be merged into a single token anything           temporary inconsistency [31], their steganographic Stepwise Veri-
+after re-tokenization, while anything does not belong to the trun-        fication does not introduce a dedicated treatment for such tokens.
+cated candidate set at the corresponding step. The small number of        Their method is essentially a persistent preventive intervention:
+residual bit-flip errors in the basic corrective-reset procedure origi-   at each generation step, candidate tokens are verified one by one,
+nates precisely from such non-original tokens: if they are decoded        and those judged inconsistent are removed in advance to avoid
+as ordinary in-support tokens, the decoder may extract incorrect          tokenization inconsistency at the source [31]. While this design
+message bits. Skip-X explicitly identifies these out-of-support to-       guarantees consistency, it does not explicitly distinguish genuine
+kens and bypasses them during extraction, thereby eliminating this        tokenization ambiguity from temporary inconsistency caused by
+error source and restoring message extraction accuracy to 100%.           unfinished token fragments.
+                                                                             To handle incomplete tokens, we design a buffering mechanism
+A.2     Incomplete Tokens and Buffering                                   within ReTokSync. Specifically, incomplete tokens are first accumu-
+        Mechanism                                                         lated in a buffer, and ambiguity detection is triggered only when
+Prior work has observed a class of “not-yet-complete” token phe-          the buffered token sequence becomes decodable as normal text. For
+nomena from different perspectives . Land and Bartolo point out           incomplete-token combinations that have not yet been fully formed,
+that some tokenizers produce partial UTF-8 sequences, which con-          the system temporarily skips ambiguity detection and related pro-
+tain only a fragment of the UTF-8 encoding of a character and             cessing, thereby avoiding misclassifying the sequence offset caused
+therefore cannot be independently decoded into normal text [12].          by incomplete decoding as genuine ambiguity. Through this buffer-
+They also discuss unreachable tokens, i.e., tokens that cannot return     ing mechanism, ambiguity detection avoids both false positives and
+to their original token IDs after a decode–re-encode process [12].        false negatives, thereby preserving the precision of ReTokSync in
+Building on this line of observation, Yan and Murawaki further            handling tokenization ambiguity.
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                           Trovato et al.
+
+
+Algorithm 3 Incomplete-Token Buffering in ReTokSync                      Algorithm 4 Deferring Detection under Pre-segmentation Anchors
+Require: Payload bitstring 𝑚, tokenizer Tok/Detok, stego en-             Require: Family 𝐹 , payload bitstring 𝑚, tokenizer Tok/Detok,
+    coder Enc, stego decoder Dec, predicates IsIncomplete(·) and             stego encoder Enc, stego decoder Dec, initial state 𝑠 0
+    Decodable(·), initial state 𝑠 0                                       1: 𝑥 ← [ ], 𝑥˜ ← [ ], 𝑗 ← 0, 𝑠 ← 𝑠 0
+ 1: 𝑥 ← [ ], 𝑥˜ ← [ ], 𝐵 ← [ ], 𝑗 ← 0, 𝑠 ← 𝑠 0                            2: for 𝑡 = 1, 2, . . . do
+ 2: for 𝑡 = 1, 2, . . . do                                                3:    (𝑥𝑡 , 𝑗, 𝑠) ← Enc( ˜𝑥, 𝑚, 𝑗, 𝑠)
+ 3:   (𝑥𝑡 , 𝑗, 𝑠) ← Enc( ˜𝑥, 𝑚, 𝑗, 𝑠)                                     4:    𝑥 ← 𝑥 ∥ [𝑥𝑡 ]
+ 4:   𝑥 ← 𝑥 ∥ [𝑥𝑡 ]                                                       5:    if 𝑥𝑡 ∈ 𝐹 then
+ 5:   𝑥˜ pred ← 𝑥˜ ∥ [𝑥𝑡 ]                                                6:         𝑥˜ ← 𝑥˜ ∥ [𝑥𝑡 ]
+ 6:   if 𝐵 ≠ [ ] or IsIncomplete(𝑥𝑡 ) then                                7:         continue
+ 7:        𝐵 ← 𝐵∥ [𝑥𝑡 ]                                                   8:    end if
+ 8:        if not Decodable(𝐵) then                                       9:    𝑥˜ pred ← 𝑥˜ ∥ [𝑥𝑡 ]
+ 9:           𝑥˜ ← 𝑥˜ pred                                               10:    𝑥˜ retok ← Tok(Detok(𝑥))
+10:           continue                                                   11:    if 𝑥˜ pred ≠ 𝑥˜ retok then
+11:        end if                                                        12:         (𝑚ˆ 1: 𝑗ˆ, ˆ𝑠) ← Dec(𝑥˜ retok, 𝑠 0 )
+12:        𝐵 ← []                                                        13:          𝑗 ← 𝑗ˆ, 𝑠 ← 𝑠ˆ
+13:   end if                                                             14:    end if
+14:   𝑥˜ retok ← Tok(Detok(𝑥))                                           15:    𝑥˜ ← 𝑥˜ retok
+15:   if 𝑥˜ pred ≠ 𝑥˜ retok then                                         16: end for
+16:        (𝑚ˆ 1: 𝑗ˆ, ˆ𝑠) ← Dec(𝑥˜ retok, 𝑠 0 )
+17:        𝑗 ← 𝑗ˆ, 𝑠 ← 𝑠ˆ
+18:   end if                                                              To address this issue, we design a processing scheme based on
+19:   𝑥˜ ← 𝑥˜ retok                                                    a special token family. Concretely, through empirical analysis, we
+20: end for                                                            identify a set of special tokens that act as pre-segmentation an-
+                                                                       chors in the tokenizers of GPT2 and the Llama3 series, and organize
+                                                                       them into a family F . The treatment is parallel to the buffering
+                                                                       mechanism for incomplete tokens: when the newly generated token
+A.3 Handling Pre-segmentation-Induced                                  belongs to F , the system temporarily skips re-tokenization, ambi-
+        Temporary Inconsistency                                        guity detection, and corrective reset; instead, it directly appends
+                                                                       the token to the current pseudo sequence and continues subsequent
+Before subword encoding, a tokenizer often performs a pre-segmentation
+                                                                       generation with this pseudo sequence as context. Only after the first
+(or pre-tokenization) step that partitions the input according to
+                                                                       token outside F is generated does the system resume the standard
+hand-crafted rules, such as whitespace, punctuation, or newline-
+                                                                       re-tokenization and disambiguation procedure.
+related markers [23]. This behavior is also exhibited by the tokeniz-
+                                                                          The reason for this design is that future tokens are unknown at
+ers used in model families such as GPT2 [22] and Llama3 [7]. Once
+                                                                       the current step, and thus it is impossible to determine in advance
+such pre-segmentation boundaries are fixed, subsequent merges
+                                                                       whether the pre-segmentation boundary has been fully established.
+are restricted to operate within, rather than across, the resulting
+                                                                       This also explains why existing methods based on preventive inter-
+segments. Consequently, even if two adjacent tokens are in princi-
+                                                                       vention cannot specially handle this issue. Only after the first token
+ple mergeable, they will not be merged when they fall on different
+                                                                       outside F appears does the relevant pre-segmentation structure
+sides of a segment boundary, for example, when one lies at the end
+                                                                       become fixed, making it possible to decide the actual segmentation
+of the preceding segment and the other at the beginning of the
+                                                                       pattern of the current prefix in the complete text and, accordingly,
+next segment. Therefore, whether two adjacent tokens are merged
+                                                                       whether genuine tokenization ambiguity has occurred. Experiments
+depends not only on their local adjacency, but also on whether the
+                                                                       show that this mechanism strictly avoids falsely intervening on
+relevant pre-segmentation boundary has already been established.
+                                                                       normal ambiguity-free positions, thereby preserving the precision
+   This phenomenon is particularly important in ReTokSync. Since
+                                                                       of ReTokSync in pre-segmentation scenarios.
+ReTokSync performs re-tokenization and ambiguity detection after
+each generated token, the input to the tokenizer is often only an
+unfinished text prefix. As a result, the resulting pseudo sequence
+                                                                       A.4 Correctness Analysis of Message Extraction
+is not always the strict receiver-view token sequence. If the cur-              in ReTokSync
+rent prefix happens to fall into a pre-segmentation region whose       Although ReTokSync allows tokenization ambiguity to arise at local
+boundary has not yet stabilized, the resulting sequence mismatch       generation positions, this does not imply that the corresponding
+does not correspond to genuine tokenization ambiguity, but merely      message extraction at such positions necessarily becomes entirely
+reflects a temporary inconsistency caused by an unfinished pre-        incorrect. In fact, the impact of local ambiguity on message ex-
+segmentation structure. If detection and correction are triggered      traction depends on the specific case and can be categorized as
+at this stage, normal ambiguity-free generation positions may be       follows.
+falsely treated as ambiguous, which contradicts the design goal of        First, if the ambiguous token introduced at a given position does
+ReTokSync to intervene only when genuine ambiguity occurs.             not appear in the corresponding candidate probability distribution,
+ReTokSync: Tokenization Disambiguation                                                                Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+the skipx criterion is triggered, and the receiver performs no mes-                     • AC-based Steganography: Ziegler et al. introduce arith-
+sage extraction at that position. In this case, no additional erroneous                   metic coding into neural text generation and determine each
+bits are introduced.                                                                      token progressively according to the model’s conditional
+   Second, if the message extracted at that position happens to                           distribution [39].
+form a prefix of the message embedded before synchronization                            • ADG: Zhang et al. propose Adaptive Dynamic Grouping,
+reset, then, although a local deviation appears to occur, it does not                     which recursively partitions the candidate set according to
+introduce erroneous bits and therefore does not cause substantive                         token probabilities for message embedding [38].
+damage to the current message recovery result.                                          • Shimmer: Bai et al. develop an entropy-collecting mecha-
+   Finally, even when the extracted bits at that position are incon-                      nism that captures and reuses residual entropy during em-
+sistent with the original message, the resulting effect is typically                      bedding to improve payload capacity [2].
+limited to bit flips at a small number of positions in the original                     • Framework-based Scheme: Liao et al. abstract provably se-
+bit stream, rather than causing the entire extraction process to                          cure generative steganography into three components: Prob-
+fail immediately. This further indicates that the primary harm of                         ability Recombination, Bin Sampling, and Uniform Steganog-
+tokenization ambiguity does not lie in the appearance of one or a                         raphy [13].
+few incorrect bits at a local position. Rather, the fundamental prob-
+lem is that an erroneous extraction process disrupts the subsequent
+message-state synchronization between the communicating parties,
+                                                                                  B.2     Algorithm-Specific Adaptation of
+causing subsequent probability reconstruction and message extrac-                         ReTokSync
+tion to deviate continuously from the true generation trajectory,                 ReTokSync is broadly compatible with existing generative stegano-
+and ultimately leading to complete communication failure.                         graphic schemes. Its deployment nevertheless requires modest
+                                                                                  algorithm-specific adaptations to accommodate the internal states
+B  Compatibility Across Steganographic                                            maintained by different methods. These adaptations are implemen-
+   Algorithms                                                                     tation-level rather than conceptual: they do not change the core
+                                                                                  embedding logic, the underlying sampling mechanism, or the in-
+B.1 Generative Linguistic Steganography                                           tended effectiveness of the original schemes. Instead, they expose
+Generative linguistic steganography (GLS) has emerged as an im-                   and synchronize the states necessary for ReTokSync to support
+portant paradigm for covert communication. Unlike traditional text                online ambiguity detection and corrective reset while preserving
+steganography, which typically relies on rule-based substitution or               the original design of each method.
+post hoc modification of an existing carrier, GLS embeds secret in-                  Discop, Meteor, and ADG require only lightweight state
+formation directly into the generation process. By leveraging large               synchronization. In these schemes, pseudorandomness is used to
+language models to represent natural language distributions, GLS                  support distribution-copy selection, XOR masking, or synchronized
+can produce stegotext that more closely resembles naturally gen-                  sampling, respectively [4, 9, 38]. Moreover, previously embedded
+erated text in terms of fluency, semantic coherence, and statistical              bits do not recursively alter how subsequent bits are embedded
+properties.                                                                       beyond the maintained message position and pseudorandom state.
+   Modern generative language models are typically built on autore-               Consequently, when ReTokSync performs corrective reset, it is suf-
+gressive Transformer-based architectures [22, 27].Given a prefix                  ficient to realign the sender’s message pointer and pseudorandom
+context 𝑥 <𝑡 = (𝑥 1, 𝑥 2, . . . , 𝑥𝑡 −1 ), the model defines at step 𝑡 a condi-   state with the decoding result under the receiver-view tokenization.
+tional distribution over the vocabulary V, denoted by 𝑝𝜃 (𝑥𝑡 | 𝑥 <𝑡 ).            This lightweight reset is enough to restore synchronization with-
+Text generation then proceeds by repeatedly selecting or sampling                 out modifying the original embedding procedure, making these
+the next token from this distribution and appending it to the cur-                methods naturally compatible with ReTokSync.
+rent prefix. In practice, inference may use deterministic decoding,                  The Framework-based Scheme requires synchronization
+such as greedy decoding, or stochastic decoding with truncation                   of multiple coordinated random states. This scheme combines
+strategies such as top-𝑘 or top-𝑝 sampling. Because open-ended                    token binning with uniform steganography and therefore maintains
+generation typically requires a balance between textual quality and               more than one source of internal randomness [13]. To integrate it
+diversity, practical decoding is often stochastic, which naturally                with ReTokSync, corrective reset must recover not only the message
+provides an entropy source for information embedding.                             position, but also the pseudorandom states associated with bin
+   GLS exploits this stepwise conditional distribution to map secret              selection and with the in-bin embedding process. In addition, a
+messages to token selections during generation, thereby enabling                  special case arises when ambiguity introduces a non-original token
+reversible embedding and extraction while preserving the underly-                 that still lies within the truncated candidate set but falls outside
+ing generation distribution as much as possible.                                  the currently selected bin. In such cases, the Skip-X rule must also
+   Representative GLS schemes include the following:                              be invoked so that extraction skips the incompatible position and
+     • Discop: Ding et al. embed secret information by constructing               rolls back the relevant state consistently with the receiver’s view.
+       multiple distribution copies and further improve embedding                    AC-based steganography additionally requires restoration
+       efficiency through a Huffman-tree-based design [4].                        of the arithmetic-coding interval. In arithmetic-coding-based
+     • Meteor: Kaptchuk et al. propose a scheme based on interval                 schemes, the decoder state is determined not only by the current
+       reversibility, where token sampling proceeds in a manner                   message position but also by the evolving coding interval [39].
+       analogous to arithmetic coding [9].                                        Therefore, corrective reset under ReTokSync must synchronize
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                           Trovato et al.
+
+
+both quantities to the receiver-view decoding result. Without in-          context 𝑥˜𝑡 −1 is exactly the receiver-view tokenization of the current
+terval restoration, subsequent decoding would proceed from an              visible prefix:
+inconsistent internal state even if the message pointer itself were
+                                                                                        𝑥˜𝑡 −1 = 𝑇𝑜𝑘 (𝑦𝑡 −1 ),       𝑦𝑡 −1 = 𝐷𝑒𝑡𝑜𝑘 (𝑥 1:𝑡 −1 ).            (14)
+correctly aligned.
+   Shimmer requires synchronization of additional iterative                  Proof. We prove by induction on 𝑡.
+intermediate states. Beyond the message position and pseudoran-              For 𝑡 = 1, the initialization gives 𝑥 = ∅ and 𝑥˜ = ∅, hence
+dom state, Shimmer maintains internal variables associated with
+its iterative interval-update process [2]. To ensure that corrective                                    𝑥˜ 0 = 𝑇𝑜𝑘 (∅) = ∅.                                (15)
+reset returns exactly to the embedding trajectory implied by the             Assume that Eq. (14) holds at the beginning of step 𝑡. After the
+receiver-view tokenization, ReTokSync must record and restore              sender generates a token 𝑥𝑡 , ReTokSync computes
+these intermediate states as well. Importantly, this adaptation does
+not modify Shimmer’s protocol logic or its original security ar-                                   𝑥˜ retok = 𝑇𝑜𝑘 (𝐷𝑒𝑡𝑜𝑘 (𝑥 1:𝑡 )).                        (16)
+gument; it only extends the set of internal variables that must be         Regardless of whether ambiguity is detected, the algorithm finally
+synchronized after ambiguity is detected.                                  sets
+                                                                                                    𝑥˜𝑡 ← 𝑥˜ retok .                     (17)
+C     Security Analysis
+                                                                           Therefore,
+   Threat model and security goal. We consider the standard black-
+box observation model for generative linguistic steganography.                                𝑥˜𝑡 = 𝑇𝑜𝑘 (𝐷𝑒𝑡𝑜𝑘 (𝑥 1:𝑡 )) = 𝑇𝑜𝑘 (𝑦𝑡 ).                      (18)
+The adversary observes only the visible text transmitted over the          Hence Eq. (14) also holds at the beginning of step 𝑡 + 1.                         □
+public channel. The adversary does not observe the sender’s internal
+token sequence 𝑥, the re-tokenized receiver-view sequence ˜𝑥, the             Lemma 2 (One-step visible distribution preservation). Con-
+ambiguity flag, the message pointer 𝑗, the internal state 𝑠, or any        ditioned on any current visible prefix 𝑦, the next visible text produced
+other hidden computation performed by the sender. In particular,           by ReTokSync follows exactly the natural visible-text channel:
+the public channel reveals only the visible text prefix                                      Pr[𝑌𝑡 = 𝑦 ′ | 𝑌𝑡 −1 = 𝑦] = 𝑄 nat (𝑦 ′ | 𝑦).                   (19)
+                            𝑦𝑡 = 𝐷𝑒𝑡𝑜𝑘 (𝑥 1:𝑡 ).                    (10)      Proof. Fix any visible prefix 𝑦. By Lemma 1, at the beginning
+   Our goal is to show that ReTokSync preserves the security of the        of the current step the sender uses
+underlying distribution-preserving steganographic encoder. Specif-                                          𝑥˜ = 𝑇𝑜𝑘 (𝑦)                                   (20)
+ically, we prove that, under the above threat model, ReTokSync
+induces exactly the same distribution on visible texts as the natural      as its token context. By the distribution-preserving property in
+generation channel, and is therefore strictly imperceptible on the         Eq. (13), the generated token 𝑋𝑡 satisfies
+visible-text channel.                                                                      Pr[𝑋𝑡 = 𝑣 | 𝑌𝑡 −1 = 𝑦] = 𝑝𝜃 (𝑣 | 𝑇𝑜𝑘 (𝑦)).                      (21)
+    Natural visible-text channel. Let V be the model vocabulary, and         The visible text emitted after generating 𝑋𝑡 is
+let 𝑝𝜃 (· | 𝑐) denote the model’s next-token distribution under token
+context 𝑐. For any visible text prefix 𝑦, define the one-step visible                      𝑌𝑡 = Φ(𝑦, 𝑋𝑡 ) = 𝐷𝑒𝑡𝑜𝑘 (𝑇𝑜𝑘 (𝑦) ∥ [𝑋𝑡 ]).                       (22)
+update map                                                                 Therefore, for any visible output 𝑦 ′ ,
+                    Φ(𝑦, 𝑣) := 𝐷𝑒𝑡𝑜𝑘 (𝑇𝑜𝑘 (𝑦) ∥ [𝑣]),               (11)                                  ∑︁
+                                                                              Pr[𝑌𝑡 = 𝑦 ′ | 𝑌𝑡 −1 = 𝑦] =           Pr[𝑋𝑡 = 𝑣 | 𝑌𝑡 −1 = 𝑦]
+where 𝑣 ∈ V and ∥ denotes concatenation.                                                                      𝑣: Φ(𝑦,𝑣)=𝑦 ′
+  The natural generation channel on visible texts is therefore                                                    ∑︁
+                                                                                                          =               𝑝𝜃 (𝑣 | 𝑇𝑜𝑘 (𝑦))                 (23)
+                             ∑︁
+           𝑄 nat (𝑦 ′ | 𝑦) =       𝑝𝜃 (𝑣 | 𝑇𝑜𝑘 (𝑦)).           (12)                                         𝑣: Φ(𝑦,𝑣)=𝑦 ′
+
+                                𝑣: Φ(𝑦,𝑣)=𝑦 ′                                                             = 𝑄 nat (𝑦 ′ | 𝑦).
+   Assumption on the underlying steganographic encoder. Let 𝐸𝑛𝑐 de-        This proves the claim.                                                            □
+note the underlying steganographic encoder used inside ReTokSync.
+We assume that it is distribution preserving in the usual sense: for          Theorem 1 (Strict security of ReTokSync on the main chan-
+every token context 𝑐, payload 𝑚, message pointer 𝑗, and internal          nel). Under the threat model above, if the underlying steganographic
+state 𝑠, the next token output by 𝐸𝑛𝑐 satisfies                            encoder is distribution preserving, then for any generation horizon 𝑇 ,
+                                                                           ReTokSync induces exactly the same distribution on visible-text tran-
+           Pr[𝐸𝑛𝑐 (𝑐, 𝑚, 𝑗, 𝑠) = 𝑣] = 𝑝𝜃 (𝑣 | 𝑐),         ∀𝑣 ∈ V.   (13)   scripts as the natural generation channel. Namely, for every visible
+                                                                           transcript 𝑦1:𝑇 ,
+That is, the encoder may use the secret payload to choose among
+tokens, but its marginal output distribution remains identical to the                   Pr[ReTokSync = 𝑦1:𝑇 ] = Pr[Natural = 𝑦1:𝑇 ].                       (24)
+model distribution.
+                                                                           Consequently, for any adversary A that observes only the visible text
+   Lemma 1 (Receiver-view context invariant). At the begin-                transcript,
+ning of every generation step 𝑡 in ReTokSync, the sender’s maintained                             Advsec
+                                                                                                      ReTokSync (A) = 0.                    (25)
+ReTokSync: Tokenization Disambiguation                                                                 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+   Proof. By the chain rule of probability, for any visible transcript             then the composed two-channel communication mechanism is strictly
+𝑦1:𝑇 ,                                                                             secure on the visible-text channel.
+                                 𝑇
+                                 Ö                                                    Proof. Under condition (3), the interleaving pattern of primary
+   Pr[ReTokSync = 𝑦1:𝑇 ] =              Pr[𝑌𝑡 = 𝑦𝑡 | 𝑌1:𝑡 −1 = 𝑦1:𝑡 −1 ].   (26)
+                                                                                   and auxiliary samples is fixed independently of the secret message,
+                                 𝑡 =1
+                                                                                   so it reveals no additional information. Under conditions (1) and (2),
+Because the channel is autoregressive, conditioning on the whole                   each individual channel is indistinguishable from its corresponding
+visible history is equivalent to conditioning on the current visible               natural channel. Therefore, by standard composition, the joint tran-
+prefix 𝑦𝑡 −1 . By Lemma 2,                                                         script distribution is also indistinguishable from the corresponding
+            Pr[𝑌𝑡 = 𝑦𝑡 | 𝑌1:𝑡 −1 = 𝑦1:𝑡 −1 ] = 𝑄 nat (𝑦𝑡 | 𝑦𝑡 −1 ).         (27)   natural mixed transcript.                                          □
+
+Substituting Eq. (27) into Eq. (26) yields                                         D  Details of the Covert Communication
+                             𝑇
+                             Ö                                                        Mechanism
+Pr[ReTokSync = 𝑦1:𝑇 ] =              𝑄 nat (𝑦𝑡 | 𝑦𝑡 −1 ) = Pr[Natural = 𝑦1:𝑇 ].
+                              𝑡 =1                                                 D.1 Protocol Scope
+                                                                (28)               The main text presents the high-level motivation and workflow of
+Hence the two channels are identically distributed on all observable               the two-channel communication mechanism. Here we focus on the
+transcripts, which proves Eq. (25).                               □                protocol details needed for implementation, namely how residual
+                                                                                   errors are aggregated on the sender side, how the corresponding
+   Why corrective reset does not break security. The key reason is
+                                                                                   correction message is constructed, and how the receiver parses and
+that corrective reset changes only the sender’s hidden internal state,
+                                                                                   applies that message to recover the final payload.
+not the public transcript. More precisely:
+                                                                                      We use ReTokSync as the primary channel and Syncpool as the
+   (1) the visible token/text for the current step has already been                auxiliary correction channel [20]. The rationale is that ReTokSync
+       sampled and emitted before reset is performed;                              confines ambiguity-induced damage to sparse local residual errors,
+   (2) reset only updates ( 𝑗, 𝑠) so that subsequent embedding re-                 while Syncpool provides a reliable vehicle for transmitting the
+       mains aligned with the receiver-view tokenization;                          comparatively short correction message. As a result, the primary
+   (3) by Lemma 1, after reset the sender again conditions future                  channel carries the main payload with high efficiency, and the
+       generation on 𝑇𝑜𝑘 (𝑦𝑡 ), which is exactly the context used by               auxiliary channel is used only to repair the small number of residual
+       the natural channel after observing the visible prefix 𝑦𝑡 .                 extraction errors that remain after primary-channel decoding.
+Therefore, corrective reset affects only hidden synchronization
+variables, while the observable visible-text distribution remains                  D.2    Sender-Side Construction
+unchanged.                                                                         We adopt a grouped correction strategy. After transmitting 𝑛 stegano-
+   Corollary 1 (Zero KL divergence on the visible-text chan-                       graphic samples through the primary channel, the sender generates
+nel). Under the assumptions of Theorem 1, the KL divergence between                one additional correction sample for that group through the auxil-
+the visible-text distribution induced by ReTokSync and that induced                iary channel. This correction sample summarizes all residual errors
+by the natural channel is exactly zero:                                            detected within the group.
+                                                                                     For a given group, the sender first converts each transmitted
+                   𝐷 KL ReTokSync ∥ Natural = 0.                (29)               sample to its receiver-view token sequence and concatenates these
+                                                                                   sequences in transmission order, thereby forming a single group-
+   Proof. The result follows immediately from Eq. (24).                       □    level token sequence. During this process, the sender records, for
+   Remark on side channels. The above theorem is proved under the                  each token position, the message fragment that would be extracted
+text-only observation model. It does not cover extra observables                   by the receiver under the standard decoding procedure. Because the
+outside the visible transcript, such as timing, computation latency,               sender also knows the intended payload, it can align the receiver-
+packetization artifacts, or a correction schedule that depends on the              view extracted stream with the target stream at the token level
+secret payload or on observed errors. These factors are outside the                and identify the token positions at which the extracted fragment is
+present security definition and must be fixed or separately masked                 inconsistent with the intended one.
+in deployment.                                                                        Each detected mismatch gives rise to one correction item. A
+                                                                                   correction item specifies (i) the position of the token whose ex-
+   Corollary 2 (Compositional security of the two-chan-                            tracted fragment is erroneous and (ii) the replacement fragment
+nel mechanism). Consider the continuous-interaction mechanism                      that should be used at that position. Collecting all such items over
+in which ReTokSync is used as the primary channel and Syncpool is                  the group yields the correction message to be embedded in the
+used as the auxiliary correction channel. If                                       auxiliary channel.
+   (1) the primary ReTokSync channel satisfies Theorem 1;
+   (2) the auxiliary channel is itself strictly secure; and                        D.3    Receiver-Side Recovery
+   (3) the positions at which auxiliary correction samples are inserted            On the receiver side, all primary-channel samples in the group
+       are determined by a public, payload-independent rule, e.g., one             are first decoded in the standard manner. The receiver likewise
+       correction sample after every fixed-size group,                             concatenates the corresponding receiver-view token sequences in
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                              Trovato et al.
+
+
+transmission order and records the extracted message fragment             use Llama-3.1-8B [7] and Qwen3-8B [35] as the underlying lan-
+associated with each token position. This produces a group-level          guage models and conduct experiments on the English and Chi-
+extracted stream together with its token-level segmentation.              nese versions of the IMDB dataset [15], respectively. Under top-
+   The receiver then decodes the correction sample transmitted            𝑘 = 128, we generate 500 texts of length 100 and compare each
+through the auxiliary channel and parses the resulting correction         original algorithm (Baseline) with its ReTokSync-enhanced counter-
+message sequentially. For each correction item, the receiver locates      part from three perspectives: effectiveness, security, and efficiency.
+the designated token position in the group-level token sequence           The evaluated methods span six representative families of gen-
+and replaces the originally extracted fragment at that position with      erative steganography, namely Discop [4], Meteor [9], AC-based
+the replacement fragment carried in the correction message. After         Steganography [39], ADG [38], Shimmer [2], and the Framework-
+all correction items have been applied, the corrected group-level         based Scheme [13], together with their corresponding variants.
+message stream is partitioned back into the message streams corre-           As shown in Tables 6 and 7, ReTokSync remains broadly compat-
+sponding to the individual samples in the group, yielding the final       ible with heterogeneous generative steganographic mechanisms.
+recovered payload for each sample.                                        Although its deployment requires method-specific state synchro-
+                                                                          nization, these adaptations do not alter the underlying embedding
+D.4     Encoding of the Correction Message                                logic. Instead, they allow the original schemes to operate within the
+Each correction message consists of a count field followed by a           corrective-reset framework while largely preserving their original
+sequence of correction items. The count field is encoded with fixed       security and efficiency characteristics.
+length and specifies the number of correction items contained in             This trend can be observed consistently across different algo-
+the message. If this field is all zeros, the message indicates that       rithm families. In the English setting, for example, the Discop-
+no correction is required for the current group, and the receiver         Base variant remains nearly unchanged after integration with Re-
+terminates correction processing immediately after reading the            TokSync: the average PPL changes only from 8.40 to 8.39, the em-
+count field.                                                              bedding capacity remains 1.36 bits/token, and the total runtime
+   Each correction item contains two components: a position field         increases only slightly from 5.10 s to 5.15 s, while extraction accu-
+and a replacement field. The position field identifies the token          racy reaches 1.000. A similar pattern is observed for Meteor-R in the
+position to be corrected in the group-level token sequence. To            Chinese setting, where the total runtime changes only marginally
+reduce overhead, positions are encoded with dynamic length rather         from 53.35 s to 53.60 s and the extraction accuracy remains high at
+than with a uniform fixed-width representation. Concretely, after         0.998. Even in comparatively less favorable cases, the degradation
+each correction item has been parsed, both sender and receiver            remains limited in nature. For instance, for the Framework-based
+update the range of token positions that remain to be described;          Differential variant with Qwen3-8B, ReTokSync preserves zero av-
+the bit width of the next position field is then determined from          erage and maximum KLD and achieves 0.999 extraction accuracy,
+that remaining range. This design avoids unnecessary positional           although the runtime overhead rises to 45.05%, indicating that the
+redundancy, especially when only a small number of tokens in a            adaptation cost is method-dependent rather than stemming from
+long group require correction.                                            any loss of distributional security.
+   The replacement field carries the corrected message fragment              Overall, the results suggest that ReTokSync transfers well across
+for the designated token position. No explicit length field is needed     substantially different embedding mechanisms. Across the reported
+for this component. Because the receiver has already recorded the         settings with available accuracy values, the ReTokSync-enhanced
+token-level extraction result for the group, once a target token          variants consistently achieve extraction accuracy of at least 99.5%,
+position is identified, the receiver also knows the length of the         while maintaining security and efficiency close to those of their
+originally extracted fragment at that position. The replacement           corresponding baselines.
+field can therefore be parsed using that known length, after which
+the erroneous fragment is directly substituted with the corrected         E.2    Communication Performance under
+one.
+   Overall, the correction message is parsed from left to right: the
+                                                                                 Different Group Sizes
+receiver first reads the count field, then iteratively parses each cor-   To further evaluate the proposed two-channel communication mech-
+rection item by decoding its position field, determining the required     anism, we conduct experiments under different group sizes in both
+replacement length from the original token-level extraction record,       English and Chinese settings. ReTokSync is used as the primary
+and reading the corresponding replacement bits. This process con-         channel, while Syncpool serves as the auxiliary correction chan-
+tinues until all correction items specified by the count field have       nel. We use Llama-3.1-8B and Qwen3-8B as the underlying lan-
+been consumed.                                                            guage models and evaluate on the English and Chinese versions of
+                                                                          the IMDB dataset, respectively. For each setting, we generate 100
+E Additional Experimental Results                                         steganographic samples of length 100. In the primary channel, the
+                                                                          top-𝑘 value is varied over {32, 64, 128, 256, 512}, while the auxiliary
+E.1 ReTokSync across Different Steganographic                             channel consistently uses Syncpool with top-𝑘 = 64. We report
+    Algorithms                                                            results for group sizes of 5, 10, and 20. For the primary channel,
+To evaluate the generality of ReTokSync, we further examine its           we report the utilization and the average number of residual bit
+performance across a diverse set of generative steganographic al-         errors per group. For the auxiliary channel, we report the aver-
+gorithms in both English and Chinese settings. Specifically, we           age correction-message length, the maximum correction-message
+ReTokSync: Tokenization Disambiguation                                                           Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+Table 6: Experimental Results of ReTokSync on Different Steganographic Algorithms with Llama-3.1-8B in the English Setting.
+
+        Algorithm              Variant       Scheme     Ave PPL Ave KLD    Max KLD      Capacity   Utilization      Total Time     RTO     Accuracy
+                                                                (×10−2 )   (×10−2 )   (bits/token)                      (s)         (%)
+                                             Baseline     8.40      0.00     0.00         1.36            0.45          5.10       0.00         –
+                                 Base
+                                            ReTokSync     8.39      0.00     0.00         1.36            0.45          5.15       1.16        1.000
+        Discop [4]
+                                             Baseline     9.67      0.00     0.00         2.88            0.91          5.13       0.00         –
+                              Huffman
+                                            ReTokSync     9.61      0.00     0.00         2.86            0.91          6.49       26.62       0.998
+                                             Baseline    10.26      0.00     0.01         2.12            0.65          5.41       0.00         –
+                               Meteor
+                                            ReTokSync    10.26      0.00     0.01         2.12            0.65          6.00       10.89       0.999
+        Meteor [9]
+                                             Baseline    10.27      0.00     0.01         2.20            0.67         31.92       0.00         –
+                              Meteor-R
+                                            ReTokSync    10.27      0.00     0.01         2.19            0.67         34.60       8.39        0.998
+                                             Baseline    10.00      0.01     0.31         3.20            0.99          2.52       0.00         –
+          AC [39]                AC
+                                            ReTokSync    10.20      0.01     0.31         3.22            0.99          2.77       9.92        0.998
+                                             Baseline     9.47      0.48     3.04         2.01            0.64          5.07       0.00         –
+        ADG [38]                ADG
+                                            ReTokSync     9.21      0.47     3.07         1.98            0.64          5.79       14.20       0.999
+                                             Baseline    10.28      0.00     0.00         2.71            0.81          4.99       0.00         –
+                              Shimmer
+                                            ReTokSync    10.30      0.00     0.00         2.73            0.82          5.28       5.81        0.999
+       Shimmer [2]
+                                             Baseline    10.49      0.00     0.00         2.75            0.82          5.03       0.00         –
+                             Shimmer-R
+                                            ReTokSync    10.49      0.00     0.00         2.77            0.83          5.29       5.17        0.999
+                                             Baseline    11.66      0.00     0.00         2.36            0.69          5.10       0.00         –
+                             Differential
+                                            ReTokSync    11.66      0.00     0.00         2.36            0.69          5.11       0.20        0.999
+  Framework-based [13]                       Baseline    11.23      0.00     0.00         2.08            0.62          5.09       0.00         –
+                               Stability
+                                            ReTokSync    11.26      0.00     0.00         2.07            0.62          5.88       15.52       0.999
+                                             Baseline    11.23      0.00     0.00         1.88            0.55          5.81       0.00         –
+                               Binary
+                                            ReTokSync    11.05      0.00     0.00         1.87            0.55          6.52       12.22       0.999
+
+
+length, the auxiliary-channel utilization, the ratio of correction-        and 0.792%, respectively. These results indicate that larger groups
+message length to the total embedded payload length, and the final         require longer correction messages in absolute terms, but allow the
+correction success rate.                                                   correction cost to be amortized over a larger primary payload.
+   Several consistent observations emerge from Tables 8, 9, and 10.            At the same time, the residual errors in the primary channel
+First, the primary channel remains stable across different group           remain limited in scale. Even in relatively challenging settings, the
+sizes. For both Llama-3.1-8B and Qwen3-8B, the primary-channel             average number of residual bit errors per group remains modest
+utilization stays within a narrow range of 0.88–0.92 across all evalu-     compared with the total payload carried by the group. For instance,
+ated settings, indicating that grouped correction does not materially      with Llama-3.1-8B and top-𝑘 = 512, the average number of residual
+affect the payload efficiency of the main transmission. Second, the        bit errors increases from 1.48 for groups of 5 to 2.96 for groups of
+correction success rate remains at 100% in all reported configura-         10 and 5.92 for groups of 20, while the corresponding correction-to-
+tions, showing that the residual errors produced by the primary            embedding ratio remains below 0.8% in all three cases. For Qwen3-
+channel can be fully repaired under the proposed two-channel               8B, the largest reported correction-to-embedding ratio is 1.333% at
+design.                                                                    top-𝑘 = 256 with groups of 5, and it remains at or below 1.147%
+   Third, although the absolute correction length generally in-            for groups of 10 and 1.075% for groups of 20. Taken together, these
+creases with group size, the relative correction overhead remains          results show that the residual deviations produced by ReTokSync
+small and often becomes more favorable when more samples are               are highly sparse, so that they can be repaired using only a short
+corrected jointly. For example, in the Llama-3.1-8B setting with           auxiliary correction message.
+top-𝑘 = 32, the average correction-message length increases from               Overall, the results confirm the complementarity of the two
+7.97 bits for groups of 5 to 10.28 bits for groups of 10 and 15.04 bits    channels. ReTokSync provides an efficient primary channel whose
+for groups of 20, while the correction-to-embedding ratio decreases        residual errors remain sparse and well structured, while Syncpool
+from 0.675% to 0.436% and then to 0.319%. A similar trend can be           provides a reliable auxiliary channel that repairs these errors with
+observed in the Chinese setting. For Qwen3-8B with top-𝑘 = 128,            100% success and modest overhead. This makes the proposed mech-
+the average correction-message length rises from 13.18 to 21.22 and        anism a practical design for continuous covert communication, as
+38.32 bits as the group size increases from 5 to 10 and 20, whereas        it preserves high primary-channel efficiency while enabling exact
+the correction-to-embedding ratio decreases from 1.089% to 0.877%          end-to-end recovery through lightweight structured correction.
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                         Trovato et al.
+
+
+Table 7: Experimental Results of ReTokSync on Different Steganographic Algorithms with Qwen3-8B in the Chinese Setting.
+
+        Algorithm               Variant        Scheme            Ave PPL Ave KLD    Max KLD      Capacity   Utilization   Total Time    RTO     Accuracy
+                                                                         (×10−2 )   (×10−2 )   (bits/token)                   (s)        (%)
+                                               Baseline            6.89     0.00       0.00         1.16        0.44         7.07       0.00        –
+                                 Base
+                                              ReTokSync            6.89     0.00       0.00         1.17        0.44         7.56       6.93        –
+        Discop [4]
+                                               Baseline            7.70     0.00       0.00         2.45        0.90         7.07       0.00        –
+                               Huffman
+                                              ReTokSync            7.75     0.00       0.00         2.47        0.90         7.54       6.61       0.998
+                                               Baseline            7.26     0.00       0.01         1.69        0.63         7.82       0.00        –
+                                Meteor
+                                              ReTokSync            7.02     0.00       0.01         1.66        0.63         8.47       8.22       0.998
+        Meteor [9]
+                                               Baseline            7.53     0.00       0.02         1.81        0.66        53.35       0.00        –
+                               Meteor-R
+                                              ReTokSync            7.52     0.00       0.02         1.82        0.66        53.60       0.47       0.998
+                                               Baseline            6.79     0.01       0.29         2.52        0.98         3.55       0.00        –
+          AC [39]                 AC
+                                              ReTokSync            6.76     0.01       0.25         2.52        0.98         3.64       2.41       0.998
+                                               Baseline            7.67     0.41       2.77         1.70        0.61         7.15       0.00        –
+         ADG [38]                ADG
+                                              ReTokSync            7.70     0.41       2.78         1.69        0.61         7.73       8.08       0.997
+                                               Baseline            6.72     0.00       0.00         2.04        0.76         7.09       0.00        –
+                               Shimmer
+                                              ReTokSync            6.63     0.00       0.00         2.01        0.75         7.28       2.68       0.995
+       Shimmer [2]
+                                               Baseline            6.75     0.00       0.00         2.08        0.77         7.03       0.00        –
+                              Shimmer-R
+                                              ReTokSync            6.68     0.00       0.00         2.05        0.76         7.23       2.83       0.996
+                                               Baseline            7.33     0.00       0.00         1.79        0.69         7.25       0.00        –
+                              Differential
+                                              ReTokSync            7.24     0.00       0.00         1.78        0.69        10.51       45.05      0.999
+  Framework-based [13]                         Baseline            7.60     0.00       0.00         1.61        0.61         7.18       0.00        –
+                               Stability
+                                              ReTokSync            7.70     0.00       0.00         1.63        0.61         8.56       19.13      0.999
+                                               Baseline            7.58     0.00       0.00         1.43        0.53         7.84       0.00        –
+                                Binary
+                                              ReTokSync            7.60     0.00       0.00         1.43        0.53        10.98       40.18      1.000
+
+
+Table 8: Communication Performance of the Two-Channel Mechanism under Different Top-𝑘 Settings (5 Samples per Group)
+
+
+                                     Primary Channel                                                Auxiliary Channel
+Models                Top-𝑘
+                                 Utilization       Ave Error          Ave Corr. Len.   Max. Corr. Len.     Utilization     Corr./Emb. Ratio         Success
+                                                     (bit)                (bit)             (bit)                                 (%)                 (%)
+                        32             0.90               0.39             7.97                44              0.39                 0.675               100
+                        64             0.90               0.70            10.17                57              0.39                 0.751               100
+Llama-3.1-8B [7]
+                        128            0.91               0.91            10.90                68              0.40                 0.729               100
+   (English)
+                        256            0.91               1.03            11.57                45              0.43                 0.705               100
+                        512            0.92               1.48            13.21                84              0.38                 0.738               100
+                        32             0.88               0.61            9.19                 41              0.50                 0.962               100
+                        64             0.89               0.76            9.80                 41              0.59                 0.907               100
+Qwen3-8B [35]
+                        128            0.91               1.46            13.18                58              0.57                 1.089               100
+  (Chinese)
+                        256            0.91               2.61            17.53                72              0.61                 1.333               100
+                        512            0.92               2.20            15.39                65              0.60                 1.084               100
+
+
+E.3     Qualitative Stegotext Examples                                              the English example is generated with Llama-3.1-8B, and the Chi-
+To provide a qualitative view of the generated stegotext, we present                nese example is generated with Qwen3-8B. For each case, we com-
+representative examples in both English and Chinese. Specifically,                  pare the stegotext produced by the baseline scheme with that gen-
+                                                                                    erated after applying ReTokSync under the same input context. The
+                                                                                    examples are shown in Tables 11 and 12.
+ReTokSync: Tokenization Disambiguation                                                       Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+Table 9: Communication Performance of the Two-Channel Mechanism under Different Top-𝑘 Settings (10 Samples per Group)
+
+
+                                    Primary Channel                                      Auxiliary Channel
+Models                Top-𝑘
+                                 Utilization   Ave Error   Ave Corr. Len.   Max. Corr. Len.      Utilization      Corr./Emb. Ratio         Success
+                                                 (bit)         (bit)             (bit)                                   (%)                 (%)
+                        32           0.90        0.78            10.28             47                0.39                 0.436               100
+                        64           0.90        1.40            14.82             66                0.39                 0.547               100
+Llama-3.1-8B [7]
+                        128          0.91        1.82            16.44             76                0.36                 0.550               100
+   (English)
+                        256          0.91        2.06            17.98             58                0.39                 0.548               100
+                        512          0.92        2.96            21.30             109               0.38                 0.595               100
+                        32           0.88        1.22            12.84              60               0.57                 0.672               100
+                        64           0.89        1.52            14.22              54               0.53                 0.658               100
+Qwen3-8B [35]
+                        128          0.91        2.92            21.22              74               0.61                 0.877               100
+  (Chinese)
+                        256          0.91        5.22            30.16              98               0.66                 1.147               100
+                        512          0.92        4.40            25.94              71               0.60                 0.913               100
+
+Table 10: Communication Performance of the Two-Channel Mechanism under Different Top-𝑘 Settings (20 Samples per Group)
+
+
+                                    Primary Channel                                      Auxiliary Channel
+Models                Top-𝑘
+                                 Utilization   Ave Error   Ave Corr. Len.   Max. Corr. Len.      Utilization      Corr./Emb. Ratio         Success
+                                                 (bit)         (bit)             (bit)                                   (%)                 (%)
+                        32           0.90        1.56            15.04             48                0.41                 0.319               100
+                        64           0.90        2.80            24.88             67                0.39                 0.459               100
+Llama-3.1-8B [7]
+                        128          0.91        3.64            27.96             87                0.44                 0.468               100
+   (English)
+                        256          0.91        4.12            31.68             83                0.43                 0.483               100
+                        512          0.92        5.92            38.04             115               0.38                 0.531               100
+                        32           0.88        2.44            20.96             63                0.71                 0.549               100
+                        64           0.89        3.04            23.36             59                0.66                 0.541               100
+Qwen3-8B [35]
+                        128          0.91         5.84           38.32             103               0.60                 0.792               100
+  (Chinese)
+                        256          0.91        10.44           56.56             112               0.70                 1.075               100
+                        512          0.92         8.80           48.04             133               0.65                 0.846               100
+
+
+   These examples illustrate that ReTokSync does not introduce ob-       generated from different contexts, we present them in separate
+vious qualitative degradation in the surface text. In both languages,    tables for clarity.
+the generated outputs remain fluent and semantically coherent,
+                                                                         Received 20 February 2007; revised 12 March 2009; accepted 5 June 2009
+while still reflecting the variability inherent in stochastic stegano-
+graphic generation. Since the English and Chinese examples are
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                                  Trovato et al.
+
+
+                                Table 11: Qualitative English stegotext example generated by Llama-3.1-8B.
+
+Context:
+I was excited to watch a Cataluña film in Berlin’s competition. But after the screening, I was totally disappointed and furious: too much blood, too much time, too
+many themes for nothing.
+Stegotext (Discop[4]):
+Something like “Béndezinhao” isn’t it! That film has blood inside and is simply “an animal”. Very good acting, but only four people are in focus; the others on
+screen stay in the background, like shadows. This afternoon at Cine France, the second film was the Mexican film “El Hombre sin Sombra”. Incredible film—simply
+incredible.
+Stegotext (ReTokSync):
+Something like “Béndezinhao” isn’t it! That film has blood inside and is simply “an animal”. Very good acting, but only four people are in focus; the others on screen
+stay in the background, like shadows. This afternoon at Cine France, the second film, the Mexican film “El Hombre sin Sombra”, wasn’t well executed: some very bad
+films and photo projections. I don’t like it.
+
+                                  Table 12: Qualitative Chinese stegotext example generated by Qwen3-8B.
+
+Context:
+这部电影从来没有在我们地区的影院上映，所以当它在DVD上出现时，我是第一个租借它的人之一。
+Stegotext (Discop[4]):
+但是，不是很令人满意。我觉得：主角扮演得不够好，但是最差的是，拍摄手法很抽劣。其次，电影的节奏太慢，没有必要地拖长时间，这导致
+了漫长的沉默，使人们感到很无聊。最后，它的结局很奇怪。我感觉这个电影没有达到预期，没有让我满意。
+Stegotext (ReTokSync):
+但是，不是很令人满意。我觉得：主角扮演得不够好，但是最差的是，拍摄手法很抽劣。其次，电影的节奏太慢，长途旅行的场景过于拖沓。唯
+一的亮点是男主角的表演，但我觉得他的表演过于做作，而且在某些场景里简直崩溃了。
+

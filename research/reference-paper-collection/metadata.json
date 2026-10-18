@@ -1,0 +1,42 @@
+{
+  "id": "reference-paper-collection",
+  "title": "Awesome Linguistic Steganography",
+  "status": "Repository documentation snapshot; not independently reproduced",
+  "kind": "repository",
+  "source": "https://github.com/ryehr/awesome-linguistic-steganography",
+  "repo": "ryehr/awesome-linguistic-steganography",
+  "why": "The survey authors' curated source list, useful for finding papers beyond the primary sources in this archive.",
+  "caveat": "A discovery aid, not evidence that listed claims have been reproduced or that every new method is suitable for exact text transport.",
+  "priority": "orientation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "reference-paper-collection/repository.html",
+      "requested_url": "https://github.com/ryehr/awesome-linguistic-steganography",
+      "resolved_url": "https://github.com/ryehr/awesome-linguistic-steganography",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:02.078859+00:00",
+      "bytes": 855871,
+      "sha256": "dbc72519ff4b1ca89149a60848124e75c8918ce24b572ba50797b4ae31b53bdb"
+    },
+    {
+      "path": "reference-paper-collection/readme-source.json",
+      "requested_url": "https://api.github.com/repos/ryehr/awesome-linguistic-steganography/readme",
+      "resolved_url": "https://api.github.com/repos/ryehr/awesome-linguistic-steganography/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:02.403382+00:00",
+      "bytes": 163728,
+      "sha256": "420a7629c14512d4286c8e586f57c83ada7f73e030e02b8cb91fa501d1050506"
+    },
+    {
+      "path": "reference-paper-collection/upstream-readme.md",
+      "source_url": "https://github.com/ryehr/awesome-linguistic-steganography/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "db3af76d2dfa9ec58167a73ffd4ee079a004761b",
+      "derived_from": "readme-source.json",
+      "bytes": 118173,
+      "sha256": "31f9c7f7975b5dfbb27ccf9442abab49e4077e2b6ef986071d9c9bfe6896e045"
+    }
+  ],
+  "errors": []
+}

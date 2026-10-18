@@ -1,0 +1,42 @@
+{
+  "id": "2026-list-decoding",
+  "title": "Provably Secure Steganography Based on List Decoding",
+  "status": "April 2026 arXiv preprint, v3",
+  "kind": "paper",
+  "source": "https://arxiv.org/abs/2604.21394v3",
+  "pdf": "https://arxiv.org/pdf/2604.21394v3",
+  "why": "Keeps candidate messages across tokens and resolves ambiguity with a suffix. Useful as an alternative way to approach the available entropy when instantaneous token choices carry little information.",
+  "caveat": "Needs message length, can maintain up to 2^20 candidates, and allows a small failure probability. A research agent flagged a possible weighted-to-unweighted inequality issue in the capacity argument; this concern was not independently audited. Treat the bound as an author claim pending review.",
+  "repo": null,
+  "priority": "supporting",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-list-decoding/paper.pdf",
+      "requested_url": "https://arxiv.org/pdf/2604.21394v3",
+      "resolved_url": "https://arxiv.org/pdf/2604.21394v3",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:58.959388+00:00",
+      "bytes": 1142627,
+      "sha256": "5619e7f14b2d964d7b8c23553929b781f2dece3cea67e1887b89f484320d4b54"
+    },
+    {
+      "path": "2026-list-decoding/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 124794,
+      "sha256": "c0aa38acbd7772fb93f59b67d7714a35fd2159196b3e18abc445994668dffb78"
+    },
+    {
+      "path": "2026-list-decoding/source.html",
+      "requested_url": "https://arxiv.org/abs/2604.21394v3",
+      "resolved_url": "https://arxiv.org/abs/2604.21394v3",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:59.242064+00:00",
+      "bytes": 42011,
+      "sha256": "7119e2ee49ae0326938e3ae3e492c29833483e6633d625c562a613f14faf3526"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 14
+}

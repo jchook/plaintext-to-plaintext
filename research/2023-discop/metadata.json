@@ -1,0 +1,60 @@
+{
+  "id": "2023-discop",
+  "title": "Discop: Provably Secure Steganography in Practice Based on Distribution Copies",
+  "status": "IEEE Symposium on Security and Privacy 2023; author-hosted PDF",
+  "kind": "paper",
+  "source": "https://dingjinyang.github.io/uploads/Discop_sp23_paper.pdf",
+  "pdf": "https://dingjinyang.github.io/uploads/Discop_sp23_paper.pdf",
+  "why": "An important distribution-preserving baseline using copies of the token distribution. Its recursive variant improves capacity and appears in many later comparisons.",
+  "caveat": "Requires synchronized sampling and inference. A secure token-level sampler alone does not resolve ambiguous detokenization or message framing.",
+  "repo": "comydream/Discop",
+  "priority": "baseline",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2023-discop/paper.pdf",
+      "requested_url": "https://dingjinyang.github.io/uploads/Discop_sp23_paper.pdf",
+      "resolved_url": "https://ding.ac.cn/uploads/Discop_sp23_paper.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:55.439152+00:00",
+      "bytes": 1693768,
+      "sha256": "de50cefb365694fa5098255a44d74a89a66d96c1d807b0d1c4b5cf89c125f609"
+    },
+    {
+      "path": "2023-discop/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 139208,
+      "sha256": "f4f87a7de8fa4e0810ae8c489c9f7b1260f2eccbfb97defe6cab600fa1cf8f15"
+    },
+    {
+      "path": "2023-discop/repository.html",
+      "requested_url": "https://github.com/comydream/Discop",
+      "resolved_url": "https://github.com/comydream/Discop",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:56.052783+00:00",
+      "bytes": 281837,
+      "sha256": "7a09bad5411000b2902f5d4a5a5b5c6a720b75a246585bc36f6c28392ee8f892"
+    },
+    {
+      "path": "2023-discop/readme-source.json",
+      "requested_url": "https://api.github.com/repos/comydream/Discop/readme",
+      "resolved_url": "https://api.github.com/repos/comydream/Discop/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:56.308090+00:00",
+      "bytes": 7198,
+      "sha256": "68e98b77542b401da8bab23a01df7ec3b5140253a78d22cfa560c795b6d6172d"
+    },
+    {
+      "path": "2023-discop/upstream-readme.md",
+      "source_url": "https://github.com/comydream/Discop/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "08206bd7e9766ba0338d6378825d74e2d5d3c4d3",
+      "derived_from": "readme-source.json",
+      "bytes": 4677,
+      "sha256": "b130021cb106c91378615f193df6f7ca2b9bfb7b35b93d993193ce413b653aa9"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 18
+}

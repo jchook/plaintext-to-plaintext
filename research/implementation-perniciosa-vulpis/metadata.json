@@ -1,0 +1,42 @@
+{
+  "id": "implementation-perniciosa-vulpis",
+  "title": "Perniciosa Vulpis",
+  "status": "Repository documentation snapshot; not independently reproduced",
+  "kind": "repository",
+  "source": "https://github.com/mikkolehtisalo/perniciosavulpis",
+  "repo": "mikkolehtisalo/perniciosavulpis",
+  "why": "Independent C/C++ Meteor-style library using pinned llama.cpp and Llama3.2 1B/3B GGUF models. Closely related to our local-model deployment and visible-text synchronization requirements.",
+  "caveat": "The reviewed deterministic profile targets x86-64. The displayed 7.211 bits/token example uses a mock backend, not Llama. Documentation was reviewed; code was not run.",
+  "priority": "implementation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "implementation-perniciosa-vulpis/repository.html",
+      "requested_url": "https://github.com/mikkolehtisalo/perniciosavulpis",
+      "resolved_url": "https://github.com/mikkolehtisalo/perniciosavulpis",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:00.320486+00:00",
+      "bytes": 360371,
+      "sha256": "e71bdf41d73c0cf1d7b07bf6777c7e551a026962e6762ac392ca1e7b0782099a"
+    },
+    {
+      "path": "implementation-perniciosa-vulpis/readme-source.json",
+      "requested_url": "https://api.github.com/repos/mikkolehtisalo/perniciosavulpis/readme",
+      "resolved_url": "https://api.github.com/repos/mikkolehtisalo/perniciosavulpis/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:00.578740+00:00",
+      "bytes": 17468,
+      "sha256": "6aa3636661c4fb2abbd8176fe01335cbb63d14ba07eb8d59c3615b9ec4bf3bc4"
+    },
+    {
+      "path": "implementation-perniciosa-vulpis/upstream-readme.md",
+      "source_url": "https://github.com/mikkolehtisalo/perniciosavulpis/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "c37d0bbd214a77ca02874bdcc3b2af39f6ea6de7",
+      "derived_from": "readme-source.json",
+      "bytes": 12052,
+      "sha256": "495d573484afa6fa7fb047cf64e655bb403ff6d5031f004a8fd4c0500d81cf71"
+    }
+  ],
+  "errors": []
+}

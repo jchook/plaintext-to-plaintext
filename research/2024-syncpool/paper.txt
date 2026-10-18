@@ -1,0 +1,1043 @@
+                                                                                                                                                                                                     1
+
+
+
+
+                                           Provably Secure Disambiguating Neural Linguistic
+                                                            Steganography
+                                                                      Yuang Qi, Kejiang Chen, Kai Zeng, Weiming Zhang, and Nenghai Yu
+
+
+
+
+                                            Abstract—Recent research in provably secure neural linguistic
+                                         steganography has overlooked a crucial aspect: the sender
+                                         must detokenize stegotexts to avoid raising suspicion from the
+                                         eavesdropper. The segmentation ambiguity problem, which arises
+
+
+
+
+arXiv:2403.17524v2 [cs.CR] 15 Dec 2024
+                                         when using language models based on subwords, leads to
+                                         occasional decoding failures in all neural language steganogra-
+                                         phy implementations based on these models. Current solutions
+                                         to this issue involve altering the probability distribution of
+                                         candidate words, rendering them incompatible with provably
+                                         secure steganography. We propose a novel secure disambiguation
+                                         method named SyncPool, which effectively addresses the seg-
+                                         mentation ambiguity problem. We group all tokens with prefix
+                                         relationships in the candidate pool before the steganographic
+                                         embedding algorithm runs to eliminate uncertainty among
+                                         ambiguous tokens. To enable the receiver to synchronize the
+                                         sampling process of the sender, a shared cryptographically-secure              Fig. 1. An example of segmentation ambiguity in generative linguistic
+                                         pseudorandom number generator (CSPRNG) is deployed to select                   steganography. The sender Alice generates a token sequence corresponding to
+                                         a token from the ambiguity pool. SyncPool does not change the                  subwords “ any” and “thing” during steganography embedding. During trans-
+                                         size of the candidate pool or the distribution of tokens and thus is           mission, the stego-tokens are decoded into the text “ anything”. Unfortunately,
+                                         applicable to provably secure language steganography methods.                  the receiver Bob may retokenize “ anything” as a single token “ anything”.
+                                         We provide theoretical proofs and experimentally demonstrate                   This can lead to errors in steganography extraction.
+                                         the applicability of our solution to various languages and models,
+                                         showing its potential to significantly improve the reliability and
+                                         security of neural linguistic steganography systems.
+                                                                                                                        Security is defined as a probabilistic polynomial time (PPT)
+                                           Index Terms—Steganography, provably secure, subwords, seg-                   distinguisher that cannot distinguish between the cover and
+                                         mentation ambiguity.
+                                                                                                                        stego. Namely, the distributions of the cover and stego ob-
+                                                                                                                        jects are computationally indistinguishable. A steganography
+                                                                    I. I NSTRUCTION                                     method that can prove that the distributions of cover and stego
+                                                                                                                        are consistent or indistinguishable is known to be provably
+                                         T     EXT is the most widely used information carrier in daily
+                                               life [1], making linguistic steganography possess sig-
+                                         nificant research value and practical significance. Generative
+                                                                                                                        secure.
+                                                                                                                           In recent years, the increasing popularity of deep generative
+                                         linguistic steganography methods [2]–[7] directly transform                    models [11]–[15] has gradually fulfilled the requirements of
+                                         secret information into innocuous-looking stegotext during                     provably secure steganography for perfect samplers and ex-
+                                         the generation process of language models. Its objective is                    plicit data distributions, making it feasible for provably secure
+                                         to effectively deceive machine steganalysis through provable                   steganography to be applied in real-world scenarios [16].
+                                         means [4]. Decades ago, researchers began the pursuit of                       For textual carriers, several methods [4], [17]–[21] based on
+                                         steganography techniques that are provably secure [8]–[10].                    neural language deep generative models have been proposed
+                                         According to the information-theoretic model for steganogra-                   in recent years. These methods represent valuable attempts to
+                                         phy proposed by Cachin [8] in 1998, the security of a stegano-                 achieve provably secure linguistic steganography. In general,
+                                         graphic system (stegosystem) can be quantified in terms of                     provably secure neural linguistic steganography can be viewed
+                                         the distribution difference between cover and stego, which is                  as a process of message-driven sampling using a generative
+                                         measured by Kullback–Leibler divergence (KL divergence) be-                    language model. At each generation step, the language model
+                                         tween the cover distributions and stego distributions. Zero KL                 predicts a probability distribution of the next token to be
+                                         divergence means that the steganographic system is perfectly                   generated. A sender selects a token from this probability
+                                         secure. From another perspective, Hopper et al. [9] formalized                 distribution to add to the stego sequence using a steganography
+                                         a provably secure system based on computational complexity.                    embedding algorithm with message bits and a chosen key
+                                                                                                                        while maintaining the probability distribution.
+                                           This work was supported in part by the National Natural Science Foundation
+                                         of China under Grant 62472398, U2336206, 62402469, and 62121002.                  However, the aforementioned neural linguistic steganogra-
+                                           All the authors are with Anhui Province Key Laboratory of Digital            phy methods have either overlooked or intentionally avoided
+                                         Security, School of Cyber Science and Technology, University of Science
+                                         and Technology of China, Hefei 230026, China.                                  the fact that Alice (steganographic sender) must detokenize the
+                                           Corresponding author: Kejiang Chen (Email: chenkj@ustc.edu.cn).              secret tokens into stegotexts before transmitting them to Bob
+                                                                                                                                   2
+
+
+
+(steganographic receiver) in order to evade Eve’s suspicion        provably secure steganography, named SyncPool. We realize
+(steganalyzer). Additionally, the receiver needs to retokenize     that the fundamental reason for segmentation ambiguity is
+the received secret text to extract the message. Ueoka et          the loss of information entropy contained in tokens with
+al. [22] were the first to point out that there is no 100%         prefix relationships during detokenization and retokenization.
+guarantee that Bob could recover the original tokens from          In this paper, we group all candidate tokens whose mapping
+detokenized texts, leading to decoding failures. The related       words have a common prefix into several ambiguity pools
+process is illustrated in Fig. 1. Moreover, since the currently    during generation, which could elimate redundant information
+high-performing large language models [13], [23], [24] are         entropy and prevent the loss of information. However, the
+mostly autoregressive Transformer [25] architectures, incorrect    sender and receiver still can not synchronize the token selected
+segmentation by Bob will lead to changes in the probability        in the ambiguity pool. Therefore, we develop synchronized
+distribution corresponding to all subsequent tokens, further       sampling based on a shared cryptographically secure pseudo-
+affecting message extraction. Simply adding error-correcting       random number generator (CSPRNG) to select a token from
+code to messages is not effective.                                 the ambiguity pool. This disambiguation method based on
+   This phenomenon is termed segmentation ambiguity by             ambiguity pool grouping and synchronized sampling can ef-
+Nozaki and Murawaki [26]. While segmentation ambiguity has         fectively avoid segmentation ambiguity while not altering the
+long been a challenging issue for scriptio continua or writing     size of the candidate pool or the probability distribution of any
+systems without explicit word boundaries, the widespread use       token within it.
+of subwords [27]–[29], which coincided with the invention of          The main contributions of this paper can be summarized as
+the Transformer [25] architecture, implies that it now affects     follows:
+any language. As long as language models are based on                • Analysis of the problems of segmentation ambigu-
+subwords, segmentation ambiguity may arise, thus affecting             ity. We review the segmentation ambiguity issue faced
+the normal use of steganography. Until recently, the provably          by existing provably secure steganography methods and
+secure steganography algorithms proposed by de Witt et                 analyze why current disambiguating solutions are not
+al. [19] and Ding et al. [20] did not considered the impact            applicable to provably secure steganography.
+of segmentation ambiguity, rendering these steganography             • The first provably secure disambiguating linguistic
+methods unusable in recently popular language models. One              steganography. We propose a novel solution named
+approach is to directly transmit tokens to avoid segmentation.         SyncPool based on ambiguity pool grouping and syn-
+However, this behavior is highly questionable in practical             chronous sampling to address information loss and token
+steganography applications and contradicts the original intent         synchronization issues during steganography, eliminating
+of steganography. Therefore, we strongly endorse the call              segmentation ambiguity without altering the distribution.
+made by Nozaki et al. [26] that researchers must consider            • Theoretical proof of steganographic security. We theo-
+detokenization and retokenization as necessary steps in lin-           retically prove that SyncPool does not alter the probabil-
+guistic steganography.                                                 ity distribution of the model during steganographic em-
+   Several existing methods [22], [26], [30] have attempted            bedding, and from a computational security perspective,
+to address the issue of segmentation ambiguity during the              we reduce the security of the algorithm to the security of
+steganography process. However, we have found that they are            the CSPRNG.
+not applicable to provably secure neural language steganog-          • Considerable performance of effectiveness and effi-
+raphy. Ueoka et al. [22] attempted to bypass segmentation              ciency. We designed and implemented necessary exper-
+ambiguity by simply skipping subwords. Their approach, an              iments to demonstrate that our method can completely
+edit-based steganography with a masked language model, can-            eliminate decoding errors, and provided analysis on the
+not be applied to generative steganography methods. Nozaki             impact on embedding and time efficiency.
+and Murawaki [26] extended this idea of skipping subwords
+                                                                     The source code of our implementations of SyncPool can
+to generative steganography, where during steganography sam-
+                                                                   be found at https://github.com/7-yaya/SyncPool.
+pling, tokens whose mapping words are prefixes of others in
+the candidate pool are removed, ensuring that the receiver
+cannot find more than one matching token when attempting                     II. BACKGROUND AND R ELATED W ORK
+to extract the message. Furthermore, Yan et al. [30] aimed to
+enhance steganography security by maximizing the probability       A. Steganography System and Steganographic Security
+sum of the remaining tokens when removing tokens from                 Steganography is a technique that embeds secret messages
+the candidate pool. However, all of these methods alter the        into objects that closely resemble real, mundane communica-
+probability distribution of the current token to be generated by   tions, making it impossible for censors to suppress such com-
+the language model. As previously mentioned, provably secure       munications. Steganography is usually illustrated by Simmons’
+steganography requires maintaining the probability distribution    Prisoners’ Problem [31]. Two prisoners, Alice and Bob, are
+unchanged from normal generation. Therefore, none of the           attempting to communicate with each other over a monitored
+existing solutions for segmentation ambiguity are suitable for     channel while trying to avoid arousing suspicion from the
+provably secure steganography.                                     warden Eve. Therefore, they must find some way to embed
+   To deploy provably secure steganography for practical use,      the secret message into an “innocent-looking” cover to obtain
+we propose a novel disambiguating method applicable to             a stego.
+                                                                                                                                   3
+
+
+
+   To this end, given a channel distribution D (alias of Pc ), the   language models. These methods are dedicated to designing
+following steganography system (stegosystem) is designed:            message embedding algorithms that are indistinguishable from
+   • Alice uses a probabilistic algorithm E NCODE D to embed         the normal generation process, i.e., random sampling. Here, we
+     a secret message m ∈ {0, 1}∗ with a shared key K and            briefly introduce several of these methods.
+     a channel history H to obtain a stego s and sends it to           • Kaptchuk et al. [18] introduced the Meteor method, a
+     Bob.                                                                provably secure steganography approach based on inter-
+                     E NCODED (K, H, m) = s.                   (1)       val reversibility using a random sampling process akin to
+                                                                         arithmetic encoding. During the information embedding
+  •   Bob receives the stego s through the monitored channel
+                                                                         process, encrypted information transformed into random
+      and extracts the message m through a probabilistic al-
+                                                                         numbers falls within a probability interval associated with
+      gorithm D ECODED with a shared key K and a channel
+                                                                         a token, thereby determining the current generated word
+      history H.
+                                                                         as that token.
+                     D ECODED (K, H, s) = m.                  (2)      • De Witt et al. [19] proposed a provably secure steganog-
+                                                                         raphy method based on minimum entropy coupling. They
+  •   Eve needs to judge whether the object transmitted in the           view steganography as a coupling established between
+      channel is innocent or not.                                        message distribution and channel distribution and control
+   There are two common definitions of steganographic secu-              the sampling of the channel distribution through coupling
+rity. Cachin [8] first proposed an information-theoretic model           influenced by a uniform distribution of messages, thereby
+for steganography with passive adversaries. The adversary’s              mapping messages into samples that follow the carrier
+task of distinguishing between an innocent covertext c and               distribution.
+a stegotext s containing a secret message is interpreted as a          • Ding et al. [20] utilized the concept of “sampled distri-
+“hypothesis testing” problem. The security of a stegosystem              bution” to express information and presented the Discop
+can be quantified by the relative entropy (a.k.a. Kullback-              method based on distribution copies. This method defines
+Leibler divergence) between the cover distribution Pc and the            a probability distribution, from which multiple distribu-
+stego distribution Ps ,                                                  tion copies are created, and then uses the index values of
+                              X              Pc (x)                      distribution copies to express messages.
+             DKL (Pc ||Ps ) =     Pc (x) log        ,      (3)
+                                             Ps (x)                     The above methods can achieve provably secure linguistic
+                              x∈C
+                                                                     steganography based on autoregressive language models [24].
+where x is the object transmitted in the channel with the alpha-     None of them alter the probability distribution of words to
+bet C. If DKL (Pc ||Ps ) = 0, the stegosystem is called perfectly    be generated by the model during the process of embedding
+secure. Another definition is based on computational complex-        secret messages. Apart from the algorithms, the protocol of
+ity theory, proposed independently by Hopper et al. [9] and          the covert communication protocol that both parties need to
+Katzenbeisser and Petitcolas [32]. The stegosystem is called         share also includes the same language model, pseudorandom
+secure against chosen hiddentext attacks if all probabilistic        number generator (PRNG), keys, and contexts used for each
+polynomial time (PPT) adversaries A’s advantage against the          generation. Specifically:
+stegosystem
+     h                       i     h             i                     • Language models, including pretrained models and tok-
+         E NCODED (K,·,·)             O (·,·)                            enizers. Pretrained language models can be obtained from
+  Pr AD                   = 1 − Pr ADD        = 1 < negl (κ) ,
+                                                              (4)        the open-source platform Hugging Face [34], and models
+where OD (·, ·) is an oracle that can randomly sample from               that are downloaded and used more frequently are more
+the channel distribution D, κ is the security parameter of the           suitable as camouflage environments for steganography.
+shared key K (usually the length of K), and negl (κ) is a                Commonly used open-source models include GPT-2 [23],
+negligible function concerning κ.                                        LLaMA [35], GLM [36], etc.
+                                                                       • A pseudorandom number generator (PRNG) is an al-
+                                                                         gorithm for generating a sequence of numbers whose
+B. Provably Secure Neural Linguistic Steganography                       properties approximate the properties of sequences of
+   While the concept of provably secure steganography has                random numbers. The PRNG-generated sequence is com-
+been around for some time, classical constructions for prov-             pletely determined by the PRNG seed. Provably secure
+ably secure steganography either require a random sampling               steganography usually requires a cryptographically secure
+oracle or explicit data distributions [20], [33]. These condi-           PRNG (CSPRNG). A requirement for a CSPRNG is that
+tions are difficult to meet in traditional data environments.            an adversary not knowing the seed has only a negli-
+It was not until recent years that the rapid advancement                 gible advantage in distinguishing the generator’s output
+of deep generative models provided the possibility of re-                sequence from a random sequence.
+producible sampling for provably secure steganography, and             • Keys. In general, steganography involves two keys: an
+the widespread dissemination of generated data provided a                encryption key to encrypt the message before embed-
+favorable environment for concealing steganographic behav-               ding and to decrypt the message after extraction; and a
+ior [16]. Researchers have proposed several provably secure              steganograpy key as the CSPRNG seed to initialize the
+linguistic steganography methods [17]–[21] based on deep                 CSPRNG. In some cases, the two keys can be one.
+                                                                                                                                                4
+
+
+
+   •   Context. The same initial context of each generated text                  the sender intended to convey, which severely impacts the
+       needs to be shared, which can be empty for unconditional                  usability of provably secure steganography.
+       generation or consist of a specified number of sentences
+       with or without a specific template.                                      D. Disambiguation Algorithm
+                                                                                    In the past two years, solutions have emerged to address
+C. Segmentation Ambiguity                                                        segmentation ambiguity in traditional generative linguistic
+   Like other traditional generative linguistic steganography                    steganography.
+methods, provably secure linguistic steganography would also                        1) Basic Solution: Nozaki and Murawaki [26] proposed a
+suffers from segmentation ambiguity [26]. Assume that the                        simple disambiguating approach, which removes the tokens
+sender Alice and the receiver Bob use one of the above prov-                     whose mapping subwords are prefixes of others during every
+ably secure steganography methods to transmit a stegotext.                       generation and extraction step. This process ensures that any
+They share a language model, an initial context, and a key                       token sent by the sender is uniquely extractable for the
+in advance. Alice uses the steganographic encoding algorithm                     receiver.
+to generate a continuation of the context with the message                          2) MWIS-based Solution: Yan et al. [30] considered the
+embedded to obtain a stego.                                                      influence of removing candidate words on the probability
+   The commonly used high-performance Transformer-based                          distributions and decided to process only if candidate-level
+language models, represented by the GPT series [23], [24],                       ambiguity occured. Their solution identifies the maximum-
+[37] and the LLaMA series [35], [38], mostly utilize subword                     weight independent set (MWIS) in the candidate pool to
+tokenization [27]–[29] to model text. Subword tokenization                       reduce probability distortion.
+is a technique in which a word is split into subwords, and                          Regardless of the method, modifications to the candidate
+these subwords are known as tokens. This technique is used                       pool evidently alter the probability distribution, resulting in
+because a generative language model needs to maintain a                          significant discrepancies from the distribution of normal gen-
+large vocabulary and complex word structures. The concept                        eration processes. Therefore, these existing token-removal-
+behind this is that frequently occurring words should be in                      based solutions for addressing segmentation ambiguity are not
+the vocabulary whereas rare words are split into frequent                        applicable to provably secure steganography.
+subwords. Each token is assigned an ID as a numerical
+representation of the subword 1 . For example, the word                                            III. P ROPOSED M ETHOD
+“ unwanted” might be split into “ un”, “want”, and “ed”.                            As analyzed above, previous attempts at disambiguating
+The stego generated by the steganographic encoding algorithm                     introduced damage to the original probability distribution
+E NCODED is essentially a sequence composed of stego tokens.                     while removing potentially ambiguous tokens. An adversary
+The sender must detokenize it using a tokenizer into a stegotext                 can easily obtain a nonnegligible advantage in distinguishing
+before transmission. The reason is obvious because even in                       the cover distributions and the stego distributions. The ideal
+today’s prevalent use of generative models and generated                         method must satisfy the following criteria: (1) the disambigua-
+text, transmitting tokens directly over a public channel is                      tion algorithm should not alter the model’s original probability
+a highly suspicious behavior. For example, if the sender                         distribution, all tokens in the candidate pool predicted by the
+generates two stego tokens mapping to subwords “ any” and                        language model should be retained, and each token should
+“thing”, the sender needs to detokenize them into the text                       maintain its original probability; (2) the disambiguation algo-
+“anything” before sending it to Bob. However, the issue is                       rithm should be easily transferable to any generative linguistic
+that common words like “anything” often exist as independent                     steganographic method based on autoregressive models with-
+tokens “ anything” in the model’s vocabulary as well. As                         out being specialized for a specific embedding and extraction
+a result, a single piece of text can correspond to two or                        algorithm. To address this problem, in this section, we present
+even more different token representations. This phenomenon                       a disambiguation method named SyncPool, which can help
+is referred to as segmentation ambiguity. To replicate Alice’s                   both parties in communication eliminate segmentation ambi-
+generation process and extract the message using D ECODED ,                      guity in steganography without altering the distribution.
+Bob must retokenize the received text into tokens. But since                        Our disambiguation method SyncPool primarily consists
+both “ any” and “ anything” exist in the candidate pool,                         of two modules: ambiguity pool grouping and synchronous
+Bob cannot determine which token the sender embedded the                         sampling. The first module acts before steganographic em-
+message into. Clearly, the differing tokenizations could result                  bedding and groups tokens according to prefix relationships,
+in the incorrect extraction of the message.                                      which eliminates the uncertainty between ambiguous tokens
+   Currently, all provably secure steganography methods are                      and avoids information loss during detokenization. The second
+ambiguity-unaware. The receiver cannot determine whether                         module works after the steganography algorithm selects an
+they have successfully obtained the token sequence generated                     ambiguity pool to help both the sender and the receiver achieve
+by the sender or if they have misunderstood the secret message                   synchronous sampling from the pool. The disambiguating
+                                                                                 steganography embedding process is shown in Fig. 2. In this
+   1 Since the numeric IDs corresponding to tokens differ across different
+                                                                                 method, the number of sampleable tokens and the probability
+models, in this paper, we directly use the subword mapped by the token
+to represent the token. In this paper, we use the underscore symbol “ ” to       of each token remain unchanged compared to the original
+indicate a word boundary, which is generally equivalent to a space in English.   probability distribution.
+                                                                                                                                                       5
+
+
+
+
+Fig. 2. The provably secure disambiguating linguistic steganography consists of the existing provably secure steganography method and our proposed
+distribution-preserving disambiguation method SyncPool. We group the original probability distribution by prefix relationships, use the existing provably
+secure steganography method, e.g. Discop, to embed the message on the grouped distribution, and perform synchronized random sampling from the ambiguity
+pools using a shared random number between the sender and receiver to ensure unique message extraction. The probability distribution corresponding to the
+sampled tokens remains unchanged before and after implementing ambiguity elimination.
+
+
+
+   Next, we will first define the original candidate pool and                 reducing the size of the candidate pool using the top-p and top-
+distribution for steganography and then provide a detailed                    k methods significantly reduces the computational overhead of
+description of each part of the disambiguation algorithm.                     both random sampling and generative steganography.
+                                                                                Therefore, in this paper, we define the original distribution
+                                                                              as the probability after applying these probability processing
+A. Candidate Pool with Original Distribution                                  methods and the original candidate pool as the remaining
+   During normal generation, the language model can predict                   available tokens after the top-k or top-p stage, which does not
+the probability distribution of the next token xt given the                   contradict the behavioral security pursued by steganography.
+previous context x<t in the whole vocabulary Σ:                               Definition 1. The original distribution of the language model
+                                                                            before steganography refers to the probability distribution
+               Pr [xt |x<t ] = p1 , p2 , . . . , p|Σ| , (5)
+                                                                              composed of the remaining tokens after probability process-
+where p1 through p|Σ| , respectively represent the probabilities              ing. Let V denote        the remaining candidate pool, V =
+of tokens w1 through w|Σ| in the vocabulary, holding that                       w1 , w2 , . . . , w|V | , |V | ≤ |Σ|. The original distribution is
+                                                                                                                  P|V |
+P|Σ|                                                                          Pc = p1 , p2 , . . . , p|V | , where i=1 pi ≤ 1.
+    i=1 pi = 1.
+   Then, the model needs to sample a token from the distri-                     Provable secure steganography requires that steganography
+bution mentioned above and add it to the generated sequence.                  does not alter the original distribution predicted by the model.
+There are primary two sampling methods: greedy sampling                       Therefore, the candidate pool and distribution after disam-
+and random sampling. In most cases, users of the generative                   biguation must also remain consistent with V and Pc .
+language model desire the model’s output to exhibit variability
+and creativity while maintaining a level of controlled ran-                   B. Ambiguity Pool
+domness. Therefore, to ensure that the model’s output meets                      Like the existing disambiguation methods, our method also
+specific requirements or matches the desired styles, three                    needs to identify all potential candidate words that could cause
+crucial parameters are introduced during the random sampling                  ambiguity. The prefix relationship between candidate words
+process. They are temperature, top-p, and top-k.                              is a necessary but not sufficient condition for segmentation
+   The temperature influences the shape of the probability                    ambiguity to occur.
+distribution that the model calculates for the next token
+rather than limiting the token selection. Top-p, i.e., nucleus                Definition 2. In the candidate pool, tokens exhibit prefix
+sampling [39], allows for dynamic control of the number of                    relationships, meaning that for a token wi in the candidate
+tokens considered, leading to different levels of diversity in                pool, its mapping subword either serves as a prefix for another
+the generated text, while top-k provides controlled randomness                token wj or another token’s mapping subword is a prefix of
+by considering a fixed number of top probable tokens. Three                   this token’s.
+of them could change the distributions or candidate pools of                     Formally, a prefix relationship can be denoted as:
+xt . It is common to use these parameters to control random                                               
+sampling in the normal sampling process of innocent users.                                                1, wi is a prefix of wj ,
+                                                                                                          
+Therefore, in provably secure steganography, there should be                         PREFIX (wi , wj ) = 1, wj is a prefix of wi ,                   (6)
+                                                                                                          
+no restrictions on the use of these parameters. Additionally,                                             
+                                                                                                            0, otherwise.
+                                                                                                                                                  6
+
+
+
+where tokens wi and wj are in the candidate pool V (t) .
+                                                                                                               
+                                                                                                            (t)
+                                                                           Algorithm 1: A MBIGUITY V (t) , Pw : Construct an
+V (t) represents the remaining candidate pool during the t-
+th time step of the generative model’s sampling process.                   Ambiguity Pool on Candidate Pool V (t) and its distri-
+                                                                                   (t)
+All occurrences of (t) in the following text have the same                 bution Pw .
+                                                                            Input: Candidate pool V (t) = w1 , w2 , . . . , w|V | , candidate
+                                                                                                                                
+meaning, representing the time step applicable to the corre-
+                                                                                                   (t)                       
+sponding data. In the following algorithm description, we use                        distribution Pw = p1 , p2 , . . . , p|V | ;
+                                                                                                       (t)                               (t)
+PREFIX (wi , wj ) = 1 to represent the presence of a prefix                 Output: Ambiguity pool Vamb ,ambiguity distribution Pamb ;
+                                                                              (t)    (t)                 (t)
+relationship between two tokens.                                          1 V     , Pw ← S ORT V (t) , Pw ;
+                                                                              (t)         (t)       (t)
+                                                                          2  Vamb ← ∅, Pamb ← Pw ;
+                                                                           3 j ← 1, vamb,j ← [wj ], pamb,j ← [pj ];
+                                                                                                        
+                                                                           4 for wi in w2 , . . . , w|V | do
+                                                                           5     if PREFIX (wj , wi ) then
+                                                                           6          vamb,j .append(wi );
+                                                                           7          pamb,j .append(pi );
+                                                                           8     else
+                                                                                        (t)
+                                                                           9          Vamb .append(vamb,j );
+                                                                                        (t)
+                                                                          10          Pamb .append(pamb,j );
+                                                                          11          j ← j + 1;
+                                                                          12          wj ← wi ;
+    (a) D /wo prefix relationships       (b) BB /w prefix relationships   13          vamb,j ← [wj ];
+                                                                          14          pamb,j ← pj ;
+Fig. 3. Different cases about prefix relationship.                        15     end
+                                                                          16 end
+   Fig. 3 illustrates two scenarios: one where a selected                 17 return
+token has no prefix relationship with other tokens in
+the candidate pool and another where it does. Given
+a candidate pool of the top-8 for an example, V =                         collectively form the candidate pool after grouping. We refer
+[AA, B, CCC, D, BB, BBD, C, BDD]. When the selected                                  (t)
+                                                                          to it as Vamb , where t is the current generation time step, with
+token is D, there is no prefix relationship; when it is BB,                                                                            (t)
+                                                                          its corresponding probability distribution denoted as Pamb .
+two other tokens, it holds that PREFIX (B, BB) = 1 and
+                                                                          The process of merging ambiguous tokens and constructing
+PREFIX (B, BBD) = 1.
+                                                                          ambiguity pools can be denoted as:
+   The presence of prefix relationships causes two tokens cor-                                                                
+                                                                                        (t)  (t)
+responding to different messages in steganography to convert                         Vamb , Pamb ← A MBIGUITY V (t) , Pw(t) .            (7)
+into a entirely identical text for the reciever after detok-
+                                                                                                                    (t)
+enization. The disappearance of uncertainty implies a loss of             For an ambiguity pool vamb,j in Vamb , we define its repre-
+information, meaning the embedded message in steganography                sentative token as the first token in the ambiguity pool, i.e.,
+cannot be extracted. This is the reason why segmentation                  the token whose mapping subword is the shortest, denoted as
+ambiguity leads to decoding errors.                                       wamb,j . We refer to vamb,j as an ambiguity pool with wamb,j ,
+                                                                                       wamb,j
+   The previous disambiguation algorithms removed certain                 denoted as vamb,j   .
+tokens to ensure that there were no prefix relationships in                 Using the distribution in Fig. 3 as an example, the original
+the candidate pool, which inevitably altered the probability              candidate pool can be sorted to
+distribution of tokens. To avoid compromising steganographic
+                                                                                    V ′ = [AA, B, BB, BBD, BDD, C, CCC, D].                     (8)
+security, we first address the information loss caused by am-
+biguous tokens. The method we implemented in this paper is to             Then, tokens that have prefix relationships are merged, and a
+establish new groups for tokens that have prefix relationships.           new distribution is established:
+We name this kind of group consisting of ambiguous tokens as
+                                                                              Vamb = [AA, [B, BB, BBD, BDD], [C, CCC], D],                      (9)
+an ambiguity pool. In this paper, establishing ambiguity pools
+that can synchronize the sender and the receiver for a given              where |Vamb | = 4. The groups [B, BB, BBD, BDD] and
+candidate pool is the key to our disambiguation algorithm.                [C, CCC] are called the ambiguity pools with B and with C,
+   The specific algorithm for constructing the ambiguity pools            respectively. Notably, under the ambiguity pool partitioning
+on a given candidate pool is shown in Algorithm 1. We first               scheme in this context, not all tokens within an ambiguity pool
+sort all the tokens in the pool according to the character                exhibit a prefix relationship. For example, in the ambiguity
+order of their corresponding subwords. After sorting, we check            pool with B mentioned above, there is no prefix relationship
+whether each token shares a common prefix as a token with                 between BB and BDD as defined previously; in other words,
+the previous token. If so, we merge it into a group. If not,              BB is not a prefix of BDD, and BDD is not a prefix of BB.
+we start merging the next group. The tokens in each merged                The same logic applies to BBD and BDD. However, they
+group jointly form an ambiguity pool vamb . A new distribution            all share a prefix relationship with B and are thus grouped
+is established, denoted as pamb , for these elements in vamb              together.
+such that the probability of each token remains consistent                   After grouping is completed, we transform the objects for
+with the original probability distribution. All ambiguity pools           embedding and extraction in the steganographic algorithm
+                                                                                                                                       7
+
+
+
+into an ambiguity pool. This ensures that regardless of which               Algorithm 2: E MBEDDING
+ambiguous token is selected from the ambiguity pool, the same             Input: Context C, CSPRNGsteg , CSPRNGsync , Language
+information will be expressed, thus avoiding information loss                      Model M, Tokenizer T , Seed K, Message m
+during the detokenization.                                                Output: Stegotext S
+                                                                        1 x ← ∅;                                 // Stego Tokens
+                                                                        2 CSPRNGsteg .S ET S EED (K);
+C. Synchronous Random Sampling                                          3 CSPRNGsync .S ET S EED (K);
+                                                                        4 t ← 1
+   While the partitioning of ambiguity pools resolves the issue         5 while not the end of m do
+of information loss between detokenization and tokenization, it                        (t)
+                                                                              V (t) , Pw ← M (C);
+                                                                        6
+                                                                                                                        // predict
+does not aid in synchronizing tokens between the sender and                      (t)    (t)
+                                                                                                           
+                                                                                                             (t)   (t)
+                                                                              Vamb , Pamb ← A MBIGUITY V , Pw ;
+the receiver. Due to the autoregressive nature of the model,                    (t)
+                                                                                                                            
+if the sender and receiver have different understandings of             7     vamb ← E NCODEP (t) CSPRNGsteg (K)(t) , m ;
+                                                                                         h      amb               i
+segmentation for the same text, it may not affect the extraction        8
+                                                                                                       (t)    (t)
+                                                                              m ← m E MBED N UM vamb , Pamb : ;
+of messages in the current step but will affect the probabilities       9     if not ambiguous then
+predicted by the model for all subsequent generation steps.            10
+                                                                                            (t)
+                                                                                    xt ← wamb ;
+Therefore, we design a new mechanism that enables the                  11     else
+                                                                                                  (t)
+sender and receiver to synchronize the selection of tokens from        12
+                                                                                     (t)
+                                                                                    pamb ←
+                                                                                                 pamb
+                                                                                                             ;
+                                                                                                (t)
+ambiguity pools using a preshared random number. We name                                     P vamb k
+                                                                                              k
+                                                                                                      pamb
+this stage synchronous random sampling.                                13
+                                                                                     (t)
+                                                                                    wsync ←
+                     (t)                                   (t)
+   Formally, let vamb be the ambiguity pools with wamb for                                        
+                                                                                                    (t)
+                                                                                                                           
+                   (t)                                                               S YNC S AMPLE pamb , CSPRNGsync (K)(t) ;
+step t, and let pamb be its corresponding probability distribu-                            (t)
+                                                                       14           xt ← wsync ;
+tion. We generate a random number that is shared between               15       end
+the sender and receiver via a synchronous CSPRNG, denoted              16       x. APPEND(xt );
+as CSPRNGsync . As long as the sender and receiver share an            17       C ← C ∥ xt ;
+initial seed, or a symmetric key, they can obtain a series of syn-    18       t ← t + 1;
+chronized pseudorandom numbers r = r(0) , r(1) , . . . , which         19 end
+                                                                       20 S ← T .D ECODE (x);
+follows a uniform distribution on [0, 1), i.e., r(t) ∼ U [0, 1).       21 return
+                                                             (t)
+At each time step t, each token in the ambiguity pool vamb is
+allocated to the left-closed, right-open interval [0, 1) according
+     (t)
+to pamb . Then, we consume a pseudorandom number r(t) and                                                        (t)
+                                                                       If there is only one token in the pool vamb , it can be added to
+select the token corresponding to the interval into which r(t)                                            (t)
+                                                                       the stego sequence, i.e., xt ← wamb , and the steganographic
+falls, denoted as the synchronous token wsync :
+                                                                       message embedding and generation process finishes normally.
+                                       
+                                          (t)
+                                                                                                                         (t)
+               (t)
+              wsync   ← S YNC S AMPLE pamb , r(t) .             (10)      However, in the event of ambiguity, i.e., vamb contains
+                                                                       more than one element, the steganographic embedding process
+As long as both the sender and receiver adhere to the                  does not select a specific token, but rather selects a group of
+same ambiguity pool construction method, the receiver can              tokens that may cause ambiguity. The information that can
+determine which specific token the sender has chosen from              be embedded is determined by the probability of this group.
+the ambiguity pool in each generation step. Because the                At this point, we employ the synchronous sampling method
+same shared random number corresponds to only one token,               proposed in the previous section for token synchronization.
+                                                                                                              (t)
+ambiguity in segmentation naturally disappears.                        The synchronized ambiguous token wsync is added to the stego
+   Next, we will describe the complete process of provably se-         token sequence.
+cure disambiguating steganography, including steganographic               Finally, the sender needs to detokenize the stego tokens into
+embedding and steganographic extraction.                               stegotext before transmission.
+
+D. Embedding                                                           E. Extraction
+   The main loop of the provably secure steganographic mes-               The main loop of the provably secure steganographic mes-
+sage embedding process with our proposed disambiguation                sage extraction process with our proposed disambiguation al-
+algorithm is shown in Algorithm 2. At the t-th step of                 gorithm is shown in Algorithm 3. During extraction, unlike the
+generation, the sender first needs to group and construct              previous ambiguity-unaware provably secure steganography,
+ambiguity pools for tokens that may cause ambiguity based              the receiver needs to first abandon using the off-the-shelf
+on the current candidate pool and distribution. Then the               tokenizer to tokenize the stegotext directly. At each time step
+steganography embedding algorithm provides an ambiguity                of the autoregressive generation process, the receiver selects a
+pool to be output based on the distribution of ambiguity pools         token w(t) from the candidate pool V (t) , while w(t) is a prefix
+  (t)
+Pamb , a random number provided by the CSPRNGsteg given                of the remaining part of the detokenized stegotext S. The
+                                                                                                                  (t)
+the key K, and the message bit sequence m,                             receiver then locates the ambiguity pool vamb corresponding to
+                                                                                             (t)
+                                                                     the selected token w and extracts the message based on the
+       (t)
+      vamb ← E NCODEP (t) CSPRNGsteg (K)(t) , m .         (11)         distribution of the ambiguity pool. Next, they employ the same
+                         w
+                                                                                                                                    8
+
+
+
+ Algorithm 3: E XTRACTION                                           where xs is the disambiguating steganographic stegotext and
+  Input: Stegotext S, Context C, CSPRNGsteg , CSPRNGsync ,          xc is the normally generated covertext, κ is the security
+          Language Model M, Tokenizer T , Seed K                    parameter of the shared key K (usually the length of K),
+  Output: Message m                                                 and negl (k) is a negligible function concerning κ.
+1 m ← “ ”;
+                                                                      We prove the statement using a proof by contradiction. First,
+2 x ← ∅;
+3 CSPRNGsteg .S ET S EED (K);
+                                                                    assume that the disambiguating steganographic stegotext xs
+4 CSPRNGsync .S ET S EED (K);                                       and the normally generated covertext xc are distinguishable,
+5 t ← 1;                                                            meaning
+6 while not the end of S do
+               (t)
+7     V (t) , Pw ← M (C);                   // predict                      |Pr [AD (xs ) = 1] − Pr [AD (xc ) = 1]| = δ,     (13)
+8     w ← P REFIX T OKEN S, V (t) ;
+        (t)
+
+        (t)     (t)
+                                 
+                                        (t)
+                                                                   where δ is non-negligible with respect to the key K. Consid-
+9     Vamb , Pamb ← A MBIGUITY V (t) , Pw ;                         ering the tokens generated at each step, we have
+                          (t)
+10      for vamb,j in Vamb do
+11          if w(t) in vamb,j then                                           |Pr [APc (ws ) = 1] − Pr [APc (wc ) = 1]| = δ,    (14)
+                  (t)
+12              vamb ← vamb,j ;
+13          end                                                     In our method, a token to be added to the stego sequence
+14      end                                       
+                                                                    undergoes two sampling processes. The first sampling occurs
+15
+                                               (t)
+        mt ← D ECODEP (t) CSPRNGsteg (K)(t) , vamb ;                within the distribution Pamb formed after grouping by the
+16
+                           amb
+        if not ambiguous then                                       ambiguity pool, controlled by the steganographic embedding
+17           xt ← w(t) ;                                            algorithm and driven by the secret message. The result is
+18      else                                                        a certain ambiguous pool vamb , consisting of one or more
+19
+               (t)
+             wsync ←                                                ambiguous tokens. The second sampling occurs within vamb ,
+                                                   
+                              (t)
+              S YNC S AMPLE pamb , CSPRNGsync (K)(t) ;              driven by pseudorandom numbers r generated by a CSPRNG.
+                    (t)                                             For simplicity, we use S(r, P ) to represent sampling from P
+20          xt ← wsync ;
+21      end                                                         using r, and E(m, P ) to represent the steganography algorithm
+22      x. APPEND(xt );                                             E NCODEP (·, m), where m is the secret message encrypted
+23      C ← C ∥ xt ;                                                using a cryptographic algorithm. Therefore, the adversary’s
+24      S ← S [L EN (T .D ECODE (xt )) :];                          judgement on ws can be expressed using the law of total
+25      m ← m ∥ mt ;                                                probability as
+26      t ← t + 1;
+27   end
+                                                                     Pr [APc (ws ) = 1]
+28   return
+                                                                                                  ws                   ws
+                                                                      = Pr [APc (ws ) = 1 | APc (vamb ) = 1] Pr [APc (vamb ) = 1]
+                                                                                                 ws                   ws
+                                                                     + Pr [APc (ws ) = 1 | APc (vamb ) = 0] Pr [APc (vamb ) = 0] ,
+synchronization sampling as the sender to ensure accurate                                                                     (15)
+segmentation. This process is repeated until the stegotext is
+                                                                    where ws = S(r, pw          ws
+                                                                                        amb ), vamb = E(m, Pamb ). At the same
+                                                                                         s
+fully extracted.
+                                                                    time, as the probabilities of each token remain unchanged
+                                                                    before and after being grouped, a single normal generation of
+F. Complexity                                                       samples is also equivalent to two separate sampling processes
+   Let V denote the candidate pool and |V | denote the size of      using random numbers. The adversary’s judgment on wc can
+the given pool. When SyncPool is used, the disambiguation           also be expressed as
+algorithm performs an extra sorting operation and a traversal of
+all tokens in the candidate pool to compare common prefixes.         Pr [APc (wc ) = 1]
+                                                                                                  wc                   wc
+The complexity of the sorting operation is O(|V | log(|V |)),         = Pr [APc (wc ) = 1 | APc (vamb ) = 1] Pr [APc (vamb ) = 1]
+and the complexity for comparing common prefixes is O(|V |).                                     wc
+                                                                     + Pr [APc (wc ) = 1 | APc (vamb                  wc
+                                                                                                     ) = 0] Pr [APc (vamb ) = 0] .
+After this, the size of the candidate pool is reduced to |Vamb |.                                                             (16)
+The complexity of steganographic embedding of the candidate
+                                                                                       wc
+pool changes accordingly, as determined by the steganographic       We also have vamb        = S(r1 , Pamb ) and wc = S(r2 , pamb ),
+algorithm used.                                                     where r1 and r2 are independent random variables corre-
+                                                                    sponding to the equivalent two-stage sampling, each uniformly
+                                                                                              i.i.d.
+G. Proof of Security                                                distributed, i.e. r1 , r2 ∼ U [0, 1).
+                                                                       Upon comparison, it can be observed that to satisfy Eq. (14),
+   From the perspective of computational security, we prove
+                                                                    it must be the condition that: the adversary can distinguish
+that SyncPool is a secure method for disambiguating steganog-
+                                                                    between E(m, Pamb ) and S(r1 , Pamb ) in polynomial time,
+raphy. By definition, steganography is secure aganist chosen
+                                                                    or the adversary can distinguish between S(r, pw      amb ) and
+                                                                                                                           s
+hiddentext attacks, if all probabilistic polynomial time (PPT)
+                                                                    S(r2 , pamb ) in polynomial time. Note that the provable se-
+adversaries A’s advantage against the stegosystem
+                                                                    curity of the steganography algorithm we employ guarantees
+                                                                                                                                   ′
+      |Pr [AD (xs ) = 1] − Pr [AD (xc ) = 1]| < negl (κ) .   (12)   that the PPT adversary cannot have a negligible advantage δ
+                                                                                                                                      9
+
+
+
+in distinguishing between E(m, Pamb ) and S(r1 , Pamb ), that         All experiments are carried out under the same hardware
+is                                                                 settings (CPU 3.00 GHz, 128 GB RAM, and NVIDIA RTX
+               wc                     wc
+                                                                   A6000).
+    |Pr [APc (vamb ) = 1] − Pr [APc (vamb ) = 1]| < negl (κ) .
+                                                            (17)   B. Metrics
+Additionally, we use a CSPRNG in our synchronous sampling
+function, implying that the generated r as a pseudorandom             We assess the performance of disambiguation algorithms
+sequence cannot be distinguished from a truly random se-           primarily based on three aspects: the effectiveness of disam-
+quence in polynomial time. Both conditions cannot be sat-          biguation, its influence on the security of the steganographic
+isfied. Therefore, Eq. (14) is not valid, leading us back to the   method, and its impact on the efficiency of the stegano-
+initial assumption that Eq. (13) is not valid.                     graphic method. We evaluate the impact by comparing the
+   Hence, any computationally secure steganographic method         steganographic performance before and after the integration
+with SyncPool is a computationally secure disambiguating           of the disambiguation algorithm using metrics for assessing
+steganography.                                                     steganographic methods.
+                                                                      1) Effectiveness: An effective disambiguation algorithm
+                                                                   should reduce the error rate of the extracted secret message to
+                         IV. E XPERIMENTS                          0%.
+   In this section, we conduct experiments to evaluate the            • Total Error: the percentage of bits with decoding errors
+performance of our proposed disambiguating algorithm in                  out of all embedded message bits.
+terms of effectiveness, security and efficiency, and compare          2) Security: In generative linguistic steganography, our
+our algorithm with baselines attempting to achieve ambiguity-      goal is to ensure that the stegotext, where the message is
+aware provably secure linguistic steganography.                    embedded, is indistinguishable from normally generated text
+                                                                   where no message is embedded. We use KL divergence (KLD)
+                                                                   to measure the distribution discrepancy between the original
+A. Setup
+                                                                   distribution provided by the language model during each token
+   In the experiments, we choose to conduct steganography          sampling period and the distribution used for steganographic
+experiments on English and Chinese, two of the most widely         sampling after disambiguation and steganographic methods.
+used languages worldwide. Meanwhile, unlike English, Chi-             • Ave KLD: the average KLD across all time steps.
+nese is a scriptio continua without spaces between characters.        • Max KLD: the maximum KLD across all time steps.
+Researchers believe that segmentation ambiguity has a more
+                                                                   These two metrics indicate the average and maximum dis-
+significant impact on scriptio continua [26]. In our experi-
+                                                                   ruption of the original distribution by steganographic and
+ments, we will also explore this by comparing the results of
+                                                                   disambiguation methods. Lower values are preferred.
+experiments conducted in English and Chinese. We deploy
+                                                                      We also use average perplexity to measure the perceptual
+the pretrained models LLaMA2-7b 2 and Baichuan2-7b 3
+                                                                   imperceptibility of steganographic texts.
+from Hugging Face as the basic generative model for English
+                                                                      • Ave PPL: the average perplexity of generated texts.
+and Chinese, respectively. Both tokenizers are implemented
+based on subwords.                                                 The smaller the difference in average perplexity values be-
+   To more intuitively assess how performance is affected by       tween the steganographic texts generated before and after ap-
+the number of elements in the candidate pool, we only use top-     plying the disambiguation algorithm, the stronger the security
+k sampling to constrain the size of the initial candidate pool     of the disambiguation algorithm. Ave PPL can be calculated
+and the probability distribution. The reason for not changing      as:
+                                                                                             M
+the temperature is that it has no effect on the number of                                 1 X − N1j PN     j
+                                                                                                         i=1 log2 Prj [xi |x<i ]
+                                                                            Ave PPL =            2                               , (18)
+tokens. As for top-p, its effect is similar to that of top-k,                            M j=1
+but the size of the candidate pool may fluctuate significantly
+                                                                   where M is the number of text sequences tested, N is the
+at each sampling step, which is not easy to be quantified
+                                                                   length of the sequence, Prj [xi |x<i ] is the probability of
+intuitively. In the experiments, we set the truncation parameter
+                                                                   generating the i-th token given the previous tokens of the j-th
+k = 16, 32, 64, 128, 256. For each k, we select 100 pieces of
+                                                                   text.
+text from the IMDb dataset [40]. We use the first three English
+                                                                      3) Efficiency: The efficiency of steganography encom-
+sentences of each sample and their Chinese translations as
+                                                                   passes the embedding rate and time consumption. We calculate
+the context for LLaMA2 [38] and Baichuan2 [41] in different
+                                                                   the entropy utilization rate to assess the embedding rate of
+languages, and generate the subsequent 100 tokens conditioned
+                                                                   steganography.
+on this context.
+                                                                      • Utilization: the ratio of the total length of the embedded
+   We compare our proposed disambiguating algorithm
+                                                                         message to the sum of entropy across all time steps.
+SyncPool with the basic [26] and MWIS-based [30] token-
+removing disambiguating methods on a provably secure               Additionally, we conduct timing experiments on language
+steganographic algorithm Discop [20].                              models for the ambiguity-unaware steganography generation
+                                                                   process and the disambiguating steganography generation pro-
+  2 https://huggingface.co/meta-llama/Llama-2-7b-hf                cess. The time at which the model predicts the probability
+  3 https://huggingface.co/baichuan-inc/Baichuan2-7B-Base          distribution is ruled out.
+                                                                                                                                                                                 10
+
+
+
+                                                            TABLE I
+        Q UANTITATIVE COMPARISON WITH THE PREVIOUS DISAMBIGUATING METHODS ON D ISCOP USING LL A MA2 AND E NGLISH CONTEXT.
+
+                                                                        Capacity ↑                          Total Time ↓           Ave Time ↓            Total Error ↓
+               Method           k     Ave PPL   Ave KLD ↓   Max KLD ↓                     Utilization ↑
+                                                                        (bits/token)                      (×10−2 seconds)       (×10−6 seconds/bit)           (%)
+                                16     3.27         0           0          1.30               0.84               1.96                   1.50                 1.81
+                                32     3.50         0           0          1.44               0.85               2.25                   1.56                 2.80
+               Discop           64     3.88         0           0          1.58               0.85               3.24                   2.05                 2.74
+                                128    4.20         0           0          1.70               0.87               4.31                   2.53                 2.50
+                                256    4.55         0           0          1.81               0.88               7.88                   4.35                 2.67
+                                16     12.13      30.25       98.63        1.58               0.86               4.23                   2.60                   0
+                                32     18.75      37.34       98.64        1.93               0.86               5.73                   2.74                   0
+                        Basic   64     29.67      44.02       98.63        2.38               0.86              10.39                   4.29                   0
+                                128    42.26      49.10       98.63        2.80               0.85              25.39                    8.92                  0
+                                256    63.73      53.17       98.63        3.18               0.87              79.60                   24.56                  0
+                                16     2.64       2.72        64.64        1.01               0.77              13.32                  11.61                   0
+         Discop +               32     2.83       2.94        71.56        1.12               0.76              20.39                  15.53                   0
+                     MWIS       64     3.04       3.41        72.96        1.22               0.77              37.56                  26.79                   0
+                                128    3.22       3.58        68.56        1.29               0.76              133.83                  85.04                  0
+                                256    3.52       3.79        72.34        1.38               0.77             1182.07                 757.59                  0
+                                16     3.19         0           0          1.00               0.66               3.90                   3.85                   0
+                                32     3.74         0           0          1.03               0.59               4.53                   4.60                   0
+                    SyncPool    64     3.88         0           0          0.85               0.46               5.37                   6.15                   0
+                                128    4.50         0           0          0.63               0.31               6.33                   10.25                  0
+                                256    4.96         0           0          0.39               0.18               8.88                   22.33                  0
+
+
+
+                                                           TABLE II
+       Q UANTITATIVE COMPARISON WITH THE PREVIOUS DISAMBIGUATING METHODS ON D ISCOP USING BAICHUAN 2 AND C HINESE CONTEXT.
+
+                                                                        Capacity ↑                          Total Time ↓           Ave Time ↓            Total Error ↓
+               Method           k     Ave PPL   Ave KLD ↓   Max KLD ↓                     Utilization ↑
+                                                                        (bits/token)                      (×10−2 seconds)       (×10−6 seconds/bit)           (%)
+                                16     8.16         0           0          2.03               0.88               2.00                   1.53                 1.73
+                                32     10.97        0           0          2.56               0.90               2.33                   1.61                 4.36
+               Discop           64     13.96        0           0          2.98               0.91               2.90                   1.83                 5.36
+                                128    20.12        0           0          3.60               0.93               4.16                   2.44                 5.32
+                                256    26.17        0           0          3.99               0.94               7.92                   4.37                 6.30
+                                16     12.96      25.54       98.63        1.97               0.87               4.52                   2.77                   0
+                                32     20.22      30.34       98.63        2.48               0.86               6.17                   2.96                   0
+                        Basic   64     34.87      36.12       98.63        3.03               0.89              10.87                   4.49                   0
+                                128    45.63      38.36       98.59        3.32               0.87              26.33                    9.25                  0
+                                256    67.07      40.91       98.62        3.68               0.87              83.13                   25.65                  0
+                                16     6.63       6.89        62.76        1.60               0.75              13.17                  11.48                   0
+         Discop +               32     8.71       8.20        61.90        2.05               0.77              19.86                  15.13                   0
+                     MWIS       64     12.15      9.87        64.48        2.55               0.78              36.10                  25.75                   0
+                                128    14.82      10.85       65.60        2.86               0.78              131.73                  83.70                  0
+                                256    19.50      11.92       67.10        3.23               0.78             1048.35                 671.89                  0
+                                16     7.49         0           0          1.57               0.72              4.11                    4.06                   0
+                                32     10.93        0           0          2.08               0.74              4.80                    4.87                   0
+                    SyncPool    64     14.40        0           0          2.46               0.74              5.95                    6.83                   0
+                                128    19.16        0           0          2.78               0.73               8.07                   13.05                  0
+                                256    23.57        0           0          3.05               0.73              12.77                   32.12                  0
+
+
+
+
+  •   Ave Time: the average time consumed for embedding
+                                                                                                              TABLE III
+      each bit of message, which is derived by dividing the total                 A N EXAMPLE OF A D ISCOP STEGOTEXT GENERATED BY THE BAICHUAN 2
+      time of embedding by the total length of the embedded                          MODEL , WHICH ENCOUNTERS DECODING ERRORS . W E USE COLOR
+      message.                                                                       BLOCKS OF DIFFERENT COLORS TO REPRESENT DIFFERENT WORD
+                                                                                  SEGMENTATION . T OKENS AND MESSAGES THAT WILL RESULT IN ERRORS
+                                                                                      DURING THE EXTRACTION PROCESS ARE HIGHLIGHTED IN RED .
+C. Results and Analysis
+   We compared the effectiveness of our method with those                              Secret Message:
+                                                                                       11111110 0011101100111001110111110011110100110010111100101011110 . . .
+of token-removal-based methods for resolving ambiguity. The                            Stego Token IDs:
+English and Chinese experimental results are presented in Ta-                          . . . 3203, 1376, 7268, 15365, 1738, 1773, 1376, 1352, 5099, 11198, 1377, 17620, 63499,
+                                                                                       1360, 1374, 1352, 39663, 73, 7548 . . . . . .
+ble I and Table II, respectively. In these tables, “Discop” refers
+                                                                                       Stegotext with Segementation Ambiguity:
+to the ambiguity-unaware provably secure steganographic al-                            The Sender:
+gorithm that does not utilize any ambiguity resolution meth-                           . . . women of Missouri were some of the sexiest and attractive babes in the Midwest!
+                                                                                       Then . . .
+ods. “Basic” and “MWIS” correspond to the basic version                                The Receiver:
+                                                                                       . . . women of Missouri were some of the sexiest and attractive babes in the Midwest!
+and the version with MWIS of the token-removal-based dis-                              Then . . .
+ambiguating algorithm, respectively. “SyncPool” refers to the                          Retokenized Stego Token IDs:
+method that we proposed in this paper. The experimental                                . . . 3203, 1376, 17858, 1738, 1773, 1376, 1352, 5099, 11198, 1377, 17620, 63499, 1360,
+                                                                                       1374, 1352, 39663, 73, 7548 . . .
+results are described and analyzed as follows.                                         Secret Message:
+   1) Effectiveness: Experiments reveal that regardless of                             11111110 0101011101110101011011111101101011011110011111011010100 . . .
+whether the Llama2 model or the Baichuan2 model is used,
+                                                                                                                                                     11
+
+
+
+a proportion of message bits will suffer decoding errors if                                      TABLE IV
+disambiguating algorithms are not performed. Overall, the                   T HE VOCABULARY S IZES AND THE F REQUENCY OF P REFIX
+                                                                                    R ELATIONSHIPS OF D IFFERENT M ODELS .
+total message decoding error rate is positively correlated with
+the number of candidate words. This trend is more pronounced                       Model            Vocal Size
+                                                                                                                        Ambiguity Frequency
+                                                                                                                 16      32      64     128   256
+when using the Baichuan2 model for steganography in Chi-
+                                                                                      GPT-2           50,257     0.05    0.12   0.20   0.27   0.39
+nese.                                                                    English
+                                                                                    Llama-2-7b        32,000     0.16    0.26   0.41   0.57   0.78
+    Table III presents a stegotext generated by Discop using                       GPT-2-chinese       50,257    0.30    0.45   0.48   0.57   0.63
+                                                                         Chinese
+Llama2. It can be observed that when segmentation ambiguity                        Baichuan2-7b       125,696    0.15    0.20   0.31   0.38   0.45
+
+leads to extraction errors, it not only affects the current token,
+but also results in changes to the probabilities corresponding to
+each subsequent token and the extractable message. Therefore,        Discop method after disambiguation with SyncPool shows
+in the case of errors, the impact of segmentation ambiguity is       a noticeable decrease in the entropy utilization rate of the
+significant. It cannot be simply corrected by error correction       distribution predicted by Llama2. Even so, when using a
+codes.                                                               lower k value such as 64, we can embed an average of 0.85
+   All three disambiguating algorithms, including our method,        bits or more of information for each generated token. This
+are effective in reducing the total decoding error rate to zero.     indicates that the elimination of ambiguity does not affect the
+   2) Security: The KL divergence of the provably secure             availability of provably secure steganographic methods.
+steganography method is zero, ensuring that the adversary               Due to the alteration of the distribution, the entropy changes
+does not gain any nongeligible advantage. However, existing          with each embedding, causing changes in embedding rates for
+ambiguity resolution methods disrupt the distribution that           the other two methods as well.
+steganographic methods painstakingly maintain, causing a sig-           4) Time Efficiency: Fig. 4 shows the variation of embedding
+nificant deviation between the distribution of the stegotext and     time (generation of 100 tokens) with the value of k for the
+the model’s original distribution. This means that once these        steganographic embedding algorithm using different disam-
+disambiguation methods are used, steganography is no longer          biguation methods. Compared to ambiguity-unaware embed-
+provably secure. Our disambiguating method still maintains           ding, our disambiguating provably secure steganography does
+a KL divergence of zero, making it perfectly suitable for            not consume much additional time.
+provably secure steganography.
+   In terms of average perplexity (Ave PPL), our proposed
+method maintains a similar level of perplexity to the orig-
+inal steganographic method. The basic token-removal-based
+method significantly increased the perplexity of the generated
+stegotexts. The MWIS method yields stegotexts whose average
+perplexity is lower than that of the original steganography
+method, which does not mean that it is the best method. The
+calculated perplexity indicates the degree to which the output
+text conforms to the model’s expectations. If a greedy sam-                          (a)                                        (b)
+pling approach is used at each generation step, meaning always       Fig. 4. Time consumption introduced by disambiguating algorithms. (a)
+selecting the token with the highest predicted probability, the      Llama2; (b) Baichuan2.
+perplexity of the generated text will be the lowest. However,
+this does not align with the normal behavior of random
+sampling that an ordinary user would employ. Therefore, the          D. Ambiguity Frequency
+standard for evaluating the average perplexity metric should
+                                                                        To further investigate the influence of segmentation
+be how closely it approaches the original ambiguity-unaware
+                                                                     ambiguity across various models, we conducted experi-
+steganography method. Under this criterion, our method per-
+                                                                     ments on several common English and Chinese open-source
+forms the best, being the most difficult to distinguish from the
+                                                                     models, GPT-24 , Llama-2-7b, GPT-2-chinese5 , and
+original steganography method without disambiguation.
+                                                                     Baichuan2-7b. Table IV illustrates the vocabulary sizes of
+   3) Utilization Efficiency: Our SyncPool method eliminates
+                                                                     various models and the frequency of ambiguity under different
+the amount of information lost in the distribution after deto-
+                                                                     top-k truncation settings. Here, we randomly sample context
+kenization and retokenization, reducing the total amount of
+                                                                     100 times, with 100 tokens sampled each time. The likelihood
+entropy available for steganography. Therefore, a decrease in
+                                                                     of segmentation ambiguity is represented by the proportion of
+message embedding efficiency is inevitable.
+                                                                     tokens selected via random sampling in each step that share
+   As a comparison, the ambiguity-unaware Discop method
+                                                                     a prefix relationship with the other k − 1 tokens. Overall,
+achieves an entropy utilization rate ranging from 0.84 to 0.88
+                                                                     within the same language, as the number of tokens in the
+in the English context and from 0.88 to 0.94 in the Chinese
+                                                                     candidate pool increases, the frequency of ambiguity also
+context. After disambiguation with our method, the entropy
+                                                                     tends to increase. Additionally, with smaller vocabulary sizes,
+utilization rate of Discop is reduced. In the Chinese context,
+our method’s embedding capacity only decreased by less than            4 https://huggingface.co/openai-community/gpt2
+
+1 bit per token. However, when using English contexts, the             5 https://huggingface.co/benjamin/gpt2-wechsel-chinese
+                                                                                                                                                                       12
+
+
+
+                             TABLE V                                                          indeed been lost. Therefore, the embedding rate of steganog-
+  E XAMPLES OF GENERATING STEGOTEXT IN DIFFERENT LANGUAGES                                    raphy inevitably decreases. The extent of reduction is related
+     USING D ISCOP [20] WITH AND WITHOUT DISAMBIGUATION ON
+                        BAICHUAN 2. k = 256.                                                  to the likelihood of encountering segmentation ambiguity and
+                                                                                              the distribution of ambiguity pools after grouping.
+  Context in English:                                                                            It is important to emphasize that ambiguity frequency does
+  When vapidness encouter doubtfulness, ideal may become a strange.
+  Discop [20]:
+                                                                                              not necessarily lead to decoding errors. A comparison of the
+  Our daily habitual words and thoughts are basically unfeeling. It is like going into a      data in Table I and Table II reveals that although the English
+  house filled with a smell. In the meantime, this habitualness has to be shattered, as a
+  new world with high ideal, which will bring us forward to an ideal world, is coming to      Llama2 model has a higher frequency of ambiguity issues,
+  view. To be born is to awakened. People around the world are not indifferent to what        the Baichuan2 model in the Chinese context experiences more
+  kind of civilization they are now living. Yet I think they are all as much sleeping as to
+  their . . .                                                                                 decoding errors. To ensure accurate extraction of the message
+  Discop [20] + SyncPool:                                                                     in every steganographic process, it is necessary to address
+  When one’s vapidness encounters fear, the ideal can be forgotten. How to become a
+  being again ? As for how and why the human being turns into the animal, since the very      all possible instances of ambiguity. Therefore, although the
+  beginning of society, it was precisely a matter of this ? This issue is a truly difficult   number of decoding errors in English experiments is fewer
+  one, not only because it is difficult to grasp in its entirety, or even to get aware of
+  the existence and the reality of this riddle; The only thing that can be ascertained with   than in Chinese experiments, the cost of embedding rate for
+  certainty . . .
+                                                                                              eliminating ambiguity is higher.
+  Context in Chinese:
+  无聊望见了犹豫，达到理想不太易。
+  Discop [20]:                                                                                                         VI. C ONCLUSION
+  不必灰心，不必愁，一切归於零。希望重燃一起望，困难永驱驰。最羡是情花一
+  簇,无艳亦艳丽，开遍遍野，开遍满地。最羡是情花一簇，带给我一双手,一对臂
+  膀,更抱紧了我俩。永远在爱里，花儿总这样开下去。鲜花铺满了整个大草原，将                                                           In this paper, we analyze the segmentation ambiguity prob-
+  歌声传遍世界每个角落，愿人人都来唱歌，让全世界. . .
+                                                                                              lem that provably secure linguistic steganography must address
+  Discop [20] + SyncPool:
+  如果你不是这样，那你就没有希望了。如果你是这样的，那麽，不要使你任性的                                                         to become practical and explain why existing disambiguating
+  个性去违反你的理想，就应当使你不屈服于理想，而使你趋向於理想。但是，这                                                         algorithms are inadequate for provably secure steganography.
+  样你又不能使你抱有的理想成为成功的把握，因为成功需要另外许多的条件。不
+  能使你成功的理想，才是符合你个性的理想；不能使你存在的个性，不是你的理                                                         We propose a novel, effective, secure disambiguating method
+  想，因为你在社会上存在，所以这种理想，你得去实现它。你先得有一种使你存                                                         based on ambiguity pool grouping and synchronous sampling,
+  在的个性. . .
+                                                                                              which does not alter the original candidate pool or probability
+                                                                                              distribution, thus enabling integration with provably secure
+the ambiguity frequency correspondingly increases. When                                       steganography methods. Our method utilizes a shared PSNR to
+comparing different languages, languages such as Chinese,                                     perform synchronized sampling in ambiguity pools, ensuring
+which lack natural segmentation, have a greater probability                                   that the receiver obtains a uniquely determined decoding
+of experiencing segmentation ambiguity than languages such                                    result. We conduct experiments on a provably secure steganog-
+as English.                                                                                   raphy method, and the results demonstrate that our method
+                                                                                              preserves the distribution, incurs no significant decrease in
+                                                                                              utilization efficiency, and does not compromise the security
+E. Examples of Stegotext                                                                      of the steganography method.
+   Table V provides an example of employing Discop with and
+without our proposed disambiguating algorithms on Baichuan2
+                                                                                                                          R EFERENCES
+to continue writing 100 tokens under k = 256 truncation. The
+semantics of stegotexts are all relevant to the given context.                                [1] W. Dai, Y. Yu, Y. Dai, and B. Deng, “Text steganography system using
+                                                                                                  markov chain source model and des algorithm.” J. Softw., vol. 5, no. 7,
+                                                                                                  pp. 785–792, 2010.
+                                 V. D ISCUSSION                                               [2] T. Fang, M. Jaggi, and K. Argyraki, “Generating steganographic text
+                                                                                                  with lstms,” ACL 2017, p. 100, 2017.
+   Our disambiguating approach has a considerable limitation,                                 [3] Z.-L. Yang, X.-Q. Guo, Z.-M. Chen, Y.-F. Huang, and Y.-J. Zhang, “Rnn-
+that is, we have reduced to some extent the entropy utilization                                   stega: Linguistic steganography based on recurrent neural networks,”
+                                                                                                  IEEE Transactions on Information Forensics and Security, vol. 14, no. 5,
+of the provably secure steganography method with respect to                                       pp. 1280–1295, 2018.
+the model’s original distribution.                                                            [4] Z. Ziegler, Y. Deng, and A. M. Rush, “Neural linguistic steganography,”
+   Provably secure steganography aims to perfectly utilize                                        in Proceedings of the 2019 Conference on Empirical Methods in Natural
+                                                                                                  Language Processing and the 9th International Joint Conference on
+the distribution predicted by the model, achieving an en-                                         Natural Language Processing (EMNLP-IJCNLP), 2019, pp. 1210–1215.
+tropy utilization rate of 1.0. From the perspective of these                                  [5] Z.-L. Yang, S.-Y. Zhang, Y.-T. Hu, Z.-W. Hu, and Y.-F. Huang, “Vae-
+steganography methods, each token in the model candidate                                          stega: linguistic steganography based on variational auto-encoder,” IEEE
+                                                                                                  Transactions on Information Forensics and Security, vol. 16, pp. 880–
+pool is perceived as unique, and based on its distribution, it                                    895, 2020.
+can represent different messages. However, when we consider                                   [6] X. Zhou, W. Peng, B. Yang, J. Wen, Y. Xue, and P. Zhong, “Linguistic
+segmentation ambiguity, two groups of different tokens with                                       steganography based on adaptive probability distribution,” IEEE Trans-
+the same prefix (such as “ any” + “thing” and “ anything”) are                                    actions on Dependable and Secure Computing, vol. 19, no. 5, pp. 2982–
+                                                                                                  2997, 2021.
+completely identical after detokenization, resulting in loss of                               [7] L. Xiang, R. Wang, Z. Yang, and Y. Liu, “Generative linguistic steganog-
+the information they can express. We use a shared CSPSNR for                                      raphy: A comprehensive review,” KSII Transactions on Internet and
+synchronization between both parties to assist the receiver in                                    Information Systems (TIIS), vol. 16, no. 3, pp. 986–1005, 2022.
+                                                                                              [8] C. Cachin, “An information-theoretic model for steganography,” in
+determining the current token and completing extraction dur-                                      International Workshop on Information Hiding. Springer, 1998, pp.
+ing the autoregressive process. However, this information has                                     306–318.
+                                                                                                                                                            13
+
+
+
+ [9] N. J. Hopper, J. Langford, and L. Von Ahn, “Provably secure steganog-        [32] S. Katzenbeisser and F. A. Petitcolas, “Defining security in stegano-
+     raphy,” in Advances in Cryptology CRYPTO 2002: 22nd Annual Interna-               graphic systems,” in Security and Watermarking of Multimedia Contents
+     tional Cryptology Conference Santa Barbara, California, USA, August               IV, vol. 4675. SPIE, 2002, pp. 50–56.
+     18–22, 2002 Proceedings 22. Springer, 2002, pp. 77–92.                       [33] K. Chen, H. Zhou, H. Zhao, D. Chen, W. Zhang, and N. Yu,
+[10] M. Backes and C. Cachin, “Public-key steganography with active                    “Distribution-preserving steganography based on text-to-speech genera-
+     attacks,” in Theory of Cryptography Conference. Springer, 2005, pp.               tive models,” IEEE Transactions on Dependable and Secure Computing,
+     210–226.                                                                          vol. 19, no. 5, pp. 3343–3356, 2021.
+[11] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley,           [34] Q. Lhoest, A. V. del Moral, Y. Jernite, A. Thakur, P. von Platen,
+     S. Ozair, A. Courville, and Y. Bengio, “Generative adversarial nets,”             S. Patil, J. Chaumond, M. Drame, J. Plu, L. Tunstall et al., “Datasets:
+     Advances in neural information processing systems, vol. 27, 2014.                 A community library for natural language processing,” in Proceedings
+[12] M. Arjovsky, S. Chintala, and L. Bottou, “Wasserstein generative ad-              of the 2021 Conference on Empirical Methods in Natural Language
+     versarial networks,” in International conference on machine learning.             Processing: System Demonstrations, 2021, pp. 175–184.
+     PMLR, 2017, pp. 214–223.                                                     [35] H. Touvron, T. Lavril, G. Izacard, X. Martinet, M.-A. Lachaux,
+[13] Y. Song and S. Ermon, “Generative modeling by estimating gradients                T. Lacroix, B. Rozière, N. Goyal, E. Hambro, F. Azhar et al.,
+     of the data distribution,” Advances in neural information processing              “Llama: Open and efficient foundation language models,” arXiv preprint
+     systems, vol. 32, 2019.                                                           arXiv:2302.13971, 2023.
+[14] R. Jozefowicz, O. Vinyals, M. Schuster, N. Shazeer, and Y. Wu, “Explor-      [36] Z. Du, Y. Qian, X. Liu, M. Ding, J. Qiu, Z. Yang, and J. Tang, “Glm:
+     ing the limits of language modeling,” arXiv preprint arXiv:1602.02410,            General language model pretraining with autoregressive blank infilling,”
+     2016.                                                                             arXiv preprint arXiv:2103.10360, 2021.
+[15] W. X. Zhao, K. Zhou, J. Li, T. Tang, X. Wang, Y. Hou, Y. Min, B. Zhang,      [37] J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya, F. L. Aleman,
+     J. Zhang, Z. Dong et al., “A survey of large language models,” arXiv              D. Almeida, J. Altenschmidt, S. Altman, S. Anadkat et al., “GPT-4
+     preprint arXiv:2303.18223, 2023.                                                  technical report,” arXiv preprint arXiv:2303.08774, 2023.
+[16] K. Chen, H. Zhou, H. Zhao, D. Chen, W. Zhang, and N. Yu, “When               [38] H. Touvron, L. Martin, K. Stone, P. Albert, A. Almahairi, Y. Babaei,
+     provably secure steganography meets generative models,” arXiv preprint            N. Bashlykov, S. Batra, P. Bhargava, S. Bhosale et al., “Llama
+     arXiv:1811.03732, vol. 1, no. 3, p. 4, 2018.                                      2: Open foundation and fine-tuned chat models,” arXiv preprint
+[17] S. Zhang, Z. Yang, J. Yang, and Y. Huang, “Provably secure generative             arXiv:2307.09288, 2023.
+     linguistic steganography,” in Findings of the Association for Computa-       [39] A. Holtzman, J. Buys, L. Du, M. Forbes, and Y. Choi, “The curious case
+     tional Linguistics: ACL-IJCNLP 2021, 2021, pp. 3046–3055.                         of neural text degeneration,” arXiv preprint arXiv:1904.09751, 2019.
+[18] G. Kaptchuk, T. M. Jois, M. Green, and A. D. Rubin, “Meteor:                 [40] A. Maas, R. E. Daly, P. T. Pham, D. Huang, A. Y. Ng, and C. Potts,
+     Cryptographically secure steganography for realistic distributions,” in           “Learning word vectors for sentiment analysis,” in Proceedings of the
+     Proceedings of the 2021 ACM SIGSAC Conference on Computer and                     49th annual meeting of the association for computational linguistics:
+     Communications Security, 2021, pp. 1529–1548.                                     Human language technologies, 2011, pp. 142–150.
+[19] C. S. de Witt, S. Sokota, J. Z. Kolter, J. N. Foerster, and M. Strohmeier,   [41] Baichuan, “Baichuan 2: Open large-scale language models,” arXiv
+     “Perfectly secure steganography using minimum entropy coupling,” in               preprint arXiv:2309.10305, 2023. [Online]. Available: https://arxiv.org/
+     The Eleventh International Conference on Learning Representations,                abs/2309.10305
+     2022.
+[20] J. Ding, K. Chen, Y. Wang, N. Zhao, W. Zhang, and N. Yu,
+     “Discop: Provably Secure Steganography in Practice Based on
+     “Distribution Copies”,” in 2023 IEEE Symposium on Security
+     and Privacy (SP). Los Alamitos, CA, USA: IEEE Computer
+     Society, May 2023, pp. 2238–2255. [Online]. Available: https:
+     //ieeexplore.ieee.org/document/10179287
+[21] X. Zhang, K. Chen, J. Ding, Y. Yang, W. Zhang, and N. Yu, “Provably
+     secure public-key steganography based on elliptic curve cryptography,”
+     IEEE Transactions on Information Forensics and Security, 2024.
+[22] H. Ueoka, Y. Murawaki, and S. Kurohashi, “Frustratingly easy edit-
+     based linguistic steganography with a masked language model,” in
+     Proceedings of the 2021 Conference of the North American Chapter
+     of the Association for Computational Linguistics: Human Language
+     Technologies, 2021, pp. 5486–5492.
+[23] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever et al.,
+     “Language models are unsupervised multitask learners,” OpenAI blog,
+     vol. 1, no. 8, p. 9, 2019.
+[24] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal,
+     A. Neelakantan, P. Shyam, G. Sastry, A. Askell et al., “Language mod-
+     els are few-shot learners,” Advances in neural information processing
+     systems, vol. 33, pp. 1877–1901, 2020.
+[25] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+     Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in
+     neural information processing systems, vol. 30, 2017.
+[26] J. Nozaki and Y. Murawaki, “Addressing segmentation ambiguity in
+     neural linguistic steganography,” AACL-IJCNLP 2022, p. 109, 2022.
+[27] R. Sennrich, B. Haddow, and A. Birch, “Neural machine translation of
+     rare words with subword units,” arXiv preprint arXiv:1508.07909, 2015.
+[28] T. Kudo, “Subword regularization: Improving neural network transla-
+     tion models with multiple subword candidates,” in Proceedings of the
+     56th Annual Meeting of the Association for Computational Linguistics
+     (Volume 1: Long Papers), 2018, pp. 66–75.
+[29] T. Kudo and J. Richardson, “Sentencepiece: A simple and language inde-
+     pendent subword tokenizer and detokenizer for neural text processing,”
+     arXiv preprint arXiv:1808.06226, 2018.
+[30] R. Yan, Y. Yang, and T. Song, “A secure and disambiguating approach
+     for generative linguistic steganography,” IEEE SIGNAL PROCESSING
+     LETTERS, p. 1, 2023.
+[31] G. J. Simmons, “The prisoners’ problem and the subliminal channel,”
+     in Advances in Cryptology: Proceedings of Crypto 83. Springer, 1984,
+     pp. 51–67.
+

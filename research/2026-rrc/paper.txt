@@ -1,0 +1,1217 @@
+      Efficient Provably Secure Linguistic Steganography via Range Coding
+
+
+                                 Ruiyi Yan and Yugo Murawaki
+                          Graduate School of Informatics, Kyoto University
+                   ruiyi@nlp.ist.i.kyoto-u.ac.jp, murawaki@i.kyoto-u.ac.jp
+
+
+
+
+                         Abstract                                               s6$*j1%H&Y*($                     Please introduce the Renaissance.
+
+
+                                                                                   Key           PRNG                 LM            Context
+       Linguistic steganography involves embedding
+       secret messages within seemingly innocuous                                      Shared                              Shared
+       texts to enable covert communication. Prov-
+                                                                                          …                                  …
+       able security, which is a long-standing goal and            Message:                                                                   Message:
+                                                                                          +                                   +
+       key motivation, has been extended to language-              1010011…
+                                                                                    Embedding                            Extraction
+                                                                                                                                              1010011…
+
+       model-based steganography. Previous prov-                                     algorithm                           algorithm
+
+       ably secure approaches have achieved perfect
+       imperceptibility, measured by zero Kullback-
+       Leibler (KL) divergence, but at the expense                                                 Public channel
+       of embedding capacity. In this paper, we at-
+                                                                    Alice           Stegotext                           Stegotext               Bob
+       tempt to directly use a classic entropy cod-
+       ing method (range coding) to achieve secure                            The Renaissance was a remarkable period of cultural, intellectual, and
+                                                                                      artistic revival in Europe, spanning roughly from …
+       steganography, and then propose an efficient
+       and provably secure linguistic steganographic             Figure 1: A schematic diagram of linguistic steganog-
+       method with a rotation mechanism. Experi-                 raphy, where PRNG refers to a pseudo-random number
+       ments across various language models show                 generator for controlling randomness and reproducibil-
+       that our method achieves around 100% en-                  ity. Alice embeds the secret message into a stegano-
+       tropy utilization (embedding efficiency) for              graphic text (stegotext), and Bob extracts the secret
+       embedding capacity, outperforming the exist-              message from the received stegotext.
+       ing baseline methods. Moreover, it achieves
+       high embedding speeds (up to 1554.66 bit-
+       s/s on GPT-2). The code is available at
+       § github.com/ryehr/RRC_steganography.
+                                                                 hatch an escape plan, and they can only com-
+                                                                 municate under the scrutiny of a warden, Eve (a
+  1    Introduction                                              steganalyzer), who can block communication if
+                                                                 any suspicious content is detected. To evade de-
+  Linguistic steganography, as a promising field in              tection, they embed their secret message into an
+  safeguarding information, refers to the art of con-            innocent-looking carrier (steganographic content).
+  cealing messages within texts. With rapid advance-             Intuitively, steganographic content is expected to
+  ments in large language models (LLM) (Brown                    closely resemble normal content, leading to the con-
+  et al., 2020; Achiam et al., 2023; Anthropic, 2024),           cept of steganographic security. However, incorpo-
+  LM-based steganography methods (Ziegler et al.,                rating steganographic algorithms into the language
+  2019; Wu et al., 2024; Yan et al., 2025) have domi-            model’s prediction and sampling processes often
+  nated linguistic steganography, as leveraging LMs              introduces distributional distortions (Holub and
+  can create flexible text content, diverse genres, and          Fridrich, 2013; Yang et al., 2019b). To address this
+  consistent contexts, enabling high embedding ca-               challenge, recent work has explored approaches
+  pacity. Figure 1 illustrates how a sender (Alice)              aimed at achieving provable security (Hopper et al.,
+  and a receiver (Bob) communicate using linguistic              2002, 2009) in steganography.
+  steganography.                                                    Despite the progress of provably secure ap-
+     Simmons’s “Prisoners’ Problem” (Simmons,                    proaches, each method has its own limitations.
+  1984) illustrates a steganographic scenario, where             ADG (Zhang et al., 2021) fails to strictly preserve
+  Alice and Bob (steganographers) are trying to                  the original probability distribution by grouping
+                                                             890
+Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 890–907
+                                July 2-7, 2026 ©2026 Association for Computational Linguistics
+candidate tokens at each generative step. Me-                      provably secure baseline methods (Section 6). Ex-
+teor (Kaptchuk et al., 2021), which is based on                    periments also show that RRC steganography has
+arithmetic coding (AC) (Ziegler et al., 2019), in-                 strong scalability and anti-steganalysis capacity.
+evitably distorts the original distribution when
+encoding intervals. Although iMEC (de Witt                         2     Background and Preliminaries
+et al., 2023), Discop (Ding et al., 2023), and                     2.1    Language Model Basics
+SparSamp (Wang et al., 2025) maintain the orig-
+                                                                   A language model (LM) has a vocabulary V, a set
+inal probability distribution, the first two suffer
+                                                                   of tokens. Consider a sequence of LM-generated T
+from limited embedding capacity and slow embed-
+                                                                   tokens {s(t) } ∈ V T . Tokens with negative indices,
+ding speeds. SparSamp, the current state-of-the-art
+                                                                   [s(−Np ) , . . . , s(−1) ], represent a prompt of length
+method, still falls short of achieving full embed-
+                                                                   Np and [s(0) , . . . , s(T −1) ] are tokens generated by
+ding efficiency (i.e., 100% entropy utilization). All
+                                                                   an LM in response to the prompt.
+of these methods process the secret message as dis-
+                                                                      The next token prediction by an LM at posi-
+crete bits, which can result in losses in embedding
+                                                                   tion t, is a function whose input is a sequence of
+efficiency or imperceptibility when incorporating
+                                                                   known tokens [s(−Np ) , . . . , s(t−1) ] which consists
+some mechanisms for unique extraction.
+                                                                   of a prompt and the first t − 1 LM-generated to-
+   These limitations motivate us to revisit a classi-
+                                                                   kens. Then it outputs a logit vector, correspond-
+cal entropy-coding technique, range coding (RC;
+                                                                   ing to each token in V. These logits are then
+Martin, 1979) which encodes messages in decimal
+                                                                   converted into a discrete probability distribution
+form rather than in bits, and explore whether it can                            (t)          (t)
+achieve (i) preservation of the original probability               p(t) = (p1 , . . . , p|V| ) over the vocabulary, via a
+distribution, (ii) full embedding efficiency, and (iii)            softmax operator (commonly). The next token is
+high embedding speed.1                                             then sampled from p(t) using either standard multi-
+   We begin by proposing a vanilla RC steganogra-                  nomial sampling, beam search, or other strategies.
+phy (Section 3). To the best of our knowledge, it is               2.2    LM-based Steganography
+the first attempt to embed a secret message entirely
+                                                                   Alice (the sender) wants to communicate a se-
+in decimal form. However, we discover its secu-
+                                                                   cret message ms ∼ U ({0, 1}l ) with Bob (the re-
+rity issues: (1) distortion on probability distribution
+                                                                   ceiver) by embedding it in a natural-language text
+and (2) randomness reuse.
+                                                                   ts (a stegotext). Alice and Bob have agreed on
+   To address these issues, we present rotation
+                                                                   an embedding function Semb and an extracting
+range-coding (RRC) steganography, which incor-
+                                                                   function Sext that perform steganography, achieved
+porates a rotation mechanism (Section 4). This
+                                                                   by a language model, M. These two functions
+mechanism ensures zero KL divergence at every
+                                                                   are supposed to be invertible. In other words,
+generative step and prevents reuse of randomness.
+                                                                   Semb (M, ms ) = ts , Sext (M, ts ) = m′s .
+The method is training-free and plug-and-play.
+   In addition, we provide theoretical analysis and                2.3    Security of Steganography
+proofs regarding zero KL divergence and computa-
+                                                                   Cachin (1998) first modeled steganographic secu-
+tional security, supporting the provable security of
+                                                                   rity from the perspective of information theory,
+our RRC steganography (Section 5). Additionally,
+                                                                   where given an object x, the security of a stegosys-
+the approximate 100% entropy utilization for em-
+                                                                   tem can be quantified by Kullback-Leibler (KL) di-
+bedding capacity is analyzed and empirically vali-
+                                                                   vergence between the cover distribution (the chan-
+dated. The key advantage of RC-based steganogra-
+                                                                   nel distribution) Pc and the stego distribution Ps ,
+phy is ensuring unique extraction internally, with-
+out requiring any trade-offs or external restrictions.                                       X                  Pc (x)
+                                                                          DKL (Pc ||Ps ) =         Pc (x) log            (1)
+   Experimental results in various language models                                                              Ps (x)
+                                                                                             x∈C
+demonstrate that RRC steganography consistently
+achieves the highest embedding efficiency (i.e.,                   which typically measures how different the two
+entropy utilization) and great embedding speed                     distributions are. When DKL (Pc ||Ps ) = 0, the
+(up to 1554.66 bits/s in GPT-2) compared to all                    stegosystem is considered to be perfectly secure in
+    1
+                                                                   this perspective of information theory.
+      When all operations are carried out in decimals, the orig-
+inal distribution at each generative step is rescaled to a new        Benefiting from the explicit generative models
+range, without distortion caused by constructing discrete bits.    that can predict probability distributions, the above
+                                                               891
+        definition
+    Historical    tokensof(in text form):
+                            steganographic security can be mod-                                           Previous tokens (in text form):
+Drinkingeled    into water
+         contaminated   another     goal, the
+                               can increase that is, steganography is                                Drinking contaminated water can increase the
+      risk of infection with Escherichia                                                                   risk of infection with Escherichia
+     indistinguishable from the normal generation pro-
+     cess, i.e., random
+                    LM       sampling (Ding et al., 2023).                                       LM            Predict the next token
+         In addition, from the perspective of computa-
+     tional   security
+        Predict the      (Hopper et al., 2002; Katzenbeisser
+                    next token                                                                              Probability distribution
+     and Petitcolas, 2002), steganography is secure                                                                                                 95%
+ Candidate pool
+     against chosenProbability
+     pool
+                          hiddentext attacks, if for all proba-                      coli (0)
+                                                                                                                           50%
+      coli                 99.5%
+     bilistic  polynomial      time (PPT) adversary detection                   species (10)
+                                                                                                 3%
+     AD , it holds: 0.3%
+    species                                                                                                    25%
+     albertii              0.1%                                                                  1%
+                                                                               albertii (110)
+                                                                                                         12.5%
+        |Pr[AD (xs ) = 1]
+    fergusonii            − Pr[AD (xc ) = 1]| < negl(λ)
+                        0.1%                                                                                                Original probability
+                                                                                                 1%                         Distorted probability
+                                                       (2)                   fergusonii (111)
+                                                                                                         12.5%
+          Huffman encoding
+      where xs is the stegotext, xc is the normally gen-                                        0%       20%       40%       60%        80%     100%
+      erated cover text, λ is the security parameter of
+      Code         Changed probability
+      the shared key K (usually the length of K), and                    Figure 2: An example of how steganographic encoding
+        0                 50%                                            (using Huffman coding (Yang et al., 2019b)) can alter
+      negl(λ)
+       10
+                is a negligible
+                          25%
+                                function concerning λ.
+                                                                         the original top-4 probability distribution predicted by
+      110
+      2.4 Statistical 12.5%
+                       Imperceptibility of LM-based                      a language model. Specifically, a pair such as coli (0)
+      111             12.5%
+          Steganography                                                  denotes a candidate token along with its Huffman code,
+                                                                         and the distorted probabilities are computed based on a
+      Following the previous formulation (Dai and Cai,                   random secret message.
+      2019; Shen et al., 2020), statistical imperceptibility
+      refers to the similarity between the true language
+      model Mt in the monitored channel and Ms , the                     In this low-entropy example, “coli” has an over-
+      language model M integrated with steganographic                    whelmingly high probability of being the next to-
+      algorithms. Specifically, the total variation distance             ken, making any alternative token extremely un-
+      (TVD) is used to measure statistical imperceptibil-                likely. If steganography introduces distribution dis-
+      ity. Consider the TVD between Mt and Ms , i.e.                     tortion (such as through Huffman encoding), it may
+      d(Mt , Ms ), by triangle inequality:                               create detectable patterns that could be exploited
+                                                                         by a steganalysis detector.
+          d(Mt , Ms ) ≤ d(Mt , M) + d(M, Ms ).                   (3)
+                                                                         2.5        Related Work with Zero KL Divergence
+      As d(Mt , M) is a criterion to measure the original
+      language model, which is limited by the research                   Achieving DKL (p(t) ||p̂(t) ) = 0 (for each t) is a
+      on language models. Thus, d(M, Ms ) is the main                    desirable objective in steganography. Ding et al.
+      focus of linguistic steganography.                                 (2023) proposed Discop, a representative zero-KL
+         According to Pinsker’s inequality (Fedotov et al.,              provably secure steganographic method. At each
+      2003) and additivity of KL divergence, d(M, Ms )                   generative step, the message determines which dis-
+      can be further decomposed in each step, that is:                   tribution copy to sample. However, Discop must
+                         v                                               avoid overlaps between its rotated copies to keep
+                         u       ∞                                       extraction unique: whenever overlaps occur, it em-
+                         u ln 2 X
+         d(M, M ) ≤ t
+                   s
+                                    DKL (p(t) ||p̂(t) ) (4)              beds fewer bits. Recently, Wang et al. (2025) in-
+                             2
+                                     t=1                                 troduced SparSamp, which embeds messages by
+                                                                         combining them with pseudo-random numbers to
+      where p(t) is the original probability distribution
+                                                                         obtain message-derived random numbers for sam-
+      at tth step, and p̂(t) is transformed from p(t) via
+                                                                         pling. To achieve uniquely extractable, SparSamp
+      sampling and encoding. Hence, linguistic steganog-
+                                                                         must sparsify its sampling grid, which leaves a
+      raphy could aim to minimize DKL (p(t) ||p̂(t) ), in
+                                                                         small capacity gap. More related methods and de-
+      order to obtain relative near-imperceptibility. Some
+                                                                         tails are shown in Appendix A.
+      derivation is skipped here, as details are verified
+      in (Dai and Cai, 2019; Shen et al., 2020; Fedotov                  3        Vanilla Range-Coding Steganography
+      et al., 2003).
+         Specifically, Figure 2 illustrates how distribu-                In this section, we tentatively start by describ-
+      tion distortion can compromise imperceptibility.                   ing a simple vanilla version of range-coding (RC)
+                                                                       892
+               LM                                LM                            LM                Algorithm 1 Vanilla RC steganography (embed)
+                                                                                                 Input:
+       Predict (t = 0)                  Predict (t = 1)                 Predict (t = 2)
+                                                                                                 Context (initial previous tokens), C
+   0                    0               0                 0                                      Language model, M
+                                            p1(1) = 0.3                                          Message length, l
+                                      0.3                 12779.52        0         12779.52     Secret message, ms
+         p1(0) = 0.65       20219 ∈         p2(1) = 0.5       20219 ∈         …
+                                                                                                 Output:
+                                      0.8                 34078.72        1         34078.72     Steganographic text, ts
+                                               …
+0.65                    42598.4         1                 42598.4
+
+         p2(0) = 0.3                                                                              1: ds ← bin2dec(ms );                         // Decimalize
+                                      16-bit secret message: 0100111011111011
+0.95                    62259.2                                                                   2: [L, R) ← [0, 2l );            // Initialize interval
+             …
+    1                   65536 (216)                Decimal value: 20219                           3: while round( L+R    ) ̸= ds do
+                                                                                                                     2
+                                                                                                          (t)
+                                                                                                  4:    p ← M(C);                            // Predict probs
+Figure 3: An example of procedures for embedding                                                  5:    c(t) ← 0||p(t) .cumsum();           // Cumulate probs
+a 16-bit secret message into a text via the vanilla RC                                            6:    c′(t) ← L + (R − L) × c(t) ;                // Rescale
+steganography. The interval is iteratively narrowed until                                         7:    Select tokeni so that ds ∈ [c′(t) [i − 1], c′(t) [i]);
+it can uniquely represent the decimal value 20219.                                                8:    [L, R) ← [c′(t) [i − 1], c′(t) [i]);
+                                                                                                  9:    C ← C||tokeni ;
+                                                                                                 10: Detokenize C into ts ;
+steganography, which directly applies RC to lin-                                                 11: return ts
+guistic steganography.
+                                                                                                 Algorithm 2 Vanilla RC steganography (extract)
+3.1 Embedding & Extraction
+                                                                                                 Input:
+Figure 3 briefly illustrates how vanilla RC steganog-                                            Context (initial previous tokens), C
+                                                                                                 Language model, M
+raphy embeds a message into a text. In range cod-                                                Message length, l
+ing, all the information can be represented in dec-                                              Steganographic text, ts
+imals and ranges (intervals). In this example, the
+                                                                                                 Output:
+16-bit message is interpreted as an integer whose                                                Secret message, ms
+decimal representation is 20219, and the interval is
+initialized as [0, 216 ) = [0, 65536).                                                            1: Tokenize ts into S;
+                                                                                                  2: [L, R) ← [0, 2l );              // Initialize interval
+    Algorithm 1 outlines how the sender (Alice) em-                                               3: for t = 0, 1, . . . , |S| − |C| − 1 do
+beds the secret message ms into the text ts using                                                 4:    p(t) ← M (S [: |C| + t]);            // Predict probs
+vanilla RC steganography. Specifically, ms is first                                               5:    c(t) ← 0||p(t) .cumsum();           // Cumulate probs
+decimalized to ds in Line 1, and all subsequent                                                   6:    c′(t) ← L + (R − L) × c(t) ;               // Rescale
+                                                                                                  7:    Select tokeni so that tokeni = S [|C| + t + 1];
+procedures operate directly on ds rather than on a
+                                                                                                  8:    [L, R) ← [c′(t) [i − 1], c′(t) [i]);
+bitstream. In Line 2, the initial interval is set to                                              9: ds ← round( L+R        );
+                                                                                                                        2
+[0, 2l ), where l is the length of ms . During subse-                                            10: ms ← dec2bin(ds ).zfill(l); // Binarize & Fill 0
+quent iterative processes (Lines 3–9), the interval is                                           11: return ms
+progressively narrowed at each step. The iteration
+ends when the midpoint of the interval is exactly
+rounded to ds (which ensures uniqueness).                                                        random 16-bit secret message ms ∼ U ({0, 1}16 ),
+    Algorithm 2 outlines how the receiver (Bob) ex-                                              so ds ∼ U ({0, 1, . . . , 216 − 1}) (ds is a discrete
+tracts the secret message ms from the received text                                              uniform random variable). Then, the stegano-
+ts . The initial interval is narrowed according to                                               graphic sampled probability for token1 (t = 0)
+                                                                                                                                                   (0)
+each token received, and ds is the rounded value                                                 is P (ds ∈ [0, 42598.4)) = 42599
+                                                                                                                                65536 ̸= 0.65 = p1 .
+of the midpoint of the final interval. Finally, the                                              Thus, distortion on probability distribution occurs
+extraction result ms is binarized from ds .                                                      and zero KL divergence or perfect security can-
+                                                                                                 not hold. Even though it could be mitigated when
+3.2 Security Issues                                                                              lengthening ms (l can be set greater than the tensor
+For vanilla RC steganography, there can be two                                                   precision). However, similar to AC-based steganog-
+security issues:                                                                                 raphy, iterative interval narrowing still causes no-
+   1) Distortion on probability distribution. Taking                                             ticeable distortion in small intervals.
+the first generative step in Figure 3 as an example,                                                2) Randomness reuse. According to Kaptchuk
+                                               (0)
+the (softmax) probability of token1 (t = 0), p1 , is                                             et al. (2021), reusing randomness in multiple sam-
+0.65, and its interval is [0, 42598.4). Considering a                                            pling events could expose features and bias to detec-
+                                                                                               893
+Algorithm 3 Rotation RC steganography (embed)                        Algorithm 4 Rotation RC steganography (extract)
+Input:                                                               Input:
+Context (initial previous tokens), C                                 Context (initial previous tokens), C
+Pseudo-random number generator, PRNG                                 Pseudo-random number generator, PRNG
+Language model, M                                                    Language model, M
+Symmetric key (seed), K                                              Symmetric key (seed), K
+Message length, l                                                    Message length, l
+Secret message, ms                                                   Steganographic text, ts
+
+Output:                                                              Output:
+Steganographic text, ts                                              Secret message, ms
+     (−1)
+ 1: ds      ← bin2dec(ms );                       // Decimalize       1: Tokenize ts into S;
+ 2: PRNG.set_seed(K);                                                 2: PRNG.set_seed(K);
+ 3: [L(−1) , R(−1) ) ← [0, 2l ); // Initialize interval               3: [L(−1) , R(−1) ) ← [0, 2l ); // Initialize interval
+ 4: for t = 0, 1, . . . do                                            4: tend ← |S| − |C| − 1;
+ 5:    p(t) ← M(C);                           // Predict probs        5: for t = 0, 1, . . . , tend do
+ 6:    c(t) ← 0||p(t) .cumsum();            // Cumulate probs         6:     p(t) ← M (S [: |C| + t]);              // Predict probs
+ 7:    ∆(t−1) = R(t−1) − L(t−1) ;                                     7:     c(t) ← 0||p(t) .cumsum();            // Cumulate probs
+ 8:    c′(t) ← L(t−1) + ∆(t−1) × c(t) ;               // Rescale      8:     ∆(t−1) ← R(t−1) − L(t−1) ;
+ 9:    o(t) ← U (0, 1).sample(PRNG(t) );                              9:     c′(t) ← L(t−1) + ∆(t−1) × c(t) ;             // Rescale
+10:    ds
+         (t)
+                 ← L(t−1) + (ds
+                                      (t−1)
+                                            − L(t−1) + o(t) ×        10:     Select tokeni so that tokeni = S [|C| + t + 1];
+       ∆  (t−1)
+                 ) mod ∆   (t−1)
+                                 ;                     // Rotate     11:     [L(t) , R(t) ) ← [c′(t) [i − 1], c′(t) [i]);
+                                   (t)                               12: mid(tend ) ← (L(tend ) + R(tend ) )/2;
+11:    Select tokeni so that ds ∈ [c′(t) [i − 1], c′(t) [i]);
+                                                                     13: for t = tend , . . . , 1, 0 do
+12:    [L(t) , R(t) ) ← [c′(t) [i − 1], c′(t) [i]);
+                                                                     14:     o(t) ← U (0, 1).sample(PRNG(t) );
+13:    C ← C||tokeni ;
+             (t)   (t)     (t)                                       15:     mid(t−1) ← L(t−1) + (mid(t) − L(t−1) − o(t) ×
+14:    if L +R         − ds ∈ (−0.5, 0.5] then
+                 2                                                          ∆(t−1) ) mod ∆(t−1) ;              // Rotate reversely
+15:         break                                                          (−1)
+16: Detokenize C into ts ;                                           16: ds      ← round_half_down(mid(−1) );
+                                                                                                 (−1)
+17: return ts                                                        17: ms ← dec2bin(ds ).zfill(l); //Binarize & Fill 0
+
+                                                                     18: return ms
+tors. Therefore, only using the bits of the message
+as the randomness or encrypting the message with
+                                                                     steps with Algorithm 1). Inspired by other provably
+a pseudo-random cipher, as in a public-key solu-
+                                                                     secure methods, we employ a pseudo-random num-
+tion, is insecure because multiple samplings will
+                                                                     ber generator (PRNG) and a symmetric key K to
+be forced to reuse randomness.
+                                                                     generate pseudo-random numbers for the following
+4    Rotation Range-Coding Steganography                             sampling (Line 2), ensuring reproducibility and cor-
+                                                                     rect extraction. Note that the pseudo-random num-
+Considering the security issues discussed above,                     bers generated by PRNG are used to control the
+we propose a rotation range-coding (RRC) stegano-                    sampling of the offset o ∼ U (0, 1) at each t (Line
+graphic method. Instead of directly using the con-                                                     (t−1)
+                                                                     9), and then o is used to rotate ds
+                                                                                                                 (t)
+                                                                                                             to ds (Line
+stant ds , our proposed rotation mechanism up-                       10). Besides, the termination condition in RRC
+        (t−1)     (t)
+dates ds      to ds at each time step t (initial                     steganography is L +R
+                                                                                          (t)   (t)    (t)
+                                                                                                    − ds ∈ (−0.5, 0.5]
+       (−1)                                                                                   2
+ds = ds ), with the following objectives:                            (Lines 14–15), which is tailored for unique extrac-
+                                                                     tion and avoiding generating unnecessary tokens.
+    • To transform the discrete uniform random vari-
+      able ds to a continuous uniform random vari-                   4.2    Extraction of RRC Steganography
+             (t)
+      able ds at each t, thereby preserving the orig-
+      inal probability distribution and ensuring zero                Algorithm 4 outlines how the receiver (Bob) ex-
+      KL divergence.                                                 tracts the secret message ms from the stegano-
+                                                                     graphic text ts . As Alice and Bob have agreed
+    • To introduce fresh randomness at each t,                       on PRNG and symmetric key K, Bob can syn-
+      thereby preventing the reuse of randomness.                    chronize each t-time rotation with Alice and re-
+                                                                                                  (t)
+                                                                     produce each range of ds according to each in-
+4.1 Embedding of RRC Steganography                                   terval [L(t) , R(t) ) at each t. Based on the termi-
+Algorithm 3 outlines the embedding procedures of                     nation condition of the embedding algorithm, the
+RRC steganography (Algorithm 3 shares several                        end time tend = |S| − |C| − 1, and mid(tend ) =
+                                                                   894
+                                                                                                          
+(L(tend ) + R(tend ) )/2, there is:                                P d(t)
+                                                                       s   ∈   [c ′(t)
+                                                                                       [i − 1], c ′(t)
+                                                                                                       [i])
+                                                                     Z c′(t) [i]
+           mid(tend ) − d(t
+                         s
+                           end )
+                                 ∈ (−0.5, 0.5]                                                          c′(t) [i] − c′(t) [i − 1]
+                                                                   =               fd(t) (x) dx =
+                                                                      c′(t) [i−1]      s                         ∆(t−1)
+     d(tend )
+              ∈ [mid(tend ) − 0.5, mid(tend ) + 0.5).                                P                                Pi−1
+      s                                                              (∆(t−1) × ik=1 pk ) − (∆(t−1) × k=1                      pk )
+                                                                   =                               (t−1)
+   Considering linear transformation and the rota-                                              ∆
+                                                                     Xi            i−1
+                                                                                   X
+tion in embedding, for each t there is (in Line 15):
+                                                                   =      pk −           pk = pi .
+                                                                       k=1         k=1
+ mid(t−1) = L(t−1) + (mid(t) − L(t−1) − o(t) ×
+                                                                   Therefore, the probability of selecting tokeni is
+ ∆(t−1) ) mod ∆(t−1)                                                      (t)
+                                                                 exactly pi , the original LM distribution.
+         d(t)
+          s ∈ [mid
+                  (t)
+                      − 0.5, mid(t) + 0.5)                         As RRC steganography does not change the orig-
+                                                                 inal predicted probability by the LM for each to-
+where ∆(t−1) = R(t−1) − L(t−1) . After iteration,                ken, the KL divergence between the original and
+    (−1)
+as ds    ∈ Z, there is (Line 16):                                the steganographic probability distribution is zero.
+                                                                 RRC steganography possesses perfect statistical
+      d(−1) ∈ [mid(−1) − 0.5, mid(−1) + 0.5)
+       s                                                         imperceptibility (according to Section 2.4).
+       ds(−1) = round_half_down(mid(−1) )                        5.2     Computational Security
+where round_half_down means that when a                          From the perspective of computational security
+number is exactly halfway between two possi-                     (Section 2.3 and Equation 2), we prove our RRC
+ble rounded values (e.g., 2.5), round_half_down                  steganography is a secure method, for which details
+rounds toward the smaller rounded values (e.g., 2).              are shown in Appendix B.3.
+                                      (−1)
+   Therefore, in RRC steganography, ds     can be                5.3     Embedding Capacity
+computed uniquely by Bob, and then ms is bina-
+            (−1)                                                 First, we consider when the embedding ends ac-
+rized from ds     (Line 17).                                     cording to the proposed termination condition,
+                                                                 there is a proposition (its proof is shown in Ap-
+5    Analysis of RRC Steganography
+                                                                 pendix B.2):
+5.1 Proof of Zero KL Divergence                                  Proposition 3. ∆(t) ≤ 1 is a sufficient condition
+                                                                                                  (t)   (t)    (t)
+Considering rotation, we first introduce Propo-                  for the embedding termination L +R   2     − ds ∈
+sition 1 (the rigorous proof is shown in Ap-                     (−0.5, 0.5] (Lines 14–15 in Algorithm 3).
+pendix B.1), and then explain how the original prob-                Then, given the initial interval [L(−1) , R(−1) ) =
+ability distribution is preserved (Proposition 2).               [0, 2n ) and the interval length ∆(−1) = 2n , the
+                     (t)                                         interval length at t is:
+Proposition 1. ds ∼ U (L(t−1) , R(t−1) ).
+                                                                                                  t
+                                                                                                  Y
+Proposition 2. In Line 11 (Algorithm 3), the se-                                       (t)      n    (i)
+                                          (t)                                      ∆         =2 ·   poutput                    (5)
+lected probability of each tokeni equals pi .                                                       i=0
+
+Proof. Considering the interval construction from                and there is:
+p(t) to c′(t) (Lines 5–8 in Algorithm 3), p(t) =                                        ∆(t)      (t)
+  (t)          (t)                    (t) (t)         (t)
+(p1 , . . . , p|V| ), c(t) = (co , c1 , . . . , c|V| ) =                                 (t−1)
+                                                                                               = poutput                       (6)
+                                                                                       ∆
+    P                    P|V|
+(0, 1k=1 pk , . . . , k=1 pk ), and c′(t) = L(t−1) +                         (i)
+                                                                 where poutput is the probability of the output token
+∆ (t−1) × c(t) = (L(t−1) , L(t−1) + ∆(t−1) ×
+P1                                                               (i = 0, 1, . . . , t).
+   k=1 pk , . . . , R
+                       (t−1) ).    According to Proposi-            According to Proposition 3, when ∆(t) ≤ 1, the
+           (t)
+tion 1, ds ∼ U (L        (t−1)  ,R (t−1) ), so the probability   embedding iteration ends. Considering information
+density function is:                                             theory and Equation 5, the interval shrinkage rate is
+                  (                                              determined by the entropy of the probability distri-
+                        1
+                             , if x ∈ [L(t−1) , R(t−1) ),        bution. The average amount of information per iter-
+  fd(t) (x) = ∆(t−1)
+     s               0,          otherwise                       ation is H (t) , and the total amount of information is
+                                                             895
+required to cover n bits of the initial interval.
+                                          P       There-   module for computing with sufficient precision.
+fore, the number of loops is satisfied: ti=0 H (t) ≥       Otherwise without an enough precision, errors or
+                     P|V| (t)            (t)
+n where H (t) = − i=1 pi log2 pi , and let the             incorrect extractions could occur.
+average entropy is Havg , so that the loop number
+                                                           6.2   Metrics
+(which is exactly the number of the generated to-
+kens) is: Ntoken ≈ Hnavg . Thus, the embedding             Avg (Max) KLD, a security metric, refers to the
+capacity (bits per token) can be represented as:           average (or maximum) value of the KL divergence
+   n                                                       DKL (p(t) ||p̂(t) ) in all steps, which indicates the av-
+Ntoken ≈ Havg . RRC steganography can achieve
+approximate 100% utilization of entropy.                   erage (or maximum) degree to the original distribu-
+                                                           tion by steganography (Ding et al., 2023). Specif-
+5.4 Complexity                                             ically, in DKL (p(t) ||p̂(t) ), p(t) is the probability
+RC-based steganography (including vanilla RC               distribution of the original candidate pool, and
+steganography and RRC steganography) requires              p̂(t) is the probability distribution of the modified
+updating probability intervals after each step, re-        (steganographic) candidate pool at each t.
+sulting in a time complexity of O(|V|) for each               Embedding capacity refers to the average num-
+generative step. The complexity can be computed            ber of bits embedded per generated token.
+following the approaches used in AC steganogra-               Entropy utilization (embedding efficiency)
+phy (Ziegler et al., 2019).                                refers to the ratio of embedding capacity to the
+                                                           average entropy over all steps.
+6       Experiments                                           Embedding speed refers to the average seconds
+                                                           required to embed a single secret bit.
+To validate the security and efficiency of our RRC
+steganography, we evaluated it compared to a se-           6.3   Main Results
+ries of methods toward provable security in this           Table 1 presents the average results across various
+era, including arithmetic coding (AC) (Ziegler             metrics for GPT-2. Besides, the results for OPT-
+et al., 2019), ADG (Zhang et al., 2021), Me-               1.3b and Llama-2-7b are shown in Tables 4 and 5 in
+teor (Kaptchuk et al., 2021), iMEC (de Witt                Appendix C.1. Both Meteor and Discop were eval-
+et al., 2023), Discop (Ding et al., 2023), and             uated in two configurations: sorted and unsorted.
+SparSamp (Wang et al., 2025).                              For each metric, the best-performing result is high-
+                                                           lighted in bold, while the second-best is indicated
+6.1 Setup                                                  with underline. The embedded secret message was
+To validate the generalizability of our stegano-           a randomly generated 128-bit sequence. In ad-
+graphic method, we implemented it using three              dition, multinomial sampling generation (random
+language models of various scales: GPT-2 (Rad-             sampling) was also carried out for comparison. The
+ford et al., 2019),2 OPT-1.3b (Zhang et al., 2022),3       key findings from these experiments are as follows:
+and Llama-2-7b (Touvron et al., 2023).4                       1) As analyzed in Wang et al. (2025), iMEC,
+   For each language model and steganographic              Discop and SparSamp are probability-preserving.
+method, 1,000 samples were generated using 1,000           The zero KL divergence of RRC steganography is
+different initial contexts. These contexts consist         proved in Section 5.1, thus these methods and our
+of the first 10 words from sequences randomly se-          RRC steganography can achieve 0 KL divergence.
+lected from the C4 dataset.5                                  2) Our RRC steganography empirically achieves
+   All the experiments were conducted with top-p           around 100% entropy utilization, which complies
+(p = 1.0) sampling, i.e., encoding the entire vocab-       with the theoretical analysis in Section 5.3, which
+ulary V, and 1.0 temperature. Experiments were             denotes the 100% embedding efficiency. Besides,
+implemented in Python 3.12.7 with Torch 2.5.0,             the entropy utilization of our method is steadily
+and accelerated by using RTX 6000 Ada Genera-              superior to other baseline methods when imple-
+tion GPUs. Besides, considering the precision limi-        mented in different language models.
+tation of the tensor, we imported Python’s decimal            3) Our RRC steganography achieves a highly
+    2
+                                                           competitive embedding speed, which is the fastest
+      https://huggingface.co/openai-community/gpt2
+    3
+      https://huggingface.co/facebook/opt-1.3b
+                                                           in GPT-2 (up to 1554.66 bits/s). However, in the
+    4
+      https://huggingface.co/meta-llama/Llama-2-7b-hf      other two language models, our method obtains the
+    5
+      https://huggingface.co/datasets/allenai/c4           second-fastest speeds.
+                                                        896
+                                       Avg / Max KLD             Capacity           Entropy      Utilization      Speed
+     Method                                            ↓                     ↑                               ↑            ↑
+                                         (bits/token)           (bits/token)      (bits/token)      (%)          (bits/s)
+     Multinomial sampling                     0/0                    N/A              5.86           N/A            N/A
+     AC                               1.95E-03 / 3.01E-02            5.86             5.87          99.83        1025.36
+     ADG                              1.60E-04 / 1.57E-03            4.81             5.89          81.60          36.45
+     Meteor w/o sort                  4.22E-02 / 1.16E-01            4.17             5.79          71.96         950.27
+     Meteor w/ sort                   4.11E-02 / 1.16E-01            4.77             5.81          82.08          25.25
+     iMEC                                     0/0                    4.16             5.83          71.44          27.30
+     Discop w/o sort                          0/0                    2.31             5.90          39.31         218.34
+     Discop w/ sort                           0/0                    5.58             5.86          95.17          44.30
+     SparSamp                                 0/0                    5.74             5.93          96.76        1267.82
+     RRC steganography (ours)                 0/0                    5.93             5.93          99.98        1554.66
+
+                 Table 1: Quantitative comparison with previous steganographic methods on GPT-2.
+
+  Message length (bits)          32          64        128            256        512     1024       2048     4096      8192
+  Utilization (%) ↑           99.86      99.19      99.98         99.89       99.77      99.93    100.35   100.43     99.99
+  Speed (bits/s) ↑          1390.23    1496.88    1554.66       1572.40     1475.68    1511.83   1191.88   880.82    604.76
+  Running time (s)            0.023      0.043      0.082         0.163       0.374      0.677     1.718    4.650    13.546
+
+Table 2: Average results on utilization, speed and running time of RRC steganography across various message
+lengths l on GPT-2.
+
+
+   Additionally, Appendix C.5 presents ablation                       3) Our method supports messages with signifi-
+studies comparing vanilla RC (Section 3) and prov-                 cantly higher bit lengths (with 8192 bits not rep-
+able secure RRC steganography (Section 4).                         resenting an upper limit), enabled by the scalable
+                                                                   precision of Python’s decimal module.
+6.4 Scalability of RRC Steganography
+Steganography based on range coding has a distinct                 6.5      Anti-steganalysis Capacity
+characteristic, that is, it embeds the entire secret              In this section, we evaluated the ability of our
+message using decimal values, rather than embed-                  method to evade Eve’s detection using steganal-
+ding it bit by bit. In other words, the minimum unit              ysis techniques, specifically through a fine-tuned
+of embedding is the complete l-bit message itself.                discriminator. The discriminators used for detec-
+If the embedding process is not completed, the mes-               tion were fine-tuned versions of the pretrained
+sage is considered not embedded at all. Therefore,                BERT (Devlin et al., 2019) and RoBERTa (Con-
+scalability should be considered, as it reflects how              neau et al., 2019) models, respectively. Table 8 in
+well RRC steganography can support the secret                     Appendix C.3 presents the steganalysis accuracies
+message with various lengths.                                     for steganographic texts generated by three differ-
+    Table 2 lists the average utilization, speed, and             ent language models. Accuracies around 50% indi-
+running time when RRC steganography embeds                        cate that the steganalysis methods do not perform
+the secret message with various lengths on GPT-2.                 better than random guessing in detecting texts.
+Tables 6 and 7 (in Appendix C.2) show results con-
+ducted in OPT-1.3b and Llama-2-7b. The number                      6.6      Human Evaluation
+of generated texts for each message length is 1000.               We randomly mixed the steganographic texts and
+From this table, we can find that:                                cover texts (250 samples per category) and asked
+    1) RRC steganography maintains steady entropy                 three human evaluators to judge whether each text
+utilization around 100%.6                                         was machine-generated with embedded hidden in-
+    2) When the message length varies from 64 to                  formation. As shown in Table 3, the consistently
+1024 bits, the embedding speed is steadily around                 low detection scores indicate that human evalua-
+1500 bits per second.                                             tors struggle to distinguish steganographic texts
+   6
+                                                                  from cover texts, providing strong evidence for the
+     The stability outperforms SparSamp whose utilization is
+sensitive to message length and the maximum length is only        perceptual imperceptibility of RRC steganography.
+1023 (according to the data disclosed in Wang et al. (2025)).     Notably, statistical classifiers already outperform
+                                                                897
+                          Model           Accuracy       Precision    Recall      F1
+                          GPT-2            47.8%          47.8%       47.2%     47.5%
+                          OPT-1.3B         46.6%          46.2%       41.2%     43.6%
+                          Llama-2-7B       50.6%          50.6%       52.4%     51.5%
+
+                          Table 3: Human evaluation results across different models.
+
+
+humans at this discrimination task, as they can ag-        for effective monitoring and regulation. We empha-
+gregate subtle statistical cues that are imperceptible     size that future research should develop effective
+to human readers.                                          detection and monitoring systems in parallel, en-
+                                                           suring responsible use of steganography.
+7   Conclusion
+                                                           Acknowledgments
+In this paper, we explore the use of a relatively
+simple and classical approach, range coding (RC),         We express our gratitude to the anonymous review-
+to achieve provably secure steganography as well          ers for their valuable and insightful comments. This
+as high embedding efficiency and speed. However,          work was supported by JST SPRING, Grant Num-
+two key security challenges arise: (1) distortion of      ber JPMJSP2110.
+the probability distribution and (2) reuse of random-
+ness. To address these issues, we propose rotation
+                                                           References
+range-coding (RRC) steganography, and provide
+theoretical explanations and proofs for it. RRC            Josh Achiam, Steven Adler, Sandhini Agarwal, Lama
+empirically outperforms the baseline methods in              Ahmad, Ilge Akkaya, Florencia Leoni Aleman,
+                                                             Diogo Almeida, Janko Altenschmidt, Sam Altman,
+both embedding efficiency and capacity, while also           Shyamal Anadkat, and 1 others. 2023. Gpt-4 techni-
+achieving competitive embedding speed. More-                 cal report. arXiv preprint arXiv:2303.08774.
+over, RRC steganography is training-free, model-
+                                                           Anthropic. 2024. The claude 3 model family: Opus,
+agnostic, and straightforward to implement, mak-
+                                                             sonnet, haiku. https://www-cdn.anthropic.com/
+ing it a practical foundation for future extensions          de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/
+to multi-modal steganography and for deployment              Model_Card_Claude_3.pdf.
+in real-world, privacy-preserving communication.
+                                                           Berk Atil, Sarp Aykent, Alexa Chittams, Lisheng Fu,
+                                                             Rebecca J. Passonneau, Evan Radcliffe, Guru Rajan
+Limitations                                                  Rajagopal, Adam Sloan, Tomasz Tudrej, Ferhan Ture,
+                                                             Zhe Wu, Lixinyu Xu, and Breck Baldwin. 2025. Non-
+In the symmetric steganographic system based on              determinism of "deterministic" llm settings. Preprint,
+RRC steganography, Alice and Bob must agree                  arXiv:2408.04667.
+on the secret message length l before the stegano-
+                                                           Tom Brown, Benjamin Mann, Nick Ryder, Melanie
+graphic communication, which is used to initialize           Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind
+the interval [0, 2l ) for both sides and fill “0” in         Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+extraction (Line 17 in Algorithm 4).                         Askell, Sandhini Agarwal, Ariel Herbert-Voss,
+   For the analysis of embedding capacity or em-             Gretchen Krueger, Tom Henighan, Rewon Child,
+                                                             Aditya Ramesh, Daniel Ziegler, Jeffrey Wu, Clemens
+bedding efficiency (Section 5.3) of RRC steganog-            Winter, and 12 others. 2020. Language models are
+raphy, we only explain an approximate 100% en-               few-shot learners. In Advances in Neural Information
+tropy utilization for it without rigorous theoretical        Processing Systems, volume 33, pages 1877–1901.
+proofs, but experiments can empirically prove that           Curran Associates, Inc.
+its utilization is approximate 100%.                       Christian Cachin. 1998. An information-theoretic
+                                                             model for steganography. In Information Hiding,
+Ethical Considerations                                       pages 306–318, Berlin, Heidelberg. Springer Berlin
+                                                             Heidelberg.
+While steganography has legitimate applications
+                                                           Alexis Conneau, Kartikay Khandelwal, Naman Goyal,
+such as embedding copyright information, it can              Vishrav Chaudhary, Guillaume Wenzek, Francisco
+also be misused for disinformation or to evade cen-          Guzmán, Edouard Grave, Myle Ott, Luke Zettle-
+sorship. This dual-use nature underscores the need           moyer, and Veselin Stoyanov. 2019. Unsupervised
+                                                     898
+  cross-lingual representation learning at scale. CoRR,     Diederik P. Kingma and Jimmy Ba. 2017. Adam:
+  abs/1911.02116.                                             A method for stochastic optimization. Preprint,
+                                                              arXiv:1412.6980.
+Falcon Dai and Zheng Cai. 2019. Towards near-
+  imperceptible steganographic text. In Proceedings of      Tri Van Le. 2003. Efficient provably secure public key
+  the 57th Annual Meeting of the Association for Com-          steganography. Cryptology ePrint Archive, Paper
+  putational Linguistics, pages 4303–4308, Florence,           2003/156.
+  Italy. Association for Computational Linguistics.
+                                                            G Nigel N Martin. 1979. Range encoding: an algorithm
+Christian Schroeder de Witt, Samuel Sokota, J Zico            for removing redundancy from a digitised message.
+  Kolter, Jakob Nicolaus Foerster, and Martin                 In Proc. Institution of Electronic and Radio Engi-
+  Strohmeier. 2023. Perfectly secure steganography            neers International Conference on Video and Data
+  using minimum entropy coupling. In The Eleventh             Recording, volume 2.
+  International Conference on Learning Representa-
+                                                            Jumon Nozaki and Yugo Murawaki. 2022. Addressing
+  tions.
+                                                              segmentation ambiguity in neural linguistic steganog-
+                                                              raphy. In Proceedings of the 2nd Conference of the
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and                 Asia-Pacific Chapter of the Association for Compu-
+   Kristina Toutanova. 2019. BERT: Pre-training of            tational Linguistics and the 12th International Joint
+   deep bidirectional transformers for language under-        Conference on Natural Language Processing (Vol-
+   standing. In Proceedings of the 2019 Conference of         ume 2: Short Papers), pages 109–116, Online only.
+   the North American Chapter of the Association for          Association for Computational Linguistics.
+  Computational Linguistics: Human Language Tech-
+   nologies, Volume 1 (Long and Short Papers), pages        Chao Pan, Donghui Hu, Yaofei Wang, Kejiang Chen,
+  4171–4186, Minneapolis, Minnesota. Association for          Yinyin Peng, Xianjin Rong, Chen Gu, and Meng
+   Computational Linguistics.                                 Li. 2025. Rethinking prefix-based steganography
+                                                              for enhanced security and efficiency. IEEE Transac-
+Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao,             tions on Information Forensics and Security, 20:3287–
+   Weiming Zhang, and Nenghai Yu. 2023. Discop:               3301.
+   Provably secure steganography in practice based on
+   "distribution copies". In 2023 IEEE Symposium on         Yuang Qi, Kejiang Chen, Kai Zeng, Weiming Zhang,
+   Security and Privacy (SP), pages 2238–2255.                and Nenghai Yu. 2025. Provably secure disam-
+                                                              biguating neural linguistic steganography. IEEE
+A.A. Fedotov, P. Harremoes, and F. Topsoe. 2003. Re-          Transactions on Dependable and Secure Computing,
+  finements of pinsker’s inequality. IEEE Transactions        22(3):2430–2442.
+  on Information Theory, 49(6):1491–1498.
+                                                            Alec Radford, Jeffrey Wu, Rewon Child, David Luan,
+Vojtěch Holub and Jessica Fridrich. 2013. Digital im-        Dario Amodei, Ilya Sutskever, and 1 others. 2019.
+  age steganography using universal distortion. In Pro-       Language models are unsupervised multitask learn-
+  ceedings of the First ACM Workshop on Information           ers. OpenAI blog, 1(8):9.
+  Hiding and Multimedia Security, IH&MMSec ’13,
+  page 59–68, New York, NY, USA. Association for            J. Rissanen and G. G. Langdon. 1979. Arithmetic cod-
+  Computing Machinery.                                         ing. IBM Journal of Research and Development,
+                                                               23(2):149–162.
+Nicholas Hopper, Luis von Ahn, and John Langford.
+  2009. Provably secure steganography. IEEE Trans-          Jiaming Shen, Heng Ji, and Jiawei Han. 2020. Near-
+  actions on Computers, 58(5):662–676.                         imperceptible neural linguistic steganography via
+                                                               self-adjusting arithmetic coding. In Proceedings of
+                                                               the 2020 Conference on Empirical Methods in Natu-
+Nicholas J. Hopper, John Langford, and Luis von Ahn.
+                                                               ral Language Processing (EMNLP), pages 303–313,
+  2002. Provably secure steganography. In Advances
+                                                               Online. Association for Computational Linguistics.
+  in Cryptology — CRYPTO 2002, pages 77–92, Berlin,
+  Heidelberg. Springer Berlin Heidelberg.                   Gustavus J. Simmons. 1984. The Prisoners’ Problem
+                                                              and the Subliminal Channel, pages 51–67. Springer
+Gabriel Kaptchuk, Tushar M. Jois, Matthew Green, and          US, Boston, MA.
+  Aviel D. Rubin. 2021. Meteor: Cryptographically
+  secure steganography for realistic distributions. In      Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+  Proceedings of the 2021 ACM SIGSAC Conference on            Martinet, Marie-Anne Lachaux, Timothée Lacroix,
+  Computer and Communications Security, CCS ’21,              Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal
+  page 1529–1548, New York, NY, USA. Association              Azhar, and 1 others. 2023. Llama: Open and effi-
+  for Computing Machinery.                                    cient foundation language models. arXiv preprint
+                                                              arXiv:2302.13971.
+Stefan Katzenbeisser and Fabien AP Petitcolas. 2002.
+   Defining security in steganographic systems. In Se-      Yaofei Wang, Gang Pei, Kejiang Chen, Jinyang Ding,
+   curity and Watermarking of Multimedia Contents IV,         Chao Pan, Weilong Pang, Donghui Hu, and Weiming
+  volume 4675, pages 50–56. SPIE.                             Zhang. 2025. SparSamp: Efficient provably secure
+                                                          899
+  steganography based on sparse sampling. In The 34th     Siyu Zhang, Zhongliang Yang, Jinshuai Yang, and
+  USENIX Security Symposium.                                Yongfeng Huang. 2021. Provably secure generative
+                                                            linguistic steganography. In Findings of the Associa-
+Jiaxuan Wu, Zhengxian Wu, Yiming Xue, Juan Wen,             tion for Computational Linguistics: ACL-IJCNLP
+   and Wanli Peng. 2024. Generative text steganogra-        2021, pages 3046–3055, Online. Association for
+   phy with large language model. In Proceedings of the     Computational Linguistics.
+   32nd ACM International Conference on Multimedia,
+   MM ’24, page 10345–10353, New York, NY, USA.           Susan Zhang, Stephen Roller, Naman Goyal, Mikel
+   Association for Computing Machinery.                     Artetxe, Moya Chen, Shuohui Chen, Christopher De-
+                                                            wan, Mona Diab, Xian Li, Xi Victoria Lin, Todor Mi-
+Lingyun Xiang, Shuanghui Yang, Yuhang Liu, Qian             haylov, Myle Ott, Sam Shleifer, Kurt Shuster, Daniel
+  Li, and Chengzhang Zhu. 2020. Novel linguistic            Simig, Punit Singh Koura, Anjali Sridhar, Tianlu
+  steganography based on character-level text genera-       Wang, and Luke Zettlemoyer. 2022. OPT: Open
+  tion. Mathematics, 8(9).                                  pre-trained transformer language models. Preprint,
+                                                            arXiv:2205.01068.
+Ruiyi Yan, Chenhui Chu, Zhongliang Yang, and Yugo
+                                                          Zachary Ziegler, Yuntian Deng, and Alexander Rush.
+  Murawaki. 2025. A comprehensive survey on lin-
+                                                            2019. Neural linguistic steganography. In Proceed-
+  guistic steganography: Methods, countermeasures,
+                                                            ings of the 2019 Conference on Empirical Methods
+  evaluation, and challenges.
+                                                            in Natural Language Processing and the 9th Inter-
+                                                            national Joint Conference on Natural Language Pro-
+Ruiyi Yan and Yugo Murawaki. 2025. Addressing tok-          cessing (EMNLP-IJCNLP), pages 1210–1215, Hong
+  enization inconsistency in steganography and water-       Kong, China. Association for Computational Linguis-
+  marking based on large language models. In Proceed-       tics.
+  ings of the 2025 Conference on Empirical Methods
+  in Natural Language Processing, pages 7076–7098,
+  Suzhou, China. Association for Computational Lin-       A     Related Work
+  guistics.
+                                                          In this section, we introduce the existing attempts
+Ruiyi Yan, Tian Song, and Yating Yang. 2024a. A near-     to provably secure steganography, and analyze their
+  imperceptible disambiguating approach via verifica-     characteristics or limitations.
+  tion for generative linguistic steganography. In 2024
+  IEEE International Conference on Systems, Man, and      A.1    Arithmetic Coding (AC) & Meteor
+  Cybernetics (SMC), pages 1638–1643.
+                                                          Arithmetic coding (AC) is a form of entropy en-
+Ruiyi Yan, Tian Song, and Yating Yang. 2024b. To-         coding used in lossless data compression (Rissanen
+  kenfree: A tokenization-free generative linguistic      and Langdon, 1979). A steganographic method that
+  steganographic approach with enhanced impercep-         first adopts AC is proposed by Le (2003). Then,
+  tibility. In 2024 IEEE International Conference on
+  Systems, Man, and Cybernetics (SMC), pages 449–         AC is applied in deep generative model and image
+  455.                                                    generation to the field of provably secure steganog-
+                                                          raphy (Yang et al., 2019a). Following these works,
+Ruiyi Yan, Yating Yang, and Tian Song. 2023. A secure     in the field of linguistic steganography, researchers
+  and disambiguating approach for generative linguis-     have presented a series of variant methods, espe-
+  tic steganography. IEEE Signal Processing Letters,
+  30:1047–1051.                                           cially including the original AC-based steganogra-
+                                                          phy (Ziegler et al., 2019), the AC-based method
+Kuan Yang, Kejiang Chen, Weiming Zhang, and Neng-         with a self-adjusting mechanism (Shen et al., 2020),
+  hai Yu. 2019a. Provably secure generative steganog-     and Meteor (Kaptchuk et al., 2021).
+  raphy based on autoregressive model. In Digital
+                                                             The sort of these AC-based steganographic meth-
+  Forensics and Watermarking, pages 55–68, Cham.
+  Springer International Publishing.                      ods commonly encounter a problem, that is, the
+                                                          precision limitation results in distortion in the orig-
+Zhong-Liang Yang, Xiao-Qing Guo, Zi-Ming Chen,            inal probability distribution at each generative step.
+  Yong-Feng Huang, and Yu-Jin Zhang. 2019b. Rnn-          Specifically, when the original probabilities are
+  stega: Linguistic steganography based on recurrent
+  neural networks. IEEE Transactions on Information       encoded into binary-based intervals, the selected
+  Forensics and Security, 14(5):1280–1295.                probability for each token always has the form of
+                                                               (t)
+                                                          2−p , where p(t) is the precision at time t. It is
+Zhong-Liang Yang, Si-Yu Zhang, Yu-Ting Hu, Zhi-           almost impossible to maintain the original distribu-
+  Wen Hu, and Yong-Feng Huang. 2021. Vae-stega:
+  Linguistic steganography based on variational auto-
+                                                          tion perfectly, thus introducing distortion.
+  encoder. IEEE Transactions on Information Foren-           To mitigate this distortion, one method is us-
+  sics and Security, 16:880–895.                          ing a higher initial precision, and even Python’s
+                                                        900
+decimal module can be used here to support a            determined. They demonstrated that achieving per-
+precision that is higher than the precision of the      fect steganographic security is equivalent to solving
+tensor. However, during the iteration of AC-based       a coupling problem, and that maximizing transmis-
+steganography, the external interval is narrowed        sion efficiency under perfect security corresponds
+and expanded many times, and when the external          to solving a minimum entropy coupling problem.
+interval is small, p(t) is also small. Therefore, as    Their proposed iMEC scheme fully exploits the
+the precision is AC-based methods are changed all       theoretical properties of coupling and minimum en-
+the times and cannot be controlled well, distortion     tropy coupling. As a result, the method preserves
+on probability distribution is inevitable.              the original probability distribution and achieves
+   Besides, even though Meteor addresses some           provably perfect security.
+problems that basic AC-based steganography suf-            However, iMEC does have a certain bit error rate.
+fers, Meteor suffers from limited embedding capac-      In addition, to achieve minimum entropy coupling
+ity. The reason is that, as Meteor does not narrow      and enhance the embedding rate, a considerable
+the interval successively and only considers each       amount of computational complexity, specifically
+generated symbol separately, thus it cannot fully       O(|V| log |V|), is necessary to couple the probabil-
+utilize the entropy. And Meteor does not address        ities. Low computation efficiency of iMEC makes
+the probability-distortion problem that arises in       it difficult to be practically utilized in a vocabulary-
+AC-based methods.                                       size situation.
+
+A.2 Adaptive Dynamic Grouping (ADG)                     A.4   Distribution Copies (Discop)
+Zhang et al. (2021) proposed a grouping-based           Ding et al. (2023) proposed a provably se-
+steganographic method called adaptive dynamic           cure steganographic method based on distribution
+grouping (ADG). At each time step, it dynamically       copies (Discop). In this method, several distribu-
+groups the probability distribution of all tokens of    tion copies are generated by rotating all intervals by
+the vocabulary into 2r groups with approximately        specific displacements. At each time step, the mes-
+the same probability sum, and then numbers them         sage determines which distribution copy to sample
+0, 1, . . . , 2r − 1. All tokens in each group rep-     from. Discop also employs an iterative method
+resent the same message bits of length r. Then,         based on the Huffman tree to further enhance the
+they match the first r bits from the message to be      capacity. Experimental results demonstrated a high
+embedded and converts them to a decimal num-            utilization rate of entropy. However, the complexity
+ber in {0, 1, . . . , 2r − 1}, and performs random      of creating a Huffman tree (O(|V|) complexity) at
+sampling from the normalized distribution of its        each step could not be efficient when a vocabulary-
+corresponding group to obtain the next token. In        size candidate pool is encoded.
+their assumptions, ADG can theoretically achieve           Discop works by creating several rotated copies
+perfect security (no probability distortion) if and     of the model’s probability distribution and picking
+only if the grouping is perfectly balanced.             one copy according to the secret bits. This design
+   However, the problem is that since the               must let the receiver uniquely tell which copy is
+vocabulary-size probability distribution is discrete,   used, without ever changing the model’s original
+the requirement is almost impossible to satisfy. In     probabilities. In practice, those rotated copies often
+most cases, the actual distribution used to embed       overlap on the same token: if the random number
+the message is a modified distribution, which is        falls into an overlap (a disputed range), the receiver
+different from the original distribution.               cannot be sure which copy was chosen. When that
+                                                        happens, the embedding process has to step back
+A.3 Iterative Minimum Entropy Coupling                  and embed fewer bits at that position to keep ex-
+    (iMEC)                                              traction unambiguous, which directly reduces the
+de Witt et al. (2023) analyzed information-theoretic    per-step payload. These overlaps become more
+steganography through the lens of minimum en-           likely whenever one token is much more probable
+tropy coupling. They investigated how much in-          than the rest, because adding more copies pushes
+formation about a fixed-length secret message can       more of the token intervals on top of each other. As
+be inferred by the sender and receiver through the      a result, the achievable rate is effectively governed
+selection of tokens, aiming to maximize and accu-       by the dominance of the most probable token (not
+mulate this information until the entire message is     by the full entropy of the distribution), and over
+                                                    901
+long texts it only approaches a stricter ceiling rather     Case 2: r + B > ∆(t−1) . There are X = r +
+                                                                                                        r
+than the ideal limit. The paper itself notes that, em-    B − ∆(t−1) and P (B > ∆(t−1) − r) = ∆(t−1)       .
+pirically, Discop reaches roughly 92%–95% of its            Therefore, for any x ∈ [0, ∆ (t−1) ), there is
+stated theoretical limit because of these disputed
+                                                                                           x
+ranges and the need to back off to smaller embed-                         P (X ≤ x) =
+dings when they occur.                                                                   ∆(t−1)
+                                                          which means X ∼ U (0, ∆(t−1) ).
+A.5 Sparse Sampling (SparSamp)                                   (t)               (t)
+                                                            As ds = L(t−1) +X, ds ∼ U (L(t−1) , L(t−1) +
+Wang et al. (2025) proposed SparSamp, an efficient                         (t)
+                                                          ∆(t−1) )), thus ds ∼ U (L(t−1) , R(t−1) ).
+and provably secure steganographic method based
+on sparse sampling. SparSamp embeds messages              B.2    Proof of Proposition 3
+by combining them with pseudo-random numbers
+                                                          Proposition 3. ∆(t) ≤ 1 is a sufficient condition
+to generate message-derived randomness for sam-                                            (t)   (t)    (t)
+                                                          for the embedding termination L +R         − ds ∈
+pling. This approach introduces only O(1) addi-                                                2
+                                                          (−0.5, 0.5] (Lines 14–15 in Algorithm 3).
+tional computational complexity per sampling step,
+ensuring high computational efficiency.                   Proof. If ∆(t) = R(t) − L(t) ≤ 1:
+   SparSamp embeds bits by turning the random
+numbers used for sampling into message-driven                        L(t) ≤ d(t)
+                                                                             s <R
+                                                                                  (t)
+                                                                                      ≤ L(t) + 1
+numbers. If two different message-driven numbers
+                                                            L(t) + R(t)
+land on the same token, the receiver cannot tell                        ∈ (L(t) , L(t) +0.5] ⊂ (L(t) , d(t)
+                                                                                                        s +0.5]
+which message was used. The paper calls this an                  2
+inherent conflict: longer message chunks raise ca-          L(t) + R(t)
+                                                                        ∈ [R(t) −0.5, R(t) ) ⊂ (ds −0.5, R(t) )
+pacity but also raise the chance of such collisions;             2
+shorter chunks reduce collisions but waste head-                   L(t) + R(t)
+room. To keep extraction unique without changing                               ∈ (ds − 0.5, ds + 0.5]
+                                                                        2
+the distribution, SparSamp deliberately spreads out
+(sparsifies) the allowable random numbers (i.e., it                 L(t) + R(t)
+                                                                                − d(t)
+                                                                                   s ∈ (−0.5, 0.5].
+increases the gap between neighboring positions),                        2
+so different messages are unlikely to pick the same
+token. That spacing is the price of uniqueness and
+                                                          B.3    Proof of Computational Security of RRC
+inevitably leaves a gap to 100% entropy utilization.
+                                                                 Steganography
+B     Propositions and Proofs                             Proposition 4. For all probabilistic polynomial
+                                                          time (PPT) adversary detection AD ,
+B.1    Proof of Proposition 1
+                  (t)
+Proposition 1. ds ∼ U (L(t−1) , R(t−1) ).                   |Pr[AD (xs ) = 1] − Pr[AD (xc ) = 1]| < negl(λ)
+
+Proof. Considering Lines 9–10 in Algorithm 3,             where xs is the stegotext, xc is the normally gen-
+     (t)                    (t−1)
+as ds = L(t−1) + (ds               − L(t−1) + o(t) ×      erated cover text, λ is the security parameter of
+∆ (t−1) ) mod ∆  (t−1) , and o ∈ U (0, 1), we let
+                               (t)                        the shared key K (usually the length of K), and
+A = ds
+          (t−1)
+                −L  (t−1)  and B = o(t) × ∆(t−1) .        negl(λ) is a negligible function concerning λ.
+Considering X = (A + B) mod ∆(t−1) , for any              Proof. We prove the computational indistinguisha-
+x ∈ [0, ∆(t−1) ), there is:                               bility (security) between stegotext and normal text
+    P (X ≤ x) = P ((A + B) mod ∆(t−1) ≤ x).               using a hybrid argument. Define the following
+                                                          hybrid distributions:
+  Let A = k∆(t−1) + r, where k ∈ Z and
+                                                              • Hyb0 – real steganographic generation: using
+r ∈ [0, ∆(t−1) ). Considering periodicity of mod-
+                                                                the secret message ms and K.
+ulo operations, there is
+                                                              • Hyb1 – modified steganographic generation:
+ (A + B) mod ∆(t−1) = (r + B) mod ∆(t−1) .                                    (−1)
+                                                                initialized ds     as a uniform random value
+  Case 1: r + B ≤ ∆(t−1) . There are X = r + B                  over [0, 2l ) instead of ms , with other steps
+                            (t−1)
+and P (B ≤ ∆(t−1) − r) = ∆∆(t−1)−r .                            unchanged.
+                                                      902
+                                                              Q
+   • Hyb2 – normal generation: sample tokens                 ( k−1   (t) (t)
+                                                                t=0 p (s ))      × Pr[terminate at k|S] ×
+     directly from language model M until the                Pr[no early termination|S].
+     sequence length matches the expected stego                In Hyb (fixed length k): PrHyb2 [S] =
+                                                             Qk−1 (t) 2 (t)
+     length, without interval operations.                      t=0 p (s ).
+                                                               Though an extra factor Pr[terminate|S] exists:
+Step 1: computational indistinguishability (se-
+curity) between Hyb0 and Hyb1                                     • This factor depends on interval lengths de-
+                 (−1)                                               termined by S, which is bounded in [0, 1],
+   • In Hyb0 , ds         = bin2dec(ms ).                           and introduces no bias due to language model
+                 (−1)                                               smoothness.
+   • In Hyb1 , ds         ∼ Uniform(0, 2l ).
+                                                  (0)             • In computational settings, distinguishers can-
+  At t = 0, the rotation operation updates ds :                     not efficiently compute Pr[terminate|S] (re-
+        d(0)   (−1)
+                    + o(0) × 2l ) mod 2l .                          quires internal state or LM details), and the
+         s = (ds
+                                                                    factor does not alter core conditional distribu-
+Since o(0) ∼ U (0, 1) implies o(0) × 2l ∼                           tions.
+Uniform(0, 2l ), we have:
+                                                                Crucially, the cryptographically secure PRNG
+         (−1)
+   • If ds
+                         (0)
+              is fixed, ds ∼ Uniform(0, 2l ).                ensures its outputs o(t) are computationally indis-
+                                                             tinguishable from true randomness. If a valid PPT
+         (−1)
+   • If ds     is uniform, ds
+                                 (0)
+                                       ∼ Uniform(0, 2l )     distinguisher AD exists for Hyb1 and Hyb2 , we
+     still holds.                                            build an adversary A′ to break PRNG security:
+                    (t)
+  For t ≥ 1, ds ∼ Uniform(L(t−1) , R(t−1) )                       • A′ simulates stego generation but uses a chal-
+which is independent of initialization. Thus, the                   lenge randomness source (PRNG or true ran-
+token sequence distributions of Hyb0 and Hyb1 are                   dom) for o(t) .
+identical (statistically indistinguishable). For any
+                                                                  • if AD succeeds, A′ breaks PRNG security,
+PPT distinguisher AD :
+                                                                    which leads to a contradiction against the cryp-
+ |Pr[AD (Hyb0 ) = 1] − Pr[AD (Hyb1 ) = 1]| = 0.                     tographically secure PRNG.
+
+                                                             Thus:
+Initialization differences are eliminated by the first
+rotation step.                                                     |Pr[AD (Hyb1 ) = 1] − Pr[AD (Hyb2 ) = 1]|
+Step 2: computational indistinguishability                          ≤ neglPRNG (λ).
+(security) between Hyb1 and Hyb2
+                                                             Step 3: computational indistinguishability (se-
+                    (−1)
+  Hyb1 uses random ds    and PRNG, but its con-              curity) between Hyb0 and Hyb2
+ditional token distribution matches the normal gen-          By the hybrid argument:
+eration. The stopping time T is stochastic, but:
+                                                                 |Pr[AD (Hyb0 ) = 1] − Pr[AD (Hyb2 ) = 1]|
+   • Token distributions conditioned on history                   ≤ |Pr[AD (Hyb0 ) = 1] − Pr[AD (Hyb1 ) = 1]|
+     match normal generation.                                     + |Pr[AD (Hyb1 ) = 1] − Pr[AD (Hyb2 ) = 1]|
+   • Termination depends on internal uniform vari-                ≤ 0 + neglPRNG (λ) = neglPRNG (λ).
+             (t)
+     ables ds and o(t) , which are inaccessible
+                                                                As Hyb0 is real steganographic generation, Hyb2
+     to distinguishers observing only token se-
+                                                             is normal generation (length-matched), for any PPT
+     quences.
+                                                             distinguisher AD , there is:
+   Consider Hyb2 (normal generation): Sample to-
+kens stepwise from M for length L = E[T ] (poly-                 |Pr[AD (xs ) = 1] − Pr[AD (xc ) = 1]| < negl(λ)
+nomially bounded since T = O(l), efficiently sam-
+                                                             where negl(λ) = neglPRNG (λ), which is negligi-
+pleable).
+                                                             ble.
+   For any fixed sequence S = [s(0) , . . . , s(k−1) ],
+its probability in Hyb1 is: PrHyb1 [S] =
+                                                           903
+                                 Avg / Max KLD           Capacity          Entropy      Utilization      Speed
+    Method                                       ↓                   ↑                              ↑            ↑
+                                   (bits/token)         (bits/token)     (bits/token)      (%)          (bits/s)
+    Multinomial sampling                0/0                  N/A             4.59           N/A            N/A
+    AC                          1.85E-03 / 1.13E-02          4.64            4.65          99.81         352.09
+    ADG                         1.38E-04 / 1.61E-03          3.45            4.64          74.20          25.29
+    Meteor w/o sort             2.80E-02 / 8.34E-02          3.13            4.54          69.03         410.79
+    Meteor w/ sort              2.77E-02 / 8.12E-02          3.65            4.52          80.76          46.02
+    iMEC                                0/0                  3.24            4.61          70.24          19.78
+    Discop w/o sort                     0/0                  1.92            4.67          41.08         154.25
+    Discop w/ sort                      0/0                  4.39            4.63          94.71          31.94
+    SparSamp                            0/0                  4.35            4.53          96.08         852.36
+    RRC steganography (ours)            0/0                  4.70            4.67         100.67         750.41
+
+             Table 4: Quantitative comparison with previous steganographic methods on OPT-1.3b.
+
+                                 Avg / Max KLD           Capacity          Entropy      Utilization      Speed
+    Method                                       ↓                   ↑                              ↑            ↑
+                                   (bits/token)         (bits/token)     (bits/token)      (%)          (bits/s)
+    Multinomial sampling                0/0                  N/A             3.46           N/A            N/A
+    AC                          6.92E-04 / 9.90E-03          3.53            3.52         100.33         104.37
+    ADG                         1.81E-04 / 3.90E-03          2.41            3.54          68.14          21.15
+    Meteor w/o sort             1.24E-02 / 4.00E-02          2.42            3.50          69.14          98.71
+    Meteor w/ sort              1.21E-02 / 4.19E-02          2.89            3.53          81.84          50.26
+    iMEC                                0/0                  2.48            3.43          72.35          10.30
+    Discop w/o sort                     0/0                  1.50            3.49          42.99         127.61
+    Discop w/ sort                      0/0                  3.33            3.48          95.72          26.13
+    SparSamp                            0/0                  3.38            3.44          98.12         326.12
+    RRC steganography (ours)            0/0                  3.57            3.52         101.41         146.24
+
+             Table 5: Quantitative comparison with previous steganographic methods on Llama-2-7b.
+
+
+C    Experimental Details & Supplementary                 to the results of 2, RRC steganography can achieve
+     Information                                          steady entropy utilization around 100%.
+
+C.1 Supplementary Main Results                            C.3     Supplementary Results of Comparison
+Tables 4 and 5 report the average results across          Table 8 reports steganalysis accuracies across three
+various metrics for OPT-1.3b and Llama-2-7b. The          steganalysis models, three language models for
+findings are consistent with those in Table 1 (GPT-       steganography, and two steganographic methods
+2), where our RRC steganography achieves the              (our RRC and the current state-of-the-art baseline,
+highest embedding capacity and embedding uti-             SparSamp). The experimental settings for steganal-
+lization among all methods. In contrast, for the          ysis follow the details in Appendix C.4.
+two larger language models, our method attains the           Table 9 presents the median perplexities under
+second-fastest speed, behind SparSamp, which is           various language models for steganography and
+particularly optimized for efficiency.                    two steganographic methods (with multinomial
+   In addition, some utilization results exceeding        sampling included for reference). The embedded
+100% appear due to sampling bias from finite data.        secret message was a random 128-bit sequence,
+Similar instances of over-100% utilization have           with 1,000 samples per group. Median values are
+also been reported in recent work (Pan et al., 2025).     reported because average perplexities are heavily
+                                                          skewed by extreme outliers.
+C.2 Supplementary Results of Scalability
+                                                             Overall, both methods yield near-random ste-
+Tables 6 and 7 list the average utilization, speed,       ganalysis accuracies (about 50%) and comparable
+and running time when RRC steganography em-               perplexity scores (close to those of multinomial
+beds the secret message with various lengths (up to       sampling), due to the provable security property
+8192 bits) on OPT-1.3b and Llama-2-7b. Similarly          shared by RRC steganography and SparSamp. Be-
+                                                      904
+   Message length (bits)       32        64       128         256      512     1024     2048      4096        8192
+   Utilization (%) ↑       100.09     99.26    100.67   100.35      100.30   100.02   100.14   100.14       100.08
+   Speed (bits/s) ↑        685.32    745.03    750.41   720.93      701.11   588.33   403.20   248.71       184.42
+   Running time (s)         0.047     0.086     0.171    0.355       0.730    1.740    5.079   16.469       44.421
+
+Table 6: Average results on utilization, speed and running time of RRC steganography across various message
+lengths l on OPT-1.3b.
+
+  Message length (bits)        32       64       128      256         512      1024    2048       4096         8192
+  Utilization (%) ↑        102.01    100.29    101.41   100.52      100.25   100.31   100.35   100.17       100.04
+  Speed (bits/s) ↑         142.67    144.63    146.24   142.00      126.51    92.65    79.38    63.21        46.10
+  Running time (s)          0.224     0.443     1.143    1.803       4.047   11.052   25.800   64.800      177.701
+
+Table 7: Average results on utilization, speed and running time of RRC steganography across various message
+lengths l on Llama-2-7b.
+
+                                  GPT-2                       OPT-1.3b                      Llama-2-7b
+  Steganalysis model
+                           RRC (ours) SparSamp          RRC (ours) SparSamp            RRC (ours) SparSamp
+  bert-base-uncased          49.3%            49.9%           48.1%          48.6%        49.7%             50.9%
+  roberta-base               51.1%            50.5%           50.1%          49.7%        51.3%             50.5%
+  roberta-large              48.9%            49.2%           52.6%          51.8%        47.7%             47.6%
+
+Table 8: Comparison of steganalysis accuracies against RRC steganography and SparSamp steganography under
+cases where models for steganography vary and models for steganalysis vary.
+
+                       Method                           GPT-2       OPT-1.3b     Llama-2-7b
+                       Multinomial sampling             81.05        74.09          74.99
+                       SparSamp                         83.56        73.18          73.37
+                       RRC steganography (Ours)         82.79        72.66          75.24
+
+Table 9: Comparison of median perplexity between RRC steganography and SparSamp steganography under cases
+where models for steganography vary.
+
+                                 Avg / Max KLD          Capacity       Entropy         Utilization        Speed
+    Method                                        ↓                ↑                               ↑              ↑
+                                   (bits/token)       (bits/token)   (bits/token)         (%)            (bits/s)
+                                             Implemented in GPT-2
+    Vanilla RC steganography    1.67E-14 / 5.73E-12        5.94          5.93            100.20          1605.31
+    RRC steganography                   0/0                5.93          5.93             99.98          1554.66
+                                            Implemented in OPT-1.3b
+    Vanilla RC steganography    1.46E-14 / 4.13E-12        4.70          4.69            100.19           770.49
+    RRC steganography                   0/0                4.70          4.67            100.67           750.41
+                                           Implemented in Llama-2-7b
+    Vanilla RC steganography    7.26E-13 / 1.99E-12        3.55          3.55            99.91            153.64
+    RRC steganography                   0/0                3.57          3.52            101.41           146.24
+
+     Table 10: Comparison between vanilla RC steganography and RRC steganography in various metrics.
+
+
+sides, we emphasize that lower perplexity does not         C.4      Steganalysis
+imply higher imperceptibility, due to the conflict        We generated 5,000 pairs of cover texts (via multi-
+between perceptual and statistical imperceptibil-         nomial sampling) and steganographic texts, re-
+ity (the Psic Effect) in steganography (Yang et al.,      spectively implemented on GPT-2, OPT-1.3b, and
+2021).                                                    Llama-2-7b. In each pair, the lengths (token num-
+                                                        905
+ber) of two texts are the same. The initial contexts       even small shifts in probability values may result
+for generation are the first 10 words from sequences       in incorrect extraction. This issue underscores the
+randomly selected from the C4 dataset. For each            importance of explicitly addressing hardware-level
+experimental group, 5,000 texts are split in a 6:2:2       robustness as an additional design dimension for
+ratio to create the training, validation, and test sets.   practical steganographic systems, alongside imper-
+   For fine-tuning BERT or RoBERTa models, we              ceptibility and capacity, in future research.
+use Adam (Kingma and Ba, 2017) as the optimizer
+with a learning rate of 5 × 10−5 . The batch size is
+set to 2048, and the discriminator is trained for 20
+epochs, running time of the whole training process
+is approximately 5 minutes.                                E    Samples of Texts
+
+C.5 Ablation on Rotation Mechanism
+To quantify the effect of the rotation mechanism,          We present examples of stegotexts generated by
+we implemented a variant without rotation (vanilla         RRC steganography and non-steganographic texts
+RC). As shown in Table 10 (where the experimen-            generated by multinomial sampling. Each stegotext
+tal setups follow Section 6.1), we can find that,          embeds a 128-bit random secret message. The ini-
+in vanilla RC steganography, even though it can            tial context is “Occasionally when I get some
+obtain the higher embedding speed compared to              free time, I’ll do.” Following the approach
+RRC steganography, 0 KL divergence cannot be               of Ziegler et al. (Ziegler et al., 2019), we terminate
+achieved. Most importantly, theoretical security           the generation process once the proposed method
+cannot be achieved. Therefore, the provable secu-          has finished embedding the message. In the fol-
+rity of vanilla RC steganography cannot be ensured         lowing examples, for each language model, the
+as shown in the analysis in Section 3.2.                   non-steganographic text has the same token num-
+                                                           ber as that of the corresponding stegotext.
+D    Discussion on Practical Issues
+One practical issue of linguistic steganography is
+tokenization inconsistency. The stegotext ts gen-              Texts generated by GPT-2
+erated by Semb (M, ms ) is essentially a sequence of
+                                                               Stegotext:
+tokens. Before transmission, the sender must deto-             Occasionally when I get some free time,
+kenize this sequence using a tokenizer to produce              I’ll do something that uses all of those
+                                                               sensors scanned at the bottom of the
+the final stegotext. Consequently, during extraction           computer - search for something. But I
+Sext (M, ts ), any tokenization inconsistency may              don’t know how to do that
+cause extraction to fail or yield an incorrect secret
+                                                               Non-steganographic text:
+message. This problem can be avoided only in                   Occasionally when I get some free time, I’ll
+a few tokenizer-free linguistic steganographic ap-             do some stretch and the lights rise over
+proaches (Xiang et al., 2020; Yan et al., 2024b). Re-          me, and will do some real experimenting. I
+                                                               didn’t really think about art where
+cently, several disambiguation methods have been
+proposed to mitigate this issue (Nozaki and Mu-
+rawaki, 2022; Yan et al., 2023, 2024a; Qi et al.,
+2025; Yan and Murawaki, 2025). These methods
+                                                               Texts generated by OPT-1.3b
+are orthogonal to our proposed RRC steganogra-
+phy and can be compatible, since they operate on               Stegotext:
+candidate pools prior to steganographic processing.            Occasionally when I get some free time,
+                                                               I’ll do flat screen, planner style
+   Another practical issue of linguistic steganog-             arrangement cards. It really highlights
+raphy is hardware indeterminism (Atil et al.,                  that the cards are supposed to be focused
+2025), whereby LLM outputs and the probabil-                   Non-steganographic text:
+ity distribution of the next token given the same              Occasionally when I get some free time, I’ll
+context can vary across different hardware settings.           do that in survival. It’s loads more fun to
+                                                               just play around and search ways to build
+Such variability poses serious risks for reliable mes-         a nest and be creative in
+sage extraction in real-world deployments, since
+                                                       906
+Texts generated by Llama-2-7b
+Stegotext:
+Occasionally when I get some free time,
+I’ll do a quick Google search on a random
+topic that interests me (if I have one
+free not sitting in front of a computer
+screen!), and just see where my curiosity
+takes me. The first thing
+
+Non-steganographic text:
+Occasionally when I get some free time, I’ll
+do a Google Searche for ""badminton"". It
+is refreshing not to find the many images
+that can be found with another more popular
+global pastime. My experiment of searching
+finds pictures
+
+
+
+
+                                               907
+

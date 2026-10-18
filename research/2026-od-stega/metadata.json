@@ -1,0 +1,42 @@
+{
+  "id": "2026-od-stega",
+  "title": "OD-Stega: LLM-Based Relatively Secure Steganography via Optimized Distributions",
+  "status": "EACL 2026",
+  "kind": "paper",
+  "source": "https://aclanthology.org/2026.eacl-long.36/",
+  "pdf": "https://aclanthology.org/2026.eacl-long.36.pdf",
+  "why": "Optimizes the available token entropy subject to a KL or total-variation divergence budget. Addresses a separate bottleneck from coding efficiency and gives a principled alternative to choosing temperature by trial and error.",
+  "caveat": "A nonzero divergence budget deliberately changes the original sampling distribution. Higher capacity must be evaluated against text quality and detectability.",
+  "repo": null,
+  "priority": "read first",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-od-stega/paper.pdf",
+      "requested_url": "https://aclanthology.org/2026.eacl-long.36.pdf",
+      "resolved_url": "https://aclanthology.org/2026.eacl-long.36.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:57.659349+00:00",
+      "bytes": 2258684,
+      "sha256": "931424b2eeea6d54cd2b44b33ab17cf2f25c16804c7d0f983712d493494b2d55"
+    },
+    {
+      "path": "2026-od-stega/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 222223,
+      "sha256": "87e97dbfe7570d6458bbad53609aa7a3213f0c15744e61634fd615b0c66d0b3d"
+    },
+    {
+      "path": "2026-od-stega/source.html",
+      "requested_url": "https://aclanthology.org/2026.eacl-long.36/",
+      "resolved_url": "https://aclanthology.org/2026.eacl-long.36/",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:58.044066+00:00",
+      "bytes": 43763,
+      "sha256": "1c5c9950c91c945ff4dce774040c3a579c0875825dc2ef65d8e9ee1e5a69c096"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 25
+}

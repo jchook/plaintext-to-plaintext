@@ -1,0 +1,69 @@
+{
+  "id": "2026-rrc",
+  "title": "Efficient Provably Secure Linguistic Steganography via Range Coding (RRC)",
+  "status": "ACL 2026",
+  "kind": "paper",
+  "source": "https://aclanthology.org/2026.acl-long.39/",
+  "pdf": "https://aclanthology.org/2026.acl-long.39.pdf",
+  "why": "A leading direct comparison for our interval coder. Reports approximately 100% entropy utilization and 3.57 bits/token on Llama-2-7B. Its repository documents precision, termination, and tokenization failures that matter for a real text-only protocol.",
+  "caveat": "Utilization is supported empirically, not by a rigorous optimality proof. Message length is agreed in advance. Repository tests report 100% recovery from token IDs but about 91% from retokenized text for one 128-bit setting, and require matched inference environments.",
+  "repo": "ryehr/RRC_steganography",
+  "priority": "read first",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-rrc/paper.pdf",
+      "requested_url": "https://aclanthology.org/2026.acl-long.39.pdf",
+      "resolved_url": "https://aclanthology.org/2026.acl-long.39.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:56.697079+00:00",
+      "bytes": 2055118,
+      "sha256": "2117f109bc21037d691b1fce4b37e00542928db5f21ba6235abe713cbef620d4"
+    },
+    {
+      "path": "2026-rrc/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 108391,
+      "sha256": "c45423caf83f0d56f9b9bf103f822d3f2389a80fcff8d387cde1450cfac1822f"
+    },
+    {
+      "path": "2026-rrc/source.html",
+      "requested_url": "https://aclanthology.org/2026.acl-long.39/",
+      "resolved_url": "https://aclanthology.org/2026.acl-long.39/",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:56.996977+00:00",
+      "bytes": 41353,
+      "sha256": "2417aad7f9ecae87ccb757673ee478ef5984888d7774c8333cf19a65bb17e270"
+    },
+    {
+      "path": "2026-rrc/repository.html",
+      "requested_url": "https://github.com/ryehr/RRC_steganography",
+      "resolved_url": "https://github.com/ryehr/RRC_steganography",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:57.701921+00:00",
+      "bytes": 329743,
+      "sha256": "f82c179cc096abbc8b51efadf79f548490b9ec6047816bf6d9c1f50e23625852"
+    },
+    {
+      "path": "2026-rrc/readme-source.json",
+      "requested_url": "https://api.github.com/repos/ryehr/RRC_steganography/readme",
+      "resolved_url": "https://api.github.com/repos/ryehr/RRC_steganography/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:57.964530+00:00",
+      "bytes": 18728,
+      "sha256": "268a1b81c3b10ffbebffd56feb02ea59ab3999831507e335bdd72aa061e886db"
+    },
+    {
+      "path": "2026-rrc/upstream-readme.md",
+      "source_url": "https://github.com/ryehr/RRC_steganography/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "52f693a104e661aa2a02b9c9f2877b4e79944fa3",
+      "derived_from": "readme-source.json",
+      "bytes": 13007,
+      "sha256": "4ff06d312d8ba9ae81db3e1e2c166bb914a48731251a50c0b29d4d2a76c02005"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 18
+}

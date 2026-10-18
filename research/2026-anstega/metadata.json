@@ -1,0 +1,33 @@
+{
+  "id": "2026-anstega",
+  "title": "Breaking the Generative Steganography Trilemma: ANStega for Optimal Capacity, Efficiency, and Security",
+  "status": "NDSS 2026",
+  "kind": "paper",
+  "source": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+  "pdf": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+  "why": "Near-entropy streaming ANS with cryptographic masking and low coding overhead. Particularly relevant to our size target: reports 3.69 bits/token on Qwen2.5-3B and 4.67 on Phi-2 2.7B in its full-vocabulary experiments.",
+  "caveat": "The decoder consumes the embedder's final ANS state. Transporting or reconstructing that state must be accounted for before treating this as a self-contained cover-text protocol. Numerical compatibility remains necessary.",
+  "repo": null,
+  "priority": "read first",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-anstega/paper.pdf",
+      "requested_url": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+      "resolved_url": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:57.210365+00:00",
+      "bytes": 2131738,
+      "sha256": "f24d795b2165b7d6041bcb869ba63016a0668e90f7b419603a199d69ce075cb6"
+    },
+    {
+      "path": "2026-anstega/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 120429,
+      "sha256": "23624475b006d5e5c027c4d398497a520f7b3117d3724ba934e3739368091bc4"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 17
+}

@@ -1,0 +1,42 @@
+{
+  "id": "2023-minimum-entropy-coupling",
+  "title": "Perfectly Secure Steganography Using Minimum Entropy Coupling",
+  "status": "ICLR 2023; arXiv author copy",
+  "kind": "paper",
+  "source": "https://arxiv.org/abs/2210.14889",
+  "pdf": "https://arxiv.org/pdf/2210.14889",
+  "why": "Provides the coupling formulation: preserving the cover distribution while maximizing information about the message. Useful theoretical reference for the entropy limit and alternatives to interval coding.",
+  "caveat": "Exact minimum-entropy coupling is computationally hard. Practical approximations and their decoding behavior must be distinguished from the ideal optimization.",
+  "repo": null,
+  "priority": "foundation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2023-minimum-entropy-coupling/paper.pdf",
+      "requested_url": "https://arxiv.org/pdf/2210.14889",
+      "resolved_url": "https://arxiv.org/pdf/2210.14889",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:53.475781+00:00",
+      "bytes": 564114,
+      "sha256": "c7d1768f9214fe17d3f6a24fbc1727f4109ef99aa853aa5e367228b42177bf7e"
+    },
+    {
+      "path": "2023-minimum-entropy-coupling/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 55517,
+      "sha256": "713335cc2366f23c00f7f755c803210d4470e7cd6085bba913de38ed47e3baa8"
+    },
+    {
+      "path": "2023-minimum-entropy-coupling/source.html",
+      "requested_url": "https://arxiv.org/abs/2210.14889",
+      "resolved_url": "https://arxiv.org/abs/2210.14889",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:53.661320+00:00",
+      "bytes": 43507,
+      "sha256": "01de11b7934c3ec48252dad57efe2b7cc5ce00bc90224ad772256ff1f72e84a7"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 14
+}

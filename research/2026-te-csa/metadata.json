@@ -1,0 +1,42 @@
+{
+  "id": "2026-te-csa",
+  "title": "TE-CSA: trajectory entropy-aware cross-step aggregation for improving embedding capacity of distribution-preserving linguistic steganography",
+  "status": "Cybersecurity, 13 October 2026",
+  "kind": "paper",
+  "source": "https://link.springer.com/article/10.1186/s42400-026-00668-2",
+  "pdf": "https://link.springer.com/content/pdf/10.1186/s42400-026-00668-2.pdf",
+  "why": "Recent diffusion-model extension that aggregates embedding opportunities across denoising steps. Reports 1.84 bits/token versus 0.09 for its architecture-matched timestep-local baseline.",
+  "caveat": "Its preservation claim assumes a distribution-preserving underlying embedding mechanism. It is a different architecture from our autoregressive POC, and its relative gains cannot be applied to our byte expansion.",
+  "repo": null,
+  "priority": "robustness",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-te-csa/paper.pdf",
+      "requested_url": "https://link.springer.com/content/pdf/10.1186/s42400-026-00668-2.pdf",
+      "resolved_url": "https://link.springer.com/content/pdf/10.1186/s42400-026-00668-2.pdf?error=cookies_not_supported&code=5035da26-9c28-4910-83d6-1e4b6bfb3e21",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:48:01.806318+00:00",
+      "bytes": 3566820,
+      "sha256": "73538bce986507ae3b304d460b173cf17266fa2afa4a59c6795a4d61dbca73fa"
+    },
+    {
+      "path": "2026-te-csa/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 136881,
+      "sha256": "bfa7583e768c5544cb76af5ee845932bf09eba36f63c4be0964ec6942248f0f9"
+    },
+    {
+      "path": "2026-te-csa/source.html",
+      "requested_url": "https://link.springer.com/article/10.1186/s42400-026-00668-2",
+      "resolved_url": "https://link.springer.com/article/10.1186/s42400-026-00668-2?error=cookies_not_supported&code=2d37b83b-5154-4194-9d12-15afef8028fd",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:03.600030+00:00",
+      "bytes": 489151,
+      "sha256": "9256b61cf9d2e722a7c7113f32e56d85bf6d571af6693fcb208e7b626e121b3a"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 27
+}

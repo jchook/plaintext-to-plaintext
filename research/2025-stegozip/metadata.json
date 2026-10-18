@@ -1,0 +1,69 @@
+{
+  "id": "2025-stegozip",
+  "title": "StegoZip: Enhancing Linguistic Steganography Payload in Practice with Large Language Models",
+  "status": "NeurIPS 2025",
+  "kind": "paper",
+  "source": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+  "pdf": "https://proceedings.neurips.cc/paper_files/paper/2025/file/6c8e215afa321d5d0b295dc1882820df-Paper-Conference.pdf",
+  "why": "Targets our expansion problem by compressing the secret before embedding. Reports about 2.5 times the payload using semantic pruning, rank-based compression, and explicit corrections for restoration errors.",
+  "caveat": "Uses a trained restoration model; main experiments involve larger models, with a 3B ablation. Reported semantic fidelity metrics do not replace our requirement to check exact bytes, Unicode, and whitespace.",
+  "repo": "Jungle0430/StegoZip",
+  "priority": "read first",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2025-stegozip/paper.pdf",
+      "requested_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/6c8e215afa321d5d0b295dc1882820df-Paper-Conference.pdf",
+      "resolved_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/6c8e215afa321d5d0b295dc1882820df-Paper-Conference.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:56.406672+00:00",
+      "bytes": 1262705,
+      "sha256": "95c6250b0970d3005504abc1aa07b8bfaf1ba0785d8410f00201bee98d6e0330"
+    },
+    {
+      "path": "2025-stegozip/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 106647,
+      "sha256": "dc0d91e89e6d691eae19e721ee2f6b09def201d052884fb70f4e313307c7e1b1"
+    },
+    {
+      "path": "2025-stegozip/source.html",
+      "requested_url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+      "resolved_url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:56.883368+00:00",
+      "bytes": 9851,
+      "sha256": "0e5c4a9c3da84691313da1a34f1c373290e0a9ab12fb20bde2d91def90a3283c"
+    },
+    {
+      "path": "2025-stegozip/repository.html",
+      "requested_url": "https://github.com/Jungle0430/StegoZip",
+      "resolved_url": "https://github.com/Jungle0430/StegoZip",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:57.619325+00:00",
+      "bytes": 266492,
+      "sha256": "c5022543bd67380972800965b69413c0ebd22436d7efa961dd47b27eecf3683e"
+    },
+    {
+      "path": "2025-stegozip/readme-source.json",
+      "requested_url": "https://api.github.com/repos/Jungle0430/StegoZip/readme",
+      "resolved_url": "https://api.github.com/repos/Jungle0430/StegoZip/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:57.877460+00:00",
+      "bytes": 5269,
+      "sha256": "d1ad773e259b9b1ceca50162485120a7cdd47dfae7a68949111c6477bb664659"
+    },
+    {
+      "path": "2025-stegozip/upstream-readme.md",
+      "source_url": "https://github.com/Jungle0430/StegoZip/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "d58a18e75bfb39beeb8d0f5ff138b578f84d0d18",
+      "derived_from": "readme-source.json",
+      "bytes": 3260,
+      "sha256": "e8fe6c103cf648f6fedc22d6adf3342b2a3a282afa0872a47e5d5b37d192c8df"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 24
+}

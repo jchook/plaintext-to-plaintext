@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-18T09:49:49.305178+00:00",
+  "entries": 28,
+  "papers": 24,
+  "relevance_notes": 28,
+  "upstream_readmes": 12,
+  "verified_artifact_checksums": 105,
+  "archived_artifact_bytes": 53148294,
+  "pdf_text_extraction": "24 successful extractions; document titles inspected",
+  "source_pages": "HTML page titles checked for access-denied and challenge responses",
+  "errors": []
+}

@@ -1,0 +1,1069 @@
+                                                  Provably Secure Steganography Based on List Decoding
+                                                                       Kaiyi Pang                                                          Minhao Bai
+                                                                  Tsinghua University                                                Tsinghua University
+                                                                     Beijing, China                                                     Beijing, China
+                                                               pky@mail.tsinghua.edu.cn                                          bmh22@mails.tsinghua.edu.cn
+
+                                         Abstract                                                                  distribution, this comes at the unacceptable cost of compromising
+                                         Steganography embeds secret messages in seemingly innocuous               imperceptibility.
+                                         carriers for covert communication under surveillance. Current Prov-          In contrast, existing provable secure steganography methods rely
+                                         ably Secure Steganography (PSS) schemes based on language mod-            primarily on algorithm constructions to improve capacity but often
+                                         els can guarantee computational indistinguishability between the          lack principled optimization strategies. In several representative
+
+
+
+
+arXiv:2604.21394v3 [cs.CR] 29 Apr 2026
+                                         covertext and stegotext. However, achieving high embedding ca-            schemes [4, 10, 11], the payload associated with a generation step is
+                                         pacity remains a challenge for existing PSS. The inefficient entropy      recovered using only the current token and the current-step distri-
+                                         utilization renders them not well-suited for Large Language Models        bution. This creates a structural bottleneck. When multiple message
+                                         (LLMs), whose inherent low-entropy tendencies severely constrain          candidates map to the same token, the encoder must either embed
+                                         feasible embedding capacity. To address this, we propose a prov-          only a short common prefix or forgo embedding at that step alto-
+                                         ably secure steganography scheme with a theoretically proved high         gether. Either choice leaves part of the token’s information content
+                                         capacity. Our scheme is based on the concept of list decoding: it         unused, reducing entropy utilization. This limitation is especially
+                                         maintains a set of candidates that contain the correct secret mes-        problematic for Large Language Models (LLMs), whose next-token
+                                         sage, instead of directly finding the correct message with more           distributions are often highly peaked, so many tokens carry little
+                                         effort. This strategy fully utilizes the information content of the       entropy and inherently constrain the embedding capacity.
+                                         generated text, yielding higher capacity. To ensure the correctness          Recent work partially alleviates this issue. SparSamp [16] and
+                                         of our scheme, we further introduce a suffix-matching mechanism           Shimmer [2] allow decoding evidence to accumulate across multi-
+                                         to distinguish the correct secret message from the candidates. We         ple tokens and achieve noticeable capacity gains. However, these
+                                         provide theoretical proofs for both the security and correctness          methods remain limited: SparSamp lacks a theoretical capacity anal-
+                                         of our scheme, alongside a derivation of its theoretical capacity         ysis and stops embedding actively when ambiguity persists, while
+                                         lower bound. Our approach is plug-and-play, requiring only a di-          Shimmer loses information during interval splitting and lacks a
+                                         rect replacement of the model’s standard random sampling module.          mechanism to maintain multiple decoding paths without incurring
+                                         Experiments on three LLMs and seven PSS baselines demonstrate             exponential blowup. More broadly, interval-based representations
+                                         that our method achieves computational efficiency comparable to           often require repeated conversions between binary strings and frac-
+                                         prior PSS schemes while delivering a substantial improvement in           tional values [2, 16], which can be cumbersome and numerically
+                                         embedding capacity.                                                       delicate in practice. Overall, a fundamental gap remains: we need a
+                                                                                                                   principled mechanism that continuously exploits entropy by main-
+                                         Keywords                                                                  taining multiple candidate states within bounded resources, rather
+                                                                                                                   than discarding them. Moreover, interval-based representations
+                                         Steganography, Large Language Models, Provable Security, List
+                                                                                                                   require frequent conversions between binary strings and fractional
+                                         Decoding
+                                                                                                                   values [2, 16], which can be cumbersome in practice.
+                                         1   Introduction                                                             Inspired by list decoding [7, 13] in information theory, we pro-
+                                                                                                                   pose a principled steganography scheme that more fully exploits
+                                         Steganography is a technique for embedding and transmitting pri-
+                                                                                                                   the entropy inherent in the model’s distribution. The basic idea
+                                         vate messages within seemingly innocuous carriers such as text
+                                                                                                                   of list decoding is that, when a unique secret message cannot be
+                                         [4, 10, 18]. Its primary goal is to conceal not only the content of the
+                                                                                                                   immediately identified, the decoder instead outputs a compact list
+                                         secret messages but also the very fact that secret communication is
+                                                                                                                   of candidates guaranteed to contain the true message. A classic
+                                         occurring. Provably Secure Steganography (PSS) [8, 10] represents
+                                                                                                                   example is the Guruswami–Sudan algorithm [7], which recovers
+                                         the state-of-the-art paradigm, ensuring that model-generated stego-
+                                                                                                                   a small list containing the correct codeword even under high er-
+                                         text is computationally indistinguishable from covertext sampled
+                                                                                                                   ror rates. Adapting this paradigm to steganography, our scheme
+                                         from the underlying model distribution.
+                                                                                                                   maintains a “list of candidate messages” throughout the generation
+                                            As a covert communication mechanism, steganography is re-
+                                                                                                                   process. This allows us to defer decoding decisions, thereby avoid-
+                                         quired not only to satisfy security guarantees but also to maximize
+                                                                                                                   ing the capacity loss inherent in prior constructions [4, 10, 11] that
+                                         communication efficiency. In the context of provably secure gen-
+                                                                                                                   prioritize immediate unique decoding.
+                                         erative text steganography [2, 4, 10], communication efficiency is
+                                                                                                                      In this paper, we introduce a provably secure steganographic
+                                         typically defined as the utilization rate of the entropy of the model
+                                                                                                                   scheme grounded in a list-decoding perspective. By strictly fol-
+                                         distribution. Intuitively, a steganographic scheme with higher ca-
+                                                                                                                   lowing the model’s sampling distribution to expand and filter the
+                                         pacity can embed more secret messages into shorter stegotext,
+                                                                                                                   candidate list, our method allows the embedding rate to approach
+                                         there-by reducing communication frequency. While non-secure
+                                                                                                                   the theoretical limit dictated by the entropy of the generated text.
+                                         methods [6, 18–20] often boost capacity by distorting the generation
+                                                                                                                         Kaiyi Pang and Minhao Bai
+
+
+Furthermore, to resolve the residual ambiguity inherent in list de-      and the secret message is used to select a specific token within the
+coding, we propose a suffix-matching strategy. This mechanism            chosen component. This method is efficient because both encoding
+enables the receiver to efficiently identify the unique secret message   and decoding depend only on the distribution at the current time
+from the candidate list, ensuring security and correctness while         step.
+maintaining an embedding capacity near the model’s entropy.
+   The main contributions of this paper are as follows:                  2.0.4 Shimmer. To address the inefficiency of METEOR [10], Bai
+                                                                         et al. proposed Shimmer [2], a provably secure steganographic
+     • We propose a provably secure steganographic scheme based          scheme that incorporates an entropy-collection mechanism. Its
+        on list decoding, and provide a theoretical analysis showing     security relies on the indistinguishability between 𝑟 ∼ Unif [0, 1)
+        that its embedding capacity can approach the entropy limit.      and 𝑟 + 𝐵 mod 1 ∼ Unif [0, 1), where 𝐵 denotes the fractional rep-
+     • We introduce a suffix-matching mechanism to assist in fast        resentation of the secret message. During encoding, the sampler
+        and correct decoding, and we provide formal proofs of            adds 𝐵 to the random variable 𝑟 and applies inverse transform
+        correctness.                                                     sampling to generate tokens; the interval shift enables recovery
+     • Extensive experiments demonstrate that our method achieves        of the secret interval. By progressively merging intervals across
+        higher capacity than state-of-the-art PSS schemes while          steps, Shimmer embeds the secret message while mitigating in-
+        preserving comparable computational efficiency and text          terval splitting through additional mechanisms. Overall, Shimmer
+        quality.                                                         achieves high entropy utilization with computational security and
+                                                                         demonstrates how carrying interval state across multiple steps can
+2   Related Work                                                         improve capacity.
+We briefly review representative provably secure steganographic
+schemes for language models, focusing on how each algorithm em-          2.0.5 SparSamp. To address both the capacity and efficiency lim-
+beds and recovers payload information and on the main bottlenecks        itations of DISCOP [4], Wang et al. proposed SparSamp [16], a
+that limit capacity.                                                     provably secure steganographic scheme that improves decoding
+                                                                         accuracy by inserting gaps between sampling intervals without
+2.0.1 METEOR. METEOR [10], proposed by Kaptchuk et al., is the           additional time complexity. SparSamp encodes a fixed-length 𝐿-bit
+first practical provably secure steganographic scheme for language       secret by generating 2𝐿 samples and repeatedly filtering candidate
+models. It encrypts the secret bitstream using a key-generated ran-      messages across multiple steps until only the true secret remains.
+dom mask via bitwise XOR, interprets the result as a real number,        While SparSamp achieves state-of-the-art embedding capacity, it
+and embeds it by sampling tokens according to the cumulative             lacks a formal capacity proof, and its fixed-length design still un-
+distribution function of the language model. The masking process         derutilizes joint entropy, leaving room for further improvement.
+is repeated independently at each generation step, and the com-
+mon prefix of tokens falling within the range represents the secret      3 Method
+information that can be embedded at this time step. Although com-
+putationally secure, METEOR does not fully exploit the model’s           3.1 Prelimilary
+entropy. Re-randomizing the secret bits at every step truncates          Following the notion of Hopper [8] and Kaptchuk [10], we formally
+the coding process and discards residual entropy, which signifi-         define steganography scheme as follows:
+cantly limits embedding capacity—especially for low-entropy token
+                                                                           Definition 1 (Steganography scheme). A steganography scheme
+distributions common in LLMs. To address this issue, a reorder-
+                                                                         ΣD on a covertext distribution D is a triple of (probabilistic) algorithms
+ing algorithm, METEOR(R.), was later proposed to improve the
+                                                                         (KeyGen, Enc𝑠𝑘,D, Dec𝑠𝑘,D ).
+expected embedding capacity.
+                                                                              • KeyGen(1𝜆 ) is a randomized algorithm that takes an ar-
+2.0.2 DISCOP. Ding et al. proposed a provably secure steganogra-                bitrary input of length 𝜆 and generates the key 𝑠𝑘 shared
+phy method based on multiple shifted copies of the model distri-                between the sender and receiver.
+bution [4]. When distinct random offsets map to different tokens,             • Enc𝑠𝑘,D (𝑚, ℎ) is a keyed randomized algorithm that takes
+multiple secret bits can be embedded in a single step, and the de-              as input a secret message 𝑚 ∈ {0, 1}∗ and the history ℎ and
+coder can recover them directly from the generated token. However,              outputs a stegotext 𝑡.
+substantial overlap among distribution copies severely limits the             • Dec𝑠𝑘,D (𝑡, ℎ) is a keyed randomized algorithm that takes as
+embedding rate, which is asymptotically bounded by the minimum                  input the stegotext 𝑡 and the history ℎ and outputs the secret
+entropy. To alleviate this limitation, the authors further proposed a           message 𝑚.
+Huffman-tree-based variant DISCOP (R.) to improve capacity.
+                                                                            In this paper, we mainly use the language models to obtain the
+2.0.3 FDPSS. Liao et al. proposed a provably secure steganographic       covertext distribution D. So the encoding and decoding algorithms
+design framework, FDPSS [11], and as an instantiation of this            can be written as Enc𝑠𝑘,Model (𝑚, ℎ) and Dec𝑠𝑘,Model (𝑡, ℎ) Basically,
+framework, developed a more efficient, capacity-oriented encoding        a useful steganography scheme ΣModel should satisfy correctness
+and decoding algorithm. We call this differential-based algorithm        and security.
+GROUP. The encoder first applies a differencing operation to the
+                                                                                                                                       Í
+model’s output distribution and then represents it as a mixture             Definition 2 (Correctness). A steganography scheme Model is
+of uniform distributions. During encoding, a random number is            correct if for any history ℎ and any message 𝑚, the stegotext generated
+sampled to determine which uniform component to draw from,               by Enc𝑠𝑘,Model (𝑚, ℎ) should be correctly decoded by the decoding
+Provably Secure Steganography Based on List Decoding
+
+
+algorithm only with negligible probability of error.                          is bounded by the product of the sums of their squares:
+                                                                                                          !2
+              Pr[Dec𝑠𝑘,Model (Enc𝑠𝑘,Model (𝑚, ℎ), ℎ) = 𝑚]                                         𝑙              𝑙
+                                                                                                                      ! 𝑙       !
+                                                                                                 ∑︁            ∑︁       ∑︁
+                                                                       (1)                                          2         2
+                                              ≥ 1 − negl(𝜆),                                        𝑎𝑖 𝑏 𝑖 ≤       𝑎𝑖       𝑏𝑖 .                    (4)
+                                                                                                  𝑖=1            𝑖=1         𝑖=1
+where negl(𝜆) is the negligible function that correlates to the secure        In the special case where 𝑎𝑖 = 1 for all 𝑖, the inequality simplifies to:
+parameter 𝜆.                                                                                                  !2
+                                                                                                         𝑙
+                                                                                                        ∑︁           ∑︁𝑙
+    Threat model. We consider a probabilistic polynomial-time (PPT)                                         𝑏𝑖 ≤ 𝑙         𝑏𝑖2 .                    (5)
+warden (adversary) who monitors the communication channel and                                            𝑖=1           𝑖=1
+attempts to determine whether an observed message is a stegotext
+or an innocent covertext. Following the standard chosen-hiddentext            3.2    Our Steganography Scheme
+attack (CHA) setting [8, 10], the warden knows the full public                3.2.1 Intuition. As discussed in Section 2, many existing provably
+description of the scheme, including all public hyperparameters               secure steganography methods recover payload information us-
+that determine the covertext channel (e.g., the language model and            ing only the current token and the current-step distribution. This
+tokenizer). The only secret information withheld from the warden              limitation often forces the sender to skip embedding at certain
+is the shared key 𝑠𝑘. The warden is given oracle access either to the         steps to avoid ambiguity, resulting in suboptimal capacity usage.
+stego encoder Enc𝑠𝑘,Model (·, ·) or to the model sampler Model(·),            To overcome this, we look to list decoding [7, 13] for inspiration.
+and try to distinguish between the two.                                       Fundamentally, list decoding relaxes the constraint of outputting a
+                                                                              single message, allowing the algorithm to produce a list of possibil-
+   Security definition. We define the security of steganographic sys-         ities, one of which is the correct message. Inspired by list decoding,
+tem against chosen hiddentext attacks [8, 10]. Intuitively, ΣModel is         our proposed scheme does not require the receiver to uniquely de-
+secure if no probabilistic polynomial-time (PPT) adversary can dis-           code the secret at the immediate token level. Instead, we allow the
+tinguish, with non-negligible advantage, between access to Enc𝑠𝑘,Model (·, ·) secret information to be embedded continuously at every time step,
+and access to the model sampler Model(·), given outputs of the                even if immediate extraction is ambiguous, aiming to maximize
+same length. More formally,                                                   the utilization of the generative distribution’s entropy and expand
+   Definition 3 (Security). A steganography scheme ΣModel is                  steganographic capacity. The correct secret message persists within
+secure if for any probabilistic polynomial-time adversary A, he cannot        a set of surviving candidates across time steps, while incorrect can-
+effectively distinguish the stegotext generated by Enc and the covertext      didates (those conflicting with the secret) are naturally "filtered" out
+generated by Model.                                                           during the sequential token selection process. To ensure correct-
+                                                                              ness, we introduce a suffix matching mechanism. The combination
+        | Pr[A Enc𝑠𝑘,Model (·,·) (1𝜆 ) = 1] − Pr[A Model(·) (1𝜆 ) = 1]|       of this natural filtering and suffix matching theoretically guarantees
+                                                                        (2)   that the receiver can uniquely recover the message after observing
+                                                           ≤ negl(𝜆).
+                                                                              the complete stegotext (theoretical proofs regarding correctness
+Here the 1 represents the internal randomness of adversary A, and
+            𝜆                                                                 are detailed in Section 3.3). Figure 1 also illustrates an example of
+A outputs 1 if he recognizes the output of Enc or Model as stegotext.         this encoding process.
+
+   Access assumptions. Our construction assumes a symmetric set-              3.2.2 Codec. The workflow of the encoding and decoding algo-
+ting in which both the sender and the receiver can access the full            rithm can be summarized by a four-step process: "Mapping, Fil-
+conditional next-token distribution 𝐷 = Model(ℎ) for any history              tering, Expanding, and Matching".
+ℎ. Such access is required to perform alias sampling and to syn-                 Mapping. During the sampling process, the sender must gener-
+chronize the message-to-token mapping between the two parties.                ate a number of samples equal to the number of candidate secret
+Pure black-box settings and other asymmetric scenarios(such as                messages in the current candidate list. To share these samples be-
+the sender and receiver have the different ) are beyond the scope             tween the sender and receiver, a pseudorandom generator is em-
+of this work.                                                                 ployed to generate all random numbers used during the sampling
+                                                                              process. To effectively gather a sufficient quantity of samples for
+  Useful inequalities. The following two classical inequalities are           establishing a direct mapping between secret messages and sam-
+used frequently in our analysis.                                              ples, some fast sampling techniques such as the Alias sampling
+                                                                              method [14, 15], detailed in Appendix A.1, can be employed. As-
+   Lemma 1 (Hoeffding’s inequality). 𝑋 1, 𝑋 2, · · ·, 𝑋𝑛 are indepen-         suming the list of candidate secret messages at a certain step is 𝑀,
+dent and identical random variables, and each 𝑋𝑖 is bounded by [𝑙, ℎ].                                       |𝑀 |
+           Í                                                                  we generate |𝑀 | samples {𝑠𝑖 }𝑖=1   to construct the sample list 𝑆 by
+Let 𝑋 = 𝑛1 𝑛𝑖=1 𝑋𝑖 and 𝜇 = E[𝑋 ], the probability that the sample
+                                                                              the codebook mapping 𝐹 (𝑚𝑖 ) := 𝑠𝑖 , 𝑚𝑖 ∈ 𝑀. Subsequently, based
+mean 𝑋 deviates from the theoretical mean E[𝑋 ] up to 𝑡 is
+                                                                              on the current prefix of the embedded bitstring (secret bits together
+                                       
+                                             2𝑛𝑡 2
+                                                                             with the validation suffix), denoted 𝑚 1:𝑙 , the sample 𝑠 ∗ = 𝐹 (𝑚 1:𝑙 )
+                P (|𝑋 − 𝜇| ≥ 𝑡) ≤ 2 exp −              .           (3)        is output. Since the generated samples are mutually independent,
+                                           (ℎ − 𝑙) 2
+                                                                              randomly selecting and outputting one is equivalent to the model’s
+   Lemma 2 (Cauchy-Schwarz inequality). For any real sequences                normal sampling process (detail is provided in the security proof
+{𝑎𝑖 }𝑙𝑖=1 and {𝑏𝑖 }𝑙𝑖=1 , the square of the sum of their pairwise products    section 3.4).
+                                                                                                                                                         Kaiyi Pang and Minhao Bai
+
+
+
+
+                                                                                                                                                 Stegotext
+                                                          Auto-Regressive
+                                                                                                                      ......
+                Prompt               Model                                                Model                                                                    Receiver
+                                                                                                                               Sender
+      =11011....110101                   Sample                      =11011....110101         Sample
+
+                  000                  b                                   00100            b                                     =11011....110101
+                                                                                                                                             Suffix Matching
+                  001                  a                                   00101            a
+                                                Output                                           Output
+                                                       a                                                c                           11011...000
+                                                 token                                            token
+                  010                  b                                   00110            a                                       11011...010
+                                                                                                                                    11011...011
+                  011                  c                 001               00111            b                                           ......    match?
+
+
+
+Secret Prefix
+                                                                                                         11011        ......        11011...100              101
+                  100                  c                                   11000            b
+                                                         110                                                                        11011...101
+                  101                  c                                    11001           a                                       11011...100
+
+
+                  110                  a          Candidate List            11010           b                                                                suffix
+
+                  111                  b                                    11011           c                                              Ensure correct decoding
+
+                      Initialized          Sample List          Augmented
+                    Candidate List                             Candidate List                                                           Unique Decoded Message
+                                                                                                                      ......             corresponding Stegotext
+                         Map                  Filter             Expand             Map         Filter
+
+
+Figure 1: Toy illustration to our embedding process. The prefix of the secret message 𝑚 defines an initial candidate list 𝑀0 . After
+mapping through the language model to obtain 𝑆, candidates whose prefixes correspond to the same tokens in 𝑆 are retained,
+forming the filtered set 𝑀1 , and the token 𝑠 1 associated with the secret message is selected for output. Autoregressive generation
+proceeds in this manner until both the secret message and its suffix are fully embedded. Finally, suffix matching is applied to
+the filtered candidate list 𝑀𝑡 , enabling rapid elimination of non-secret candidates and guaranteeing unique decodability of the
+secret message from the stegotext.
+
+
+   Filtering. Transmitting a single sample 𝑠 ∗ does not uniquely                                upper bound of the ratio |𝑀 1|
+                                                                                                                         |𝑀0 | is given by:
+determine the secret message because multiple different candidate                                                                         
+messages may map to the same sample; that is, the pre-image                                                               |𝑀1 |                              
+                                                                                                                 Pr             ≥ 𝐷 (𝑠) + 𝛿 ≤ exp −2𝛿 2 |𝑀0 | .                (6)
+set 𝐹 −1 (𝑠 ∗ ) = {𝑚𝑖 : 𝐹 (𝑚𝑖 ) = 𝑠 ∗ } may contain multiple elements.                                                    |𝑀0 |
+We can view the embedding process as a filtering process that
+progressively eliminates candidate messages.                                                       Therefore, determining a sufficiently large 𝑀0 guarantees the
+   At the start of embedding, the sender initializes a candidate list                           elimination of a (1 − 𝐷 (𝑠)) proportion of candidates. For instance,
+𝑀0 containing all possible 𝑁 -bit strings, with a size of 2𝑁 . Clearly,                         when |𝑀0 | = 220 , the deviation 𝛿 rarely exceeds 0.5%. In practical
+the 𝑁 -bit prefix of the real secret message 𝑚 ∗1:𝑁 is in 𝑀0 . The sender                       applications, the number of samples should be maximized without
+then constructs the Sample List 𝑆 by message-to-token mapping 𝐹 1 ,                             affecting the execution time, and a very large candidate list should
+and sends the sample 𝑠 1∗ = 𝐹 1 (𝑚 ∗1:𝑁 ). Upon receiving 𝑠 1∗ , the receiver                   be maintained at each step to ensure filtering efficiency.
+identifies all candidates capable of producing this sample using the                               From an information-theoretic perspective, although the se-
+inverse mapping, which is the pre-image set of 𝑠 ∗ : 𝑀1 = 𝐹 1−1 (𝑠 ∗ ).                         cret message is not uniquely determined at this stage, the pos-
+At this point, the prefix 𝑚 ∗1:𝑁 must also belong to 𝑀1 . Since the                             sible choices are reduced. for the decoder, the entropy of the se-
+pre-image set 𝑀1 is a subset of 𝑀0 , we have |𝑀1 | ≤ |𝑀0 |, narrowing                                       drops from log2 (|𝑀0 |) to log2 (|𝑀1 |), a reduction of
+                                                                                                cret message
+                                                                                                     
+the candidate list.                                                                             log2 |𝑀  0|
+                                                                                                       |𝑀1 | ≈ log2 (𝐷 (𝑡)). This approximates the information of the
+   Further analysis reveals the probability and extent of this list                             token.
+reduction. Assuming the output token is 𝑠 with probability 𝐷 (𝑠),                                  Expanding After filtering, the size of the candidate list decreases.
+and we draw |𝑀0 | i.i.d. samples to construct the mapping, on aver-                             To embed more secret bits and maintain the candidate list size at
+age, a proportion of 𝐷 (𝑠) of the candidate messages remains, i.e.,                             a high level, the list should be expanded. A feasible strategy is
+E [|𝑀1 |] = 𝐷 (𝑠) · |𝑀0 |. According to Hoeffding’s inequality, the                             as follows: for each candidate message 𝑚 in the current list 𝑀𝑖 ,
+                                                                                                append bits ‘0’ and ‘1’ to generate two new messages 𝑚∥0 and 𝑚∥1.
+Provably Secure Steganography Based on List Decoding
+
+
+These form the augmented list 𝑀𝑛′ . Clearly, if the 𝑘-bit prefix 𝑚 ∗1:𝑘     corresponding to the real payload will fully match it, enabling
+belongs to 𝑀𝑖 , then the (𝑘 + 1)-bit prefix 𝑚 ∗1:𝑘+1 belongs to 𝑀𝑖′ . To    unique decoding.
+prevent memory overflow from exponential growth, an upper limit                The decoding algorithm is essentially the symmetric inverse of
+2𝑁 (e.g., 220 ) is set. If the expanded list size is still less than half   the encoding process. Detailed procedures for the encoding algo-
+of the limit (2𝑁 −1 ), the expansion operation repeats until the size       rithm, Enc𝑠𝑘,Model,2𝑁 (ℎ, 𝑚 ∗ ), and the decoding algorithm,
+exceeds 2𝑁 −1 . Consequently, the filtering step is always performed        Dec𝑠𝑘,Model,2𝑁 (ℎ, 𝑡, |𝑚 ∗ |), are presented in Algorithm 1 and Algo-
+with more than 2𝑁 −1 candidate messages, effectively ensuring that          rithm 2, respectively. To account for potential hardware constraints,
+the entropy dissipated in each step remains low. The complete               we denote the maximum candidate list length, which also serves as
+filtering-expanding process can be viewed as follows:                       the maximum sample count, as the subscript parameter 2𝑁 .
+        Filter     Filter     Expand 𝑒 1 times     Filter   Filter
+   𝑀0 −−−−→ · · · −−−−→ 𝑀𝑖 −−−−−−−−−−−−→ 𝑀𝑖′ −−−−→ 𝑀𝑖+1 −−−−→ · · ·         Algorithm 2 Dec𝑠𝑘,Model,2𝑁 (ℎ, 𝑡, |𝑚 ∗ |) −
+                                                                                                                      → 𝑚∗
+                                                                            Input: Secret key 𝑠𝑘, Language Model Model, History ℎ, Stegotext
+Algorithm 1 Enc𝑠𝑘,Model,2𝑁      (ℎ, 𝑚 ∗ ) −
+                                          →𝑡                                    𝑡, Payload length |𝑚 ∗ |, Maximum list length 2𝑁 ;
+                                                                            Output: Recovered secret message 𝑚 ∗ .
+Input: Secret key 𝑠𝑘, Language Model Model, History ℎ, Secret                1: 𝑀 ←− {0, 1} 𝑁 {Initialize candidate message list}
+    message 𝑚 ∗ , Maximum list length 2𝑁 ;                                   2: 𝑙, 𝑐𝑛𝑡 ←− 𝑁 , 0 {Initialize counters}
+Output: Stegotext 𝑡.                                                         3: 𝑠𝑢 𝑓 ←− PRG𝑠𝑘 (·) {Reconstruct shared validation suffix}
+ 1: 𝑀, 𝑡 ←− {0, 1} 𝑁 , ∅ {Initialize candidate message list 𝑀 and            4: while 𝑙 ≤ |𝑚 ∗ | + |𝑠𝑢 𝑓 | do
+    stegotext 𝑡}                                                             5:     𝑐𝑛𝑡 ←− 𝑐𝑛𝑡 + 1
+ 2: 𝑙, 𝑐𝑛𝑡 ←− 𝑁 , 0 {Initialize message-length counter 𝑙 and counter         6:     𝐷 ←− Model(ℎ) {Obtain distribution}
+    𝑐𝑛𝑡}                                                                                 2|𝑀 |
+                                                                             7:     {𝑟𝑖 }𝑖=1   ←− PRG𝑠𝑘 (·) {Reconstruct randomness}
+ 3: 𝑠𝑢 𝑓 ←− PRG𝑠𝑘 (·) {Shared validation suffix}                                       |𝑀 |
+                                                                                                               
+                                                                                                                     2|𝑀 |
+                                                                                                                          
+ 4: 𝑚 ←− 𝑚 ∗ ∥𝑠𝑢 𝑓 {Add suffix}
+                                                                             8:   {𝑠𝑖 }𝑖=1  ←− AliSample |𝑀 | 𝐷, {𝑟 }𝑖=1   {Alias sampling}
+ 5: while 𝑙 ≤ |𝑚| do                                                         9:   for 𝑖 = 1 to |𝑀 | do
+ 6:     𝑐𝑛𝑡 ←− 𝑐𝑛𝑡 + 1                                                      10:      Let 𝐹 (𝑚𝑖 ) := 𝑠𝑖 {Reconstruct mapping 𝐹 }
+ 7:     𝐷 ←− Model(ℎ) {Obtain distribution}                                 11:   end for
+             2|𝑀 |                                                                ℎ ←− ℎ∥𝑡𝑐𝑛𝑡 {Autoregressive update of history}
+ 8:     {𝑟𝑖 }𝑖=1   ←− PRG𝑠𝑘 (·) {Derive
+                                     pseudorandomness}
+                                                                            12:
+            |𝑀 |
+                                              
+                                           2|𝑀 |                            13:   𝑀 ←− 𝐹 −1 (𝑡𝑐𝑛𝑡 ) {Filter candidates by observed token}
+ 9:   {𝑠𝑖 }𝑖=1   ←− AliSample |𝑀 | 𝐷, {𝑟 }𝑖=1    {Execute Alias sam-
+                                                                            14:   while |𝑀 | ≤ 2𝑁 −1 do
+      pling to obtain |𝑀 | samples}                                         15:      𝑀 ←− {𝑚∥𝑏𝑖𝑡 : 𝑚 ∈ 𝑀, 𝑏𝑖𝑡 ∈ {0, 1}} {Expand candidate
+10:   for 𝑖 = 1 to |𝑀 | do                                                           list}
+11:       Let 𝐹 (𝑚𝑖 ) := 𝑠𝑖 {Construct a mapping}                           16:      𝑙 ←− 𝑙 + 1
+12:   end for                                                               17:   end while
+13:   𝑠 ∗ ←− 𝐹 (𝑚 1:𝑙 ) {Select token corresponding to current mes-         18: end while
+      sage prefix}                                                          19: Find the unique 𝑚 ∈ 𝑀 such that 𝑚 |𝑚 | − |𝑠𝑢 𝑓 |:|𝑚 | = 𝑠𝑢 𝑓
+14:   𝑡, ℎ ←− 𝑡 ∥𝑠 ∗, ℎ∥𝑠 ∗ {Append new token 𝑠 ∗ to stegotext and          20: Output 𝑚 ∗ ←− 𝑚 1:|𝑚 ∗ | {Drop validation suffix}
+      history}                                                              21: return 𝑚 ∗
+15:   𝑀 ←− 𝐹 −1 (𝑠 ∗ ) {Find pre-image set of 𝑠 ∗ and update candi-
+      date message list 𝑀}
+16:   while |𝑀 | ≤ 2𝑁 −1 do                                                 3.3    Proof of Correctness
+17:       𝑀 ←− {𝑚∥𝑏𝑖𝑡 : 𝑚 ∈ 𝑀, 𝑏𝑖𝑡 ∈ {0, 1}} {Expand candidate
+                                                                            We now verify the condition under which the probability of non-
+          message list 𝑀}
+                                                                            unique decoding is negligible.
+18:       𝑙 ←− 𝑙 + 1 {Increment candidate message length after
+          expansion}                                                           Proposition 1. For any non-secret message element 𝑚 in the
+19:   end while                                                             candidate list, if the validation suffix 𝑠𝑢 𝑓 ∈ {0, 1}𝑏 is uniformly
+20: end while                                                               random (or pseudorandomly generated via PRG𝑠𝑘 ) and the maximum
+21: return 𝑡                                                                candidate list size is 2𝑁 , the probability that 𝑚∥𝑠𝑢 𝑓 appears in the
+                                                                                                                      −𝑏
+                                                                            subsequent candidate list is at most  √︃2 𝜆  𝑛 , where 𝑛 is the number
+                                                                                                                    1+
+    Matching The "Filter-Expand" process repeats until all bits of the                                                   2𝑁
+                                                                            of tokens added to embed 𝑠𝑢 𝑓 .
+secret message are embedded. At this stage, the candidate list 𝑀𝑛
+still contains multiple messages, one of which is the complete real            Proof. Let the additional generated token sequence of suffix
+secret message 𝑚 ∗ . To ensure the receiver can uniquely determine          be 𝑠 1, 𝑠 2, · · · , 𝑠𝑛 . In each step, the probability that an element 𝑚 in
+𝑚 ∗ , a validation phase is appended. Concretely, the sender and            the candidate list is retained during filtering is 𝐷 (𝑠 𝑗 ). Given that 𝑚
+receiver derive a pseudorandom validation suffix 𝑠𝑢 𝑓 from the              exists in the candidate list, the probability of 𝑚∥𝑠𝑢 𝑓 appearing is:
+shared key, append it to the payload, and continue embedding.                                                                          Ö𝑛
+Since the suffix is pseudorandom and sufficiently long (detailed                        Pr [𝑚∥𝑠𝑢 𝑓 appears | 𝑚 has appeared] =             𝐷 (𝑠 𝑗 ). (7)
+analysis in Section 3.3), with high probability only the candidate                                                                 𝑖=1
+                                                                                                                                                     Kaiyi Pang and Minhao Bai
+
+
+Since the candidate list expanded 𝑏 times during this process, we
+have:                                                                                                     𝐺 0 : Steganographic Encoding Algorithm
+                      Ö 𝑛
+                           (𝐷 (𝑠𝑖 ) + 𝛿) ≤ 2−𝑏 ,               (8)                                        1: 𝐷 ←− Model(ℎ){Obtain distribution}
+                                                                                                                  2|𝑀 |
+                                    𝑖=1                                                                   2: {𝑟 }𝑖=1   ←− PRG𝑠𝑘 (·){Generate pseudorandom num-
+where 𝛿 is the deviation from the Hoeffding inequality. Equation 8                                           bers}                                        
+can be expanded as:                                                                                               |𝑀 |                               2|𝑀 |
+                                                                                                          3: {𝑠𝑖 }𝑖=1 ←− AliSample |𝑀 | 𝐷, {𝑟 }𝑖=1           {Alias sam-
+ 𝑛                           𝑛                   𝑛
+ Ö                           Ö                  ∑︁               ∑︁        Ö                                 pling}
+       (𝐷 (𝑠𝑖 ) + 𝛿) =              𝐷 (𝑠𝑖 ) +          𝛿𝑘 ·                        𝐷 (𝑠 𝑗 ) ≤ 2−𝑏 . (9)
+                                                                                                          4: for 𝑖 = 1 to |𝑀 | do
+ 𝑖=1                          𝑖=1                𝑘=1          𝑆 ⊆ {1,...,𝑛} 𝑗 ∈𝑆
+                                                                 |𝑆 |=𝑘                                   5:    Let 𝐹 (𝑚𝑖 ) := 𝑠𝑖 {Construct mapping 𝐹 }
+                                                                                                          6: end for
+Since
+                                                                                                          7: return 𝐹 (𝑚 ∗1:𝑙 ) {Select sample 𝑠 ∗ corresponding to the
+      𝑛                                                 𝑛              𝑛
+    ∑︁                 ∑︁        Ö                     ∑︁  𝑛             Ö
+                                                                                                             real secret message}
+             𝛿𝑘 ·                         𝐷 (𝑠 𝑗 ) ≥                𝛿𝑘         𝐷 (𝑠 𝑗 )
+                                                                𝑘
+       𝑘=1          𝑆 ⊆ {1,...,𝑛} 𝑗 ∈𝑆                 𝑘=1               𝑗=1
+                       |𝑆 |=𝑘
+                                                                                𝑛
+                                                                                Ö                         𝐺 1 : Using True Random Number
+                                                  = ((1 + 𝛿)𝑛 − 1)                    𝐷 (𝑠𝑖 ),    (10)
+                                                                                𝑖=1                       1: 𝐷 ←− Model(ℎ){Obtain distribution}
+                                                                                                                  2|𝑀 |
+                                                                                                          2: {𝑟 }𝑖=1      ←−$ Unif [0, 1]{Get true
+combining this with Eq. 9, we obtain:                                                                                                           random numbers}
+                                                                                                                   |𝑀 |                            2|𝑀 |
+                                                𝑛
+                                                Ö                                                         3: {𝑠𝑖 }𝑖=1     ←− AliSample |𝑀 | 𝐷, {𝑟 }𝑖=1      {Alias sam-
+                                            𝑛                         −𝑏
+                                (1 + 𝛿)               𝐷 (𝑠𝑖 ) ≤ 2 .                               (11)         pling}
+                                                𝑖=1                                                       4: for 𝑖 = 1 to |𝑀 | do
+Here we computes the maximum value of 𝛿: as the maximum can-                                              5:     Let 𝐹 (𝑚𝑖 ) := 𝑠𝑖 {Construct mapping 𝐹 }
+didate list size is 2𝑁 , we know that |𝑀1 | ≥ 2𝑁 −1 . By Hoeffding
+                                                                √︃ in-                                    6: end for
+                                    −1
+                                                                                                        7: return 𝐹 (𝑚 ∗1:𝑙 ) {Select sample 𝑠 ∗ corresponding to the
+equality, ensuring exp −2𝛿 · 22   𝑁       ≤ exp (−𝜆) yields 𝛿 ≤ 2𝜆𝑁 .
+                                                                                                               real secret message}
+Using the conclusion of Eq. 11:
+                                                                           𝑛
+                                                                           Ö
+                Pr [𝑚∥𝑠𝑢 𝑓 appears | 𝑚 exists] =                                 𝐷 (𝑠𝑖 )                  𝐺 2 : Removing Secret Message
+                                                                           𝑖=1
+                                                  2−𝑏                      2−𝑏                            1: 𝐷 ←− Model(ℎ){Obtain distribution}
+                                           ≤             ≤                          𝑛 .         (12)            2|𝑀 |
+                                                (1 + 𝛿)𝑛                                                  2: {𝑟 }𝑖=1      ←−$ Unif [0, 1]{Get true
+                                                                           √︃
+                                                                     1+          𝜆                                                              random numbers}
+                                                                                2𝑁                                |𝑀 |                             2|𝑀 |
+                                                                                                          3: {𝑠𝑖 }𝑖=1     ←− AliSample |𝑀 | 𝐷, {𝑟 }𝑖=1  {Alias sam-
+By letting the right-hand side be less than exp(−𝜆), we maintain a                                           pling}
+negligible probability of collision when the suffix length 𝑏 satisfies:                                   4: Choose 𝑖 ←−$ {1, . . . , |𝑀 |} {Uniformly select one of
+                     &                     √︂ !'
+                                               𝜆                                                             the samples}
+                𝑏 ≥ 𝜆 log2 𝑒 + 𝑛 log2 1 +            .            (13)                                    5: 𝑠 ∗ ←− 𝑠𝑖
+                                              2𝑁
+                                                                                                          6: return 𝑠 ∗
+                                                                                                    □
+
+  That is, when the suffix 𝑠𝑢 𝑓 has length 𝑏, the probability that                                        𝐺 3 : Normal Model Sampling
+𝑚∥𝑠𝑢 𝑓 appears in the subsequent candidate-message set is at most
+   2 −𝑏                                                                                                  1: 𝐷 ←− Model(ℎ){Obtain distribution}
+ √︃      𝑛 , where 𝑛 is the additional number of tokens generated
+ 1+   𝜆
+       2𝑁
+                                                                                                          2: {𝑟 }𝑖=1
+                                                                                                                 2 ←− Unif [0, 1]{Get true random numbers}
+                                                                                                                     $
+                                                                                                          3: 𝑠 ∗ ←− AliSample1
+                                                                                                                                               
+l this process. Equivalently,
+in                    √︃ m if the suffix 𝑠𝑢 𝑓 has length at least                                                                  𝐷, {𝑟 }𝑖=1
+                                                                                                                                           2     {Alias sampling}
+                                                                                                          4: return 𝑠 ∗
+                  
+ 𝜆 log2 𝑒 + 𝑛 log2 1 + 2𝜆𝑁 , then the probability that 𝑚∥𝑠𝑢 𝑓 ap-
+pears in the subsequent candidate-message set is negligible.
+
+3.4     Proof of Security                                                                                      Figure 2: The games used in security proof.
+   To prove the security of the proposed scheme, we construct the
+following sequence of games:                                                     • 𝐺 3 : EncodeModel,1 (ℎ) using truly random numbers to draw
+       • 𝐺 0 : The steganography encoding algorithm Encode𝑠𝑘,Model,2𝑁 (ℎ, 𝑚 ∗ )      a single sample via alias sampling, with the secret message
+         using key-controlled pseudorandom numbers;                                  𝑚 ∗ omitted. The detailed procedure of AliSample is given
+       • 𝐺 1 : EncodeModel,2𝑁 (ℎ, 𝑚 ∗ ) using truly random numbers;                  in Appendix A.1;
+       • 𝐺 2 : EncodeModel,2𝑁 (ℎ) using truly random numbers, with              We illustrate the games involved in the hybrid proof in Figure 2.
+         the secret message 𝑚 ∗ omitted;                                   We can prove the following proposition:
+Provably Secure Steganography Based on List Decoding
+
+
+   Proposition 2. For any history ℎ, message 𝑚 ∗ , secret key 𝑠𝑘 gen-         3.5      Capacity Analysis
+erated by KeyGen, the distribution of the stegotext generated by the          First, we define the embedding capacity within the steganographic
+encoding algorithm Enc𝑠𝑘,Model,2𝑁 (ℎ, 𝑚 ∗ ) is computationally indistin-      scheme. In many prior schemes that recover payload information at
+guishable from the distribution of covertext generated by Model(ℎ).           the token level, capacity is typically defined as the average ratio of
+                                                                              the number of bits that can be embedded and accurately extracted
+                                                                              per token to the information of that token, which can be viewed as
+                                                                              the information utilization rate. As our steganography scheme can-
+   Proof. 𝐺 0 ≈ 𝐺 1 : Assume there exists a polynomial-time ad-
+                                                                              not decode any bit from a single token, the information utilization
+versary A capable of effectively distinguishing the output of 𝐺 0
+                                                                              rate can be defined as follows:
+from that of 𝐺 1 . We can then construct another polynomial-time
+adversary A ′ that can effectively distinguish between a true ran-                 Definition 4 (Information Utilization Rate of stegano-
+dom number sequence and a pseudorandom number sequence. The                   graphic scheme). Let the generated stegotext be a token sequence
+workflow of A ′ is as follows:                                                𝑠 1, 𝑠 2, · · · , 𝑠𝑛all . For each step 𝑖, let 𝑝𝑖 = Pr[𝑠𝑖 | ℎ <𝑖 ] = Model(ℎ <𝑖 ) (𝑠𝑖 )
+                                                                              be the conditional probability assigned by the cover distribution. The
+                                                          2|𝑀 |
+      • Input a pseudorandom number sequence {𝑟 }𝑖=1            and a true    total information content of the stegotext is
+                                       ′ 2|𝑀 |
+        random number sequence {𝑟 }𝑖=1 ;                                                                          𝑛 all
+                                                                                                                  ∑︁
+                               2|𝑀 |           2|𝑀 |
+      • A ′ runs 𝐺 0 using {𝑟 }𝑖=1   and {𝑟 ′ }𝑖=1   as the randomness,                                      𝐼=           − log2 (𝑝𝑖 ).                        (14)
+        respectively, to obtain outputs 𝑠 and 𝑠 ′ ;                                                               𝑖=1
+      • A ′ invokes the adversary A to distinguish between 𝑠 and              Let |𝑚 ∗ | denote the payload length (excluding the validation suffix).
+        𝑠′.                                                                   The information utilization rate is
+                                                                                                                           |𝑚 ∗ |
+Since the 𝐺 0 algorithm using true random numbers is essentially                                                  𝑅=              .                            (15)
+identical to 𝐺 1 , 𝑠 and 𝑠 ′ correspond to the outputs of 𝐺 0 and 𝐺 1 under                                                  𝐼
+the same history ℎ and secret message 𝑚 ∗ , respectively. Thus, they             Next, we prove the lower bound of the information utilization
+can be effectively distinguished by the adversary A. Consequently,            rate for the scheme; that is, the following proposition holds:
+A ′ can further distinguish the true random number sequence from
+                                                                                Proposition 3. To embed a payload 𝑚 ∗ , given that the maximum
+the pseudorandom number sequence by invoking A. However, by
+                                                                              candidate list size is bounded by 2𝑁 and the validation suffix
+                                                                                                                                          length is
+the definition of pseudorandom property, such an adversary A ′
+does not exist. An adversary capable of distinguishing between al-            𝑏, a lower bound on the information utilization rate is 𝑅 ≥ 1 − 𝑏|𝑚−𝑁
+                                                                                                                                                  ∗| ·
+                                                                                       √︃   !
+gorithms 𝐺 0 and 𝐺 1 must necessarily be able to distinguish between                𝑛 all    𝜆
+                                                                                            2𝑁
+true and pseudorandom sequences; therefore, such an adversary                  1−      ln 2·𝐼    , where 𝜆 is the security parameter, 𝑛 all is the total
+cannot operate in polynomial time. Since there is no polynomial-
+                                                                              number of generated tokens, and 𝐼 is the total information content of
+time adversary that can effectively distinguish between 𝐺 0 and 𝐺 1 ,
+                                                                              the stegotext.
+by the definition of computational indistinguishability, the outputs
+of 𝐺 0 and 𝐺 1 are computationally indistinguishable.                            Proof. First, we determine the capacity lower bound on a single
+   𝐺 1 = 𝐺 2 : In 𝐺 1 , the encoder outputs 𝑠 ∗ = 𝐹 (𝑚 ∗1:𝑙 ), where 𝐹 is     token. Without loss of generality, let the probability of the token
+constructed by drawing i.i.d. samples from 𝐷 = Model(ℎ) using                 be 𝑝. By Hoeffding’s inequality, we have:
+true randomness. Therefore 𝑠 ∗ is distributed exactly as a fresh                                              
+sample from 𝐷, i.e., for any token 𝑠, Pr[𝑠 ← 𝐺 1 (ℎ, 𝑚 ∗ )] = 𝐷 (𝑠).                             |𝑀2 |                          
+                                                                                           Pr          − 𝑝 ≥ 𝛿𝑝 ≤ exp −2𝑁 𝛿 2 𝑝 2 .           (16)
+In 𝐺 2 , the encoder instead chooses a uniformly random element                                  |𝑀1 |
+from the same multiset of i.i.d. samples; by symmetry, the output             By setting the right-hand side to be less than exp(−𝜆), rendering
+distribution is also 𝐷. Hence 𝐺 1 and 𝐺 2 are identically distributed.        the probability of the event on √︃
+                                                                                                               the left-hand side negligible, we
+   𝐺 2 = 𝐺 3 : 𝐺 2 randomly selects one element from the multiset of
+                                                                              derive an upper bound for 𝛿 as 2𝑁𝜆𝑝 2 . Therefore, after filtering
+|𝑀 | i.i.d. samples, while 𝐺 3 draws a single fresh sample from the
+distribution. It was proven in the previous step that the probability         based on a single token, the proportion of remaining candidate
+of 𝐺 2 outputting token 𝑠 is 𝐷 (𝑠), following the distribution predicted      messages is at most (1 + 𝛿)𝑝.
+by the model. Since 𝐺 3 utilizes alias sampling, the output of this               Next, consider the sequential generation of 𝑛 all tokens 𝑠 1, 𝑠 2, · · · , 𝑠𝑛all .
+sampling algorithm must follow the given input distribution 𝐷;                Let the probabilities of these tokens be 𝑝 1, 𝑝 2, · · · , 𝑝𝑛all , respectively.
+                                                                                                                Î𝑛all
+thus, the probability of it outputting token 𝑠 remains 𝐷 (𝑠).                 In the worst-case scenario, if 𝑖=1      (1 + 𝛿𝑖 )𝑝𝑖 ≤ 12 , an expansion step
+                                                                                                                                Î𝑛all
+   In summary, we have established that 𝐺 0 ≈ 𝐺 1 = 𝐺 2 = 𝐺 3 .               is triggered. The probability of the product 𝑖=1         (1+𝛿𝑖 )𝑝𝑖 occurring
+                                                                                                    Í 𝑛          
+This demonstrates that the output of our steganographic encoding              is at most exp −2𝑁 𝑖=1    all 2 2
+                                                                                                           𝑝𝑖 𝛿𝑖 . By constraining this probability up-
+algorithm is computationally indistinguishable from the model’s               per bound to be less than exp(−𝜆), we obtain a constraint on 𝛿𝑖 ,
+                                                                                       Í𝑛all 2 2
+normal output at any single generation step. By the autoregressive            namely 𝑖=1     𝑝𝑖 𝛿𝑖 ≤ 2𝜆𝑁 . Consequently, the information utilization
+nature of the generation process and the chain rule, it follows               rate implies:
+that the full text sequences generated by Enc𝑠𝑘,Model,2𝑁 (ℎ, 𝑚) and                                      Í𝑛all
+                                                                                                                − log2 ((1 + 𝛿𝑖 )𝑝𝑖 )
+Model(ℎ) are computationally indistinguishable.                                                    𝑅 = 𝑖=1Í𝑛all                       .                  (17)
+                                                                         □                                      𝑖=1 − log2 (𝑝𝑖 )
+                                                                                                                                                        Kaiyi Pang and Minhao Bai
+
+
+Considering the summation in the numerator, we can separate the                                          4 Experiment & Discussion
+product terms and apply the standard inequality ln(1 + 𝑥) ≤ 𝑥:
+                                                                                                         4.1 Experiment Settings
+                                                           1                                             Although our steganographic scheme is not restricted to a specific
+          − log2 ((1 + 𝛿𝑖 )𝑝𝑖 ) = − log2 (𝑝𝑖 ) −                ln(1 + 𝛿𝑖 )
+                                                          ln 2                                           carrier type, provably secure steganography has been most actively
+                                                           𝛿𝑖                                            studied in text generation, as language models represent the best
+                                         ≥ − log2 (𝑝𝑖 ) −      .                                  (18)
+                                                          ln 2                                           known technique for approximating human communication [10].
+                                                                                                         Therefore, to enable a more comprehensive and fair comparison
+At this point, the information utilization rate 𝑅 simplifies to:
+                                                                                                         with existing provably secure methods, our experiments primarily
+                                                  Í𝑛all 𝛿𝑖                                               focus on large language model–based text generation scenarios.
+                          𝑅 = 1 − Í𝑛all 𝑖=1 ln 2    .                                             (19)      Baseline. We evaluated our steganography scheme against Ran-
+                                   𝑖=1 − log2 (𝑝𝑖 )                                                      dom Sampling, representing the ideal steganography algorithm,
+                             Í𝑛all 2 2                                                                   and seven recent provably secure generative steganography algo-
+Given that the constraint 𝑖=1     𝑝 𝛿 ≤ 𝜆𝑁 must hold for any 𝛿𝑖 ,                                        rithms, including METEOR [10] and its capacity-enhanced vari-
+                                  Í𝑖𝑛all𝑖 2 2 𝜆          Í𝑛all 2
+and 0 ≤ 𝑝𝑖 ≤ 1, it follows that 𝑖=1 𝛿𝑖 ≤ 2𝑁 . Viewing 𝑖=1      𝛿𝑖 as                                     ant METEOR (R.), DISCOP [4] and DISCOP (R.), SparSamp [16],
+Í𝑛all 2 2
+  𝑖=1 1 · 𝛿 𝑖 and applying the Cauchy-Schwarz   inequality, we have:                                     Shimmer [2], and the capacity-optimized group algorithm from
+                                                                                                         FDPSS [11]. Each baseline was introduced in Section 2 and tested
+               𝑛 all
+                                !2        𝑛 all
+                                                       !   𝑛 all
+                                                                           !
+               ∑︁                         ∑︁
+                                                   2
+                                                           ∑︁
+                                                                       2
+                                                                                   𝑛 2all 𝜆              using its default parameters.
+                       1 · 𝛿𝑖        ≤            1                𝛿           ≤              .   (20)      Model. We evaluate our method on three purely text-generation
+                𝑖=1                       𝑖=1              𝑖=1
+                                                                                    2𝑁
+                                                                                                         LLMs:Mistral v0.3 [9], Qwen2 [1], and Llama3 [5], each with
+               Í𝑛all                     √︃                                                              approximately 7 billion parameters. As models of this scale already
+                                     𝜆
+This implies     𝑖=1 𝛿𝑖     ≤ 𝑛 all 2𝑁
+                                        . Denoting the total information                                 exhibit strong instruction-following ability, all experiments are con-
+                                              Í𝑛all
+content of tokens 𝑠 1, 𝑠 2, · · · 𝑠𝑛all as 𝐼 = 𝑖=1  − log2 (𝑝𝑖 ), the lower                              ducted in a zero-shot setting. In the main experiments, prompts are
+bound for the information utilization rate is:                                                           randomly sampled from the InstructWild dataset [12] and format-
+                                                √︃                                                       ted with the tokenizer’s apply_chat_template function before
+                           Í𝑛all                    𝜆                                                    being fed to the models. Because both our method and the provably
+                                  𝛿 𝑖
+                                          𝑛 all    2𝑁
+                  𝑅 = 1 − 𝑖=1 ≥ 1 −                   .            (21)                                  secure baseline steganographic algorithms are distribution-agnostic
+                            ln 2 · 𝐼       ln 2 · 𝐼
+                                                                                                         and do not impose specific assumptions on the model distribution,
+      √︃
+                                                                                                         we do not artificially constrain the decoding distribution. For each
+Since 2𝜆𝑁 is extremely small for typical choices of 𝑁 (e.g., 𝑁 ≥ 20),
+                                                                                                         test, we ask the models to generate 1,000 samples using the full
+the overall utilization rate remains relatively close to 1.                                              vocabulary, a base temperature of 1.0, and a maximum generation
+   According to Proposition 1, unique decoding is achieved with                                          length of 800 tokens. In the main expirement, we set 𝑁 =20 and
+high probabilityl when the length of the √︃
+                                           embeddedm   validation suf-                                  use a 20-bit validation suffix (i.e., 𝑏=20), which targets a concrete
+fix 𝑏 is at least 𝜆 log2 𝑒 + 𝑛𝑠𝑢 𝑓 log2 1 + 2𝜆𝑁 , where 𝑛𝑠𝑢 𝑓 is the                                     decoding-failure upper bound on the order of 10−6 . All experiments
+number of tokens used to embed 𝑠𝑢 𝑓 . In our overall encoding pro-                                       were conducted on 2 × NVIDIA A5000 GPUs (32GB RAM) and 24
+cess, the payload is embedded starting from an initial 𝑁 -bit prefix                                     × Intel Xeon w5-3423 CPUs.
+(because |𝑀0 | = 2𝑁 ) and ends after the required suffix bits are
+embedded. This introduces an overhead of
+                  &                         √︂ !'
+                                                                                                         4.2    Metrics
+                                                𝜆                                                        We evaluate the performance of our steganography scheme in terms
+              𝐾 = 𝜆 log2 𝑒 + 𝑛𝑠𝑢 𝑓 log2 1 +        −𝑁           (22)
+                                               2𝑁                                                        of Security, Efficiency, Capacity and Correctness.
+
+additional bits beyond the initial 𝑁 -bit prefix. Therefore, the effec-                                  4.2.1 Security. Although our steganography scheme’s computa-
+tive utilization rate is multiplied by a coefficient 1 − |𝑚𝐾∗ | , which                                  tional security has been theoretically proven in the Method Section,
+approaches 1 as |𝑚 ∗ | grows.                                         □                                  we further validate its security through linguistic steganalysis in ad-
+                                                                                                         versarial scenarios and evaluate its intuitive imperceptibility based
+   In conclusion, under the stated conditions, the lower bound of                                        on linguistic quality.
+the information utilization rate for the steganography scheme is                                            Steganalysis. We employed a classic steganalysis model TS-
+                                              √︃                                                         CSW [17], which is built upon the pre-trained BERT architecture
+                                      𝑛 all
+                                                  𝜆                                                      [3]to evaluate the imperceptibility of the generated stegotexts. The
+                            𝐾      ©             2𝑁 ª
+                𝑅 ≥ 1 − ∗ · ­­1 −                   ®.       (23)                                        detectors were trained on 1,000 samples each of stegotext and cor-
+                           |𝑚 |           ln 2 · 𝐼 ®                                                     responding cover text, randomly drawn from outputs of the same
+                                   «                ¬
+                                                                                                         language model. The data were split in a 3:1:1 ratio for training,
+Hence, the lower bound   on theaverage embedding capacity per                                           validation, and testing. Training was performed for three epochs
+                         √
+                   
+                          𝜆/2𝑁                                                                           with a learning rate of 1 × 10−4 . This entire procedure was repeated
+token is 1 − |𝑚𝐾∗ | · 𝐻 − ln 2 , which is asymptotically optimal
+                                                                                                         three times, and the final steganalysis performance was reported
+with respect to the average entropy of tokens 𝐻 .                                                        as the average F1 score on the test set across all runs.
+Provably Secure Steganography Based on List Decoding
+
+
+                                                Capacity                  Time                   Linguistic Quality            Imperceptibility     Correctness
+   Model         Algorithm
+                                    Entropy      Embed                    Time
+                                                         ↑    Utili.↑             ↓      PPL       Dist2    Dist3     Dist4      TS-CSW F1↓                 SR↑
+                                    bit/token   bit/token               sec./token
+              Random Sampling        0.8223           -          -        0.0552        2.3359     0.2447   0.4067    0.5207          -                   -
+              METEOR (R.) [10]       0.8048        0.6737     0.6367      0.0552        2.2255     0.2302   0.3842    0.4906      52.39%3.87            1.000
+                METEOR [10]          0.7794        0.6000     0.6253      0.0552        2.3821     0.2374   0.3876    0.4934      53.97%2.99            1.000
+               DISCOP (R.) [4]       0.7558        0.7439     0.8047      0.0695        2.0709     0.2178   0.3541    0.4532      51.11%2.37            1.000
+  Mistral        DISCOP [4]          0.7937        0.4102     0.4002      0.0606        2.1052     0.2458   0.3899    0.4860      50.08%3.02            1.000
+               SparSamp [16]         0.7807        0.8100     0.8701      0.0544        2.3445     0.2366   0.3862    0.4854      51.10%2.79            1.000
+                Shimmer [2]          0.8163        0.6433     0.7835      0.0552        2.0420     0.2014   0.3512    0.4527      52.67%2.35            1.000
+                 Group [11]          0.9827        0.6519     0.5875      0.0553        2.9868     0.2773   0.4387    0.5482      55.34%3.94            1.000
+                     Ours            0.8044        0.7927     0.9835      0.0529        2.1121     0.2312   0.3926    0.5013      50.06%3.91            1.000
+              Random Sampling        1.5591           -          -        0.0546        3.5241     0.3445   0.5635    0.7025          -                   -
+              METEOR (R.) [10]       1.6269        0.9634     0.5954      0.0546        3.7602     0.3643   0.5770    0.7061      52.69%2.39            1.000
+                METEOR [10]          1.6197        0.9551     0.5933      0.0545        3.6935     0.3648   0.5827    0.7120      53.81%2.90            1.000
+               DISCOP (R.) [4]       1.6201        1.2342     0.8458      0.1296        3.5792     0.3576   0.5753    0.7104      51.84%3.19            1.000
+  Qwen2          DISCOP [4]          1.6231        0.7351     0.4396      0.1630        3.7863     0.3632   0.5724    0.6954      50.29%2.83            1.000
+               SparSamp [16]         1.6238        1.3562     0.9069      0.0539        3.6862     0.3634   0.5864    0.7241      50.77%2.68            1.000
+                Shimmer [2]          1.6734        1.1528     0.8403      0.0540        3.7181     0.3852   0.5903    0.7351      52.71%2.20            1.000
+                 Group [11]          1.6611        1.0927     0.6197      0.0545        4.4333     0.3991   0.6151    0.7431      53.59%3.25            1.000
+                     Ours            1.5908        1.5971     0.9906      0.0517        3.8074     0.3602   0.5975    0.7237      50.59%2.07            1.000
+              Random Sampling        0.6166           -          -        0.0582        1.8595     0.1846   0.3143    0.4176          -                   -
+              METEOR (R.) [10]       0.6724        0.3745     0.5418      0.0587        1.8406     0.1800   0.3041    0.4057      54.10%3.15            1.000
+                METEOR [10]          0.6703        0.3640     0.5406      0.0586        1.8525     0.1893   0.3210    0.4286      53.27%2.72            1.000
+               DISCOP (R.) [4]       0.6896        0.5135     0.7656      0.1093        1.8371     0.1816   0.3073    0.4109      51.94%1.81            1.000
+  Llama3         DISCOP [4]          0.6895        0.3376     0.4770      0.1376        1.9113     0.1842   0.3121    0.4123      50.43%1.93            1.000
+               SparSamp [16]         0.6653        0.6265     0.9319      0.0575        1.8121     0.1803   0.3021    0.4020      51.92%2.46            1.000
+                Shimmer [2]          0.7941        0.5733     0.7219      0.0579        2.0421     0.2013   0.3413    0.4463      53.30%3.08            1.000
+                 Group [11]          0.7277        0.4364     0.5807      0.0584        2.1106     0.2122   0.3490    0.4545      52.51%3.20            1.000
+                     Ours            0.6717        0.6725     0.9924      0.0523        1.8594     0.1893   0.3154    0.4240      51.21%2.07            1.000
+                                                       Table 1: Main results with 𝑁 = 20 and 𝑏 = 20.
+
+
+
+   Linguistic Quality. The generated stegotext should meet the                        4.2.3 Capacity. Entropy. This represents the theoretical upper
+fundamental requirement of human perceptual concealment. We                           bound of the embedding capacity, measured in bits per token. The
+evaluate linguistic quality using perplexity (PPL) and diversity. PPL                 entropy is computed as:
+measures the fluency of generated text, with lower PPL values
+indicating smoother text:                                                                                             𝐿
+                                                                                                                1 ∑︁
+                                                                                                  Entropy = −         Pr[𝑥𝑖 | 𝑥 <𝑖 ] log2 Pr[𝑥𝑖 | 𝑥 <𝑖 ],         (26)
+                                 𝐿
+                                                        !                                                       𝐿 𝑖=1
+                              1 ∑︁
+              𝑃𝑃𝐿 = exp −           log Pr[𝑥𝑖 |x1:𝑖 −1 ] ,        (24)
+                              𝐿 𝑖=1
+                                                                                      where 𝐿 denotes the text length, and Pr[𝑥𝑖 | 𝑥 <𝑖 ] is the conditional
+where x represents the generated text and 𝐿 is the token count of                     probability of token 𝑥𝑖 given the preceding context 𝑥 <𝑖 .
+the generated text.                                                                       Embedding Capacity. This metric quantifies the average num-
+   As for text diversity, we used the 𝑑𝑖𝑠𝑡𝑛 metric. This metric needs                 ber of secret bits that can be successfully embedded and extracted,
+to find the unique pieces of tokens in the text and calculate their                   expressed as bits per token.
+ratio:                                                                                    Utilization Rate. Let 𝐵 denote the number of secret bits that can
+                           count(unique n-grams)                                      be embedded and extracted (not including the suffix) in a sentence,
+                  𝑑𝑖𝑠𝑡𝑛 =
+                                                                                                    Í𝐿
+                                                    .             (25)                and let 𝐼 = 𝑖=1     − log2 Pr[𝑥𝑖 | 𝑥 <𝑖 ] denote the total information
+                               count(n-grams)
+                                                                                      (i.e., the theoretical capacity in bits) of the generated sentence of
+4.2.2 Efficiency. Time. To evaluate time efficiency, we measure the                   length 𝐿. The utilization rate is defined as 𝑅 = 𝐵𝐼 . Here 𝑅 ∈ [0, 1],
+time required to generate a stego token, including both language-                     and 𝑅 = 1 indicates optimal use of the available entropy.
+model inference and the additional computation introduced by
+the steganographic algorithm (e.g., sampling, and any auxiliary                       4.2.4 Correctness. Success Rate We evaluate correctness using
+encoding/decoding operations). We report the average runtime per                      the bit-level decoding Success Rate (SR). Let x denote the original
+generated token over the full generation process to reduce variance.                  secret bitstream and x̂ the decoded bitstream, both of length|x|.
+                                                                                                         1 Í |x|
+Lower time indicates higher efficiency.                                               We define 𝑆𝑅 = |x|     𝑗=1 𝛿 [𝑥 𝑗 , 𝑥ˆ 𝑗 ], where 𝛿 [𝑢, 𝑣] is the indicator
+                                                                                                                             Kaiyi Pang and Minhao Bai
+
+
+function, which takes the value 1 if 𝑢 = 𝑣 and 0 otherwise. Con-             every token while keeping computation bounded, which explains
+sequently, 𝑆𝑅 = 1 signifies a lossless reconstruction of the secret          the consistent utilization gains observed in Fig. 3
+message, whereas lower values indicate the presence of decoding                  We further examine how the secret message length |𝑚 ∗ | and
+errors.                                                                      the candidate list size 2𝑁 affect the utilization rate (Fig. 4). Across
+                                                                             all three large language models, for a fixed 𝑁 , longer secret mes-
+4.3    Evaluation Results and Discussion                                     sages yield higher utilization. This trend is expected because the
+                                                                             suffix can be viewed as a fixed overhead used to enable fast and
+4.3.1 Capacity. As analyzed in Section 3.5, we derive lower bounds
+                                                                             unambiguous decoding; amortizing the same suffix over more pay-
+on both the information utilization rate and the embedding capacity.
+                                                                             load bits improves overall efficiency (even though suffix bits are
+In the main experimental setting (𝑏 = 20, 𝑁 = 20, hence 𝐾 = 0),
+                                                                             excluded from the embedding capacity). Moreover, larger values
+the lower
+     √    bound on the average embedding capacity per token is
+                                                                             of 𝑁 consistently yield higher utilization, which aligns with our
+       𝜆/2𝑁
+𝐻 − ln 2 . This bound exceeds the explicit lower bounds reported             list-decoding intuition: maintaining a larger candidate list provides
+by GROUP [11] (𝐻 −log2 (1+𝐻 ln 2)−0.0861), METEOR [10] ( 12 𝐻 − 12 ),        more flexibility and results in higher embedding capacity.
+DISCOP [4] (minimum entropy), and Shimmer [2] ( 23 𝐻 − 15 ) in LLM-
+based experiments, where the entropy H is typically small. Although          4.3.2 Time Efficiency. The time of our approach is predominantly
+some recent SOTA provably secure steganography methods, such                 limited by two factors: the time for model to generate token and the
+as SparSamp [16], do not provide theoretical capacity analyses, the          time for sampling. As shown in Table 1, even with a sampling scale
+main experimental results in Table 1 show that our scheme achieves           of around 220 , our steganography scheme does not incur significant
+higher entropy utilization than SparSamp [16].                               time overhead; its runtime is comparable to random sampling and
+    We further compare information utilization rate across large             other baseline methods. With faster sampling techniques [14, 15],
+language models and secret message lengths (Fig. 3). A consistent            the time required to generate stego tokens could be further reduced.
+trend is that Shimmer [2] and SparSamp [16] achieve higher capac-            Our scheme is even faster than DISCOP, especially its reordered
+ity than METEOR [10], METEOR (R). [10], DISCOP [4], DISCOP                   variant, which must construct a Huffman tree at each time step,
+(R.) [4], and Group [11]. This gap is structural: METEOR, DISCOP,            which leads to slightly higher runtime despite our optimized Cython
+and Group recover payload information from the current token                 implementation.
+and the current-step distribution only. In regimes where the next-
+token distribution is highly peaked, as is typical for LLMs, multiple        4.3.3 Linguistic Quality & Security . Similar to other provably se-
+payload candidates often map to the same high-probability token.             cure steganographic constructions, Table 1 shows that the stegotext
+Consequently, these methods must either embed only a short com-              generated by our method closely matches randomly sampled text
+mon prefix or forgo embedding entirely, thereby wasting part of              across multiple evaluation metrics, including PPL and diversity
+the available entropy. Shimmer and SparSamp, by contrast, accu-              measures (Dist-2, Dist-3, and Dist-4). This is consistent with our
+mulate decoding evidence across multiple steps, which allows them            security analysis, indicating that the stegotext is difficult to dis-
+to exploit entropy more effectively. Among the token-local base-             tinguish from cover text. As illustrated in Table 2, both randomly
+lines, DISCOP(R.) achieves the highest capacity in our experimental          sampled text and stego text are also perceptually indistinguishable
+settings [2, 16], but it still falls short of the best multi-step designs.   to human readers. Steganalysis results further confirm this: because
+    Despite their advantage, prior high-capacity schemes still in-           provably secure schemes make steganographic sampling computa-
+cur avoidable capacity loss due to how they represent and update             tionally indistinguishable from random sampling, machine-learning
+the decoding state. Shimmer [2] maintains a single interval-valued           classifiers fail to learn effective features, yielding F1 scores close to
+state; when interval splitting occurs, the valid set becomes a union         50%.
+of disjoint intervals. Keeping all branches would lead to an expo-
+nential blowup, so Shimmer must effectively discard branches to              4.3.4 Decoding Correctness. In the Proof of Correctness section 3.3,
+suppress splitting, which wastes entropy and reduces utilization.            we explain that when the suffix 𝑠𝑢 𝑓 has a length of 𝑏, the probability
+                                                                                                                   −𝑏
+SparSamp [16] improves capacity by accumulating entropy over                 of a decoding error is at most  2√︃ 𝜆  𝑛 . Larger 𝑏 tightens this
+                                                                                                                 1+
+blocks, but it does not expand a set of parallel decoding candidates                                                  2𝑁
+                                                                             bound and can make the decoding error probability negligibly small;
+when ambiguity persists; instead, it must pause active embedding
+                                                                             in our experiments we choose 𝑏 = 20 to reduce overhead while
+(or spend additional tokens to resolve the state), again leaving part
+                                                                             still keeping the concrete upper bound extremely low. In the main
+of the entropy unexploited.
+                                                                             experiment, where 𝑏 = 20, the upper bound for the error rate is
+    In contrast, our method attains the highest capacity among
+                                                                             8.695 × 10−7 . As indicated in Table 1, no decoding errors were
+the compared baselines because it adopts a list-decoding view of
+                                                                             observed in the main experiments involving 1,000 samples.
+steganographic decoding. Rather than enforcing immediate de-
+codability or committing to a single interval/state, we maintain a
+bounded candidate list of message prefixes. Each generated token             5   Conclusion
+filters this list in proportion to its probability mass, and whenever        In this paper, we revisit steganography decoding from a list-decoding
+the list becomes too small we expand it to keep the filtering pro-           perspective and show that temporarily maintaining a set of decod-
+cess operating near the entropy rate. The remaining ambiguity is             ing candidates can exploit entropy more fully than prior token-local
+then eliminated by matching a short validation suffix. This filter–          designs. Building on this insight, we propose a provably secure
+expand–match mechanism continuously harvests entropy from                    steganography scheme based on list decoding, which combines list
+     Provably Secure Steganography Based on List Decoding
+
+
+                                   Llama3                                        Mistral                                                    Qwen2
+               100%                                           100%                                                 100%
+
+                   90%                                         90%                                                 90%
+
+
+
+
+Utilization Rate
+                   80%                                         80%                                                 80%
+
+                   70%                                         70%                                                 70%
+
+                   60%                                         60%                                                 60%
+
+                   50%                                         50%                                                 50%
+
+                   40%                                         40%                                                 40%
+                         100          300           500               100           300              500                       100             300              500
+                               Secret Bits Length                            Secret Bits Length                                        Secret Bits Length
+                          Method      Meteor(Reordered)     Meteor   Discop(Reordered)      Discop         Group          Sparsamp      Shimmer        Ours
+
+                          Figure 3: The information utilization rate of several existing provable secure steganography schemes
+
+
+     expansion and suffix matching to ensure correct decoding while en-              References
+     abling high-capacity embedding. We provide a security and correct-               [1] Jinze Bai, Shuai Bai, and Yunfei Chu et. al. 2023. Qwen Technical Report. arXiv
+     ness proof,and derive theoretical lower bound on the embedding                       preprint arXiv:2309.16609 (2023).
+                                                                                      [2] Minhao Bai, Kaiyi Pang, Guorui Liao, Jinshuai Yang, and Yongfeng Huang. 2025.
+     capacity. Extensive experiments on three popular LLMs demon-                         Shimmer: a Provably Secure Steganography Based on Entropy Collecting Mech-
+     strate that our method achieves high generation quality, efficiency,                 anism. In 34th USENIX Security Symposium (USENIX Security 25). 5949–5965.
+                                                                                      [3] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2018. Bert:
+     and capacity.                                                                        Pre-training of deep bidirectional transformers for language understanding.
+                                                                                          arXiv preprint arXiv:1810.04805 (2018).
+     6              Acknowledgement                                                   [4] Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao, Weiming Zhang, and Neng-
+                                                                                          hai Yu. 2023. Discop: Provably Secure Steganography in Practice Based on
+    The authors gratefully acknowledge Liao, Shao, et al. for shar-                       “Distribution Copies”. In 2023 IEEE Symposium on Security and Privacy (SP). IEEE
+    ing their perspective on classification of instantaneous and non-                     Computer Society, 2238–2255.
+                                                                                      [5] Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad
+    instantaneous steganography in their ongoing work.                                    Al-Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Amy Yang, Angela Fan,
+                                                                                          et al. 2024. The llama 3 herd of models. arXiv preprint arXiv:2407.21783 (2024).
+     7              Ethics Considerations                                             [6] Tina Fang, Martin Jaggi, and Katerina Argyraki. 2017. Generating Steganographic
+                                                                                          Text with LSTMs. In Proceedings of ACL 2017, Student Research Workshop. 100–
+    We propose a provably secure steganography scheme based on                            106.
+    list decoding that embeds secret messages into seemingly innocu-                  [7] V. Guruswami and M. Sudan. 1999. Improved decoding of Reed-Solomon and
+                                                                                          algebraic-geometry codes. IEEE Transactions on Information Theory 45, 6 (1999),
+    ous text. We acknowledge the dual-use risk of this technology:                        1757–1767. https://doi.org/10.1109/18.782097
+    While it protects people’s privacy to prevent censorship, it could                [8] Nicholas J. Hopper. 2004. Toward a Theory of Steganography. Ph.D. thesis.
+                                                                                          Carnegie Mellon University, Pittsburgh, PA.
+    also be exploited by malicious actors for covert coordination. We                 [9] Albert Q Jiang, Alexandre Sablayrolles, Arthur Mensch, Chris Bamford, De-
+    treat the secret bits as a random binary bitstream without seman-                     vendra Singh Chaplot, Diego de las Casas, Florian Bressand, Gianna Lengyel,
+    tic constraints in expirements so the steganography method is                         Guillaume Lample, Lucile Saulnier, et al. 2023. Mistral 7B. arXiv preprint
+                                                                                          arXiv:2310.06825 (2023).
+    agnostic to content. Relative to prior provably secure text steganog-            [10] Gabriel Kaptchuk, Tushar M. Jois, Matthew Green, and Aviel D. Rubin. 2021.
+    raphy [2, 4, 10, 11], our main contribution is an algorithmic design                  Meteor: Cryptographically Secure Steganography for Realistic Distributions. In
+    that improves capacity and decoding, rather than the introduction                     Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications
+                                                                                          Security (Virtual Event, Republic of Korea) (CCS ’21). Association for Computing
+    of the underlying ethically sensitive capability of covert communi-                   Machinery, New York, NY, USA, 1529–1548. https://doi.org/10.1145/3460120.
+    cation itself. We therefore do not believe that this work materially                  3484550
+                                                                                     [11] Guorui Liao, Jinshuai Yang, Weizhi Shao, and Yongfeng Huang. 2025. A frame-
+    exacerbates the ethical risks already associated with this line of                    work for designing provably secure steganography. In 34th USENIX Security
+    research.                                                                             Symposium (USENIX Security 25). 6837–6856.
+        Furthermore, we emphasize that our scheme guarantees conceal-                [12] Jinjie Ni, Fuzhao Xue, Yuntian Deng, Jason Phang, Kabir Jain, Mahir Hitesh Shah,
+                                                                                          Zangwei Zheng, and Yang You. 2023. Instruction in the Wild: A User-based
+    ment only at the content level. It does not hide network metadata                     Instruction Dataset. https://github.com/XueFuzhao/InstructionWild.
+    or traffic patterns, which monitors can still exploit via behavioral             [13] Madhu Sudan. 1997. Decoding of Reed Solomon Codes beyond the Error-
+    analysis. Thus, this method should be viewed not as a standalone                      Correction Bound. J. Complex. 13, 1 (March 1997), 180–193. https://doi.org/10.
+                                                                                          1006/jcom.1997.0439
+    panacea for resisting surveillance but as a component of a broader               [14] Alastair J Walker. 1974. New fast method for generating discrete random numbers
+    surveillance defense strategy.                                                        with arbitrary frequency distributions. Electronics Letters 10, 8 (1974), 127–128.
+                                                                                     [15] Alastair J Walker. 1977. An efficient method for generating discrete random
+                                                                                          variables with general distributions. ACM Transactions on Mathematical Software
+                                                                                          (TOMS) 3, 3 (1977), 253–256.
+                                                                                     [16] Yaofei Wang, Gang Pei, Kejiang Chen, Jinyang Ding, Chao Pan, Weilong Pang,
+                                                                                          Donghui Hu, and Weiming Zhang. 2025. SparSamp: Efficient Provably Secure
+                                                                                          Steganography Based on Sparse Sampling. In 34th USENIX Security Symposium
+                                                                                                                                                                       Kaiyi Pang and Minhao Bai
+
+
+
+                       100   0.768   0.753   0.853   0.910     0.927   0.940   0.947   0.966   0.968                  Language Processing (EMNLP-IJCNLP). 1210–1215.
+                                                                                                       0.95
+                       200   0.717   0.848   0.849   0.894     0.927   0.963   0.972   0.971   0.981
+                                                                                                       0.90
+
+
+
+
+  Secret bits length
+                       300   0.768   0.832   0.915   0.922     0.951   0.967   0.976   0.983   0.995
+                                                                                                       0.85
+                                                                                                              Utils
+                       400   0.750   0.845   0.887   0.932     0.970   0.986   0.987   0.984   0.991
+                                                                                                       0.80
+                       500   0.774   0.814   0.917   0.930     0.968   0.965   0.980   0.981   0.991
+                                                                                                       0.75
+                       600   0.697   0.817   0.905   0.931     0.968   0.961   0.986   0.991   0.995
+                                                                                                       0.70
+                              5       7       9       11        13      15      17      19      20
+                                                                 N
+
+                                                             (a) Llama3
+
+                       100   0.639   0.702   0.838   0.881     0.930   0.918   0.948   0.930   0.956
+                                                                                                       0.95
+
+                       200   0.664   0.777   0.858   0.893     0.950   0.945   0.958   0.961   0.972   0.90
+
+                                                                                                       0.85
+
+
+
+ Secret bits length
+                       300   0.634   0.738   0.855   0.892     0.946   0.949   0.973   0.976   0.976
+                                                                                                       0.80   Utils
+                       400   0.684   0.774   0.858   0.902     0.937   0.950   0.964   0.977   0.987
+                                                                                                       0.75
+                       500   0.667   0.791   0.858   0.894     0.939   0.967   0.983   0.980   0.989
+                                                                                                       0.70
+
+                       600   0.617   0.785   0.861   0.906     0.952   0.968   0.979   0.990   0.992   0.65
+
+                              5       7       9       11        13      15      17      19      20
+                                                                 N
+
+                                                             (b) Mistral3
+
+                       100   0.662   0.737   0.812   0.856     0.941   0.892   0.915   0.957   0.957
+                                                                                                       0.95
+
+                       200   0.653   0.761   0.839   0.914     0.920   0.944   0.955   0.971   0.969   0.90
+
+
+
+
+  Secret bits length
+                       300   0.664   0.793   0.811   0.899     0.945   0.933   0.967   0.975   0.972   0.85
+
+
+                       400   0.646   0.768   0.850   0.890     0.935   0.964   0.973   0.984   0.978   0.80   Utils
+
+                                                                                                       0.75
+                       500   0.664   0.793   0.734   0.915     0.945   0.960   0.972   0.984   0.984
+                                                                                                       0.70
+                       600   0.646   0.786   0.864   0.880     0.940   0.963   0.980   0.990   0.992
+                                                                                                       0.65
+                              5       7       9       11        13      15      17      19      20
+                                                                 N
+
+                                                              (c) Qwen2
+
+Figure 4: Information utilization rate of our method for dif-
+ferent secret bit lengths and candidate list length (𝑁 ) on three
+LLMs (Llama3, Mistral3, and Qwen2).
+
+
+     (USENIX Security 25).
+[17] Zhongliang Yang, Yongfeng Huang, and Yujin Zhang. 2020. TS-CSW: Text
+     steganalysis and hidden capacity estimation based on convolutional sliding
+     windows. Multimedia Tools and Applications 79 (2020), 18293–18316.
+[18] Zhong-Liang Yang, Xiao-Qing Guo, Zi-Ming Chen, Yong-Feng Huang, and Yu-Jin
+     Zhang. 2018. RNN-stega: Linguistic steganography based on recurrent neural
+     networks. IEEE Transactions on Information Forensics and Security 14, 5 (2018),
+     1280–1295.
+[19] Zhong-Liang Yang, Si-Yu Zhang, Yu-Ting Hu, Zhi-Wen Hu, and Yong-Feng Huang.
+     2020. VAE-Stega: linguistic steganography based on variational auto-encoder.
+     IEEE Transactions on Information Forensics and Security 16 (2020), 880–895.
+[20] Zachary Ziegler, Yuntian Deng, and Alexander M Rush. 2019. Neural Linguistic
+     Steganography. In Proceedings of the 2019 Conference on Empirical Methods in
+     Natural Language Processing and the 9th International Joint Conference on Natural
+Provably Secure Steganography Based on List Decoding
+
+
+Algorithm 3 Alias Sampling Method AliSample𝑁 (𝐷, {𝑟 }𝑖=1
+                                                     2𝑁 ) −
+                                                          →                 A Appendix
+{𝑠}𝑖=1
+   𝑁
+                                                                            A.1 Alias Method
+Input: Distribution 𝐷, Sequence of random numbers {𝑟 }𝑖=1        2𝑁 ;
+                                                                            Since the number of samples required can be extremely large,
+Output: Sequence of samples {𝑠}𝑖=1 .     𝑁
+                                                                            the efficiency of standard Inverse Transform Sampling is insuf-
+  1: 𝑆, 𝐺 ←− ∅, ∅ {Preparation phase: Initialize the list of small          ficient. The complexity of traditional Inverse Transform Sampling
+     probability tokens 𝑆 and large probability tokens 𝐺.}                  is 𝑂 (|𝑉 |), where |𝑉 | is the size of the model’s vocabulary. If 2𝑘
+  2: for 𝑖 ∈ {1, 2, · · · , |𝑉 |} do                                        samples are required, the complexity of the entire sampling flow
+  3:    𝑞𝑖 ←− |𝑉 | · 𝐷 (𝑖) {Scale probability by a factor of |𝑉 |}          becomes 𝑂 (2𝑘 |𝑉 |). In practice, generating 1 million samples could
+  4:    if 𝑞𝑖 < 1 then                                                      incur a latency of several seconds or even tens of seconds. There-
+  5:       𝑆 ←− 𝑆 + {𝑖} {Construct low-probability set 𝑆}                   fore, we introduce an efficient sampling method known as the Alias
+  6:    else                                                                Method[14, 15], proposed by A. J. Walker in 1977. The detailed
+  7:       𝐺 ←− 𝐺 + {𝑖}{Construct high-probability set 𝐺}                   procedure is given below.
+  8:    end if                                                                  The algorithm reconstructs the original distribution 𝐷 in a prepa-
+  9: end for                                                                ration phase into a uniform combination of sub-distributions, each
+ 10: for 𝑖 ∈ {1, 2, · · · , |𝑉 |} do
+                                                                                                                                     Í |𝑉 | 1
+                                                                            containing at most two tokens, such that 𝐷 (𝑧) = 𝑖=1            |𝑉 | 𝐷𝑖 (𝑧).
+ 11:    Select and remove an element 𝑗 from set 𝑆                           To construct such sub-distributions, the probability of each token
+ 12:    𝐴𝑖 , 𝑃 (𝐴𝑖 ) ←− 𝑗, 𝑞 𝑗 {Prioritize low-probability tokens to con-   is first multiplied by |𝑉 | as a weight. These weights are then re-
+        struct sub-distribution}                                            distributed into multiple normal sub-distributions that sum to 1.
+ 13:    if 𝐺 ≠ ∅ then                                                       Specifically, tokens are divided into two categories: a low-weight
+ 14:       Select and remove an element 𝑘 from set 𝐺                        list 𝑆 (weights < 1) and a high-weight list 𝐺 (weights ≥ 1). When
+ 15:       𝐵𝑖 , 𝑃 (𝐵𝑖 ) ←− 𝑘, 1 − 𝑞 𝑗 {Select a high-probability token to   constructing a sub-distribution, a token 𝑗 is removed from 𝑆. Since
+           fill the remainder}                                              𝑞 𝑗 < 1, a token 𝑘 is removed from 𝐺, and its weight 𝑞𝑘 is split.
+ 16:       𝑞𝑘 ←− 𝑞𝑘 − (1 − 𝑞 𝑗 ){Update token probability}                  Part of it, 1 − 𝑞 𝑗 , is used to fill the sub-distribution (making the
+ 17:       if 𝑞𝑘 < 1 then                                                   sum 1), while the remainder 𝑞𝑘 − (1 − 𝑞 𝑗 ) becomes the new weight
+ 18:           𝑆 ←− 𝑆 + {𝑘 } {If probability drops below 1, move to         for token 𝑘, which is then re-added to either 𝑆 or 𝐺. The resulting
+               low-probability set}                                         sub-distribution contains only two tokens, 𝐴𝑖 = 𝑗 and 𝐵𝑖 = 𝑘, with
+ 19:       else                                                             probabilities 𝑃 (𝐴𝑖 ) = 𝑞 𝑗 and 𝑃 (𝐵𝑖 ) = 1 − 𝑞 𝑗 .
+ 20:           𝐺 ←− 𝐺 + {𝑘}{If probability remains ≥ 1, keep in high-           Eventually, the entire distribution 𝐷 is decomposed into a uni-
+               probability set}                                             form combination of such sub-distri-
+ 21:       end if                                                           butions. Once constructed, sampling is straightforward: uniformly
+ 22:    end if                                                              select one of the |𝑉 | sub-distributions, then output the sample based
+ 23: end for                                                                on a comparison between a random number and 𝑃 (𝐴𝑖 ). The com-
+ 24: for 𝑖 ∈ {1, 2, · · · , 𝑁 } do                                          plexity of the preparation phase is 𝑂 (|𝑉 |), while a single sampling
+ 25:    𝑥 ←− ⌊|𝑉 | · 𝑟 2𝑖 −1 ⌋ {Randomly select one of the |𝑉 | uniform     operation requires only one comparison, yielding 𝑂 (1) complexity.
+        sub-distributions}                                                  When generating 2𝑘 samples, the total complexity is 𝑂 (|𝑉 | + 2𝑘 ),
+ 26:    if 𝑟 2𝑖 < 𝑃 (𝐴𝑥 ) then                                              which is significantly superior to repeated Inverse Transform Sam-
+ 27:       𝑠𝑖 ←− 𝐴𝑥 {Sample from the binary sub-distribution; repeat        pling.
+           𝑁 times}
+ 28:    else                                                                A.2     Examples of generated stegotext
+ 29:       𝑠𝑖 ←− 𝐵𝑥                                                         Table 2 shows several examples of stegotext produced by llama3
+ 30:    end if                                                              in the main experiment. It is difficult for human to perceptually
+ 31: end for
+                                                                            distinguish between normally generated text produced by random
+ 32: return {𝑠𝑖 }𝑖=1 𝑁
+                                                                            sampling and text generated by provably secure steganographic
+                                                                            methods.
+                                                                                                                Kaiyi Pang and Minhao Bai
+
+
+                            Table 2: Examples of stegotexts generated by Llama3-8B
+
+Method            Generated Texts
+Prompt            What is Steganography?
+Random Sampling   Steganography is a technique of hiding secret information within a non-secret message, image, audio, or other
+                  medium. The goal is to conceal the existence of the secret information, making it difficult for unauthorized
+                  parties to detect its presence. Imagine sending a letter to a friend with a hidden message inside: you would
+                  write the secret message on the back of a seemingly ordinary letter or enclose it within an envelope with a
+                  false address......
+METEOR(R.) [10]   Steganography is the practice of hiding secret information within a non-secret message, image, audio, or other
+                  medium. The goal of steganography is to conceal the existence of the secret information, making it difficult
+                  for unauthorized parties to detect its presence. In other words, steganography involves embedding a message,
+                  known as the covertext, within a seemingly innocuous medium, such as an image, video, audio file, or text......
+METEOR [10]       Steganography is the practice of hiding secret information within a non-secret message, image, or file in such a
+                  way that the very existence of the secret information is not apparent. The goal of steganography is to conceal the
+                  fact that a secret message is being transmitted, rather than simply encrypting it. In other words, steganography
+                  is a technique used to communicate sensitive information securely by hiding it in plain sight......
+DISCOP(R.) [4]    Steganography is a technique used to hide secret information within a non-secret message, image, audio, or
+                  video file. The goal of steganography is to conceal the existence of the secret information, making it difficult for
+                  unauthorized parties to detect its presence. In steganography, a cover text is used as a carrier to hide the secret
+                  information. The cover text can be a digital image, audio file, video, or even a text file. The secret information,
+                  known as the message, is then concealed ......
+DISCOP [4]        Steganography is a method of hiding secret information within a non-secret message, image, audio, or video
+                  file. The idea is to conceal the existence of the hidden message or data, making it difficult for unauthorized
+                  parties to detect its presence. In other words, steganography is a technique that embeds a secret message or
+                  data within a cover file, such as an image, audio, or video, in a way that the presence of the hidden information
+                  is not immediately apparent...
+SparSamp [16]     Steganography is the practice of hiding secret information within a non-secret message, image, audio, or video
+                  file in such a way that the very existence of the secret message is not apparent. The goal of steganography is
+                  to conceal the presence of the secret information, making it invisible to unauthorized parties. Steganography
+                  is often compared to cryptography, which is the practice of encrypting information to make it secure. While
+                  cryptography focuses on protecting the confidentiality......
+Shimmer [2]       Steganography is the practice of hiding secret information within a non-secret message, image, audio file,
+                  or other medium in such a way that the very existence of the secret information is not apparent. This is in
+                  contrast to cryptography, which encrypts the secret information, making it unreadable without the proper
+                  decryption key or access. In steganography, the secret information is embedded in a way that makes it difficult
+                  to distinguish from the rest of the message, and the presence of......
+Group [11]        Steganography is the practice of concealing a secret message, image, or audio file within a non-secret message,
+                  image, or audio file, called a cover object. The goal of steganography is to hide the existence of the secret
+                  message orsignal, so that only the intended recipient can detect and extract it. Steganography is often used to
+                  achieve confidentiality and authenticity of the secret information. By embedding the secret message within a
+                  seemingly innocuous object......
+Ours              Steganography is the practice of hiding secret information or messages within another, seemingly innocuous,
+                  medium or format, such as an image, audio file, or text document. The purpose of steganography is to conceal
+                  the existence of the secret message, making it difficult for unauthorized parties to detect or intercept it.
+                  Steganography is different from cryptography, which focuses on encrypting and protecting the content of the
+                  message. In steganography, the message itself ......
+

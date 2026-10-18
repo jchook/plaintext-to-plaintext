@@ -1,0 +1,42 @@
+{
+  "id": "2026-survey",
+  "title": "A Comprehensive Survey on Linguistic Steganography: Methods, Countermeasures, Evaluation, and Challenges",
+  "status": "August 2026 arXiv survey; authors report EMNLP 2026 acceptance",
+  "kind": "paper",
+  "source": "https://arxiv.org/abs/2608.29077v1",
+  "pdf": "https://arxiv.org/pdf/2608.29077v1",
+  "why": "Map of the field, including 148 steganographic methods, tokenization fixes, evaluation metrics, and engineering limitations. Useful starting point and bibliography for continuing this research.",
+  "caveat": "A survey indexes claims rather than independently validating every method. Return to the primary papers for security assumptions, exact recovery requirements, and comparable capacity measurements.",
+  "repo": null,
+  "priority": "orientation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-survey/paper.pdf",
+      "requested_url": "https://arxiv.org/pdf/2608.29077v1",
+      "resolved_url": "https://arxiv.org/pdf/2608.29077v1",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:59.754571+00:00",
+      "bytes": 1561392,
+      "sha256": "ed54dad5f8bcc1851e3a881f5eaa144d2fd26860b79f1922be63ca41a61073a2"
+    },
+    {
+      "path": "2026-survey/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 272948,
+      "sha256": "a0111fb30a38343b50560c996a62f2a22b18e8d2401566a28177ea5c9a52a525"
+    },
+    {
+      "path": "2026-survey/source.html",
+      "requested_url": "https://arxiv.org/abs/2608.29077v1",
+      "resolved_url": "https://arxiv.org/abs/2608.29077v1",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:00.096517+00:00",
+      "bytes": 40955,
+      "sha256": "4021e40dc0ced71d982bee24686cf59926c46011e6d1fd47756cd74b1b39c5ac"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 36
+}

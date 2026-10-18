@@ -1,0 +1,1242 @@
+ Discop: Provably Secure Steganography in Practice
+          Based on “Distribution Copies”
+       Jinyang Ding∗          Kejiang Chen∗ B         Yaofei Wang+     Na Zhao∗        Weiming Zhang∗ B          Nenghai Yu∗
+                      ∗                                                     +
+                          University of Science and Technology of China         Hefei University of Technology
+
+
+
+   Abstract—Steganography is the act of disguising the transmis-     For instance, Protozoa [8] leveraged WebRTC video calls to
+sion of secret information as seemingly innocent. Although prov-     create covert channels, where the encrypted video streams are
+ably secure steganography has been proposed for decades, it has      replaced with the sensitive message. Another similar work,
+not been mainstream in this field because its strict requirements
+(such as a perfect sampler and an explicit data distribution)        Balboa [9], replaced audio streams or web browsing traffic
+are challenging to satisfy in traditional data environments. The     with the sensitive message. However, they rely heavily on the
+popularity of deep generative models is gradually increasing         condition that censors can only monitor encrypted data [9],
+and can provide an excellent opportunity to solve this problem.      [10]. These replacement-based covert channels can be easily
+Several methods attempting to achieve provably secure steganog-      detected if the censor has access to plaintext data, such as
+raphy based on deep generative models have been proposed in
+recent years. However, they cannot achieve the expected security     controlling the WebRTC gateway that can decrypt and validate
+in practice due to unrealistic conditions, such as the balanced      incoming media streams. Meanwhile, there is no guarantee
+grouping of discrete elements and a perfect match between the        that these channels are sustainable. Concretely, censors can
+message and channel distributions. In this paper, we propose a       systematically compromise these tools by selectively reducing
+new provably secure steganography method in practice named           the quality of encrypted channels or even blocking the delivery
+Discop, which constructs several “distribution copies” during the
+generation process. At each time step of generation, the message     of encrypted traffic for which they do not have a suitable
+determines from which “distribution copy” to sample. As long as      trapdoor.
+the receiver agrees on some shared information with the sender,         To circumvent extreme censorship, steganography has been
+he can extract the message without error. To further improve         introduced into covert channels [10], [12]. Steganography is
+the embedding rate, we recursively construct more “distribution      the technique that embeds secret messages in objects that
+copies” by creating Huffman trees. We prove that Discop can
+strictly maintain the original distribution so that the adversary    closely mimic real, mundane-appearing communications so
+cannot perform better than random guessing. Moreover, we             that such communications are impossible to be repressed by
+conduct experiments on multiple generation tasks for diverse         censors. The most familiar steganography method is least
+digital media, and the results show that Discop’s security and       significant bit (LSB) replacement, where the sender needs an
+efficiency outperform those of previous methods.                     image as the cover-image, and the secret message is converted
+                          I. I NTRODUCTION                           to a bitstream that replaces the LSBs of the pixel values
+                                                                     in the cover image to obtain the stego-image. Although the
+   The past few decades have witnessed massive surveillance
+                                                                     visualizations of the cover-image and stego-image are similar,
+and censorship mechanisms deployed to prevent citizens from
+                                                                     it is easy to detect LSB replacement from the statistical
+accessing or publishing selected types of information on the
+                                                                     perspective [13]. To improve the covertness, several attempts
+Internet [1], [2]. In response, encrypted communication sys-
+                                                                     have been made to minimize the modification number based
+tems have proliferated, designed to fend off intricate censors.
+                                                                     on matrix encoding [14]–[16]. Considering that modifications
+While these systems safeguard the confidentiality of plain-
+                                                                     on different regions have different impacts, researchers have
+text messages, the data transmitted by them can be readily
+                                                                     shifted their focus towards adaptive steganography, which
+recognized as encrypted traffic, thus attracting the attention
+                                                                     aims to minimize the distortion caused by embedding mes-
+of censors. For example, encryption-based censorship circum-
+                                                                     sages [17], [18]. However, these methods can be detected
+vention techniques such as Tor [3] can be actively detected by
+                                                                     by steganalyzers [19], [20]. In recent years, deep learning-
+increasingly sophisticated techniques [4]–[7] and blocked.
+                                                                     based methods for data hiding in images have been proposed,
+   To cope with excessive censorship, significant efforts have
+                                                                     which directly utilize neural networks for message embedding
+been devoted to making communications look innocuous dur-
+                                                                     and extraction, such as HiDDeN [21], SteganoGAN [22], and
+ing the last few years. Among these, the most representative
+                                                                     DeepMIH [23]. Even though involving adversarial training,
+methods refer to information hiding technology that disguises
+                                                                     they are still easily detected [23]–[25].
+the covert transmission of sensitive data as innocuous com-
+                                                                          a) Classical provably secure steganography: Research
+munication. One of the latest advances in this area is to
+                                                                     on provably secure steganography has been carried out since
+“tunnel” secret messages in the data produced by commu-
+                                                                     two decades ago. Cachin [26] first modeled steganographic
+nication applications or protocol implementations [8]–[11].
+                                                                     security by DKL (Pc ∥Ps ), the Kullback-Leibler divergence
+  B Kejiang Chen and Weiming Zhang are the corresponding authors.    between the cover distribution Pc and the stego distribution Ps .
+Hopper et al. [27] modeled steganographic security in terms          eration tasks (or media), we deploy Discop on three generation
+of computational complexity and proposed a provably secure           tasks, including text generation, image completion, and text-
+steganography method based on rejection sampling with poor           to-speech.
+embedding rate and excessive time consumption. Making use                 f) Evaluation axes: We evaluate the performance of
+of the duality of steganography and source coding, Le [28]           Discop on different axes inspired by the desired requirements:
+proposed a method based on arithmetic coding, which has bet-         1) the security measured by the average and maximum value
+ter efficiency. However, the stringent conditions they require,      of the KL divergence; 2) the time efficiency measured by
+such as the channel oracle and the explicit data distribution,       the average time to embed one bit; 3) the capacity efficiency
+are challenging to satisfy in the traditional environment (before    measured by the utilization of entropy, which is a new metric
+the popularity of deep generative models).                           proposed by us and calculated by dividing the total capacity
+      b) Deep generative models and their feasibility: In the        by its theoretical limit (i.e., the total entropy).
+past few years, there has been a surge of deep generative                 g) Contributions: The main contributions of this paper
+models, which can approximate complex non-trivial data               can be summarized as follows:
+distributions and synthesize realistic data. Moreover, their            • Analysis of the problems of existing attempts. We
+popularity is gradually increasing, providing great scenarios             review the existing steganography methods that attempt
+and techniques for efficient, provably secure steganography in            to achieve provable security in practice and analyze the
+practice.                                                                 problems preventing them from the expected security.
+      c) Efficient attempts to provably secure steganography:           • A novel steganography method. We elaborate a novel
+Thanks to deep generative models, there have been several                 steganography method based on “distribution copies” that
+attempts to achieve provably secure steganography in prac-                share identical distribution. Furthermore, we theoretically
+tice, such as arithmetic coding-based methods [29]–[32] and               prove its security.
+ADG [33]. However, these previous methods, in practice,                 • Strategy to improve the embedding rate. We further
+would almost inevitably modify the original data distribution             propose Discop, which improves the embedding rate by
+since the conditions they require are unrealistic, such as                recursively constructing more “distribution copies”.
+the balanced grouping of discrete elements and a perfect                • Benchmarking and comparison. We choose three typ-
+match between the message and channel distributions. They                 ical generation tasks to deploy Discop and show that it
+cannot achieve expected security because the adversary always             outperforms the existing methods in terms of security and
+has a non-negligible advantage in distinguishing the cover                efficiency.
+distribution Pc and the stego distribution Ps .                         The source code of our implementations of Discop can be
+      d) Our method: To address this problem, we propose             found at https://github.com/comydream/Discop.
+a novel, efficient, provably secure steganography method in
+                                                                                II. BACKGROUND AND R ELATED W ORK
+practice named Discop. Our insight is that during generation,
+we can construct multiple copies (i.e., interval assignment          A. Steganography System
+schemes) of a probability distribution predicted by the gener-          Steganography is usually illustrated by Simmons’ “Prison-
+ative model, called “distribution copies”. Concretely, we first      ers’ Problem” [34]: Alice and Bob (steganographers) are in
+assign each candidate token an interval of length equal to           jail, trying to hatch an escape plan. The only way they can
+its probability within [0, 1); then, we construct “distribution      communicate with each other is carefully censored by the
+copies” by rotating all intervals by certain displacements. With     warden Eve (steganalyzer). Once Eve detects any “unusual”
+these “distribution copies”, we can express information by           such as illegal words, encrypted messages, or abnormal codes,
+deciding from which “distribution copy” to sample. As long           she will block their plan and throw them into high-security
+as the receiver agrees on some shared information with the           solitary confinement. Therefore, they must find some way to
+sender, such as the PRNG, the seed, and the generative model,        embed the secret message into an “innocent-looking” cover-
+he can reconstruct the “distribution copies” and then extracts       object to obtain a stego-object.
+the message by determining from which “distribution copy”               Formally, a steganography system (stegosystem) ΣD with
+the current token was sampled. Since the probability of each         the channel distribution D (alias of Pc ) is a triple of proba-
+token in different “distribution copies” is equal, the proposed      bilistic algorithms, ΣD = (KeyGenD , EncodeD , DecodeD ).
+                                                                                        λ
+scheme strictly maintains the original distribution. Thus Ps            • KeyGenD (1 ) takes arbitrary input with length λ and
+is strictly equal to Pc . A steganalyzer cannot perform better             generates a shared key K ∈ {0, 1}k with length k, which
+than random guessing. To further improve the embedding                     will be used in the other two algorithms.
+rate, we decompose the multivariate distribution into multiple          • EncodeD (K, m, H) takes as input a shared key K,
+bivariate distributions through a Huffman tree and construct               a message (i.e., the hiddentext) m ∈ {0, 1}∗ , and a
+“distribution copies” for each bivariate distribution recursively.         channel history H. It returns the stego, which is a symbol
+In this way, more “distribution copies” are constructed.                   sequence s = s1 ∥s2 ∥ . . . ∥sl with length l.
+      e) Deployments: Theoretically, Discop can be deployed             • DecodeD (K, s, H) takes as input a shared key K, a
+on any explicit generative model that can yield probability                stego s and a channel history H, and returns the message
+distributions. To demonstrate Discop’s support for diverse gen-            extracted from s.
+  Notably, like cryptography, steganography needs to satisfy          of time consumption grows exponentially with message length
+Kerckhoffs’s principle [35] that Eve knows any information            to be embedded per time step; 2) these rejection sampling
+other than the key.                                                   algorithms fail when the distribution has very low minimum
+                                                                      entropy. Moreover, there was a lack of an oracle that could
+B. Definition of Steganographic Security
+                                                                      sample objects strictly according to channel distribution in the
+   There are two common definitions of steganographic secu-           traditional data environment.
+rity. One is based on hypothesis testing within the framework            2) Arithmetic coding-based method: Le [28] first proposed
+of information theory [26] and the other is based on compu-           a steganographic construction based on arithmetic coding
+tational complexity theory [27], [36].                                (AC), which utilizes the duality of steganography and source
+   Cachin [26] first modeled steganographic security from the         coding (i.e., data compression) [39]. The embedding and
+perspective of information theory, where given an object x,           extraction algorithms of steganography correspond to the
+the security of a stegosystem can be quantified by the relative       decompression and compression algorithms of source cod-
+entropy (a.k.a. Kullback-Leibler divergence) between the cover        ing, respectively. The embedding algorithm decompresses the
+distribution Pc and the stego distribution Ps ,                       encrypted message into stego, and the extraction algorithm
+                             X              Pc (x)                    compresses the stego into the encrypted message. If the data
+             DKL (Pc ∥Ps ) =     Pc (x) log        ,                  compression scheme is perfect, the security of this construction
+                                            Ps (x)
+                               x∈C                                    can be reduced to that of the encryption. It has a higher
+which typically measures how different the two distributions          capacity and better efficiency than the rejection sampling-
+are. When DKL (Pc ∥Ps ) = 0, the stegosystem is considered            based methods. However, in addition to the requirement of
+to be perfectly secure. In this case, Pc is identical to Ps so that   encrypting the message in advance, it also relies on a more
+the steganalyzer cannot perform better than random guessing.          stringent condition: explicit data distribution.
+   Hopper et al. [27] and Katzenbeisser and Petitcolas [36]              To summarize, rejection sampling-based methods require
+independently proposed the complexity-theoretic definition of         a random sampling oracle, while AC-based methods require
+steganographic security, which is established by means of a           even explicit data distribution. These conditions are chal-
+probabilistic game that distinguishes the outputs of the oracle       lenging to satisfy in the traditional data environment (before
+OD and EncodeD . The stegosystem is called secure against             the popularity of deep generative models) because, at that
+chosen hiddentext attacks if for all probabilistic polynomial         time, digital data were created by sensors or humans, whose
+time (PPT) adversaries AD , it holds that                             generation processes were too complex to model.
+     h                      i      h               i
+        EncodeD (K,·,·)                O (·,·)                        D. Deep Generative Models and Their Feasibility
+  Pr AD                 = 1 − Pr ADD           = 1 < negl(λ),
+                                                                         Deep learning has made great achievements in the past
+where OD (·, ·) is an oracle that can randomly sample from            decade. Deep generative models, such as variational autoen-
+the data distribution D.                                              coders (VAEs) [40], [41], generative adversarial networks
+C. Classical Provably Secure Steganographic Construction              (GANs) [42]–[45], and auto-regressive models [44], [46]–
+                                                                      [48], have emerged and prospered. They are neural networks
+   Since the definitions of steganographic security were pro-
+                                                                      trained on a large amount of data and can approximate the
+posed, several steganography methods were constructed, which
+                                                                      complex non-trivial probability distribution of various types of
+can be divided into two categories: rejection sampling-based
+                                                                      data [42], [49], providing an excellent opportunity to provably
+and arithmetic coding-based methods.
+                                                                      secure steganography.
+   1) Rejection sampling-based methods: Assuming that there
+                                                                         GANs and VAEs are implicit generative models that aim
+was a random sampling oracle (sampler) OD and a perfectly
+                                                                      to build generators whose distribution is close to the real
+unbiased function f over D shared by the communication
+                                                                      distribution of training data,
+parties, Hopper et al. [27] proposed a provably secure stegano-
+graphic construction based on rejection sampling. One en-                                    x = Gθ (z), z ∼ p(z).
+crypted message bit mi at a time, the sender uses rejection           That is, a noise vector z is first sampled from a prior
+sampling to find a symbol si that satisfies f (si ) = mi . The        distribution p(z), then z is transformed by a neural network
+receiver, on the other hand, simply computes mi = f (si )             Gθ and finally outputs the sample x. In the rejection sampling-
+for all i and concatenates them together to obtain the whole          based methods, we can use the generator of a GAN or VAE
+encrypted message. Von Ahn and Hopper [37] proposed                   as a sampler for generating stego-objects that obey the data
+public-key steganography with rejection sampling. Backes and          distribution.
+Cachin [38] extended public-key steganography to defend                  Auto-regressive generative models, in contrast, are explicit
+against active attacks. The security of these constructions           generative models. They use the chain rule of conditional prob-
+depends on the fact that rejection sampling does not destroy          ability distribution to model the joint probability distribution
+the channel distribution when each encrypted message bit              of the object x,
+obeys the uniform distribution U {0, 1} and f is perfectly                          T                                     T
+unbiased. However, the rejection sampling-based methods                             Y                                     Y
+                                                                          p (x) =         p (xt | x0 , . . . , xt−1 ) =         p (xt | x<t ) ,
+suffer the following limitations in practice: 1) the expectation                    t=0                                   t=0
+where xt is the basic unit of x, like a pixel in an image, a token         c) Meteor: Kaptchuk et al. [32] proposed Meteor, which
+in a piece of text. The explicit distribution of the generated       addressed the problems basic AC-based methods suffer. It
+data makes efficient methods such as the AC-based method             made two modifications to AC-based methods: 1) not to
+possible in practice.                                                narrow the interval successively; 2) prevented the randomness
+   The remaining problem is whether the generated data are           reuse problem by re-encrypting the message each time it
+suitable for steganography. The essence of steganography             was used for sampling. They deployed Meteor on the text
+is to disguise steganographic behavior as normal behavior.           generation task.
+Deep generative models can synthesize photo-realistic high-                d) Problems of Meteor: Meteor has a lower capacity
+resolution images, luxuriant original art [43], [45], [50], [51],    than the basic AC-based methods. The reason is that the
+and articles that seem written by humans [44], [46], [47].           basic AC-based methods narrow the interval successively, with
+Currently, the generated data are widespread on the Internet.        the generated symbol at each time step fully contributing to
+Furthermore, their popularity is gradually increasing. Accord-       message embedding, while Meteor considers each generated
+ing to Gartner’s recent research report [52], generative AI will     symbol separately and cannot fully utilize the entropy.
+account for 10% of all data produced by 2025. Therefore,                   e) Common implementation problems of AC-based meth-
+sharing generated data can be seen as a normal behavior              ods: In their code implementations1,2 , things got worse. On
+without raising suspicion.                                           each token sampled, the original distribution goes through
+                                                                     “cutoff-rescale-round-remove-add” before it becomes the ac-
+E. Efficient Attempts to Provably Secure Steganography               tual distribution for steganography, severely destroying the
+                                                                     original distribution.
+   Benefiting from the explicit generative models that can              2) Grouping-based method: The basic idea of this method
+predict probability distributions of data, researchers have pro-     is, at each time step, to first group all tokens evenly according
+posed several efficient attempts to achieve provably secure          to their probabilities and then randomly sample a token
+steganography in practice. These methods were dedicated to           from the group with the index corresponding to the current
+designing message embedding algorithms indistinguishable             encrypted message fragment.
+from the normal generation process, i.e., random sampling.
+                                                                           a) ADG: Zhang et al. [33] proposed a steganography
+   1) AC-based methods: Following Le’s work [28], re-                method based on adaptive dynamic grouping (ADG). At
+searchers have introduced deep explicit generative models            each time step, they dynamically obtained the conditional
+to the AC-based method to make it practical, producing a             probability distribution of all tokens in the vocabulary, grouped
+series of works in recent years. We can divide them into two         them into 2r groups with approximately the same probability
+categories: basic AC-based methods and Meteor.                       sum, and numbered them 0, 1, . . . , 2r − 1. All tokens in each
+      a) Basic AC-based methods: Yang et al. [29] deployed           group represented the same message bits of length r. Then,
+the AC-based method on the image generation task. This               they read r bits from the message to be embedded and
+was the first study to apply a deep generative model to              converted them to a decimal number in {0, 1, . . . , 2r − 1}, and
+the field of provably secure steganography. Specifically, they       performed random sampling from the normalized distribution
+repeatedly use an auto-regressive generative model to predict        of its corresponding group to obtain the next token. They
+the probability distribution of the next pixel and decompress        assumed that the message bits followed a uniform distribution.
+the current message fragment into a pixel using arithmetic           Since all groups had approximately the same probability sum,
+coding. Chen et al. [30] and Ziegler et al. [31] extended            the probability of each token obtained by ADG sampling is
+the method to the text-to-speech and text generation tasks,          close to that obtained by random sampling.
+respectively.                                                              b) Problems of ADG: Theoretically, ADG can achieve
+      b) Problems of basic AC-based methods: Basic AC-               perfect security if and only if the grouping is perfectly
+based methods construct a reversible mapping between stego           balanced. However, the problem is that since the probabilities
+and message. Since the probability of a message always has the       are discrete, the requirement is almost impossible to satisfy. In
+form of 2−l , where l ∈ N, the probability of the corresponding      most cases, the actual distribution used to embed the message
+stego has the same form. However, a cover distribution, which        is a modified distribution, which is different from the original
+the model predicts, is almost impossible to match the stego          distribution.
+distribution perfectly. Thus, the embedding algorithm needs to          To facilitate understanding, we visualize the distortions
+tune the probability of each possible cover to fit the form of       introduced by the AC-based methods and ADG by giving toy
+2−l , introducing a distortion. To reduce the distortion, one can    examples in Appendix E.
+lengthen the message simply by padding so that the probability
+of each symbol sequence becomes smaller and closer to a 2−l .                             III. D ISCOP M ETHODOLOGY
+The distortion tends to zero as the message length approaches          As analyzed above, previous attempts to achieve provably
+infinity, which is obviously impractical. Even then, the KL          secure steganography in practice [29], [30], [32], [33] in-
+divergence is a negligible function with respect to the message
+length, not the length of the encryption key (which is the             1 https://github.com/harvardnlp/NeuralSteganography/blob/master/arithmetic.py
+
+security parameter), and cannot achieve the expected security.         2 https://gist.github.com/tusharjois/ec8603b711ff61e09167d8fef37c9b86
+troduced minor damage to the original probability distribu-         to express information, which does not destroy the original
+tion while embedding the message. They cannot achieve the           distribution. This is the essential difference between Discop
+expected security because the adversary always has a non-           and existing methods.
+negligible advantage in distinguishing the cover distributions         There are many ways to create “distribution copies”. We
+Pc and the stego distribution Ps . To address this problem, in      employ a simple implementation: rotate all intervals to the
+this section, we present a new steganography method named           left by a certain step size, i.e., subtract this step size from all
+Discop, which can embed the message without destroying the          intervals, and put the part less than 0 to the far right.
+original probability distribution.
+                                                                    A running example. For ease of understanding, here is an
+A. Steganography Method Based on “Distribution Copies”              example. Suppose there are four tokens, namely “a”, “b”,
+   We take the text generation task as an example to describe       “c”, and “d”, with probabilities of 0.1, 0.2, 0.3, and 0.4,
+the proposed method. Text generation leverages computational        respectively. Alice wants to embed 1 bit of information during
+linguistics and artificial intelligence knowledge to automati-      sampling, so she needs to create 21 = 2 “distribution copies”,
+cally generate text that looks like human-written text. Auto-       and the rotation step size is 1/2 = 0.5. As shown in the
+regressive language models, such as GPT series models [44],         first row in Fig. 1, she takes the order “a-b-c-d” as the initial
+[46], [47], are the most representative generative models in this   interval assignment scheme, i.e., the “distribution copy” with
+area, which can predict P (t) = Pr [xt | x<t ], the probability     index 0. Moreover, she rotates the initial interval assignment
+distribution of the next token given previous context x<t .         scheme to the left by 0.5 to obtain the “distribution copy”
+   With the predicted distribution, a strategy called random        with index 1, as shown in the second row in Fig. 1. To embed
+sampling is applied. A whole process of text generation with        message b ∈ {0, 1}, she samples from the “distribution copy”
+random sampling is usually implemented as follows. First, a         with the index b. Suppose she wants to embed 1, so she
+pseudo-random number generator (PRNG)          is used to yield a   samples from the “distribution copy” with index 1. Suppose
+                                         
+series of pseudo-random numbers r = r(0) , r(1) , . . . , which     the pseudo-random number she consumes is r(t) = 0.2. She
+follow the uniform distribution on [0, 1), i.e., r(t) ∼ U [0, 1).   finds that r(t) falls into the interval corresponding to “d”, so
+At each time step t, the generative model M predicts P (t) ,        she sends “d” to Bob. Bob receives “d”. He can create the same
+and each token in the vocabulary V is assigned a left-closed        “distribution copies” and consumes the same pseudo-random
+and right-open interval in [0, 1) according to P (t) . Then we      number r(t) = 0.2. The received token “d” and the same
+consume a pseudo-random number r(t) and select the token            “distribution copies” and consumed pseudo-random number
+corresponding to the interval that r(t) falls into as the next      r(t) allow him to uniquely determine that this “d” was obtained
+token xt , and append it to the context. This process is repeated   by sampling from the “distribution copy” with index 1, so he
+until the termination condition is reached (e.g., the length of     learns that the embedded information is 1.
+the generated token sequence reaches the preset maximum             The condition for unique decoding. When the tokens
+length).                                                            sampled by the consumed pseudo-random number from all
+   Our insight is that during generation, we can construct          “distribution copies” are different from each other, the receiver
+multiple copies (i.e., interval assignment schemes) of the          can uniquely decode the message. In the above example, Fig. 1
+probability distribution predicted by the generative model,         shows the “distribution copies” when 1 bit of information is
+called “distribution copies”, and use the index of “distribution    to be embedded. Regardless of the value of the consumed
+copy” to express information. For example, suppose that there       pseudo-random number r(t) , it satisfies that the tokens cor-
+are only two tokens, “a” and “b” with probabilities of 0.4 and      responding to the intervals r(t) falls into in all “distribution
+0.6. We can assign [0, 0.4) and [0.4, 1.0) to “a” and “b”, or       copies” are different, so Bob can uniquely decode the message.
+assign [0.6, 1) and [0, 0.6) to “a” and “b”. As you can see, the    When Alice tries to embed 2 bits of information, as shown
+probability of each token is the same in several “distribution      in Fig. 2, she needs to create 22 = 4 “distribution copies”,
+copies”, meaning that the distribution of these “distribution       and the rotation step size is 1/4 = 0.25. Note that there
+copies” is identical. In this way, the sender can create several    will be cases where the consumed pseudo-random number
+“distribution copies” and decide from which one to sample           falls into the same token’s interval in several “distribution
+a token depending on the message. As long as the sender             copies”. In these cases, the intervals assigned to the same
+and receiver are under the same settings, including PRNG,           token in different “distribution copies” have intersections, and
+seed, generative model, and context, they can synchronize all       the consumed pseudo-random number, unfortunately, falls into
+their states, where the seed is the number (or vector) used         one of the intersections, resulting in the receiver cannot decode
+to initialize the PRNG and can be regarded as part of the           the message uniquely. We call such intersections the disputed
+symmetric key. Correspondingly, the receiver can extract the        ranges. For this example, to embed 1 bit of information
+message by determining from which “distribution copy” the           (Fig. 1), there is no disputed range; while to embed 2 bits of
+token was sampled. Notably, the existing methods use token          information (Fig. 2), there will be disputed ranges, as shown in
+indexes or group indexes to express information, requiring          the parts covered by gray masks in Fig. 2. For instance, in the
+tuning the original distribution to fit the message distribu-       “distribution copies” with index 0 and 3, the intervals assigned
+tion. Instead, our method uses “distribution copy” indexes          to the token “c” are [0.30, 0.60) and [0.55, 0.85) respectively,
+                                                 a            b                     c                                                  d                           index = 0
+                                             0       0.1   0.2       0.3                            0.6             0.7                                      1      (initial)
+                                                                  rotate left by 0.5
+
+                                                 c                    d                         a                   b                            c
+                                                                                                                                                                   index = 1
+           -0.5   -0.4         -0.2          0       0.1   0.2                            0.5          0.6                        0.8                        1
+
+
+
+Fig. 1: An example of the proposed steganography construction based on “distribution copies”. By rotating the interval
+assignment scheme (i.e., the “distribution copy” with index 0) to the left by 0.5, the “distribution copy” with index 1 is obtained.
+Alice wants to embed mi = 1, so she samples from the “distribution copy” with index mi = 1. Suppose the pseudo-random
+number she consumes is r(t) = 0.2. She finds that r(t) falls into the interval corresponding to “d”, so she sends “d”. Bob
+receives “d” at this time step and consumes the same pseudo-random number r(t) = 0.2. These two pieces of information
+make Bob uniquely determine that this “d” is obtained by sampling from the “distribution copy” with index 1, so he learns the
+message is mi = 1. Notably, rotating the interval assignment scheme to the left by 0.5 is equivalent to rotating the consumed
+                                                    (t)            (t)
+pseudo-random number to the right by 0.5 (e.g., r0 = 0.2 ⇒ r1 = 0.7).
+
+
+and their intersection [0.55, 0.60) is a disputed range. If the
+                                                                               a            b                           c                                    d                       index = 0 (00)
+pseudo-random number does not fall into the disputed ranges,               0        0.1                0.3                                 0.6                                   1
+2 bits of information can be embedded. Otherwise, 2 bits of                  b              c                                      d                        a                b       index = 1 (01)
+information cannot be embedded, so we can only return to                   0 0.05                            0.35                                    0.75         0.85           1
+
+the case where only 1 bit of information can be embedded, as                   c                        d                          a             b                       c           index = 2 (10)
+                                                                           0        0.1                                     0.5            0.6              0.8                  1
+illustrated in Fig. 1.
+                                                                                      d                a                b                        c                       d           index = 3 (11)
+   Notably, the disputed ranges do not affect the correct                  0                    0.25         0.35                 0.55                            0.85           1
+extraction of the message. Because the receiver shares the
+same settings with the sender, he can calculate the disputed              Fig. 2: To embed 2 bits of information, we need to create
+ranges and judge whether the pseudo-random number falls into              22 = 4 “distribution copies”, and the rotation step size is
+the disputed ranges. Therefore, he can know the actual length             1/4 = 0.25. The parts covered by the gray masks indicate the
+of the embedded message and can create the same “distribution             disputed ranges. If the consumed pseudo-random number does
+copies” to extract the message.                                           not fall into the disputed ranges, 2 bits of information can be
+                                                                          embedded. Otherwise, since the unique decoding condition is
+Embedding rate. The embedding rate is defined as the                      not met, 2 bits of information cannot be embedded, so we can
+average number of bits that can be embedded per generated                 only return to the case where only 1 bit of information can be
+token. Although the disputed ranges do not affect the correct             embedded, as shown in Fig. 1.
+extraction of messages, they affect the embedding rate. The
+shorter the total length of the disputed ranges, the higher the
+embedding rate. We can similarly define the instantaneous
+                                                                          all intervals in [a, b) is equivalent to rotating the consumed
+embedding rate β (t) as the number of bits embedded when
+                                                                          pseudo-random number r(t) in the opposite direction in [a, b).
+the t-th token is generated; then, the rotation step size at time
+                 (t)                                                      For example, as shown in Fig. 1, rotating all intervals to the
+step t is 2−β . We denote the maximum token probability                                                          (t)
+                       (t)                                                left by 0.5 is equivalent to rotating r0 to the right by 0.5.
+at time step t as pmax , and the theoretical upper bound of
+  (t)     (t)
+β as B . According to the condition for unique decoding,                     In the following, we uniformly create “distribution copies”
+it can be deduced
+                               (t)
+                         that pmax /2 < 2−B
+                                              (t)      (t)
+                                                  ≤ pmax , and            by rotating the consumed pseudo-random numbers to the right.
+  (t)
+β = B      (t)
+               
+                  ∈ N, so                                                 For convenience of description, in Algorithm 1 we define
+              $            %             &        '                       the function rotate(a, d, e) to calculate the value obtained by
+                       1                       1                          rotating a to the right by d in the interval [0, e). With the
+                                   (t)
+                log2 (t)      ≤ β ≤ log2 (t)        .                     function, we start to prove the security of Discop.
+                     pmax                    pmax
+                              
+                                     (t)
+                                                                         Intuitive proof of security. The steganography method based
+Specifically, let α = log2 1/pmax . If α ∈ N, then β (t) =                on “distribution copies” performs a random sampling from
+α; otherwise, β (t) may be ⌊α⌋ or ⌈α⌉, and which value it                 one of the copies. Since the distribution of all copies is
+is depends on whether the consumed pseudo-random number                   identical, the steganographic behavior does not destroy the
+falls into the disputed ranges. We can infer that the embedding           original distribution, so DKL (Pc ∥Ps ) = 0.
+rate is asymptotic to the average of the minimum entropy [27]
+                                                                          Rigorous proof of security. First, consider the case where
+over all time steps when the generated text is long enough.
+                                                                          only 1 bit of information (mi = 0 or 1) is embedded.
+An equivalent implementation. At each time step t, rotating               Evidently, the sum of the probabilities of all possible values
+             Message Bits                 Embedding                                      Extracting Stego
+             1000101010110010...                                                                          Once the mission is
+                                                                                                          underway there is plenty of
+                                                        1 0 0 0 1 0 1 0 1 0 1 1 0 0 1 0 ...               tension, including some
+                                                                                                          particularly gripping
+             Key                                                                                          moments on the second
+             !d@>M#['$\3%-1=^               PRNG                                                          planet they visit. The small
+                                                                                                          cast does a fine job. The
+             Context                                                                                      effects looked great, as one
+                                                                                                          would expect...
+             This film starts at a         Generative
+             gentle pace gradually          Model
+             explaining what has                                                                                    Internet
+             happened to the Earth                        Once     the        mission       is     ...     Alice                 Bob
+             before getting the mission                                                                                   Eve
+             to save the world started.
+
+
+Fig. 3: An overview of Discop. Alice and Bob need to share the same settings: 1) the initial context, 2) the PRNG, and 3)
+the symmetric key K (the seed for the PRNG). At each time step of Discop’s embedding or extraction process, the generative
+model predicts the probability distribution of the next token conditioned on the current context, and a Huffman tree is created
+based on this distribution. During the embedding process, Alice makes a series of child node selections to obtain the next token
+based on 1) pseudo-random numbers generated by the PRNG and 2) the message to be embedded. She repeats the process to
+get the stego. Then she sends it to Bob. In the extraction process, Bob can synchronize all states with Alice and extract the
+message from the stego.
+
+
+ Algorithm 1: rotate(a, d, e): rotate a to the right by                  B. Improving the Embedding Rate by Recursion
+ d in the interval [0, e)                                                   Although the steganography construction described above
+  Input: Original Number a, Rotate Distance d, The                       can perfectly achieve the goal of being provably secure, the
+          End Point of the Interval (exclusive) e                        embedding rate is asymptotic to the average of minimum
+  Output: The Value Obtained after Rotation b                            entropy of all time steps, which is low and far from the theoret-
+  b←a+d                                                                  ical limit (i.e., the average entropy of all time steps). Therefore,
+  if b ≥ e then                                                          we further investigate how to improve the embedding rate.
+       b←b−e                                                                Consider a simple case where there are three tokens, “a”,
+  return b                                                               “b”, and “c”, with probabilities of 0.5, 0.25, and 0.25. If
+                                                                         we just use the construction in Sec. III-A, only one bit can
+                                                                         be embedded. Our idea is that the embedding rate can be
+is 1, i.e., Pr [mi = 0] + Pr [mi = 1] = 1. The pseudo-random             improved by grouping. Specifically, we put “b” and “c” into a
+numbers generated by the PRNG obey the uniform distribution              group G in advance. We see that the probabilities of token “a”
+in [0, 1), that is, r ∼ U [0, 1). Suppose that any value a in the        and group G are 0.5 and 0.5, and we can certainly embed one
+[0, 1) interval is selected with a probability density of p, then        bit. Then if G is selected, since the normalized probabilities
+                                                                         of “b” and “c” in G are 0.5 and 0.5, we can additionally
+         Pr [r = a] = Pr [r = rotate (a, 0.5, 1)] = p.                   embed one bit. Following this idea, we construct a binary tree
+Let r′ be the equivalent value of the pseudo-random number               by recursive grouping, and then embed the message bits in
+after rotating, then                                                     the process of a series of child node selections from the root
+                                                                         node to a leaf node. This is equivalent to decomposing one-
+    Pr [r′ = a] = Pr [r = a] × Pr [mi = 0]                               round sampling from a multivariate distribution into multiple-
+                  + Pr [r = rotate (a, 0.5, 1)] × Pr [mi = 1]            round sampling from bivariate distributions. It is possible to
+                  = p = Pr [r = a] .                                     embed one bit during each sampling, thereby increasing the
+                                                                         embedding rate.
+Similarly, this conclusion also holds when embedding multiple
+bits of information. In this way, we show that the proposed              Minimizing the total length of the disputed ranges. How to
+steganography method based on “distribution copies” does                 construct a binary tree so that the embedding rate is as large as
+not modify the probability density of arbitrary pseudo-random            possible? Similar to that discussed in Sec. III-A, at each non-
+numbers at each time step t, so the actual distribution for              leaf node, the shorter the total length of the disputed ranges is,
+steganographic sampling is equal to the original distribution.           the more likely it is to embed one bit. So our greedy strategy
+At time step t+1, the history consists of steganographic tokens          is to minimize the total length of the disputed ranges. We use
+                                                                                                                                     (t)
+(generated in the previous t time steps) indistinguishable from          Vj to denote the j-th token in the vocabulary V , and pj to
+normal ones. By analogy, the distribution at each time step is           denote the conditional probability of the j-th token predicted
+not modified, so security holds overall. Q.E.D.                          by M at time step t. Suppose that the groups corresponding
+to the left and right child nodes of each non-leaf node are                                                  Algorithm 2: The main loop of Discop’s message
+Gleft and Gright . It is easy to calculate the total length of the                                           embedding algorithm
+disputed ranges,                                                                                              Input: Context C, PRNG, Language Model M, Seed
+                                                                                                                     K, Message to Embed m
+                                                           (t)                             (t)                Output: Stego S
+                                                   X                       X
+                                                           pj −                       pj         .
+                                            Vj ∈Gleft                Vj ∈Gright
+                                                                                                              S←“”
+                                                                                                              PRNG.set seed (K)
+The smaller the value, the higher the embedding rate. We use                                                  while not the end of m do
+the Huffman tree because it can construct a series of bivariate                                                  P (t) ← M(C)
+distributions that are as balanced as possible so that this value                                                                                 // predict
+                                                                                                                 nm , w ← sample P (t) , m, PRNG
+is as small as possible.                                                                                         m ← m[nm :]
+   We name the steganography method based on “distribution                                                       C ← C∥w
+copies” with recursion as Discop. The overview of Discop                                                         S ← S∥w
+is illustrated in Fig. 3. Both parties (Alice and Bob) need to
+                                                                                                              return S
+share the same settings: 1) the initial context, 2) the PRNG,
+and 3) the symmetric key K (the seed for the PRNG). At
+each time step of Discop’s embedding or extraction process,
+the generative model predicts the probability distribution of                                               ber r ∈ [0, node. prob), where node. prob is the probabil-
+the next token conditioned on the current context, and a                                                    ity sum of all tokens contained in the current node. We
+Huffman tree is created based on this distribution. During                                                  decide which child node to select according to the inter-
+the embedding process, Alice makes a series of child node                                                   val the value rotate (r, mi × 0.5 × node. prob, node. prob)
+selections to obtain the next token based on 1) the pseudo-                                                 falls into. Specifically, if mi = 0, we move to the child node
+random numbers generated by the PRNG and 2) the message                                                     that r falls into; otherwise, we move to the child node the value
+to be embedded. She repeats the process to get the stego.                                                   rotate (r, 0.5 × node. prob, node. prob) falls into. However,
+Then she sends it to Bob. In the extraction process, Bob can                                                if both r and its rotated value fall into the interval of the same
+synchronize all states with Alice and extract the message from                                              child node, that is, r falls into the disputed ranges, then we
+the stego. In the following, we will first introduce the two sub-                                           also need to move to this child node, but no bit is embedded
+procedures that are integral to both the message embedding                                                  in this child node selection, and leave mi to the next step.
+and extraction algorithms: the construction of a Huffman tree                                                  Next, we will describe Discop’s message embedding and
+and the selection of child nodes.                                                                           extraction algorithms.
+Constructing a Huffman tree. At each time step t, we create                                                 Embedding. The main loop of Discop’s message embedding
+a Huffman tree [53] according to the conditional probability                                                algorithm is shown in Algorithm 2. Suppose that we want
+distribution P (t) . An example is shown in Fig. 5. It is a                                                 to embed the message m. At time step t, we first build a
+binary tree; each leaf node corresponds to a token, and                                                     Huffman tree according to P (t) , and start from the root node.
+each non-leaf node corresponds to a group containing several                                                We repeat the child node selection process until the current
+tokens. Appendix A provides a linear complexity algorithm                                                   node is already a leaf node and its corresponding token is
+for creating a Huffman tree. At the beginning of each time                                                  sampled as the next token, and we append it to the end of
+step, we are at the root node.                                                                              the context. The above process is repeated until the message
+Child node selection. At each non-leaf node of the tree,                                                    is completely embedded. Algorithm 3 shows the sampling
+we can select one of its two child nodes, possibly to ex-                                                   process at each time step.
+press one bit. Suppose that we want to embed one bit mi                                                     Extraction. The order of extracting the message is the same as
+at a non-leaf node. We consume a pseudo-random num-                                                         that of embedding the message, i.e., traversing all tokens from
+                                                                                                            the first to the last. As long as the receiver shares the same
+                                     0.25                                                                   settings with the sender, all states can be synchronized. At
+                                                                               Context = “Hello, my”        each time step, conditioned on the same context, the receiver
+                                             0.2
+                                      0.2
+                                                                                                            can use the same model to obtain the same distribution and
+
+
+           Conditional Probability
+                                     0.15          0.145                                                    create the same Huffman tree with the sender. According to
+                                                           0.136
+                                                                   0.125   0.125
+                                                                                   0.114
+                                                                                            0.105
+                                                                                                            the current received token, the path from the root node of the
+                                      0.1                                                                   Huffman tree to the leaf node can be uniquely determined.
+                                     0.05
+                                                                                                     0.05   In each non-leaf node on the path, the receiver can extract
+                                                                                                            one bit (or none) by determining which child node the current
+                                       0
+                                            name friend dear       little new      god      mom      cell
+                                                                                                            token belongs to. Finally, he concatenates all the extracted bits
+                                                                        Token                               together to obtain the entire message.
+  Fig. 4: An example of the distribution of the next token.                                                 A running example. To make this process easy to understand,
+         Context = “Hello, my”                     1.000
+                                                                                                                                          Message    = [..., 1, 0, 1, ...]
+
+                                                   root
+                                               [0.000, 1.000)                                                                                                                         0.3123                         0.8123
+
+                       0.439                                                        0.561
+                                                                                                                                                                        0                      0.439                               1
+      [0.000, 0.439)                                                                          [0.439, 1.000)
+
+
+
+                                                                                                                                                                                                   0.2033                     0.4228
+          0.200                 0.239                                   0.261                          0.300                                                                 name
+                                                                                                                                                                       0                        0.200                           0.439
+         name                           [0.200, 0.439) [0.439, 0.700)                                          [0.700, 1.000)
+      [0.000, 0.200)
+
+
+                                                                                                                                                                             0.0393                         0.1588
+
+                        0.114            0.125             0.125                0.136         0.145              0.155                                                          god                             little
+                                                                                                                                                                       0                         0.114                          0.239
+                         god              little            new                 dear          friend                     [0.845, 1.000)
+                  [0.200, 0.314)   [0.314, 0.439)       [0.439, 0.564)      [0.564, 0.700) [0.700, 0.845)                                 Next token = “god”
+                                                                                                       0.050              0.105           Actual embedded message = [1, 0]
+
+                                                   Huffman Tree Construction                            cell              mom                    Message Embedding Process
+                                                                                                   [0.845, 0.895)      [0.895, 1.000)
+
+
+                        Fig. 5: An example of Discop’s embedding algorithm corresponds to the distribution in Fig. 4.
+
+
+here is an example. Suppose that the bits we want to embed                                                           4) Now we are at a leaf node, so we sample the token “god”
+are [. . . , 1, 0, 1, . . . ], and the context is “Hello, my”. We use                                                   corresponding to this node as the next token and append
+M to predict the probability distribution of the next token                                                             it to the context. After the above process, we actually
+conditioned on the context, which is shown in Fig. 4. The                                                               embed 2 bits of information [1, 0]. The subsequent bits
+Huffman tree corresponding to this distribution is shown in                                                             will be embedded by similar generation processes later.
+Fig. 5. The process of message embedding is as follows.                                                            We note that a previous Huffman coding-based steganog-
+                                                                                                                 raphy method [54] also involved Huffman trees. However, it
+  1) Initially, we are at the root node of the tree, which is                                                    used the token indexes to express the message, similar to the
+     a non-leaf node, so we make a child node selection.                                                         AC-based methods. It would damage the original distribution
+     We use the PRNG to generate a pseudo-random number                                                          more seriously than the AC-based methods. Instead, Discop
+     r(k) ∈ [0, 1). Assuming that we get r(k) = 0.8123, we                                                       uses the “distribution copy” indexes to express the message
+                                            (k)
+     rotate it by 0 and 0.5, and obtain r0 = 0.8123 and                                                          without destroying the distribution.
+      (k)
+     r1 = 0.3123. They fall into the intervals corresponding
+     to different child nodes, namely G1 and G0 , so we can                                                      Complexity. At each time step, the Discop algorithm mainly
+     embed 1 bit of information mi = 1 by selecting the                                                          includes two processes: creating a Huffman tree and a series
+     child node G0 corresponding to r1 .
+                                        (k)                                                                      of child node selections (walking from the root node to the
+  2) Now we are at G0 , a non-leaf node, so we make a child                                                      leaf node). Let the size of the vocabulary be |V |. Creating a
+     node selection again. We use the PRNG to generate a                                                         Huffman tree can be implemented in linear complexity, i.e.
+     pseudo-random number r(k+1) ∈ [0, 0.439). Assuming                                                          O (|V |). The average complexity of walking from the root
+     that we get r(k+1) = 0.2033, we rotate it by 0 and                                                          node to a leaf node of the tree is O (log |V |).
+                                              (k+1)
+     0.5 × 0.439 = 0.2195, and obtain r0             = 0.2033
+            (k+1)                                                                                                                               IV. D EPLOYMENTS
+     and r1        = 0.4228. Unfortunately, they fall into the
+     interval corresponding to the same child node, G01 , so                                                        Theoretically, Discop can be deployed on any explicit
+     we cannot embed any information here, and leave mi+1                                                        generative model that can yield probability distributions. Here,
+                                    (k+1)        (k+1)
+     to the next step. Since both r0      and r1       fall into                                                 to illustrate Discop’s support for diverse generation tasks
+     G01 , we have to select G01 .                                                                               (or media), we select several typical generation tasks and
+  3) Now we are at G01 , a non-leaf node, so we make a child                                                     corresponding publicly available pre-trained models to deploy
+     node selection again. We use the PRNG to generate a                                                         Discop on, as shown in Table I. We have described in detail
+     pseudo-random number r(k+2) ∈ [0, 0.239). Assuming                                                          how to deploy Discop on the text generation task in Sec. III.
+     that we get r(k+2) = 0.0393, we rotate it by 0 and                                                          Similarly, we also deploy Discop on auto-regressive models
+                                              (k+2)
+     0.5 × 0.239 = 0.1195, and obtain r0             = 0.0393                                                    for image completion and text-to-speech tasks. Note that the
+             (k+2)
+     and r1         = 0.1588. They fall into the intervals                                                       deployment scenarios of Discop are not limited to these.
+     corresponding to different child nodes, namely the token                                                       Before starting covert communication, the two parties must
+     “god” and the token “little”, so we can embed 1 bit                                                         agree on a protocol, i.e., they should share the same settings.
+     of information mi+1 = 0 by selecting the token “god”                                                        The basic settings include the steganography method, the
+                         (k+2)
+     corresponding to r0       .                                                                                 PRNG, and the seed. In addition, there may be additional
+                                                                     the proportion of the initial context to the full image). As
+                                    
+ Algorithm 3: sample P (t) , m, PRNG : sampling at
+ time step t                                                         shown in Fig. 6(b), the sender uses the Discop embedding
+                                                                     algorithm to complete an image part of size (pc × m) × n to
+  Input: Distribution P (t) , Message to Embed m,
+                                                                     a complete image of size m × n in a pixel-by-pixel manner
+          PRNG
+                                                                     and sends it to the receiver. The receiver knows pc and can
+  Output: Number of Bits Embedded nm , Selected Next
+                                                                     segment the received image into two parts: the initial context
+            Token w
+                                                                     and the stego-image, then use the Discop extraction algorithm
+  struct {
+                                                                     to extract the message.
+      token, prob, left, right
+  } Node
+  node ← create tree P (t)
+                               
+                                   // the root node                  C. Text-to-Speech
+  nm ← 0                                                                To deploy Discop on this task, as shown in Fig. 6(c), the
+  while not node.is leaf() do                                        sender uses the Discop embedding algorithm to convert the
+      r ← PRNG.random (0, node.prob)                                 text to a corresponding speech in a sample-by-sample3 manner.
+        // r ∈ [0, node.prob)                                        The receiver uses the Discop extraction algorithm to extract
+      r0 ← r                                                         the message. Note that the receiver should share the text
+      r1 ← rotate (r, 0.5 × node.prob, node.prob)                    corresponding to the speech with the sender, which can be
+      separator ← node.left.prob                                     achieved by the sender sending the text directly along with
+      next ← [ ]                                                     the speech or by the receiver performing speech recognition.
+      if r0 < separator then
+                                                                        For GPT-2 [47], DistilGPT-2 [55], Transformer-XL [56],
+          next[0] ← node.left
+                                                                     and Image GPT [57], we directly employ the pre-trained
+      else
+                                                                     models provided by Hugging Face [60]. For Tacotron [58]
+          next[0] ← node.right
+                                                                     and WaveRNN [59], we employ the public pre-trained models
+      if r1 < separator then                                         from GitHub4,5 .
+          next[1] ← node.left
+      else
+                                                                                    V. E XPERIMENTS AND E VALUATION
+          next[1] ← node.right
+      if next[0] ̸= next[1] then    // embed one bit                    In this section, we conduct experiments to present the per-
+          nm ← nm + 1                                                formance of Discop mainly in terms of security and efficiency,
+                                                                     and compare Discop with previous methods attempting to
+      node ← next [m [nm ]]
+                                                                     achieve provable security in practice.
+  w ← node.token
+  return nm , w
+                                                                     A. Setup
+                                                                        We follow the deployments described in Sec. IV to carry
+settings for a specific task, which will be described separately     out experiments. In the experiments, we introduce nucleus
+in the following.                                                    sampling [61], a.k.a. top-p sampling, which is now widely
+                                                                     used in generation tasks. It chooses the smallest possible set
+A. Text Generation                                                   whose cumulative probability exceeds p and then normalizes
+   To deploy Discop on this task, both communication parties         the probability distribution of this set and performs random
+need to share the same initial context, which can be empty (for      sampling from the normalized distribution. To better evaluate
+unconditional generation) or consist of a specified number of        the performance in various scenarios, we set the truncation
+tokens or sentences. As shown in Fig. 6(a), for example, if both     parameter p = 0.80, 0.92, 0.95, 0.98, 1.00. Other settings
+parties agree to use n tokens as the initial context, the sender     on the three deployed tasks are as follows.
+can choose arbitrary n tokens as the initial context, then use          1) Text generation: For each p, we select 100 pieces of text
+the Discop embedding algorithm to write a continuation of it         from the IMDb dataset [62]. We use the first three sentences
+with the message embedded to obtain the stego-text, and send         of each sample as the context and generate the subsequent 100
+the concatenation of the initial context and stego-text to the       tokens conditioned on the context.
+receiver. After receiving the text, the receiver can split it into      2) Image completion: For each p, we select 100 images
+two parts according to the protocol and then use the Discop          from the CelebA dataset [63]. We resize each image to the
+extraction algorithm to extract the message.                         size specified by the model and provide the upper part of the
+                                                                     image to the model to complete the image.
+B. Image Completion
+   To deploy Discop on this task, both parties should share           3 The “sample” here refers to an element in a waveform.
+the initial context of the image, which can be achieved by            4 https://github.com/bshall/Tacotron
+
+sharing a context proportion parameter pc (which indicates            5 https://github.com/bshall/UniversalVocoding
+                                   TABLE I: The tasks/models we implemented the deployment of Discop on.
+               Task                                             Description                                                                               Model
+       Text Generation                         Given a context, write a continuation of it.                               GPT-2 [47], DistilGPT-2 [55], Transformer-XL [56]
+      Image Completion             Given part of an image (e.g., the upper half part), complete it.                                                Image GPT [57]
+        Text-to-Speech              Given a piece of text, synthesize its corresponding speech.                                             Tacotron [58] + WaveRNN [59]
+
+
+
+             Initial Context
+                                       Sender                                                                                                    Receivcer
+                                                                                                                     Initial Context
+          The best time to plant                                                                                   The best time to plant
+                                     Generative Model       Stego-text              Concatenation                                               Generative Model
+                                                          a tree was 20 years       The best time to plant                                                             Message
+                                     Discop Embedding     ago. The second            a tree was 20 years                                        Discop Extraction
+                                                                                     ago. The second
+                                                                                                                       Stego-text                                   Attack at dawn!
+                Message                                   best time is now.                                         a tree was 20 years
+                                                                                     best time is now.
+             Attack at dawn!                                                                                        ago. The second
+                                                                                                                    best time is now.
+
+
+
+                                                                                 (a) Text Generation
+           Initial Context             Sender                                                                      Initial Context               Receivcer
+                                                                                    Concatenation
+                                                           Stego-image
+                                     Generative Model                                                                                           Generative Model
+                                                                                                                                                                       Message
+                                     Discop Embedding                                                               Stego-image                 Discop Extraction
+                                                                                                                                                                    Attack at dawn!
+                Message
+             Attack at dawn!
+
+
+
+
+                                                                                (b) Image Completion
+                                       Sender                                                                                                    Receivcer
+                  Text                                                                Stego-speech
+              This is a text.        Generative Model                                                                                           Generative Model
+                                                                                                                       Text                                            Message
+                                     Discop Embedding                                                  Speech
+                                                                                                                                                Discop Extraction
+                                                                                                     Recognition   This is a text.                                  Attack at dawn!
+                Message
+             Attack at dawn!
+
+
+
+
+                                                                                 (c) Text-to-Speech
+                                         Fig. 6: Schematic diagrams of deploying Discop on the three tasks.
+
+
+   3) Text-to-speech (TTS): For each p, we select 100 pieces of                                   distance between the embedding rate and the theoretical limit
+text from the IMDb dataset [62]. We use the model to generate                                     (i.e., the average value of entropy for all time steps), we
+the speech corresponding to the first sentence of each text.                                      propose a new metric, the utilization rate of entropy.
+   We compare Discop with Meteor [32] and ADG [33] only                                              1) Security: Again, the primary pursuit of steganography is
+on the text generation task because both of them are originally                                   “behavioral security”. That is, steganographic behavior should
+deployed only on this task. The base version of Meteor has                                        be indistinguishable from normal behavior. Here, we pursue
+a low embedding rate, for which its authors have designed a                                       that the generated text with message embedded (stegos) is
+heuristic sorting algorithm to improve the embedding rate. We                                     indistinguishable from the “normal” generated text without
+benchmark Meteor for both the base version and the version                                        message embedded (covers). We follow Cachin’s formalization
+with sorting. Since Meteor is an enhanced version of the basic                                    of steganographic security from the perspective of information
+AC-based method, we do not need to benchmark the basic AC-                                        theory [26] and use the KL divergence between Pc and Ps , i.e.,
+based method.                                                                                     DKL (Pc ∥Ps ), to measure security, which is also the foremost
+   All experiments are carried out under the same hardware                                        metric to measure the competence of a steganography method.
+settings (CPU 3.00GHz, 128GB RAM, and NVIDIA RTX                                                  During each token sampling, the model gives the original
+3090). The involved datasets are loaded from the Datasets                                         distribution. To embed message bits, a steganography method
+library provided by Hugging Face [64].                                                            may modify the original distribution (e.g., ADG tunes the total
+                                                                                                  probability of each group to 2−n , n ∈ N), and we can get the
+B. Metrics                                                                                        actual distribution for steganographic sampling. So the KL
+   We evaluate the performance of Discop in terms of both                                         divergence between these two distributions can be calculated.
+security and efficiency. We consider that the efficiency of                                       In the experiment, we use two KL divergence metrics:
+steganography mainly includes two aspects: the embedding                                              •      Ave KLD: The average value of the KL divergence for
+rate and the time consumption. To better characterize the                                                    all time steps. It is obtained by dividing the cumulative
+                           TABLE II: Quantitative comparison with the previous attempts using GPT-2.
+                                  Total Time   Ave Time ↓      Ave KLD ↓      Max KLD ↓       Capacity        Entropy
+             Method         p                                                                                              Utilization ↑
+                                   (seconds)   (seconds/bit)   (bits/token)   (bits/token)   (bits/token)   (bits/token)
+                           0.80     96.71       3.16E-03        7.93E-03        6.76E-02        3.07           3.95            0.78
+                           0.92    104.48       2.57E-03        1.02E-02        4.75E-02        4.06           4.93            0.82
+              ADG          0.95    114.72       2.62E-03        1.09E-02        4.73E-02        4.38           5.34            0.82
+                           0.98    150.68       3.08E-03        1.20E-02        4.54E-02        4.89           5.83            0.84
+                           1.00    846.27       1.57E-02        1.31E-02        4.99E-02        5.39           6.26            0.86
+                           0.80     95.58       3.73E-03        5.13E-02       8.28E+00         2.56           3.83            0.67
+                           0.92     96.16       2.79E-03        8.17E-03       5.62E+00         3.44           4.82            0.71
+             Meteor
+                           0.95     98.57       2.61E-03        3.40E-03       1.30E+00         3.78           5.15            0.73
+             w/o sort
+                           0.98    105.37       2.51E-03        6.59E-04       1.74E+00         4.20           5.61            0.75
+                           1.00    251.48       5.56E-03        1.05E-06       1.68E-05         4.52           5.96            0.76
+                           0.80     282.18      9.71E-03        5.57E-02       9.01E+00         2.91           3.76            0.77
+                           0.92    1359.87      3.33E-02        9.34E-03       4.63E+00         4.09           4.87            0.84
+              Meteor       0.95    2334.54      5.21E-02        2.77E-03       6.98E-01         4.48           5.23            0.86
+                           0.98    5559.88      1.16E-01        5.57E-04       8.23E-01         4.79           5.60            0.86
+                           1.00   47301.20      9.11E-01        1.06E-06       1.68E-05         5.19           5.98            0.87
+                           0.80    101.33       5.52E-03            0              0            1.84           3.84            0.48
+              Discop       0.92    102.78       5.00E-03            0              0            2.06           4.83            0.43
+           w/o recursion   0.95    103.11       4.74E-03            0              0            2.17           5.29            0.41
+            (Proposed)     0.98    105.81       4.70E-03            0              0            2.25           5.68            0.40
+                           1.00    145.81       6.38E-03            0              0            2.29           6.03            0.38
+                           0.80    104.30       2.99E-03            0              0            3.48           3.79            0.92
+                           0.92    104.36       2.29E-03            0              0            4.55           4.86            0.94
+              Discop
+                           0.95    107.07       2.21E-03            0              0            4.84           5.18            0.94
+            (Proposed)
+                           0.98    115.13       2.17E-03            0              0            5.29           5.59            0.95
+                           1.00    362.63       6.29E-03            0              0            5.76           6.08            0.95
+                           0.80     91.21          N/A              0              0            N/A            3.80            N/A
+                           0.92     90.89          N/A              0              0            N/A            4.80            N/A
+             Random
+                           0.95     92.39          N/A              0              0            N/A            5.15            N/A
+             Sampling
+                           0.98     95.20          N/A              0              0            N/A            5.59            N/A
+                           1.00    174.09          N/A              0              0            N/A            5.87            N/A
+
+
+
+    KL divergence over all time steps by the total number of               time consumption caused by Discop’s embedding is as little
+    tokens, indicating the average degree of damage to the                 as possible compared to the normal generation (random sam-
+    original distribution by the steganography method. The                 pling) process. We performed timing tests on these models
+    lower, the better.                                                     for the Discop generation process and the random sampling
+  • Max KLD: The maximum value of the KL divergence                        process.
+    for all time steps. This indicates the most severe degree of              In addition, we conduct steganalysis and generation quality
+    damage to the original distribution by the steganography               evaluation experiments for Discop in Appendix C and D.
+    method. The lower, the better.
+                                                                           C. Results and Analysis
+   2) Utilization: The embedding rate, a.k.a. capacity in some               Note that for the text generation task, we only show the
+papers, is typically defined as the average number of bits that            experimental results of deploying these methods on GPT-2
+can be embedded per generated token. However, random sam-                  because the results obtained by deploying these methods on
+pling is used in the generation process so that the theoretical            the other two models are similar.
+limit of the length of the message that can be embedded                      1) Comparison to Baselines: We compare Discop with
+(i.e., the sum of entropy over all time steps) is not fixed.               Meteor [32] and ADG [33] only on the text generation task
+Therefore, to better evaluate the embedding ability, we propose            because both of them are deployed only on this task. The
+a new metric, the utilization rate of entropy, Utilization for             experimental results are presented in Table II. In this table,
+short, which is defined as the ratio of the total length of the            “Meteor w/o sort” and “Meteor” correspond to the base
+embedded message to the entropy sum over all time steps. The               version and the version with sorting of Meteor, respectively.
+higher, the better.                                                        “Discop w/o recursion” corresponds to our elementary method
+   3) Time: To realize real-time covert communication, we                  proposed in Sec. III-A. “Random Sampling” is a reference
+expect to complete steganographic embedding and extraction                 that indicates the “normal” generation without embedding any
+in a relatively short time. We define a metric called Ave Time,            message. According to the previous definitions and analysis,
+which is obtained by dividing the total time of the entire                 Ave Time, Ave KLD, Max KLD, and Utilization are the
+process by the total length of the embedded message. The                   key metrics to measure the performance of steganography
+shorter, the better. In addition, we expect that the additional            methods, and Total Time, Embedding Rate, and Entropy
+are also listed in the table for reference. Overall, our method    TABLE III: The additional time consumption introduced by
+outperformed the other methods in almost all metrics. The          Discop to embed messages.
+experimental results are described and analyzed as follows.                                  Random Sampling      Discop
+      a) Security: The KL divergence of Meteor and ADG is             Task/Model       p                                        Ratio
+                                                                                              Time (seconds)   Time (seconds)
+far from negligible, which may cause the adversary to gain a                          0.80        91.21           104.30        1.14
+non-negligible advantage. The non-negligible KL divergence          Text Generation
+                                                                                      0.92        90.89           104.36        1.15
+in ADG is likely due to issues around grouping discrete                               0.95        92.39           107.07        1.16
+                                                                         GPT-2
+                                                                                      0.98        95.20           115.13        1.21
+probabilities (as discussed in Sec. II-E(2)(b)), while in Meteor                      1.00       174.09           362.63        2.08
+it is likely due to implementation problems (as discussed in                          0.80       739.82           741.35        1.00
+Sec. II-E(1)(e)). Since Discop does not fundamentally change                          0.92       740.57           750.96        1.01
+                                                                   Image Completion
+the original distributions, it achieves the goal that the KL          Image GPT
+                                                                                      0.95       742.79           832.52        1.12
+                                                                                      0.98       738.57           763.67        1.03
+divergence is zero, which is not achieved by other methods.                           1.00       752.24           759.24        1.01
+      b) Utilization: The utilization of entropy by ADG and
+                                                                                      0.80       2500.56          2679.60       1.07
+Meteor is in the range of 0.77 to 0.87, while that by Discop                          0.92       2522.93          2599.81       1.03
+                                                                    Text-to-speech
+is in the range of 0.92 to 0.95. Discop makes better use of           WaveRNN
+                                                                                      0.95       2520.88          2649.25       1.05
+entropy than other methods, and the recursion strategy signifi-                       0.98       2537.15          2700.39       1.06
+                                                                                      1.00       2744.50          3582.87       1.31
+cantly improves the utilization. For the embedding rate, Discop
+can embed 3.48 to 5.76 bits of information per generated
+token, which is better than baselines.
+                                                                      To avoid the out-of-band cost, a possible solution is in-
+      c) Time: Under most truncation settings, all methods
+                                                                   troducing an existing public-key steganography method such
+except Meteor can embed the messages at a competitively low
+                                                                   as [37]. Similar to hybrid encryption, a public-key steganog-
+time consumption. Compared to “normal” random sampling,
+                                                                   raphy session could establish a shared state, and Discop can
+they do not take much extra time. In contrast, Meteor adopts a
+                                                                   use that state for its operation.
+heuristic interval sorting algorithm, which results in enormous
+time costs. As a result, to embed a message of the same
+                                                                   B. Limitations
+length, Meteor takes 3.25× to 144.88× the time cost of
+Discop, which is probably unacceptable when real-time covert         We would like to clarify the limitations of Discop.
+communication is needed.                                             • Discop is only suitable for explicit generative models that
+   2) Evaluation of additional time consumption: The exper-            can yield probability distributions, e.g., auto-regressive
+imental results are shown in Table III. Compared to random             models.
+sampling, most of the additional time of Discop’s embedding          • Discop requires both parties to share the pseudo-random
+algorithm is consumed in creating Huffman trees, which is              numbers used to perform sampling, so it can only con-
+proportional to the number of candidate tokens. As can be              struct symmetric-key steganography but not public-key
+seen, for GPT-2 with 50,257 candidate tokens, the top-p                steganography.
+truncation (p ̸= 1.00) removes a large number of candidate
+tokens, making the additional time very short. For Image GPT                               VII. C ONCLUSION
+with 512 candidate tokens and WaveRNN with 1024 candidate             In this paper, we analyze the problems faced by previous
+tokens, the number of candidate tokens is much smaller than        attempts to achieve provably secure steganography in practice.
+that of GPT-2, so regardless of the value of p, the extra          To overcome these problems, we present Discop, a novel,
+time introduced by Discop’s message embedding algorithm            efficient, provably secure steganography method in practice
+is relatively short.                                               based on “distribution copies”, which does not destroy the
+                                                                   original data distribution when embedding the message. We
+                      VI. D ISCUSSION
+                                                                   deploy Discop on diverse generation tasks (or media) and
+A. Out-of-Band Cost                                                conduct a series of experiments. The experimental results
+   In general, the sender needs to use an encryption key to        show that Discop’s security and efficiency outperform previous
+encrypt the message before performing the embedding algo-          attempts. Moreover, the embedding rate of Discop reaches
+rithm; on the other hand, the receiver needs to use the same       approximately 0.92 to 0.95 of the theoretical limit.
+key to decrypt the message after performing the extraction
+                                                                                       ACKNOWLEDGEMENT
+algorithm. Therefore, steganography involves two keys: the
+encryption key and the steganography key, which need to be            We thank the reviewers for their valuable comments. This
+transmitted over an out-of-band channel in advance.                work was supported in part by the Natural Science Founda-
+   For Discop, the steganographic key is the seed used to          tion of China under Grant 62102386, 62002334, 62072421,
+initialize the PRNG. Other important components including          62121002 and U20B2047, by Xiaomi Young Scholars Pro-
+the generative model and the PRNG—which are publicly               gram, and by Open Fund of Anhui Province Key Laboratory
+available—can be considered part of the protocol.                  of Cyberspace Security Situation Awareness and Evaluation.
+                              R EFERENCES                                        [21] J. Zhu, R. Kaplan, J. Johnson, and L. Fei-Fei, “Hidden: Hiding
+                                                                                      data with deep networks,” in Computer Vision - ECCV 2018
+ [1] F. Cramer, “Hiding in plain sight. amy sou wu’s the kandinsky collec-            - 15th European Conference, Munich, Germany, September 8-14,
+     tive,” Inmaterial. Diseño, Arte y Sociedad, vol. 2, no. 4, pp. 105–114,         2018, Proceedings, Part XV, 2018, pp. 682–697. [Online]. Available:
+     2017.                                                                            https://doi.org/10.1007/978-3-030-01267-0 40
+ [2] S. Landau, “Highlights from making sense of snowden, part ii: What’s        [22] K. A. Zhang, A. Cuesta-Infante, L. Xu, and K. Veeramachaneni,
+     significant in the nsa revelations,” IEEE Security & Privacy, vol. 12,           “Steganogan: High capacity image steganography with gans,” arXiv
+     no. 1, pp. 62–64, 2014.                                                          preprint arXiv:1901.03892, 2019.
+ [3] R. Dingledine, N. Mathewson, and P. F. Syverson, “Tor: The second-          [23] Z. Guan, J. Jing, X. Deng, M. Xu, L. Jiang, Z. Zhang, and Y. Li,
+     generation onion router,” in Proceedings of the 13th USENIX Security             “Deepmih: Deep invertible network for multiple image hiding,” IEEE
+     Symposium, August 9-13, 2004, San Diego, CA, USA, M. Blaze, Ed.                  Transactions on Pattern Analysis and Machine Intelligence, 2022.
+     USENIX, 2004, pp. 303–320. [Online]. Available: http://www.usenix.          [24] J. Tan, X. Liao, J. Liu, Y. Cao, and H. Jiang, “Channel attention image
+     org/publications/library/proceedings/sec04/tech/dingledine.html                  steganography with generative adversarial networks,” IEEE Trans.
+ [4] M. W. Al Nabki, E. Fidalgo, E. Alegre, and I. de Paz, “Classifying               Netw. Sci. Eng., vol. 9, no. 2, pp. 888–903, 2022. [Online]. Available:
+     Illegal Activities on Tor Network Based on Web Textual Contents,”                https://doi.org/10.1109/TNSE.2021.3139671
+     in Proceedings of the 15th Conference of the European Chapter of            [25] S. Baluja, “Hiding images within images,” IEEE Trans. Pattern Anal.
+     the Association for Computational Linguistics: Volume 1, Long Papers.            Mach. Intell., vol. 42, no. 7, pp. 1685–1697, 2020. [Online]. Available:
+     Valencia, Spain: Association for Computational Linguistics, 2017, pp.            https://doi.org/10.1109/TPAMI.2019.2901877
+     35–43.                                                                      [26] C. Cachin, “An Information-Theoretic Model for Steganography,” in
+ [5] A. Cuzzocrea, F. Martinelli, F. Mercaldo, and G. Vercelli, “Tor traffic          Information Hiding, D. Aucsmith, Ed. Berlin, Heidelberg: Springer,
+     analysis and detection via machine learning techniques,” in 2017 IEEE            1998, pp. 306–318.
+     International Conference on Big Data (Big Data), 2017, pp. 4474–4480.       [27] N. J. Hopper, J. Langford, and L. von Ahn, “Provably Secure Steganog-
+ [6] F. A. Saputra, I. U. Nadhori, and B. F. Barry, “Detecting and blocking           raphy,” in Advances in Cryptology — CRYPTO 2002, M. Yung, Ed.
+     onion router traffic using deep packet inspection,” in 2016 International        Berlin, Heidelberg: Springer, 2002, pp. 77–92.
+     Electronics Symposium (IES), Sep. 2016, pp. 283–288.                        [28] T. V. Le, “Efficient provably secure public key steganography,”
+                                                                                      IACR Cryptol. ePrint Arch., p. 156, 2003. [Online]. Available:
+ [7] D. Sarkar, P. Vinod, and S. Y. Yerima, “Detection of Tor Traffic using
+                                                                                      http://eprint.iacr.org/2003/156
+     Deep Learning,” in 2020 IEEE/ACS 17th International Conference on
+                                                                                 [29] K. Yang, K. Chen, W. Zhang, and N. Yu, “Provably secure generative
+     Computer Systems and Applications (AICCSA), 2020, pp. 1–8.
+                                                                                      steganography based on autoregressive model,” in Digital Forensics
+ [8] D. Barradas, N. Santos, L. Rodrigues, and V. Nunes, “Poking a Hole
+                                                                                      and Watermarking - 17th International Workshop, IWDW 2018, Jeju
+     in the Wall: Efficient Censorship-Resistant Internet Communications by
+                                                                                      Island, Korea, October 22-24, 2018, Proceedings, ser. Lecture Notes in
+     Parasitizing on WebRTC,” in Proceedings of the 2020 ACM SIGSAC
+                                                                                      Computer Science, C. D. Yoo, Y. Q. Shi, H. Kim, A. Piva, and G. Kim,
+     Conference on Computer and Communications Security, ser. CCS ’20.
+                                                                                      Eds., vol. 11378. Springer, 2018, pp. 55–68. [Online]. Available:
+     New York, NY, USA: Association for Computing Machinery, Oct. 2020,
+                                                                                      https://doi.org/10.1007/978-3-030-11389-6 5
+     pp. 35–48.
+                                                                                 [30] K. Chen, H. Zhou, H. Zhao, D. Chen, W. Zhang, and N. Yu,
+ [9] M. B. Rosen, J. Parker, and A. J. Malozemoff, “Balboa: Bobbing
+                                                                                      “Distribution-preserving steganography based on text-to-speech genera-
+     and Weaving around Network Censorship,” in 30th USENIX Security
+                                                                                      tive models,” IEEE Transactions on Dependable and Secure Computing,
+     Symposium (USENIX Security 21), 2021, pp. 3399–3413.
+                                                                                      2021.
+[10] G. Figueira, D. Barradas, and N. Santos, “Stegozoa: Enhancing webrtc        [31] Z. Ziegler, Y. Deng, and A. Rush, “Neural Linguistic Steganography,” in
+     covert channels with video steganography for internet censorship cir-            Proceedings of the 2019 Conference on Empirical Methods in Natural
+     cumvention,” in Proceedings of the 2022 ACM on Asia Conference on                Language Processing and the 9th International Joint Conference on
+     Computer and Communications Security, 2022, pp. 1154–1167.                       Natural Language Processing (EMNLP-IJCNLP). Hong Kong, China:
+[11] J. K. H. Iv, M. Georgiou, A. J. Malozemoff, and T. Shrimpton, “Security          Association for Computational Linguistics, 2019, pp. 1210–1215.
+     Foundations for Application-Based Covert Communication Channels,”           [32] G. Kaptchuk, T. M. Jois, M. Green, and A. D. Rubin, “Meteor:
+     in 2022 IEEE Symposium on Security and Privacy (SP), 2022, pp. 1971–             Cryptographically Secure Steganography for Realistic Distributions,” in
+     1986.                                                                            Proceedings of the 2021 ACM SIGSAC Conference on Computer and
+[12] J. Mahmod and M. Hicks, “Invisible bits: hiding secret messages in               Communications Security. Virtual Event Republic of Korea: ACM,
+     sram’s analog domain,” in Proceedings of the 27th ACM International              Nov. 2021, pp. 1529–1548.
+     Conference on Architectural Support for Programming Languages and           [33] S. Zhang, Z. Yang, J. Yang, and Y. Huang, “Provably Secure Gen-
+     Operating Systems, 2022, pp. 1086–1098.                                          erative Linguistic Steganography,” in Findings of the Association for
+[13] A. D. Ker, “Improved detection of lsb steganography in grayscale                 Computational Linguistics: ACL-IJCNLP 2021. Online: Association
+     images,” in International workshop on information hiding. Springer,              for Computational Linguistics, 2021, pp. 3046–3055.
+     2004, pp. 97–115.                                                           [34] G. J. Simmons, “The prisoners’ problem and the subliminal channel,”
+[14] J. Fridrich, “Minimizing the embedding impact in steganography,” in              in Advances in Cryptology. Springer, 1984, pp. 51–67.
+     Proceedings of the 8th Workshop on Multimedia and Security, 2006,           [35] A. Kerckhoffs, “La cryptographic militaire,” Journal des sciences mili-
+     pp. 2–10.                                                                        taires, pp. 5–38, 1883.
+[15] X. Zhang and S. Wang, “Efficient steganographic embedding by ex-            [36] S. Katzenbeisser and F. A. P. Petitcolas, “Defining security in
+     ploiting modification direction,” IEEE Communications letters, vol. 10,          steganographic systems,” in Security and Watermarking of Multimedia
+     no. 11, pp. 781–783, 2006.                                                       Contents IV, E. J. Delp III and P. W. Wong, Eds., San Jose,
+[16] W. Zhang and X. Wang, “Generalization of the zzw embedding construc-             CA, Apr. 2002, pp. 50–56. [Online]. Available: http://proceedings.
+     tion for steganography,” IEEE Transactions on Information Forensics              spiedigitallibrary.org/proceeding.aspx?articleid=877726
+     and Security, vol. 4, no. 3, pp. 564–569, 2009.                             [37] L. v. Ahn and N. J. Hopper, “Public-key steganography,” in Interna-
+[17] T. Filler, J. Judas, and J. Fridrich, “Minimizing additive distortion in         tional Conference on the Theory and Applications of Cryptographic
+     steganography using syndrome-trellis codes,” IEEE Transactions on                Techniques. Springer, 2004, pp. 323–341.
+     Information Forensics and Security, vol. 6, no. 3, pp. 920–935, 2011.       [38] M. Backes and C. Cachin, “Public-Key Steganography with Active
+[18] W. Li, W. Zhang, L. Li, H. Zhou, and N. Yu, “Designing near-                     Attacks,” in Theory of Cryptography, ser. Lecture Notes in Computer
+     optimal steganographic codes in practice based on polar codes,” IEEE             Science, J. Kilian, Ed. Berlin, Heidelberg: Springer, 2005, pp. 210–226.
+     Transactions on Communications, vol. 68, no. 7, pp. 3948–3962, 2020.        [39] R. Barron, B. Chen, and G. Wornell, “The duality between information
+[19] J. Fridrich and J. Kodovsky, “Rich models for steganalysis of digital            embedding and source coding with side information and some appli-
+     images,” IEEE Transactions on information Forensics and Security,                cations,” IEEE Transactions on Information Theory, vol. 49, no. 5, pp.
+     vol. 7, no. 3, pp. 868–882, 2012.                                                1159–1180, 2003.
+[20] M. Boroumand, M. Chen, and J. Fridrich, “Deep residual network              [40] D. P. Kingma and M. Welling, “Auto-Encoding Variational Bayes,” in
+     for steganalysis of digital images,” IEEE Transactions on Information            Proceedings of the 2th International Conference on Learning Represen-
+     Forensics and Security, vol. 14, no. 5, pp. 1181–1193, 2018.                     tations, Banff, AB, Canada, 2014.
+[41] D. P. Kingma, M. Welling et al., “An introduction to variational                    Natural Language Processing,” in Proceedings of the 2020 Conference
+     autoencoders,” Foundations and Trends® in Machine Learning, vol. 12,                on Empirical Methods in Natural Language Processing: System Demon-
+     no. 4, pp. 307–392, 2019.                                                           strations. Online: Association for Computational Linguistics, 2020, pp.
+[42] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley,                  38–45.
+     S. Ozair, A. Courville, and Y. Bengio, “Generative Adversarial Nets,”          [61] A. Holtzman, J. Buys, L. Du, M. Forbes, and Y. Choi, “The Curious
+     in Advances in Neural Information Processing Systems, vol. 27. Cam-                 Case of Neural Text Degeneration,” in 8th International Conference on
+     bridge, MA, USA: Curran Associates, Inc., 2014, pp. 2672–2680.                      Learning Representations. Addis Ababa, Ethiopia,: OpenReview.net,
+[43] J.-Y. Zhu, T. Park, P. Isola, and A. A. Efros, “Unpaired Image-To-                  Apr. 2020.
+     Image Translation Using Cycle-Consistent Adversarial Networks,” in             [62] A. L. Maas, R. E. Daly, P. T. Pham, D. Huang, A. Y. Ng, and C. Potts,
+     Proceedings of the IEEE International Conference on Computer Vision,                “Learning word vectors for sentiment analysis,” in Proceedings of the
+     2017, pp. 2223–2232.                                                                49th Annual Meeting of the Association for Computational Linguistics:
+[44] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal,                 Human Language Technologies. Portland, Oregon, USA: Association
+     A. Neelakantan, P. Shyam, G. Sastry, A. Askell, S. Agarwal, A. Herbert-             for Computational Linguistics, June 2011, pp. 142–150. [Online].
+     Voss, G. Krueger, T. Henighan, R. Child, A. Ramesh, D. Ziegler, J. Wu,              Available: http://www.aclweb.org/anthology/P11-1015
+     C. Winter, C. Hesse, M. Chen, E. Sigler, M. Litwin, S. Gray, B. Chess,         [63] Z. Liu, P. Luo, X. Wang, and X. Tang, “Deep Learning Face Attributes
+     J. Clark, C. Berner, S. McCandlish, A. Radford, I. Sutskever, and                   in the Wild,” in Proceedings of the IEEE International Conference on
+     D. Amodei, “Language Models are Few-Shot Learners,” in Advances                     Computer Vision, 2015, pp. 3730–3738.
+     in Neural Information Processing Systems, vol. 33. Online: Curran              [64] Q. Lhoest, A. Villanova del Moral, Y. Jernite, A. Thakur, P. von Platen,
+     Associates, Inc., 2020, pp. 1877–1901.                                              S. Patil, J. Chaumond, M. Drame, J. Plu, L. Tunstall, J. Davison,
+[45] O. Patashnik, Z. Wu, E. Shechtman, D. Cohen-Or, and D. Lischin-                     M. Šaško, G. Chhablani, B. Malik, S. Brandeis, T. Le Scao, V. Sanh,
+     ski, “StyleCLIP: Text-Driven Manipulation of StyleGAN Imagery,” in                  C. Xu, N. Patry, A. McMillan-Major, P. Schmid, S. Gugger, C. Delangue,
+     Proceedings of the IEEE/CVF International Conference on Computer                    T. Matussière, L. Debut, S. Bekman, P. Cistac, T. Goehringer, V. Mustar,
+     Vision. Montreal, QC, Canada: IEEE, 2021, pp. 2085–2094.                            F. Lagunas, A. Rush, and T. Wolf, “Datasets: A community library for
+[46] A. Radford and K. Narasimhan, “Improving Language Understanding                     natural language processing,” in Proceedings of the 2021 Conference
+     by Generative Pre-Training,” 2018.                                                  on Empirical Methods in Natural Language Processing: System
+[47] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, and I. Sutskever,                  Demonstrations. Online and Punta Cana, Dominican Republic:
+     “Language Models are Unsupervised Multitask Learners,” p. 24, 2019.                 Association for Computational Linguistics, Nov. 2021, pp. 175–184.
+[48] A. van den Oord, N. Kalchbrenner, L. Espeholt, k. kavukcuoglu,                      [Online]. Available: https://aclanthology.org/2021.emnlp-demo.21
+     O. Vinyals, and A. Graves, “Conditional Image Generation with Pixel-           [65] Z. Yang, Y. Huang, and Y.-J. Zhang, “A fast and efficient text steganaly-
+     CNN Decoders,” in Advances in Neural Information Processing Systems,                sis method,” IEEE Signal Processing Letters, vol. 26, no. 4, pp. 627–631,
+     vol. 29. Curran Associates, Inc., 2016.                                             2019.
+[49] L. Ruthotto and E. Haber, “An Introduction to Deep Generative Model-           [66] Y. Niu, J. Wen, P. Zhong, and Y. Xue, “A Hybrid R-BILSTM-C Neural
+     ing,” arXiv:2103.05180 [cs], Apr. 2021.                                             Network Based Text Steganalysis,” IEEE Signal Processing Letters,
+[50] A. Ramesh, M. Pavlov, G. Goh, S. Gray, C. Voss, A. Radford, M. Chen,                vol. 26, no. 12, pp. 1907–1911, Dec. 2019.
+     and I. Sutskever, “Zero-Shot Text-to-Image Generation,” in Proceedings         [67] H. Yang, Y. Bao, Z. Yang, S. Liu, Y. Huang, and S. Jiao, “Linguistic
+     of the 38th International Conference on Machine Learning. PMLR,                     Steganalysis via Densely Connected LSTM with Feature Pyramid,” in
+     Jul. 2021, pp. 8821–8831.                                                           Proceedings of the 2020 ACM Workshop on Information Hiding and
+[51] A. Ramesh, P. Dhariwal, A. Nichol, C. Chu, and M. Chen, “Hi-                        Multimedia Security. Denver CO USA: ACM, Jun. 2020, pp. 5–10.
+     erarchical Text-Conditional Image Generation with CLIP Latents,”               [68] W. Luo, H. Li, Q. Yan, R. Yang, and J. Huang, “Improved audio stegan-
+     arXiv:2204.06125 [cs], Apr. 2022.                                                   alytic feature and its applications in audio forensics,” ACM Transactions
+[52] Gartner, “Top strategic technology trends for 2022,” Gartner, 2022.                 on Multimedia Computing, Communications, and Applications (TOMM),
+[53] D. A. Huffman, “A Method for the Construction of Minimum-                           vol. 14, no. 2, pp. 1–14, 2018.
+     Redundancy Codes,” Proceedings of the IRE, vol. 40, no. 9, pp. 1098–           [69] M. Heusel, H. Ramsauer, T. Unterthiner, B. Nessler, and S. Hochreiter,
+     1101, Sep. 1952.                                                                    “Gans trained by a two time-scale update rule converge to a local
+[54] Z. Yang, X. Guo, Z. Chen, Y. Huang, and Y. Zhang, “Rnn-stega:                       nash equilibrium,” in Advances in Neural Information Processing
+     Linguistic steganography based on recurrent neural networks,” IEEE                  Systems 30: Annual Conference on Neural Information Processing
+     Transactions on Information Forensics and Security, vol. 14, no. 5,                 Systems 2017, December 4-9, 2017, Long Beach, CA, USA, 2017, pp.
+     pp. 1280–1295, 2019. [Online]. Available: https://doi.org/10.1109/TIFS.             6626–6637. [Online]. Available: https://proceedings.neurips.cc/paper/
+     2018.2871746                                                                        2017/hash/8a1d694707eb0fefe65871369074926d-Abstract.html
+[55] V. Sanh, L. Debut, J. Chaumond, and T. Wolf, “Distilbert, a distilled          [70] A. W. Rix, J. G. Beerends, M. P. Hollier, and A. P. Hekstra, “Perceptual
+     version of bert: smaller, faster, cheaper and lighter,” vol. abs/1910.01108,        evaluation of speech quality (pesq)-a new method for speech quality
+     2019.                                                                               assessment of telephone networks and codecs,” in IEEE International
+[56] Z. Dai, Z. Yang, Y. Yang, J. Carbonell, Q. Le, and R. Salakhutdinov,                Conference on Acoustics, Speech, and Signal Processing, ICASSP
+     “Transformer-XL: Attentive Language Models beyond a Fixed-Length                    2001, 7-11 May, 2001, Salt Palace Convention Center, Salt Lake
+     Context,” in Proceedings of the 57th Annual Meeting of the Associa-                 City, Utah, USA, Proceedings, 2001, pp. 749–752. [Online]. Available:
+     tion for Computational Linguistics. Florence, Italy: Association for                https://doi.org/10.1109/ICASSP.2001.941023
+     Computational Linguistics, 2019, pp. 2978–2988.
+[57] M. Chen, A. Radford, R. Child, J. Wu, H. Jun, D. Luan, and I. Sutskever,                                       A PPENDIX
+     “Generative Pretraining From Pixels,” in Proceedings of the 37th Inter-        A. Linear Complexity Algorithm for Creating a Huffman Tree
+     national Conference on Machine Learning. PMLR, Nov. 2020, pp.
+     1691–1703.                                                                        A linear time complexity algorithm for creating a Huffman
+[58] Y. Wang, R. Skerry-Ryan, D. Stanton, Y. Wu, R. J. Weiss, N. Jaitly,            tree is shown in Algorithm 4.
+     Z. Yang, Y. Xiao, Z. Chen, S. Bengio, Q. Le, Y. Agiomyrgiannakis,
+     R. Clark, and R. A. Saurous, “Tacotron: Towards End-to-End Speech              B. Examples of Output of Discop
+     Synthesis,” in Interspeech 2017. ISCA, Aug. 2017, pp. 4006–4010.
+[59] N. Kalchbrenner, E. Elsen, K. Simonyan, S. Noury, N. Casagrande,                  Table IV gives an example of employing random sampling
+     E. Lockhart, F. Stimberg, A. Oord, S. Dieleman, and K. Kavukcuoglu,            and Discop with GPT-2 [47] to continue writing 200 tokens
+     “Efficient Neural Audio Synthesis,” in Proceedings of the 35th Interna-
+     tional Conference on Machine Learning. PMLR, Jul. 2018, pp. 2410–              under p = 0.95 truncation. As can be seen, the semantics of
+     2419.                                                                          texts are both relevant to the given context.
+[60] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue, A. Moi,                     Fig. 7 gives examples of employing Image GPT [57] to
+     P. Cistac, T. Rault, R. Louf, M. Funtowicz, J. Davison, S. Shleifer,
+     P. von Platen, C. Ma, Y. Jernite, J. Plu, C. Xu, T. Le Scao, S. Gugger,        perform image completion under p = 0.95 truncation. The
+     M. Drame, Q. Lhoest, and A. Rush, “Transformers: State-of-the-Art              upper half of each of them is obtained by down-sampling and
+                                    
+ Algorithm 4: create tree P (t) : create a Huffman
+ tree according to P (t) in O (|V |) time
+  Input: Distribution P (t)
+  Output: Root Node of the Created Huffman Tree root
+  indices, probs ← P (t)
+  nodes ← [ ]
+  n ← probs.size()
+  for i ← 0 to n − 1 do
+      node ← Node(indices[i], probs[i], ∅, ∅)
+      nodes.append(node)
+  q1 ← queue(nodes)                                                                    (a) Random Sampling
+  q2 ← queue()
+  subroutine GetMin()
+     nonlocal q1 , q2
+     if q1 .size() > 0 and q2 .size() > 0 and
+        q1 .front().prob < q2 .front().prob then
+         item ← q1 .front()
+         q1 .pop front()
+     else if q1 .size() = 0 then
+         item ← q2 .front()
+         q2 .pop front()
+     else if q2 .size() = 0 then
+         item ← q1 .front()                                                                 (b) Discop
+         q1 .pop front()
+     else                                                        Fig. 7: Samples of employing Image GPT to perform image
+         item ← q2 .front()                                      completion under p = 0.95 truncation.
+         q2 .pop front()
+     return item
+                                                                 C. Steganalysis Experiments
+  while q1 .size() + q2 .size() > 1 do
+     left ← GetMin()                                                Although we have proved the security of the steganography
+     right ← GetMin()                                            method based on “distribution copies” in Sec. III-A, we still
+     prob ← left .prob + right .prob                             try to distinguish between covers (generated by random sam-
+     q2 .push back(Node(∅, prob, left, right)                    pling) and stegos (generated by steganographic sampling) with
+                                                                 steganalyzers for the sake of the integrity of this work. Existing
+  if q2 .size() > 0 then                                         steganalysis methods generally 1) generate many covers and
+      root ← q2 .front()                                         stegos under the same settings as the communication parties
+  else                                                           and then train a binary classifier; 2) use the trained classifier
+      root ← q1 .front()                                         to predict whether a sample is a stego or a cover. Notably,
+  return root                                                    the generated covers and stegos are in pairs, with the same
+                                                                 contexts (for the text generation and image completion tasks)
+                                                                 or with the same texts (for the text-to-speech task).
+cropping selected samples in the CelebA dataset, and we use         In our steganalysis experiments, we generate more samples
+random sampling and Discop to complete it. It can be seen        to better train steganalyzers, and all covers and stegos are
+that the quality of the image generated by random sampling       generated with the truncation parameter of p = 0.95. Except
+is similar to that of the image generated by Discop. In order    for the number of generated samples and the truncation
+to generate a large number of images quickly, we choose the      parameter p, the settings are the same as described in Sec. V-A.
+Image GPT model with the generated image size of 32 × 32               a) Text generation: We generate 10,000 covers and
+as an instance. If a larger model is chosen, or the ability of   10,000 stegos. We employ three linguistic steganalyzers,
+generative models becomes more powerful in the future, the       including FCN [65], R-BiLSTM-C [66], and BiLSTM-
+quality of the image will be improved.                           Dense [67].
+   For the text-to-speech task, we have put some audio clips           b) Image Completion: We generate 10,000 covers and
+here6 . Both the audio clips generated by random sampling and    10,000 stegos. We employ a widely used image steganalyzer:
+Discop sound clear and normal.                                   Steganalysis Residual Network (SRNet) [20].
+                                                                       c) Text-to-speech: We generate 1000 covers and 1000
+ 6 https://github.com/comydream/Discop/tree/main/audio samples   stegos. We employ an audio steganalyzer: Combined Time and
+TABLE IV: An example of employing GPT-2 to perform text                          1) Text generation: We denote the cover and stego text
+generation under p = 0.95 truncation.                                         datasets generated in Appendix C as Tc and Ts . For each
+   Context:
+                                                                              dataset, we can obtain the mean and standard deviation of
+   I remember this film, it was the first film I had watched at the cinema.   the perplexity (ppl) values of the texts, as shown in Table VI.
+   Random Sampling:                                                           It can be seen that they are close, indicating that the quality
+   There was a last minute switch because I had watched it a decade           of the texts generated by steganographic sampling is similar
+   ago in the City School balcony of a big theatre where the writers          to that generated by random sampling.
+   were also prominent. So I just watched it, cut it, then cut it. When I
+   was about 15 years old, I went to the Millie Murphy director’s ticket         2) Image completion: We denote the cover and stego image
+   and watched The Girl who Would Get Away With Murder and then I             datasets generated in Appendix C as Ic0 and Is , and addi-
+   watched an Ode to love. It’s just magic. Once we got into that period      tionally generated 10,000 covers with the same contexts as
+   with Baby Driver and Gravity and Rushmore, the characters played
+   what I’d always dreamed. You know, they’d come up with creative,           dataset Ic1 . We use the Fréchet Inception Distance (FID) [69]
+   futuristic, ridiculously stupid songs from here and then the originals     to measure the distance between Ic0 and Is (a cover dataset
+   would come out, the normal birds would just sit there and wait for a       and a stego dataset) and the distance between Ic0 and Ic1 (two
+   substitution in the end credits to get on the schedule. And I just loved
+   that whole process of watching this wonderful, there is so much greater    cover datasets, for reference), as shown in Table VII. It can
+   potential here and it’s been so exciting to continue to put in so much     be seen that they are close, indicating that the quality of the
+   work and still succeed with these great movies in the works                images generated by steganographic sampling is similar to that
+   Discop:                                                                    generated by random sampling.
+   I was very nervous, at the time. I was 22, and the director was actually      3) Text-to-speech: We denote the cover and stego speech
+   at a birthday party in Paris and just saying the doors were closed. But
+   I put on a large black motorcycle, got my album saved and drove on,        datasets generated in Appendix C as Ac0 and As , and addi-
+   doing videos about history and the films. So I was really excited. And     tionally generated 1000 covers with the same texts as dataset
+   I found that in this movie, we were at a concert in London. And that       Ac1 . We employ the Perceptual Evaluation of Speech Quality
+   concert was where every song and every act was at the movie playing
+   the music that could be heard and the message was, “By God, there’s        (PESQ) [70], which measures the similarity between two audio
+   people. But time has passed, and we’re here, maybe from another            clips. For each pair of audio clips with the same text from two
+   world. Let’s see how things can go.” And at the end of the movie I         datasets, we can calculate the PESQ between them. The mean
+   said, “I hope the thing happened a bit, because there’s no way you
+   can change what you know. You know? Something has happened. Just           and standard deviation of the PESQ values between Ac0 and
+   let it happen. Let it happen.” And at the end, I say to myself, “Hey,      As (a cover dataset and a stego dataset) and that between Ac0
+   maybe we can change                                                        and Ac1 (two cover datasets, for reference) are presented in
+                                                                              Table VIII. It can be seen that they are close, meaning that the
+                                                                              quality of the speeches generated by steganographic sampling
+                                                                              is similar to that generated by random sampling.
+Frequency (CTaF) [68].
+   The detection error rate PE of the testing set is used                          TABLE VI: Quality evaluation of generated texts.
+to evaluate the security of steganographic methods. For all
+steganalysis experiments, the generated datasets are divided                                    Dataset   mean(ppl)   std(ppl)
+into the training set, validation set, and testing set (3:1:1).                                   Tc       42.858     21.512
+   The experimental results are shown in Table V. The de-                                         Ts       42.229     22.770
+tection error rates against Discop deployed on three tasks are
+all close to 50%. The results show that these classifiers are
+                                                                              E. Toy Examples of Steganographic Distortions
+challenging to distinguish between the covers and the stegos,
+which validates the security of Discop.                                          We provide toy examples in Fig. 8 to illustrate the distor-
+                                                                              tions introduced by the AC-based methods and ADG, as well
+          TABLE V: Steganalysis results for Discop.                           as how Discop can preserve the distribution.
+                  Task                Steganalyzer           PE
+                                      FCN [65]             50.10%
+            Text Generation       R-BiLSTM-C [66]          50.45%
+                                 BiLSTM-Dense [67]         49.95%
+          Image Completion            SRNet [20]           50.05%
+            Text-to-Speech             CTaF [68]           49.50%
+
+
+
+D. Generation Quality Evaluation Experiments
+   Discop makes the stego distribution strictly equal to the
+cover distribution. It means that the quality of the stegano-
+graphic generations is similar to that of normal generations.
+To verify this, we conduct quality evaluation experiments on
+the covers and stegos.
+                                          TABLE VII: Quality evaluation of generated images.
+                                                                          Datasets         FID
+                                                                      Ic0      Is          3.858
+                                                                      Ic0     Ic1          3.843
+
+
+
+
+                                          TABLE VIII: Quality evaluation of generated audios.
+                                                        Datasets            mean(PESQ)             std(PESQ)
+                                                     Ac0      As              3.354                  0.122
+                                                     Ac0      Ac1             3.356                  0.128
+
+
+
+
+                                                 a                                b                          c                     d       e f
+                                  0                                0.35                       0.61                          0.84   0.93 0.97 1
+
+
+
+
+                                                 a                                    b                           c                    d     e
+                                  0                                  0.38                          0.64                       0.87         0.96 1
+
+(a) By “cutoff-rescale-round-remove-add” in the code implementations, the AC-based methods may remove the tokens with the lowest
+probabilities and add the subtracted probabilities to the token with the highest probability to ensure that the probabilities sum to 1. In this
+example, Meteor removes the token “f” with a probability of 0.03 and adds that probability to the token “a”, whose probability becomes
+0.38 as a result.
+
+
+                                                     a                                           b                                 c
+                                  0                                          0.45                                0.75                            1
+
+
+
+
+                                                        a                                            b                             c
+                                  0                                                 0.50                          0.77                           1
+
+
+(b) ADG divides all tokens into 2r (r ∈ N) groups and adjusts the probabilities sum of each group to 1/2r . In this example, the number
+of groups is 2, and the probabilities sum of each group needs to be adjusted to 1/2.
+
+                                      a          b                            c                                         d
+                                  0       0.10              0.30                              0.60                                               1
+
+                                                                            rotate
+
+
+                                      a          b                            c                                         d
+                                  0       0.10   0.20       0.30                              0.60        0.70                                   1
+
+(c) Discop creates “distribution copies” by rotation and then performs a random sampling from one of these copies. Since the distribution
+of all “distribution copies” is identical, Discop does not modify the distribution.
+    Fig. 8: The distortions introduced by ADG and the AC-based methods and how Discop can maintain the distribution.
+

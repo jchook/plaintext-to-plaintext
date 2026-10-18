@@ -1,0 +1,42 @@
+{
+  "id": "2020-self-adjusting-arithmetic-coding",
+  "title": "Near-imperceptible Neural Linguistic Steganography via Self-Adjusting Arithmetic Coding",
+  "status": "EMNLP 2020",
+  "kind": "paper",
+  "source": "https://aclanthology.org/2020.emnlp-main.22/",
+  "pdf": "https://aclanthology.org/2020.emnlp-main.22.pdf",
+  "why": "Historical follow-up on arithmetic coding that adapts coding decisions to improve the capacity and distribution-distortion tradeoff.",
+  "caveat": "Supporting reference discovered during the survey. Near-imperceptibility and favorable measured KL divergence should not be treated as an audited end-to-end security guarantee.",
+  "repo": null,
+  "priority": "supporting",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2020-self-adjusting-arithmetic-coding/paper.pdf",
+      "requested_url": "https://aclanthology.org/2020.emnlp-main.22.pdf",
+      "resolved_url": "https://aclanthology.org/2020.emnlp-main.22.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:53.053896+00:00",
+      "bytes": 820312,
+      "sha256": "2184dbc7d7f537ce744fd85070fb150f53e310f6ee93a2508a111022fc53a4a8"
+    },
+    {
+      "path": "2020-self-adjusting-arithmetic-coding/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 76646,
+      "sha256": "50e8bf58bbffbb55002dbfc913e12e1eafd128f418ac23bd2fe0b14dbd7831e1"
+    },
+    {
+      "path": "2020-self-adjusting-arithmetic-coding/source.html",
+      "requested_url": "https://aclanthology.org/2020.emnlp-main.22/",
+      "resolved_url": "https://aclanthology.org/2020.emnlp-main.22/",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:53.332341+00:00",
+      "bytes": 40907,
+      "sha256": "b6789881169bd5e710831bd811cc4743c6f098a3336a65b470cf547d23c937cd"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 11
+}

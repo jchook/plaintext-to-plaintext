@@ -1,0 +1,1407 @@
+Deng et al. Cybersecurity   (2026) 9:238                                                                                                                        Cybersecurity
+https://doi.org/10.1186/s42400-026-00668-2
+
+
+
+
+ RESEARCH                                                                                                                                                      Open Access
+
+TE‑CSA: trajectory entropy‑aware cross‑step
+aggregation for improving embedding
+capacity of distribution‑preserving linguistic
+steganography
+Runxuan Deng1,2, Xiaowei Yi1,2* , Hong Zhang1,2, Yun Cao1,2 and Changjun Liu1,2
+
+
+
+  Abstract
+  Existing diffusion-based linguistic steganography methods largely operate in a timestep-local manner, where embed-
+  ding decisions are made independently within isolated denoising steps. Such a design fundamentally underuti-
+  lizes the trajectory-level uncertainty naturally distributed across the diffusion process, causing a substantial gap
+  between achievable embedding performance and the embedding opportunities available throughout the diffusion
+  trajectory. In this paper, we propose TE-CSA, a Trajectory Entropy-aware Cross-Step Aggregation framework for high-
+  capacity distribution-preserving linguistic steganography based on diffusion language models. First, departing
+  from conventional timestep-local embedding paradigms, TE-CSA introduces a trajectory-level aggregation mecha-
+  nism that jointly exploits embedding opportunities scattered across multiple denoising timesteps. By transforming
+  isolated local candidates into globally coordinated embedding resources, the proposed framework significantly
+  enlarges the effective embedding space and unlocks latent capacity hidden within diffusion trajectories. Second,
+  from an information-theoretic perspective, not all candidate positions contribute equally to embedding. Low-
+  entropy positions often behave as bottlenecks that consume embedding opportunities while providing little effec-
+  tive information gain. To alleviate this entropy bottleneck, TE-CSA incorporates an entropy-aware filtering strategy
+  that selectively retains informative candidate positions and allocates embedding operations to regions with higher
+  entropy concentration, thereby improving effective embedding utilization and enhancing the capacity–quality trade-
+  off. Finally, a distribution-preserving probabilistic sampling mechanism is employed to keep embedding statistically
+  consistent with the original diffusion generation process. Under the assumption that the underlying probabilistic
+  embedding procedure preserves the target token distribution, cross-step aggregation and entropy-aware filtering
+  do not alter the sampling probabilities themselves, thereby retaining the distribution-preserving security prop-
+  erty while maintaining natural text quality. We further derive a group-constrained trajectory-level capacity bound
+  for the adopted three-position redundant embedding mechanism and show that capacity-sorted grouping attains
+  this bound under complete trajectory availability. Experimental results demonstrate that TE-CSA achieves up to 18.60×
+  higher embedding capacity and 20.40× higher embedding rate (from 0.09 to 1.84 bits/token) than the architecture-
+  matched timestep-local diffusion baseline, while maintaining limited runtime overhead and generation-quality
+  degradation.
+
+
+
+*Correspondence:
+Xiaowei Yi
+yixiaowei@iie.ac.cn
+Full list of author information is available at the end of the article
+
+
+                                             © The Author(s) 2026. Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which
+                                             permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the
+                                             original author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The images or
+                                             other third party material in this article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit line
+                                             to the material. If material is not included in the article’s Creative Commons licence and your intended use is not permitted by statutory
+                                             regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To view a copy of this
+                                             licence, visit http://​creat​iveco​mmons.​org/​licen​ses/​by/4.​0/.
+Deng et al. Cybersecurity   (2026) 9:238                                                                      Page 2 of 27
+
+
+
+
+  Keywords Linguistic steganography, Distribution-preserving steganography, Embedding capacity, Entropy
+  utilization, Diffusion models
+
+
+Introduction                                                generative steganography based on long readable text
+Linguistic steganography conceals secret informa-           generation. Together with recent neural linguistic steg-
+tion in natural language text, enabling covert commu-       anography methods, these studies demonstrate the
+nication over public channels Provos and Honeyman           increasing diversity of generative information-hiding
+(2003); Hopper et al. (2002); Fridrich (2009). In a typi-   paradigms. More recently, linguistic steganography has
+cal communication process, the sender embeds a secret       also been extended to large language models, includ-
+message into seemingly normal text and transmits            ing ChatGPT-based generation frameworks Steinebach
+the generated stegotext through a public channel.           (2024).
+The receiver then recovers the hidden message from             Beyond autoregressive generation, diffusion language
+the received text. Unlike traditional modification-         models have introduced a fundamentally different para-
+based steganography, generative linguistic steg-            digm for text generation. Unlike autoregressive models
+anography embeds information directly during text           that generate text through left-to-right token prediction,
+generation while preserving stegotext distributions         diffusion language models progressively denoise noisy
+that remain statistically close to those of normal lan-     token states over multiple inference steps. Prior diffu-
+guage model outputs Yang et al. (2018); Ziegler et al.      sion language modeling studies further explore semantic
+(2019); Kaptchuk et al. (2021); Cao et al. (2022). This     consistency, controllability, and efficient denoising strat-
+distribution-preserving paradigm has become a fun-          egies Lin et al. (2023); Li et al. (2023); Lou et al. (2023).
+damental design principle in provably secure linguistic     More importantly, the iterative denoising process exposes
+steganography (PSLS). Recent studies also investigate       a sequence of intermediate token distributions rather
+steganalysis robustness using deep learning-based           than a single decoding distribution, creating a trajectory-
+detectors Yang et al. (2019); Peng et al. (2021); Cao       level probabilistic space in which embedding opportuni-
+et al. (2026).                                              ties naturally emerge across denoising timesteps.
+  Recent progress in autoregressive language models            The rapid development of diffusion generation has
+(ARMs) and large language models (LLMs) has sig-            also motivated increasing interest in diffusion-based
+nificantly advanced generative linguistic steganog-         steganography Yu et al. (2023); Kim et al. (2025). In the
+raphy Vaswani et al. (2017); Radford et al. (2019);         linguistic domain, GTSD Wu et al. (2024) introduced a
+Brown et al. (2020); Touvron et al. (2023). Representa-     diffusion-based generative text steganography frame-
+tive autoregressive methods include RNN-Stega Yang          work that embeds secret information through prompt
+et al. (2018), Meteor Kaptchuk et al. (2021), Dis-          mapping and batch mapping. Rather than modifying
+cop Ding et al. (2023), FreStega Pang (2024), Zero-shot     token-level sampling distributions, GTSD maps secret
+GLS Lin et al. (2024), SparSamp Wang et al. (2025), and     bits to conditional prompts and selects the final stegotext
+CascSamp Lv et al. (2025), which achieve secure or dis-     from batches of diffusion-generated candidate sentences.
+tribution-preserving embedding through probabilistic        More recently, STEAD Qi et al. (2026) introduced token-
+generation and controlled sampling strategies. Recent       level provably secure linguistic steganography into diffu-
+studies have further explored adaptive entropy cod-         sion language models through step-wise embedding over
+ing and asymmetric numerical systems to improve the         intermediate denoising distributions.
+efficiency and flexibility of generative linguistic steg-      Recent diffusion-based linguistic steganogra-
+anography Liu et al. (2025). Recent studies have also       phy studies mainly focus on prompt-level mapping,
+extended generative steganography beyond conven-            timestep-local probabilistic sampling, distribution
+tional linguistic settings. Zhou et al. (2022) proposed     preservation, or robustness enhancement Wu et al.
+a reversible secret-to-image transformation framework       (2024); Qi et al. (2026). Despite these advances, exist-
+for generative steganography, while subsequent work         ing diffusion-based linguistic steganography methods
+explored generative steganography through automati-         still suffer from several limitations: (1) existing token-
+cally generated semantic object contours Zhou et al.        level diffusion steganography methods such as STEAD
+(2023). Recent works published in Cybersecurity have        perform embedding independently within isolated
+further investigated coverless and multi-image steg-        denoising timesteps, thereby restricting embedding
+anography Zhang et al. (2025); Ren and Wu (2024). In        decisions to timestep-local candidate positions. (2)
+the linguistic domain, Cao et al. (2022) investigated       Many candidate positions exhibit highly concentrated
+Deng et al. Cybersecurity   (2026) 9:238                                                                       Page 3 of 27
+
+
+
+
+token distributions with extremely low entropy.                   retical characterization of the maximum capacity
+Directly using such low-capacity positions may reduce             achievable under the adopted grouping constraint.
+effective embedding utilization and introduce unstable
+distribution perturbations during controlled sampling.
+(3) Existing methods mainly focus on local sampling          Background
+correctness and distribution preservation, while the         Diffusion language models
+trajectory-level embedding structure naturally con-          Diffusion language models generate text through an
+tained in diffusion generation remains insufficiently        iterative denoising process, where a sequence of latent
+explored.                                                    states {xt }Tt=0 is progressively refined from noisy rep-
+  To address these limitations, we propose TE-CSA,           resentations to coherent natural language outputs. At
+a Trajectory Entropy-aware Cross-Step Aggrega-               each denoising step t, the model produces a token-level
+tion framework for improving embedding capacity                                                    (i)
+                                                             probability distribution pt (v | xt ) for each position
+of distribution-preserving linguistic steganography.         i, forming a time-varying probabilistic space over the
+Instead of consuming candidate positions indepen-            vocabulary Ho et al. (2020); Austin et al. (2021); Gong
+dently within isolated timesteps, TE-CSA dynamically         et al. (2022).
+accumulates candidate positions throughout diffusion            Recent advances in diffusion language modeling have
+trajectories and constructs embedding groups across          further improved generation quality and controllabil-
+multiple denoising stages. An entropy-aware filtering        ity through a variety of modeling paradigms, includ-
+mechanism selectively removes low-capacity candi-            ing self-refined generation, simplified diffusion training
+date positions before embedding. This improves effec-        objectives, and masked or BERT-style diffusion decod-
+tive embedding utilization while reducing unnecessary        ing mechanisms Strudel et al. (2022); Sahoo et al. (2024);
+generation-quality degradation.                              He et al. (2023). These studies demonstrate that diffusion
+  The main contributions of this paper are summa-            language models effectively capture complex semantic
+rized as follows:                                            distributions while exposing rich intermediate denoising
+                                                             states throughout the generation trajectory.
+  • We identify inefficient utilization of fragmented           From the perspective of linguistic steganography,
+    candidate positions across denoising timesteps as        these intermediate distributions define a dynamic sam-
+    an important capacity bottleneck in timestep-local       pling space in which embedding operations can be per-
+    diffusion steganography.                                 formed. Instead of treating generation as a timestep-local
+  • We introduce a cross-step candidate aggregation          decoding process, diffusion models expose a sequence of
+    mechanism that differs from existing timestep-           evolving probability distributions across timesteps, each
+    local diffusion steganography by preserving and          corresponding to a distinct embedding opportunity with
+    jointly utilizing candidate positions discovered         different entropy characteristics.
+    across multiple denoising timesteps. This mecha-            As illustrated in Fig. 1, each denoising step induces a
+    nism converts temporally fragmented embedding            token distribution over the vocabulary, and sampling
+    opportunities into globally coordinated embedding        is typically performed via stochastic selection over
+    groups.                                                  pt (v | xt(i) ). This naturally forms a probability partition
+  • We further propose an entropy-aware filtering            structure, which enables information embedding by
+    mechanism that distinguishes candidate positions         operating within constrained sampling intervals rather
+    according to their effective embedding potential.        than modifying logits or deterministic outputs.
+    Unlike methods that treat all available candidates          Existing diffusion-based linguistic steganography
+    uniformly, TE-CSA removes low-capacity posi-             methods exploit diffusion generation in different ways.
+    tions with highly concentrated token distributions       GTSD Wu et al. (2024) performs embedding at the
+    before group construction, improving effective           prompt and generated-sentence batch levels, whereas
+    embedding utilization and the capacity–quality           STEAD Qi et al. (2026) operates directly on token-level
+    trade-off.                                               distributions within individual denoising timesteps.
+  • We derive a group-constrained trajectory-level           However, neither paradigm explicitly aggregates token-
+    embedding capacity bound that explicitly accounts        level embedding opportunities distributed across multi-
+    for the three-position redundant embedding               ple denoising steps.
+    mechanism. We further show that capacity-sorted
+    grouping attains this bound when the complete
+    retained candidate set is available, providing a theo-
+Deng et al. Cybersecurity    (2026) 9:238                                                                                                 Page 4 of 27
+
+
+
+
+ Fig. 1 Diffusion language model viewed from a probabilistic embedding perspective. Each denoising step produces a token distribution
+          (i)
+ pt (v | xt ), forming a sequence of evolving sampling spaces across the diffusion trajectory. These intermediate distributions serve as embedding
+ opportunities for diffusion-based linguistic steganography
+
+
+
+
+Information‑theoretic capacity                                                 This observation motivates the entropy-aware filter-
+In information theory, entropy measures the uncertainty                      ing mechanism proposed in this paper. Specifically,
+of a probability distribution and determines its infor-                      positions with extremely low embedding capacity val-
+mation-carrying capability Hopper et al. (2002); Cachin                      ues are removed before embedding because they con-
+(1998); Kaptchuk et al. (2021). For a discrete probability                   tribute little effective information while increasing
+distribution P(v), Shannon entropy is defined as:                            distribution imbalance during controlled sampling.
+                
+      H (P) = −      P(v) log P(v)                     (1)                   Diffusion‑based linguistic steganography
+                     v                                                       The development of diffusion language models has stim-
+Higher entropy generally indicates larger embedding                          ulated growing interest in diffusion-based linguistic steg-
+flexibility and stronger information-carrying capability.                    anography. Compared with conventional autoregressive
+Existing linguistic steganography studies further demon-                     generation, diffusion models expose iterative interme-
+strate that embedding capacity in probabilistic text gen-                    diate states and support partially parallel or batch-level
+eration is closely related to effective entropy utilization                  generation, providing new opportunities for information
+and distribution uncertainty Ziegler et al. (2019); Pang                     hiding. GTSD Wu et al. (2024) is an early representative
+(2024); Qi et al. (2026).                                                    diffusion-based generative text steganography frame-
+   However, directly computing Shannon entropy for                           work. It adopts AR-Diffusion as the underlying genera-
+every token distribution during diffusion generation                         tion model and embeds secret information through two
+can be computationally expensive. Following previ-                           mapping mechanisms. Prompt mapping maps a segment
+ous studies, we estimate the integer-valued candidate                        of secret bits to a conditional prompt, while batch map-
+capacity using a min-entropy-inspired approximation:                         ping selects the final stegotext from a batch of candidate
+                                                                         sentences generated under that prompt. Its embedding
+                                      (i)
+     C(t, i) = − log2 max pt (v | xt ) .                 (2)                 capacity is therefore mainly controlled by the prompt-
+                          v
+                                                                             table size, model batch size, and generated sentence
+where C(t, i) denotes the estimated candidate capacity at                    length. GTSD demonstrates the potential of diffusion
+denoising step t and position i.                                             models for improving generation speed, robustness, and
+   Intuitively, if the maximum token probability is                          embedding flexibility.
+extremely large, the corresponding token distribution                          More recently, STEAD Qi et al. (2026) introduced
+is highly concentrated and provides limited embedding                        token-level provably secure linguistic steganography into
+flexibility. Conversely, more balanced distributions cor-                    diffusion language models. Unlike GTSD’s prompt- and
+respond to larger embedding entropy and potentially
+larger steganographic embedding capacity.
+Deng et al. Cybersecurity   (2026) 9:238                                                                           Page 5 of 27
+
+
+
+
+sentence-level mapping paradigm, STEAD performs              utilization while preserving text quality and distribution
+embedding directly over token distributions exposed          consistency.
+during iterative denoising. This provides a more direct        We first present the overall framework architecture
+connection between diffusion probability distributions       and then describe the core components of the proposed
+and distribution-preserving linguistic steganography.        method, including candidate collection, pending-pool
+   In parallel, high-capacity provably secure linguistic     aggregation, entropy-aware filtering, and distribution-
+steganography has also been investigated under autore-       preserving embedding.
+gressive language models. CascSamp Lv et al. (2025)
+improves embedding capacity through recursive uniform        Motivational study
+grouping and cascade sampling. By increasing sampling        We begin by identifying a fundamental limitation of
+depth and jointly considering token distributions across     existing diffusion-based steganography methods through
+consecutive autoregressive prediction steps, CascSamp        an empirical motivational study.
+substantially improves entropy utilization while main-         Existing token-level diffusion linguistic steganography
+taining distributional consistency.                          methods such as STEAD generally perform embedding
+   Despite these advances, the above methods opti-           independently at each denoising timestep. Such timestep-
+mize embedding capacity through different mecha-             local strategies implicitly assume that sufficient embed-
+nisms. CascSamp focuses on improving the utilization         ding opportunities are available whenever embedding is
+of autoregressive conditional distributions, while GTSD      required. To examine whether this assumption holds in
+embeds information at the prompt and sentence-batch          practice, we analyze the distribution of candidate embed-
+levels. STEAD operates on token-level diffusion dis-         ding positions across diffusion timesteps under the default
+tributions but performs embedding within individual          setting (Length = 256, Temp = 1.3, and top-p = 0.98).
+denoising timesteps. Consequently, the joint utilization     For each denoising step, we count the number of candi-
+of token-level candidate positions distributed across mul-   date positions satisfying the embedding criterion used in
+tiple diffusion timesteps remains insufficiently explored.   STEAD.
+This observation motivates the trajectory-level cross-step     As shown in Table 1, a key observation is that embed-
+aggregation mechanism proposed in TE-CSA.                    ding opportunities are highly sparse across diffusion tra-
+   The key distinction of TE-CSA is therefore not            jectories, with the majority of timesteps failing to provide
+merely the use of a diffusion language model, but the        any valid candidate positions. Only a very small fraction of
+explicit treatment of the complete denoising trajectory      timesteps provide embeddable candidates, and candidate-
+as a shared embedding resource. Existing diffusion-          rich timesteps occur only occasionally throughout the dif-
+based approaches either operate at the prompt or sen-        fusion trajectory.
+tence-batch level, as in GTSD, or perform token-level          These results show that candidate positions are sparsely
+embedding independently within individual denoising          distributed across denoising timesteps. Since timestep-
+timesteps, as in STEAD. TE-CSA instead introduces a          local embedding cannot jointly utilize candidates discov-
+trajectory-level coordination mechanism in which candi-      ered at different steps, a considerable fraction of otherwise
+date positions discovered at different timesteps can par-    usable embedding opportunities remains under-exploited.
+ticipate in the same embedding process. Entropy-aware        This observation motivates the cross-step aggregation
+filtering further differentiates TE-CSA by explicitly mod-   mechanism introduced in the following section.
+eling the heterogeneous embedding value of these candi-
+dates before group construction.                             Overall framework
+                                                             Diffusion language models expose a sequence of evolving
+Proposed method                                              token distributions across denoising timesteps, and the
+In this section, we introduce the proposed TE-CSA            corresponding embedding opportunities are unevenly dis-
+framework for improving embedding capacity of lin-           tributed throughout the trajectory. Motivated by the sparse
+guistic steganography in diffusion language models.          candidate distribution observed in Sect. Motivational
+Unlike existing timestep-local embedding methods,
+TE-CSA jointly utilizes candidate embedding opportu-
+nities distributed across multiple denoising timesteps.
+The framework combines cross-step aggregation with           Table 1 Distribution of candidate positions across diffusion
+entropy-aware filtering to improve effective embedding       timesteps under the default setting
+                                                             Candidate count             0               1&2                ≥3
+
+                                                             Percentage (%)              92.97           5.66               1.37
+Deng et al. Cybersecurity    (2026) 9:238                                                                                                 Page 6 of 27
+
+
+
+
+ Fig. 2 Overall framework of TE-CSA. The proposed method formulates diffusion-based linguistic steganography as a trajectory-level entropy
+ allocation problem. It integrates cross-step candidate aggregation, entropy-aware filtering, and distribution-preserving embedding into a unified
+ entropy-exploitation pipeline
+
+
+
+
+study, we formulate diffusion-based linguistic steganogra-                   to their estimated embedding capacity before group con-
+phy as a trajectory-level entropy allocation problem, where                  struction. These two mechanisms respectively address
+candidate-level embedding opportunities from different                       temporal fragmentation and entropy imbalance, which
+timesteps are jointly coordinated rather than processed                      are not explicitly modeled in existing timestep-local
+independently.                                                               approaches.
+   Based on this perspective, we propose TE-CSA (Trajec-                       The design of TE-CSA is motivated by three funda-
+tory Entropy-aware Cross-Step Aggregation), a unified                        mental observations on diffusion trajectories:
+framework that explicitly models and exploits the trajec-                      (1) Trajectory-level entropy distribution. Embedding
+tory-level entropy structure of diffusion language models                    opportunities are not uniformly distributed but instead
+for high-capacity distribution-preserving linguistic steg-                   emerge as sparse high-entropy regions across timesteps.
+anography. The core idea is to transform fragmented can-                       (2) Entropy imbalance across candidates. Different
+didate-level embedding opportunities across timesteps into                   token positions exhibit significantly varying entropy
+a globally coordinated embedding resource through cross-                     levels, leading to heterogeneous information-carrying
+step aggregation and entropy-aware selection mechanisms.                     capacity.
+Figure 2 presents the overall framework of TE-CSA.                             (3) Distributional constraint of secure embedding.
+   This formulation differs from existing diffusion-based                    Secure probabilistic embedding requires not only
+linguistic steganography in two aspects. First, embedding                    sampling within the support of the original diffusion
+decisions are no longer restricted to candidates available                   distribution, but also preserving the corresponding
+within a single denoising timestep; instead, candidates                      token-selection probabilities under the assumed embed-
+are accumulated and jointly organized across the tra-                        ding mechanism.
+jectory. Second, candidate positions are not treated as                        Accordingly, TE-CSA can be viewed as a trajectory-
+equally valuable, but are selectively retained according                     level entropy allocation framework. It first aggregates
+                                                                             fragmented entropy signals across timesteps, then
+Deng et al. Cybersecurity   (2026) 9:238                                                                                             Page 7 of 27
+
+
+
+
+filters low-value entropy regions, and finally converts the               recover the embedded message without modifying the
+remaining high-quality entropy into hidden communica-                     received stegotext.
+tion capacity under distribution-preserving constraints.
+   Cross-step candidate aggregation Candidate positions                   Cross‑step aggregation
+are continuously extracted from each denoising timestep                   TE-CSA introduces a cross-step candidate aggregation
+and accumulated into a global pending pool. This mech-                    mechanism that continuously accumulates candidate
+anism converts temporally scattered candidate-level                       positions across denoising timesteps and dynamically
+embedding opportunities into a unified representation of                  constructs embedding groups from the aggregated can-
+trajectory-level embedding resources.                                     didates. Unlike timestep-local embedding, which pro-
+   Entropy-aware candidate filtering To improve effec-                    cesses candidates independently within each denoising
+tive embedding utilization, low-information candidates                    step, cross-step aggregation preserves candidates until
+are removed based on their estimated candidate capaci-                    sufficient compatible positions are available for group
+ties. This step mitigates entropy dilution caused by highly               construction.
+concentrated token distributions and enhances the effi-                     Because candidate positions are sparsely and unevenly
+ciency of subsequent embedding operations.                                distributed throughout the diffusion trajectory, this accu-
+   Distribution-preserving embedding and extraction                       mulate-then-trigger design allows temporally fragmented
+Finally, TE-CSA performs probabilistic interval-based                     embedding opportunities to be jointly utilized. The over-
+embedding over the filtered candidate pool. Under the                     all aggregation process is illustrated in Fig. 3.
+assumed distribution-preserving embedding mecha-                            At diffusion timestep t, the language model predicts a
+nism, the cross-step aggregation and filtering operations                 token distribution for each masked position:
+only determine which candidate positions participate
+in embedding and do not directly modify their underly-                            (i)
+                                                                                 pt (v) = P(xi = v | xt )                                       (3)
+ing token probabilities. Therefore, these trajectory-level
+operations do not introduce an additional distributional                  where xt denotes the current noisy state, i represents
+modification beyond that of the underlying embedding                      the token position, and v denotes a candidate token in
+procedure. During extraction, the receiver reconstructs                   the vocabulary. Based on the predicted distribution, TE-
+the same candidate sets and probability intervals to                      CSA evaluates the estimated candidate capacity of each
+
+
+
+
+ Fig. 3 Cross-step aggregation mechanism in TE-CSA. Candidate positions collected from multiple denoising timesteps are continuously
+ accumulated into a global pending pool. After sufficient high-capacity candidates have been aggregated, the framework dynamically constructs
+ embedding groups for distribution-preserving information embedding
+Deng et al. Cybersecurity   (2026) 9:238                                                                       Page 8 of 27
+
+
+
+
+position. Positions satisfying the embedding criteria are        Once triggered, the framework selects a subset of posi-
+added into a candidate set:                                    tions from the pending pool to form an embedding group
+                                                               Gm ⊆ Pt , where Gm denotes the m-th embedding group.
+      Ct = {(t, i) | i ∈ Msel
+                          t }                            (4)   After entropy-aware filtering, the remaining candidates
+                                                               are ranked according to their estimated capacities C(t, i)
+where Msel t denotes the token positions selected for tran-    in descending order. TE-CSA selects the three highest-
+sition at diffusion timestep t. Candidate positions identi-
+                                                               capacity candidates to construct the embedding group
+fied at the current timestep are first added to the global
+                                                               Gm. When multiple candidates have identical capacities,
+pending pool, while their embedding capacities are evalu-
+                                                               their position indices are used to maintain determinis-
+ated subsequently before embedding-group construction.
+                                                               tic ordering. The effective group capacity is determined
+   Unlike conventional timestep-local methods, TE-CSA
+                                                               by the minimum capacity among the three selected
+does not immediately consume candidates from Ct .
+                                                               positions:
+Instead, all candidate positions are accumulated into a
+global pending pool:                                               Cm = min C(t, i),
+                                                                          (t,i)∈Gm                                     (6)
+      Pt = Pt+1 ∪ Ct                                     (5)
+                                                               Accordingly, the practical embedding capacity of TE-
+where Pt denotes the pending pool after processing             CSA is determined by the group-level bottleneck capac-
+timestep t. Intuitively, the pending pool serves as a global   ity rather than by the direct sum of the capacities of all
+candidate reservoir across the diffusion trajectory. Can-      candidate positions. This group constraint is explicitly
+didate positions discovered at different denoising steps       incorporated into the theoretical analysis in Sect. Group-
+are jointly preserved and later used for embedding group       constrained trajectory-level capacity bound. Because the
+construction. This allows TE-CSA to exploit the full dif-      same secret bit segment is redundantly embedded across
+fusion trajectory rather than isolated timesteps.              the three selected positions, the effective capacity of an
+  As shown in Fig. 3, candidate positions emerge con-          embedding group is determined by the candidate with
+tinuously throughout the denoising process. Some               the smallest capacity.
+timesteps may contain only a few valid candidates, while          Compared with timestep-local embedding, the pro-
+others may contain more high-capacity positions. Under         posed aggregation strategy provides two major advan-
+timestep-local embedding, these sparse candidates are          tages. First, it significantly increases the number of
+independently consumed at each timestep, resulting in          available high-capacity positions. Since candidate posi-
+fragmented embedding opportunities and low effec-              tions are collected across multiple denoising steps, the
+tive utilization. In contrast, TE-CSA aggregates candi-        framework can construct embedding groups with much
+dates from multiple timesteps into a unified candidate         larger effective capacity. Second, cross-step aggrega-
+pool. When the pending pool contains at least three            tion improves candidate diversity. Different diffusion
+candidate positions, i.e., |Pt | ≥ τ with τ = 3, the frame-    timesteps exhibit different uncertainty structures and
+work activates embedding-group construction. The               semantic distributions. Aggregating positions across
+value τ = 3 corresponds to the embedding-group size            multiple timesteps allows the framework to better uti-
+used in our implementation, where three high-capacity          lize heterogeneous embedding opportunities within the
+candidate positions are jointly selected for each embed-       diffusion trajectory. More importantly, the proposed
+ding operation. The aggregation threshold τ controls the       aggregation mechanism reveals that embedding in diffu-
+minimum number of accumulated candidate positions              sion language models is inherently a multi-step process
+required before an embedding group can be constructed.         rather than a purely timestep-local operation. Figure 3
+A smaller τ triggers embedding more frequently but             demonstrates that high-capacity candidates are sparsely
+provides less opportunity for cross-step coordination,         distributed across the trajectory, and effective embed-
+whereas a larger τ allows more candidates from different       ding emerges only after sufficient cross-step accumula-
+timesteps to be jointly considered at the cost of longer       tion. This observation suggests that a major source of the
+accumulation intervals. This mechanism is referred to as       capacity limitation of existing timestep-local methods is
+the accumulate-then-trigger strategy. Instead of embed-        the inability to jointly utilize candidate information dis-
+ding immediately whenever a candidate appears, TE-             tributed across multiple denoising steps.
+CSA waits until sufficient high-quality candidates have           Finally, after embedding group construction, the
+been accumulated.                                              selected candidate positions are removed from the pend-
+                                                               ing pool:
+Deng et al. Cybersecurity   (2026) 9:238                                                                                               Page 9 of 27
+
+
+
+
+ Fig. 4 Entropy-aware candidate filtering mechanism in TE-CSA. Candidate positions collected from multiple denoising timesteps are first evaluated
+ according to their token probability distributions. Low-capacity positions with highly concentrated probabilities are removed from the pending
+ pool, while high-entropy candidates are preserved for subsequent embedding group construction. The filtering process improves effective
+ embedding utilization and generation quality during cross-step embedding
+
+
+
+
+                                                                           candidates while reducing unnecessary generation per-
+      Pt ← Pt \ Gm                                                 (7)
+                                                                           turbation. The overall filtering process is illustrated in
+The remaining candidates continue to participate in sub-                   Fig. 4.
+sequent aggregation and embedding processes. Through                         For a token distribution at timestep t and position i,
+this dynamic accumulation-and-selection mechanism,
+                                                                                    (i)
+TE-CSA transforms fragmented timestep-local can-                                  pt (v) = P(xi = v | xt )                                      (8)
+didates into globally coordinated embedding groups,
+                                                                           the uncertainty of the distribution determines its effec-
+thereby considerably improving effective embedding
+                                                                           tive embedding flexibility.
+utilization.
+                                                                             According to information theory, the Shannon entropy
+                                                                           of a discrete probability distribution is defined as:
+Entropy‑aware candidate filtering                                                  (i)
+                                                                                            (i)           (i)
+                                                                                 Ht = −       pt (v) log pt (v)                  (9)
+Although cross-step aggregation increases the number                                           v
+of available candidate positions, their estimated capaci-
+ties vary substantially because token probability distri-                  Higher entropy indicates that the token probabilities are
+butions can be highly imbalanced. TE-CSA therefore                         more balanced, implying larger uncertainty and stronger
+introduces entropy-aware candidate filtering, which eval-                  information-carrying capability. Conversely, when the
+uates the estimated candidate capacity of each position                    probability mass is concentrated on a small number of
+and removes low-capacity candidates before embedding-                      dominant tokens, the corresponding entropy becomes
+group construction. Positions with highly concentrated                     extremely low. However, directly computing Shannon
+token distributions are more likely to provide limited                     entropy for all candidate positions during diffusion gen-
+embedding flexibility and are therefore filtered out,                      eration introduces considerable computational overhead.
+allowing the framework to focus on more informative                        Therefore, following previous information-theoretic
+                                                                           approximations, TE-CSA computes the integer-valued
+Deng et al. Cybersecurity   (2026) 9:238                                                                      Page 10 of 27
+
+
+
+
+candidate capacity using the following min-entropy-             In practice, the filtering threshold controls the trade-
+inspired formulation:                                         off between embedding capacity and text quality Zie-
+                                                          gler et al. (2019); Kaptchuk et al. (2021). A smaller
+                           (i)
+     C(t, i) = − log2 max pt (v)               (10)           threshold preserves more candidate positions and may
+                        v
+                                                              increase total embedding opportunities, but it also
+where C(t, i) denotes the estimated candidate capac-          introduces more low-entropy positions that contrib-
+ity of position (t, i). Intuitively, when a token             ute limited effective information. Conversely, a larger
+distribution is highly concentrated, the maximum prob-        threshold retains only high-capacity positions, improv-
+                                    (i)
+ability approaches 1, i.e., maxv pt (v) → 1, which leads to   ing embedding efficiency but potentially reducing the
+C(t, i) → 0 and indicates extremely limited embedding         total number of available candidates.
+flexibility.                                                    To further investigate the influence of low-capacity
+   As shown in Fig. 4, low-capacity positions typically       positions, we evaluate three progressively stronger fil-
+correspond to highly peaked token distributions. Such         tering configurations, τ1, τ2 , and τ3 , in addition to the
+positions contribute very little effective information        no-filter setting. These configurations remove candi-
+because the model is already highly confident about the       date positions with capacities {1}, {1, 2}, and {1, 2, 3},
+next token prediction. Embedding information into these       respectively. Experimental results demonstrate that
+positions often requires stronger distribution perturba-      removing low-capacity positions significantly improves
+tion, which may lead to larger generation-quality varia-      the perplexity-capacity trade-off. In particular, the
+tion while contributing minimal embedding gain.               strongest filtering configuration achieves the best over-
+   More importantly, low-capacity positions can directly      all performance by eliminating most low-entropy can-
+constrain the effective capacity of an embedding              didates while preserving sufficient embedding diversity.
+group. As defined in Sect. Cross-step aggregation, the          Another important advantage of entropy-aware filter-
+effective group capacity is determined by the mini-           ing is improved distribution stability. Since low-capac-
+mum candidate capacity within the group. Therefore,           ity positions usually correspond to highly concentrated
+if a low-capacity position is included in an otherwise        token distributions, embedding perturbations at these
+high-capacity group, it becomes the group-level bottle-       positions are more likely to reduce generation stability.
+neck and limits the number of secret bits that can be         By removing such positions, TE-CSA reduces unneces-
+redundantly embedded across the selected positions.           sary probability perturbation and helps preserve diffu-
+Filtering such candidates before group construction           sion sampling consistency.
+can therefore improve the effective utilization of the          The proposed filtering mechanism also naturally
+remaining embedding opportunities.                            complements the cross-step aggregation framework
+   Based on this principle, TE-CSA removes low-capac-         introduced in Sect. Overall framework. Cross-step
+ity positions before embedding. Specifically, candidate       aggregation increases the number of candidate positions
+positions are retained only when their estimated capac-       across the diffusion trajectory, while entropy-aware filter-
+ity exceeds a predefined threshold:                           ing further selects the most informative subset among
+                                                           these candidates. Together, these two mechanisms enable
+      Pfiltered = (t, i) ∈ Pcross  C(t, i) ≥ τf
+                                  
+                                                       (11)   TE-CSA to achieve significantly higher embedding effi-
+                                                              ciency compared with previous diffusion-based stegano-
+where τf denotes the numerical filtering threshold. We        graphic methods. Finally, after filtering, the remaining
+define three filtering configurations: TE-CSA-τ1, TE-         high-capacity candidates are forwarded to the embed-
+CSA-τ2, and TE-CSA-τ3, corresponding to τf = 2, τf = 3,       ding stage for group construction and distribution-pre-
+and τf = 4 , respectively.                                    serving embedding.
+  The filtering process is performed in three steps.
+First, TE-CSA computes the candidate capacity C(t, i)         Distribution‑preserving embedding and extraction
+for each candidate position in the aggregated pool. Sec-      After cross-step aggregation and entropy-aware filter-
+ond, candidates are ranked or compared according to           ing, TE-CSA obtains a set of high-capacity candidate
+this value. Third, positions whose capacity is lower than     positions suitable for embedding. The next objective is
+the filtering threshold τf are removed before embed-          to embed secret information into these positions while
+ding-group construction. Therefore, entropy-aware fil-        preserving the original diffusion generation distribution
+tering does not modify the token distribution itself; it      as much as possible. Direct token replacement or deter-
+only determines whether a candidate position is eligible      ministic modification may introduce obvious statistical
+to participate in subsequent embedding.                       artifacts, making generated stegotext vulnerable to stega-
+                                                              nalysis. Therefore, preserving distribution consistency
+Deng et al. Cybersecurity   (2026) 9:238                                                                                               Page 11 of 27
+
+
+
+
+during embedding is essential for secure linguistic                         positions are retained. Neither operation directly modi-
+steganography.                                                              fies the token probability values produced by the dif-
+  To address this issue, TE-CSA adopts a distribution-                      fusion language model. Therefore, provided that the
+preserving probabilistic sampling strategy. Instead of                      underlying interval-based embedding procedure samples
+directly modifying generated tokens, the framework                          tokens according to the target diffusion distribution, the
+embeds secret information through constrained proba-                        additional trajectory-level operations introduced by TE-
+bilistic sampling over candidate token distributions.                       CSA preserve this distributional property.
+Under the assumed distribution-preserving sampling                             Accordingly, we distinguish two levels of security eval-
+mechanism, this design allows hidden information to be                      uation in this work. The first is conditional distribution-
+embedded while retaining the target diffusion sampling                      preserving security, which relies on the assumption that
+distribution.                                                               the underlying probabilistic embedding procedure faith-
+  It is important to clarify the security scope considered                  fully realizes the target token distribution. The second
+in this work. TE-CSA does not claim that cross-step                         is empirical resistance to practical steganalysis, which
+aggregation or entropy-aware filtering alone establishes                    is evaluated separately in Section Steganalysis evalua-
+unconditional provable security. Instead, the security                      tion using neural-network-based detectors. The empiri-
+property of the framework is inherited from the under-                      cal detection results provide complementary evidence
+lying distribution-preserving probabilistic embedding                       of practical resistance to steganalysis but should not be
+mechanism. Specifically, cross-step aggregation changes                     interpreted as a proof of information-theoretic or univer-
+when and how candidate positions are grouped, while                         sal steganographic security. The overall embedding and
+entropy-aware filtering determines which candidate                          extraction process is illustrated in Fig. 5.
+
+
+
+
+ Fig. 5 Distribution-preserving embedding and extraction process in TE-CSA. The sender encodes secret bits into probability intervals derived
+ from diffusion token distributions, while the receiver reconstructs the same intervals to recover the hidden message
+Deng et al. Cybersecurity        (2026) 9:238                                                                 Page 12 of 27
+
+
+
+
+Embedding process
+Algorithm 1 TE-CSA embedding algorithm
+
+
+
+
+Suppose an embedding group Gm contains multi-                    During embedding, the value z is located within one of
+ple candidate positions collected across the diffusion           the token intervals, and the corresponding token is sam-
+trajectory:                                                      pled under distribution-preserving constraints. Under
+                                                                 the assumed distribution-preserving interval-sampling
+      Gm = {(t1 , i1 ), (t2 , i2 ), . . . , (tk , ik )}   (12)
+                                                                 mechanism, token selection follows the target diffusion
+For each candidate position, the diffusion language              distribution. Importantly, embedding is performed only
+model outputs a token probability distribution:                  on high-entropy candidate positions aggregated across
+                                                                 timesteps, which improves effective embedding utiliza-
+        (i)
+      pt (v) = P(xi = v | xt )                            (13)   tion and avoids low-capacity regions. The embedding
+                                                                 procedure is summarized in Algorithm 1.
+Deng et al. Cybersecurity    (2026) 9:238                                                                   Page 13 of 27
+
+
+
+
+Algorithm 2 TE-CSA extraction algorithm
+
+
+
+
+  Given a secret bit sequence b, TE-CSA maps it into a            b̂ = D(Gm )                                       (15)
+continuous value z ∈ [0, 1) using binary fraction encod-
+ing. The token probability space is partitioned into cumu-    where D(·) denotes the interval decoding function.
+lative intervals:                                               Because the receiver reconstructs the same candidate
+                                                            sets, filtering decisions, embedding groups, and probabil-
+            �         �                                       ity intervals as the sender, the embedded bitstream can
+      Ij =      pk ,   pk                            (14)   be recovered without modifying the received stegotext.
+              k<j      k≤j                                    The distributional security property therefore concerns
+                                                              the generation and embedding process rather than the
+                                                              subsequent decoding operation. The extraction proce-
+Extraction process
+                                                              dure is summarized in Algorithm 2.
+During extraction, the receiver reconstructs the same
+candidate positions using identical diffusion dynam-
+ics and entropy-aware filtering. Since both sender and
+                                                              Theoretical analysis
+receiver follow the same aggregation rule, embedding
+                                                              This section provides theoretical analysis of the proposed
+groups can be deterministically recovered.
+                                                              TE-CSA framework from two perspectives: (1) group-
+  For each recovered embedding group Gm, the observed
+                                                              constrained embedding capacity and (2) computational
+token is mapped back to its corresponding probabil-
+                                                              complexity.
+ity interval under the reconstructed distribution. The
+                                                                Unlike conventional timestep-local diffusion steg-
+interval index is then decoded into binary representa-
+                                                              anography methods, TE-CSA constructs embedding
+tion, yielding the recovered message bits b̂. Formally, the
+                                                              groups from candidates accumulated across multiple
+decoding process is defined as:
+                                                              denoising timesteps. Therefore, its practical embedding
+Deng et al. Cybersecurity   (2026) 9:238                                                                             Page 14 of 27
+
+
+
+
+capacity depends not only on the candidate-level capac-         candidate-level embedding potential under the surrogate
+ity distributed throughout the trajectory, but also on the      measure in Eq. (16). The actual embedding capacity is
+three-position grouping constraint introduced by the            further constrained by entropy-aware filtering and by the
+redundant embedding mechanism.                                  three-position redundant grouping mechanism.
+                                                                  For a fixed filtering configuration, let
+
+Group‑constrained trajectory‑level capacity bound
+                                                                      Pf = {(t, i) ∈ Ptraj | C(t, i) ≥ τf }                  (20)
+The original capacity limitation of timestep-local diffu-       denote the retained candidate set, and let Nf = |Pf |. Sort
+sion steganography arises from two distinct factors: the        the corresponding candidate capacities in non-increasing
+amount of candidate-level embedding potential exposed           order:
+throughout the denoising trajectory and the structural
+constraints under which these candidates can be organ-                c1 ≥ c2 ≥ · · · ≥ cNf .                                (21)
+ized into embedding groups. In TE-CSA, the same
+secret bit segment is redundantly embedded across three         Since each TE-CSA embedding group contains three
+candidate positions, and the effective capacity of each         candidate positions and the same secret bit segment is
+embedding group is therefore determined by the mini-            redundantly embedded across all three positions, the
+mum capacity among its three members. Consequently,             effective capacity of a group Gm is
+directly summing the capacities of all candidate positions            C(Gm ) = min ci .                                      (22)
+does not represent the practically achievable embedding                              i∈Gm
+
+capacity of TE-CSA. In this section, we explicitly incor-       Let
+porate this group constraint and derive a trajectory-level
+capacity bound consistent with the actual embedding                             Nf
+                                                                                    
+mechanism.
+                                                                      M=                                                     (23)
+                                                                                3
+   For each candidate position (t, i), we use the following
+min-entropy-inspired quantity as a surrogate measure of         denote the maximum number of complete three-position
+its candidate-level embedding potential:                        groups that can be constructed from the retained candi-
+                                                            date set.
+                              (i)
+      C(t, i) = − log2 max pt (v) .                    (16)       Given the retained candidate capacities in Eq. (21),
+                          v
+                                                                the maximum total embedding capacity achievable
+where pt(i) (v) denotes the predicted token probability         under the three-position redundant grouping con-
+distribution at timestep t and position i. A larger C(t, i)     straint is
+corresponds to a less concentrated token distribution                           M
+and therefore indicates greater flexibility for probabilistic
+                                                                                
+                                                                                                                             (24)
+                                                                       ∗
+                                                                      CGC =           c3m .
+embedding.                                                                      m=1
+  For any candidate set S, we define its aggregate surro-
+gate capacity budget as                                         This bound is attained by grouping the sorted candidates
+                                                               consecutively as
+      B(S) =       C(t, i).
+                                                        (17)           ∗
+                                                                      Gm = {c3m−2 , c3m−1 , c3m },       m = 1, . . . , M.   (25)
+                (t,i)∈S
+
+Let                                                             Proof. Consider any valid partition of the retained candi-
+                                                                dates into M disjoint three-position groups, and denote
+                T
+                                                               the corresponding group capacities, sorted in non-
+      Ptraj =         Pt                                (18)    increasing order, by
+                t=1
+                                                                      g1 ≥ g2 ≥ · · · ≥ gM .                                 (26)
+denote the complete set of candidate positions exposed
+throughout the diffusion trajectory. The corresponding          For the first m groups to each have capacity at least gm,
+trajectory-level surrogate budget is                            each of these groups must contain three candidates
+                                                                whose individual capacities are no smaller than gm.
+      Btraj = B(Ptraj ).                                (19)    Therefore, at least 3m candidates must have capacities no
+Importantly, Btraj is neither the Shannon capacity of the       smaller than gm. Since the candidate capacities are glob-
+complete diffusion process nor the directly achievable          ally ordered as c1 ≥ c2 ≥ · · · ≥ cNf , it follows that
+embedding capacity of TE-CSA. It only summarizes the
+Deng et al. Cybersecurity        (2026) 9:238                                                                     Page 15 of 27
+
+
+
+
+                                                                 This inequality formally characterizes the theoreti-
+      gm ≤ c3m ,            m = 1, . . . , M.            (27)
+                                                                 cal advantage of relaxing the timestep-local grouping
+Hence, for any valid grouping,                                   constraint: cross-step aggregation enlarges the feasible
+                                                                 grouping space and can therefore utilize combinations of
+      M            M
+                                                               candidate positions that are unavailable to timestep-local
+            gm ≤         c3m .                           (28)
+                                                                 embedding.
+      m=1          m=1
+                                                                   The actual TE-CSA algorithm operates online: candi-
+The consecutive capacity-sorted grouping in Eq. (25) has         dates are accumulated in the pending pool and groups
+group minima exactly equal to c3 , c6 , . . . , c3M and there-   are constructed whenever the aggregation condition is
+fore achieves equality. Thus,                                    satisfied. Let CTE-CSA denote the realized capacity of this
+               M
+                                                                 online procedure. Because the online algorithm only
+                                                                observes candidates available up to the current denoising
+                                                         (29)
+       ∗
+      CGC =          c3m .
+               m=1
+                                                                 stage, while Eq. (24) assumes that the complete retained
+                                                                 candidate set is available before grouping, the realized
+                                                                capacity satisfies
+   Equation (24) provides an exact finite-trajectory upper
+                                                                                                                          (34)
+                                                                                 ∗
+bound under the candidate definition, filtering con-                  CTE-CSA ≤ CGC .
+figuration, and three-position redundant embedding
+                                                                 When the complete retained candidate set is available,
+rule adopted by TE-CSA. Compared with the aggregate
+                                                                 capacity-sorted consecutive grouping attains CGC ∗ exactly.
+candidate-level surrogate budget, this bound more accu-
+                                                                 For the online setting, however, equality is not guaran-
+rately characterizes the practically usable embedding
+                                                                 teed because future candidate positions are unavailable at
+capacity because it explicitly accounts for the bottleneck
+                                                                 the time an embedding group is triggered.
+introduced by redundant grouping. In particular, because
+                                                                    It is therefore important to distinguish the exact finite-
+every valid group contains three candidates whose indi-
+                                                                 trajectory result established above from the stronger
+vidual capacities are no smaller than the group minimum,
+                                                                 information-theoretic convergence claim made in the
+        ∗
+      3CGC ≤ B(Pf ),                                     (30)    original manuscript. The present analysis proves the
+                                                                 maximum embedding capacity induced by the adopted
+and therefore                                                    candidate-capacity surrogate and three-position group-
+                                                                 ing constraint under complete trajectory availability. It
+                1         1
+       ∗
+      CGC ≤       B(Pf ) ≤ Btraj .                       (31)    does not claim convergence to the intrinsic Shannon
+                3         3                                      entropy or information-theoretic channel capacity of
+This relation quantifies the capacity cost introduced by         the complete diffusion process. A rigorous characteriza-
+the three-position redundant embedding mechanism                 tion of such an intrinsic Shannon capacity would require
+and distinguishes the aggregate candidate-level surrogate        an explicit joint probabilistic model of the complete dif-
+budget from the practically usable group-level embed-            fusion trajectory and its inter-timestep dependencies,
+ding capacity.                                                   which is beyond the scope of this work.
+  The above analysis also provides a direct comparison              Overall, the analysis establishes three conclusions.
+between timestep-local and cross-step grouping. Let              First, the aggregate candidate-level surrogate budget Btraj
+Glocal denote the set of all feasible three-position group-      is not directly achievable because the redundant embed-
+ings in which every group is restricted to candidates            ding mechanism introduces a group-level bottleneck.
+originating from the same denoising timestep, and let            Second, under the adopted three-position grouping rule,
+Gcross denote the corresponding set when candidates              the exact complete-trajectory capacity bound is given
+from different timesteps may be jointly grouped. Since           by CGC ∗ in Eq. (24), and capacity-sorted grouping attains
+
+every timestep-local grouping is also a valid cross-step         this bound. Third, cross-step aggregation enlarges the
+grouping,                                                        feasible grouping space relative to timestep-local embed-
+                                                                 ding, while the realized online capacity remains upper-
+      Glocal ⊆ Gcross .                                  (32)    bounded by the complete-trajectory group-constrained
+Therefore, if Clocal
+               ∗     and Ccross
+                          ∗     denote the optimal capaci-       capacity.
+ties under these two feasible grouping sets, respectively,
+                                                                 Computational complexity
+                                                         (33)
+       ∗        ∗        ∗
+      Clocal ≤ Ccross = CGC .                                    Let T denote the number of diffusion timesteps, N denote
+                                                                 the number of evaluated candidate positions at each
+Deng et al. Cybersecurity   (2026) 9:238                                                                   Page 16 of 27
+
+
+
+
+timestep, and K denote the average number of retained        conventional timestep-local embedding methods, the
+candidates after entropy-aware filtering.                    overall computational overhead remains relatively small
+  Traditional timestep-local diffusion steganography         and practical runtime efficiency is largely preserved.
+methods independently process candidate positions
+at each denoising timestep, resulting in computational       Experiments
+complexity approximately proportional to O(TN). Com-         To comprehensively evaluate the effectiveness of the pro-
+pared with previous methods, the proposed TE-CSA             posed TE-CSA framework, we conduct experiments on
+framework additionally introduces cross-step candidate       embedding capacity, embedding efficiency, generation
+accumulation, entropy-aware filtering, and dynamic           quality, runtime overhead, steganalysis resistance, and
+embedding group construction. However, these opera-          cross-step aggregation behavior. Controlled experiments
+tions mainly involve lightweight indexing, candidate         between STEAD and TE-CSA are conducted under uni-
+management, and local probability comparisons, and           fied experimental settings to ensure fair comparison. We
+therefore do not dominate the overall diffusion inference    additionally report published results of representative
+cost.                                                        high-capacity and diffusion-based linguistic steganog-
+  During the aggregation stage, candidate positions are      raphy methods for broader methodological comparison;
+continuously inserted into the pending pool:                 these literature-reported results are explicitly distin-
+                                                             guished from our controlled experiments. In the follow-
+      Pt = Pt+1 ∪ Ct                                 (35)
+                                                             ing experiments, Length denotes the generated sequence
+where Ct denotes the candidate set collected at timestep     length, Temp denotes the sampling temperature, and
+t. Since each candidate position is inserted only once       top-p controls the cumulative probability mass retained
+and removed after embedding group construction, the          during nucleus sampling.
+overall aggregation complexity remains approximately
+linear with respect to the number of retained candi-         Experimental setup
+dates, i.e., approximately proportional to O(TK). Mean-      Datasets and Baseline Methods
+while, entropy-aware filtering only requires computing       Following previous diffusion-based linguistic steganog-
+a lightweight capacity approximation for each candidate      raphy and diffusion text generation studies Gong et al.
+position:                                                    (2022); Han et al. (2023); Qi et al. (2026), experiments
+                      
+                              (i)
+                                                           are conducted on open-domain English text genera-
+     C(t, i) = − log2 max pt (v) .
+                          v
+                                                    (36)     tion benchmarks. Prompts are randomly sampled from
+                                                             publicly available datasets covering dialogue generation,
+Unlike full Shannon entropy computation, this formula-       open-domain completion, and descriptive generation
+tion only requires identifying the maximum token prob-       tasks. The datasets contain diverse sentence structures
+ability within the local token distribution. Consequently,   and semantic distributions, which are suitable for evalu-
+the filtering process introduces only constant additional    ating both generation quality and embedding robustness
+overhead per candidate position and remains negligible       under diffusion generation settings.
+compared with diffusion model inference itself.                To analyze the influence of generation length on
+  Another important characteristic of TE-CSA is that         embedding performance, generated text lengths are fixed
+the framework does not require additional denoising          as Length ∈ {128, 256, 512} throughout experiments. For
+iterations, auxiliary neural networks, or external refine-   each configuration, thousands of stegotext samples are
+ment modules Austin et al. (2021); Hoogeboom et al.          generated for statistical evaluation. STEAD and TE-CSA
+(2021). All candidate information is directly reused from    use identical prompts and random seeds in the controlled
+the original diffusion generation process. Therefore, the    comparison to ensure fair evaluation.
+proposed framework effectively improves embedding              We consider two types of comparisons: (1) an architec-
+utilization while preserving the overall inference struc-    ture-matched controlled comparison with STEAD under
+ture of diffusion language models. In addition, the pend-    the same diffusion setting, and (2) a broader literature-
+ing pool size remains dynamically bounded through the        based comparison with CascSamp and GTSD to position
+accumulate-then-trigger strategy. Candidate positions        TE-CSA among representative high-capacity and diffu-
+are continuously consumed after embedding group con-         sion-based linguistic steganography methods.
+struction, preventing excessive candidate accumulation         CascSamp Lv et al. (2025) is included as a representa-
+during long diffusion trajectories and helping maintain      tive high-capacity provably secure linguistic steganogra-
+stable runtime behavior throughout generation.               phy method based on autoregressive language models. It
+  Overall, although TE-CSA introduces additional             improves capacity through recursive uniform grouping
+cross-step management operations compared with               and cascade sampling. Under its reported LLaMA-7B
+Deng et al. Cybersecurity   (2026) 9:238                                                                         Page 17 of 27
+
+
+
+
+setting with top- p = 0.93, CascSamp achieves an embed-        Evaluation metrics
+ding rate of 3.42 bits/token. Because CascSamp uses an         To comprehensively evaluate the proposed framework, we
+autoregressive backbone and a different evaluation set-        measure embedding performance, generation quality, and
+ting, these values are treated as literature-reported refer-   computational overhead using the following metrics.
+ences rather than controlled results.                             (1) Embedding capacity ( CEmb , bits). Embedding capac-
+  GTSD Wu et al. (2024) is included as a representative        ity measures the total amount of hidden information suc-
+diffusion-based generative text steganography method.          cessfully embedded into generated stegotext:
+GTSD embeds information through prompt mapping                                M
+and batch mapping rather than token-level probabilistic                       
+                                                                    CEmb =          bm                                   (37)
+embedding. The original paper reports 1.87−2.22 bits/
+                                                                              m=1
+word under its basic prompt-table configuration and
+4.97−5.49 bits/word under its extended configuration           where bm denotes the number of embedded bits within
+across three datasets. Since its capacity depends directly     embedding group Gm. Larger embedding capacity indi-
+on prompt-table size, model batch size, and sentence           cates that the framework can utilize more effective
+length, these results are reported only as literature-based    embedding opportunities during diffusion generation.
+references.                                                      (2) Embedding rate ( REmb , bits/token). Embedding rate
+  STEAD Qi et al. (2026) is adopted as the primary             measures the average number of hidden bits carried by
+baseline. STEAD performs embedding independently               each generated token:
+at each denoising timestep and represents a typi-
+                                                                               CEmb
+cal timestep-local diffusion linguistic steganography               REmb =                                               (38)
+framework. Since STEAD preserves the original dif-                            Length
+fusion sampling distribution while achieving provable          Higher embedding rate indicates more efficient utiliza-
+security, it provides a suitable reference for evaluat-        tion of generated tokens for information hiding.
+ing the effectiveness of cross-step aggregation and              (3) Text quality ( γPPL , %). Evaluating text quality in lin-
+entropy-aware candidate selection. Therefore, STEAD            guistic steganography is challenging because absolute per-
+serves as the primary controlled baseline, whereas             plexity values are highly dependent on model architecture,
+CascSamp and GTSD provide complementary litera-                sampling strategy, decoding temperature, and generation
+ture-based references across different high-capacity           length. Directly comparing raw perplexity across different
+embedding paradigms. A detailed capacity-oriented              settings may therefore introduce significant bias and fail
+comparison is provided in Section Embedding capacity           to accurately reflect the actual perturbation introduced by
+and efficiency.                                                embedding operations.
+  For fair comparison, STEAD uses the same diffusion             To provide a more stable and interpretable evaluation, we
+backbone, sampling strategy, timestep number, tempera-         adopt the relative perplexity variation metric:
+ture setting, and top-p configuration as TE-CSA. Unless
+otherwise specified, the default generation setting fol-            γPPL =
+                                                                               �PPL
+                                                                                      × 100% =
+                                                                                               PPLstego − PPLnoemb
+                                                                                                                   × 100%
+lows: Length = 256, Temp = 1.3, and top-p = 0.98.                            PPLnoemb               PPLnoemb
+  TE-CSA-no-filter denotes the variant without                                                                         (39)
+entropy-aware filtering. All collected candidate positions     where PPLstego denotes the perplexity of stego text and
+participate in embedding group construction, allowing us       PPLnoemb denotes the perplexity of generation without
+to analyze the influence of low-capacity candidate posi-       embedding. Smaller γPPL values indicate lower distribu-
+tions on embedding behavior and overall embedding              tion perturbation and better preservation of generation
+efficiency. TE-CSA- τ1 , TE-CSA- τ2 , and TE-CSA- τ3           quality. Compared with directly reporting absolute per-
+denote progressively stronger entropy-aware filtering          plexity values, γPPL more effectively reflects the relative
+configurations. Specifically,TE-CSA-τ1 removes candi-          influence of embedding operations on the original diffu-
+date positions with capacity 1, TE-CSA-τ2 removes posi-        sion generation distribution.
+tions with capacities 1 and 2, and TE-CSA-τ3 removes              (4) Encoding runtime ( TEnc , seconds). Encoding runtime
+positions with capacities 1, 2, and 3. Therefore, under        measures the average time required to complete stegotext
+TE-CSA-τ3, only candidate positions with estimated             generation and secret information embedding, including
+capacity C(t, i) ≥ 4 are retained for embedding-group          candidate collection, cross-step aggregation, entropy-aware
+construction. Among these variants, TE-CSA-τ3 achieves         filtering, embedding group construction, and probabilistic
+the best overall capacity–quality trade-off and is there-      interval sampling.
+fore used as the default filtered configuration in the main       (5) Decoding runtime ( TDec , seconds). Decoding runt-
+experiments.                                                   ime measures the average time required to reconstruct
+Deng et al. Cybersecurity       (2026) 9:238                                                                                                        Page 18 of 27
+
+
+
+
+  Fig. 6 Overall performance comparison under the default configuration. A Embedding capacity. B Embedding rate. C Encoding and decoding
+  runtime. D Text quality measured by γPPL
+
+
+
+Table 2 Controlled performance comparison under different generation lengths
+Metric                       STEAD Qi et al. (2026)                        TE-CSA-no-filter                                TE-CSA-τ3
+
+Length                       128            256             512            128             256            512              128              256           512
+CEmb (bits) ↑                12.6           25.3            45.7           190.5           469.9          1010.6           211.9            470.5         1022.6
+REmb (bits/token) ↑          0.09           0.09            0.09           1.49            1.84           1.97             1.66             1.84          2.00
+TEnc (s) ↓                   32.67          49.76           85.40          32.87           51.51          88.61            33.00            51.53         88.93
+TDec (s) ↓                   32.62          50.28           86.75          32.71           51.33          88.43            32.83            51.31         88.60
+γPPL (%) ↓                   4.5            4.8             4.9            12.1            11.2           11.8             5.9              5.6           5.6
+Bold values denote the best results for (CEmb ), (REmb ), and (γPPL ) among the compared methods under the same generation-length setting
+
+
+
+
+embedding groups and recover hidden messages from gen-                              approaching 50% indicates that the detector performs
+erated stegotext, including candidate reconstruction, prob-                         close to random guessing and therefore corresponds to
+ability interval recovery, embedded token localization, and                         stronger practical resistance to steganalysis.
+secret bit extraction.                                                                Unless otherwise specified, all reported results are aver-
+   (6) Steganalysis Detection Error Rate ( Pe , %). The detec-                      aged over multiple random seeds under identical experi-
+tion error rate measures the ability of a steganalyzer to                           mental settings.
+distinguish stegotext from cover text. Following standard
+linguistic steganalysis evaluation, Pe is defined as                                Model parameter settings
+                                                                                    Experiments are conducted using a diffusion language
+                PFA + PMD
+       Pe =               × 100%,                                        (40)       model framework following previous work Gong et al.
+                    2                                                               (2022); Qi et al. (2026). Unless otherwise specified, the dif-
+where PFA denotes the probability of falsely classifying                            fusion process contains T = 512 denoising timesteps. The
+cover text as stegotext, and PMD denotes the probability                            default generation parameters are fixed as Temp = 1.3,
+of incorrectly classifying stegotext as cover text. A value                         and top-p = 0.98.
+Deng et al. Cybersecurity       (2026) 9:238                                                                                                            Page 19 of 27
+
+
+
+
+Table 3 Embedding-rate and methodological comparison with representative high-capacity linguistic steganography methods
+Method                           Generation paradigm           Embedding granularity           Capacity mechanism                                REmb (bits/token)
+
+CascSamp Lv et al. (2025)†       Autoregressive                Token / joint-token             Recursive grouping + cascade sampling             3.42
+GTSD Wu et al. (2024)†           Diffusion                     Prompt / sentence batch         Prompt mapping + batch mapping                    1.56–3.94∗
+STEAD Qi et al. (2026)           Diffusion                     Timestep-local token            Step-wise probabilistic embedding                 0.09
+TE-CSA                           Diffusion                     Cross-step token                Cross-step aggregation + entropy filtering        1.84
+† Results are taken from the original publications and are provided as literature-based references rather than controlled comparisons. ∗ GTSD reports 1.87−2.22 and
+
+4.97−5.49 bits/word under its basic and extended prompt-table configurations, respectively. The displayed bits/token range is approximately normalized from the
+corresponding three-dataset averages using an empirically estimated conversion factor of 1.34 tokens/word
+
+
+
+  During diffusion generation, TE-CSA continuously col-                              TE-CSA-τ3 achieve 469.90 bits and 470.50 bits, respec-
+lects candidate positions across denoising timesteps and                             tively. The best result corresponds to an 18.60× improve-
+stores them in a global pending pool:                                                ment over STEAD, confirming the capacity limitation
+                                                                                     imposed by timestep-local candidate utilization.
+      Pt = Pt+1 ∪ Ct                                                      (41)          Figure 6B further shows that TE-CSA markedly
+When the pending pool size satisfies |Pt | ≥ τ , the frame-                          improves embedding efficiency. The embedding rate
+work triggers embedding group construction.                                          increases from 0.09 bits/token in STEAD to 1.84
+  To estimate candidate-level embedding potential for fil-                           bits/token in TE-CSA-τ3, corresponding to a 20.40×
+tering, the candidate capacity is approximated as:                                   improvement.
+                                                                                        The substantial capacity improvement mainly origi-
+                                                                                     nates from the relaxation of the timestep-local grouping
+                                   
+                                (i)
+     C(t, i) = − log2 max pt (v)                        (42)
+                           v
+                                                                                     constraint. Under STEAD, candidate positions available
+where low-capacity candidate positions are filtered                                  at an individual denoising timestep may be insufficient
+before embedding execution.                                                          to form an effective embedding group, causing other-
+  STEAD and TE-CSA use identical prompts, random                                     wise usable positions to remain under-utilized. TE-CSA
+seeds, diffusion timesteps, and probabilistic sampling                               preserves these candidates in the pending pool and com-
+strategies to ensure fair comparison. All experiments                                bines them with compatible candidates appearing at
+are conducted on a Linux server equipped with four                                   subsequent timesteps. Consequently, the improvement
+NVIDIA GeForce RTX 3090 GPUs (24GB memory), Intel                                    does not arise from creating additional token entropy,
+Xeon Gold 5218 CPUs, and 128GB RAM. All models are                                   but from converting a larger fraction of the embedding
+implemented using Python 3.12 with CUDA 12.4. Unless                                 opportunities already exposed throughout the diffusion
+otherwise specified, all experiments are conducted under                             trajectory into effective embedding groups. This mecha-
+the same hardware configuration. Results are averaged                                nism is consistent with the sparse candidate distribu-
+over 8 independent runs.                                                             tion observed in Table 1 and the dynamic aggregation
+  In summary, the aggregation threshold is fixed as τ = 3,                           behavior analyzed in Section Cross-step aggregation
+corresponding to the three-position embedding-group                                  mechanism.
+size used throughout our implementation. Entropy-                                       To provide a broader capacity-oriented comparison,
+aware filtering is controlled by the configurations τ1, τ2,                          we further compare TE-CSA with STEAD, GTSD, and
+and τ3, which progressively remove candidate positions                               CascSamp. Table 3 summarizes their generation para-
+with capacities {1}, {1, 2}, and {1, 2, 3}, respectively. Unless                     digms, embedding granularities, capacity mechanisms,
+otherwise specified, TE-CSA-τ3 is used as the default fil-                           and embedding rates. Since the methods are evaluated
+tered configuration, while the filtering strength is varied                          under different architectures and embedding settings, the
+only in the sensitivity experiment of Section Entropy-                               literature-reported results are provided mainly for meth-
+aware filtering analysis.                                                            odological and scale reference.
+                                                                                        Table 3 shows that TE-CSA achieves a substantial
+                                                                                     capacity improvement within token-level diffusion steg-
+Embedding capacity and efficiency
+                                                                                     anography, increasing the embedding rate from 0.09
+Figure 6 and Table 2 summarize the controlled compari-                               bits/token in the architecture-matched STEAD baseline
+son between STEAD and TE-CSA variants under the                                      to 1.84 bits/token. GTSD reports approximately 1.56–
+unified diffusion generation setting.                                                3.94 bits/token across its basic and extended prompt-
+  As shown in Fig. 6A, STEAD achieves only 25.30 bits                                table configurations, with the basic configuration below
+of embedding capacity, while TE-CSA-no-filter and                                    TE-CSA and the extended configuration achieving a
+Deng et al. Cybersecurity        (2026) 9:238                                                                                                          Page 20 of 27
+
+
+
+
+higher payload. This difference mainly reflects their dis-                           collected from token distributions already produced
+tinct capacity mechanisms. GTSD embeds informa-                                      during the original diffusion process. Therefore, the
+tion through predefined prompt and sentence-batch                                    additional computation mainly comes from lightweight
+mappings, and its payload explicitly depends on the                                  indexing, entropy-aware filtering, pending-pool mainte-
+prompt-table capacity, model batch size, and sentence                                nance, and interval-based probabilistic sampling.
+length. Increasing these mapping spaces can therefore                                  Overall, TE-CSA improves embedding performance
+directly enlarge its payload, but also requires the sender                           primarily through more effective utilization of diffusion
+and receiver to maintain consistent pre-shared prompt-                               trajectory information rather than by increasing genera-
+mapping and generation resources; in contrast, TE-CSA                                tion complexity. Consequently, the proposed framework
+improves capacity by utilizing token-level embedding                                 maintains favorable encoding and decoding efficiency
+opportunities already exposed throughout the diffusion                               under high-capacity embedding settings.
+trajectory without enlarging an external prompt space.
+CascSamp achieves 3.42 bits/token under an autoregres-                               Text quality
+sive generation paradigm, where recursive grouping and                               Text quality is evaluated using the relative perplexity
+cascade sampling can exploit consecutive next-token                                  variation metric γPPL, where smaller values indicate lower
+conditional distributions. Although its absolute rate is                             distribution perturbation introduced during embedding.
+higher, TE-CSA reaches a comparable order of magni-                                  As shown in Fig. 6D, TE-CSA introduces larger γPPL
+tude while operating in the more closely constrained                                 values than STEAD because substantially more hidden
+token-level diffusion setting. Overall, the comparison                               information is embedded into the generated text. This
+indicates that TE-CSA substantially improves capac-                                  behavior reflects the inherent trade-off between embed-
+ity within diffusion token-level probabilistic embedding,                            ding capacity and generation quality in high-capacity lin-
+whereas GTSD and CascSamp obtain high payloads                                       guistic steganography.
+through different embedding spaces and generation                                      Nevertheless, TE-CSA-τ3 achieves noticeably smaller
+paradigms.                                                                           γPPL than TE-CSA-no-filter, reducing the relative per-
+                                                                                     plexity variation from 11.20 to 5.60% while maintaining
+Encoding and decoding time                                                           nearly identical embedding capacity. This result directly
+Encoding and decoding efficiency are important factors                               validates the effectiveness of entropy-aware filtering.
+for practical diffusion-based linguistic steganography.                              Low-capacity candidate positions usually correspond
+Although TE-CSA introduces cross-step aggregation,                                   to highly concentrated token distributions. Embed-
+entropy-aware filtering, and embedding group construc-                               ding information into such positions tends to introduce
+tion, these operations remain lightweight compared with                              stronger statistical perturbation because the diffusion
+diffusion inference itself.                                                          model already strongly favors a limited number of can-
+  As shown in Fig. 6C, all methods maintain compara-                                 didate tokens. By removing low-entropy candidate posi-
+ble encoding and decoding runtime under the default                                  tions before embedding, TE-CSA-τ3 preserves more
+Length=256 setting. STEAD requires 49.76 seconds                                     balanced candidate distributions and reduces unneces-
+for encoding and 50.28 seconds for decoding, while                                   sary perturbation to the original diffusion generation
+TE-CSA-τ3 requires 51.53 seconds and 51.31 seconds,                                  process. Therefore, entropy-aware filtering improves
+respectively. The additional computational overhead                                  the capacity–quality trade-off instead of merely reduc-
+remains limited despite the substantial improvement in                               ing candidate quantity. Quantitatively, filtering reduces
+embedding capacity and embedding rate.                                               γPPL by 50.0% relative to TE-CSA-no-filter (from 11.20 to
+  This result mainly arises because TE-CSA does not                                  5.60%), while the embedding capacity remains essentially
+introduce additional denoising iterations or auxiliary                               unchanged (469.90 vs. 470.50 bits). This contrast shows
+neural network modules. Candidate positions are directly                             that the principal contribution of entropy-aware filtering
+
+
+Table 4 Steganalysis detection error rate (Pe , %) under different linguistic steganography methods. Values closer to 50% indicate
+stronger resistance to steganalysis
+Detector                                             CascSamp Lv et al. (2025) † STEAD Qi et al. (2026)              TE-CSA-no-filter                      TE-CSA-τ3
+
+FCN Yang et al. (2019)                               49.73                            50.13                          49.88                                 50.10
+R-BiLSTM-C Niu et al. (2019)                         50.05                            51.48                          50.21                                 50.06
+BiLSTM-Dense Yang et al. (2020)                      49.67                            51.77                          52.06                                 51.38
+† CascSamp results are taken from the original publication and are provided only as a literature reference because its model and experimental settings differ from
+
+those used in our controlled experiments
+Deng et al. Cybersecurity    (2026) 9:238                                                                                   Page 21 of 27
+
+
+
+
+is not to enlarge the available embedding space, but to                       default generation setting (Length = 256, Temp = 1.3,
+remove inefficient low-capacity positions that introduce                      and top- p = 0.98). The same prompts and generation
+disproportionate generation perturbation.                                     settings are used for cover and stego samples to minimize
+  Another interesting observation is that the γPPL value                      unrelated distribution differences.
+of TE-CSA-τ3 remains relatively close to STEAD despite                          Following standard linguistic steganalysis protocols,
+achieving nearly 18.6× larger embedding capacity. This                        each detector is trained to distinguish cover texts from
+suggests that trajectory-level candidate aggregation can                      stegotexts. We report the detection error rate Pe , where
+effectively increase embedding utilization efficiency with-                   values approaching 50% indicate that the detector per-
+out proportionally amplifying distribution distortion.                        forms close to random guessing and therefore suggest
+  Overall, these results demonstrate that TE-CSA                              stronger practical resistance to steganalysis.
+achieves substantially higher embedding capacity while                          As shown in Table 4, the detection error rates of the
+limiting the additional generation-quality degradation                        evaluated TE-CSA variants remain close to the 50%
+through entropy-aware filtering.                                              random-guessing level under all three neural steganalyz-
+                                                                              ers. For TE-CSA-τ3, the detection error rates obtained
+Steganalysis evaluation                                                       by FCN, R-BiLSTM-C, and BiLSTM-Dense are 50.10%,
+To evaluate the practical detectability of the proposed                       50.06%, and 51.38%, respectively. These results indicate
+framework, we conduct steganalysis experiments using                          that the evaluated detectors have limited discrimina-
+three representative neural-network-based linguistic                          tion capability between TE-CSA stegotext and normal
+steganalyzers: FCN Yang et al. (2019), R-BiLSTM-C Niu                         diffusion-generated text under the adopted experimental
+et al. (2019), and BiLSTM-Dense Yang et al. (2020). These                     setting.
+detectors have been widely used in generative linguistic                        TE-CSA-no-filter achieves detection error rates of
+steganography and are also adopted in the evaluation of                       49.88%, 50.21%, and 52.06% under the three detectors,
+CascSamp Lv et al. (2025), providing a useful reference                       respectively. After entropy-aware filtering is applied,
+for practical steganalysis resistance.                                        the results of TE-CSA-τ3 remain concentrated around
+  For the controlled evaluation, cover texts are gener-                       the random-guessing level. Importantly, this practi-
+ated using the same diffusion backbone without secret                         cal steganalysis performance is maintained while TE-
+embedding, while stegotexts are generated using the                           CSA-τ3 increases the embedding rate from 0.09 bits/
+corresponding steganographic configuration. We evalu-                         token in STEAD to 1.84 bits/token. These results suggest
+ate STEAD, TE-CSA-no-filter, and TE-CSA-τ3 under the                          that the capacity improvement introduced by cross-step
+
+
+
+
+ Fig. 7 Influence of different top-p settings on embedding capacity and relative perplexity variation γPPL
+Deng et al. Cybersecurity     (2026) 9:238                                                                                   Page 22 of 27
+
+
+
+
+Table 5 Top-p sensitivity analysis under different sampling settings
+Top-p                         0.90                    0.92                    0.94                   0.96         0.98              1.00
+
+CEmb (bits) ↑                 431.0                   434.9                   452.6                  470.1        470.5             483.1
+γPPL (%) ↓                    3.8                     4.2                     4.8                    5.2          5.6               6.4
+
+
+
+
+aggregation does not lead to a substantial increase                            empirical steganalysis results therefore complement,
+in practical detectability under the evaluated neural                          rather than replace, the conditional distribution-preserv-
+steganalyzers.                                                                 ing security argument described in Sect. Distribution-
+   For additional reference, Table 4 also reports the pub-                     preserving embedding and extraction.
+lished CascSamp results obtained using the same three                            Overall, the steganalysis results provide empirical
+types of steganalyzers. Under the reported CascSamp                            evidence that TE-CSA remains difficult to distinguish
+setting, the detection error rates are 49.73%, 50.05%,                         from normal diffusion-generated text under the evalu-
+and 49.67% for FCN, R-BiLSTM-C, and BiLSTM-Dense,                              ated neural-network-based steganalyzers while substan-
+respectively. Because CascSamp is based on an autore-                          tially improving embedding capacity and embedding
+gressive language model and uses different generation                          efficiency. Nevertheless, these experiments characterize
+and experimental settings, these values are included only                      practical resistance under the selected detectors rather
+as literature-based references and are not treated as con-                     than establishing universal undetectability against all
+trolled numerical comparisons with TE-CSA.                                     possible steganalyzers. More advanced generalized and
+   The observed detection resistance of TE-CSA may be                          LLM-based steganalysis methods Wang et al. (2023,
+related to several characteristics of the proposed frame-                      2025); Yang et al. (2024) remain important directions for
+work. First, cross-step aggregation distributes embed-                         future evaluation.
+ding operations across multiple denoising timesteps
+rather than restricting them to isolated timestep-local                        Ablation and mechanism analysis
+candidate groups. Second, entropy-aware filtering avoids                       To further investigate the effectiveness of different com-
+low-capacity positions with highly concentrated token                          ponents in the proposed TE-CSA framework, we conduct
+distributions. Third, the embedding operation remains                          additional ablation and mechanism analysis experiments
+constrained by the original diffusion sampling distribu-                       from three perspectives: (1) sensitivity to the top-p
+tions. These properties may help reduce detectable sta-                        sampling parameter, (2) effectiveness of entropy-aware
+tistical deviations during high-capacity embedding. The                        filtering, and (3) dynamic behavior of the cross-step
+
+
+
+
+  Fig. 8 Influence of entropy-aware filtering configurations on CEmb and relative perplexity variation γPPL
+Deng et al. Cybersecurity      (2026) 9:238                                                                                             Page 23 of 27
+
+
+
+
+Table 6 Entropy-aware filtering analysis under different filtering               Figure 7 and Table 5 summarize the influence of differ-
+configurations                                                                 ent top-p settings on embedding capacity and text quality
+Configuration                       CEmb (bits) ↑                 γPPL (%) ↓   under Length = 256 and Temp = 1.3. As shown in Fig. 7,
+                                                                               the embedding capacity of TE-CSA-τ3 gradually increases
+TE-CSA-no-filter                     469.90                       11.20        as top-p becomes larger. When top-p = 0.90, the frame-
+TE-CSA-τ1                            467.50                       8.40         work already achieves more than 430 bits of embedding
+TE-CSA-τ2                            468.20                       6.70         capacity. As the sampling space expands, the embedding
+TE-CSA-τ3                            470.50                       5.60         capacity further increases to 483.1 bits at top-p = 1.00.
+Bold values denote the best result for each corresponding metric among the       This behavior indicates that larger top-p values pro-
+compared filtering configurations                                              vide richer token diversity and additional embedding
+                                                                               opportunities across diffusion trajectories. Since more
+                                                                               candidate tokens remain available during probabilistic
+aggregation mechanism. These experiments aim to ana-                           sampling, TE-CSA can accumulate more valid embed-
+lyze how different design choices influence embedding                          ding positions through cross-step aggregation. The
+capacity, generation quality, and effective embedding uti-                     proposed framework therefore effectively transforms
+lization throughout diffusion trajectories.                                    trajectory-level sampling diversity into usable embedding
+                                                                               capacity.
+Top‑p sampling sensitivity
+                                                                                 Meanwhile, the relative perplexity variation γPPL also
+In diffusion language models, top-p sampling controls                          gradually increases as top-p becomes larger. This trend is
+the cumulative probability mass retained during token                          expected because larger sampling spaces preserve more
+generation. Larger top-p values preserve more low-prob-                        low-probability candidate tokens, thereby introducing
+ability candidate tokens in the sampling space, thereby                        greater uncertainty during probabilistic embedding. Nev-
+increasing generation diversity and potential embedding                        ertheless, the increase of γPPL remains relatively moder-
+opportunities. However, excessive sampling flexibility                         ate throughout the entire sampling range. Even under
+may also introduce larger probabilistic perturbation and                       top-p = 1.00, the relative perplexity variation remains
+reduced generation stability.                                                  only 6.4%.
+
+
+
+
+  Fig. 9 Cross-step aggregation mechanism analysis. A Cumulative embedded bits throughout diffusion timesteps. B Activated embedding
+  positions across timesteps. C Distribution of candidate positions across denoising trajectories. D Dynamic evolution of pending pool size
+Deng et al. Cybersecurity   (2026) 9:238                                                                     Page 24 of 27
+
+
+
+
+  These results demonstrate that TE-CSA maintains sta-        final TE-CSA-τ3 configuration therefore combines the
+ble embedding behavior under different sampling condi-        capacity benefit of trajectory-level aggregation with the
+tions while effectively utilizing the additional embedding    quality benefit of low-capacity candidate removal.
+opportunities exposed by larger token sampling spaces.
+More importantly, the framework preserves a favorable         Cross‑step aggregation mechanism
+capacity–quality trade-off across a wide range of practi-     To further understand why TE-CSA achieves substan-
+cal top-p settings.                                           tially larger embedding capacity than timestep-local
+                                                              methods, we analyze the dynamic behavior of the pro-
+Entropy‑aware filtering analysis                              posed cross-step aggregation mechanism throughout the
+We further analyze the effectiveness of entropy-aware         diffusion process.
+filtering under different filtering configurations. The          Figure 9 visualizes the temporal dynamics of candi-
+objective of this experiment is to investigate how            date accumulation and embedding execution under
+entropy-aware candidate selection influences the trade-       Length = 128, Temp = 1.3, and top-p = 0.98. As shown
+off between embedding capacity and generation quality.        in Fig. 9A, cumulative embedded bits exhibit a staircase-
+   Figure 8 and Table 6 summarize the experimen-              like growth pattern rather than smooth linear increase.
+tal results under Length = 256, Temp = 1.3, and               This phenomenon indicates that embedding execution
+top-p = 0.98. As shown in Fig. 8, the embedding capacity      is triggered only after sufficient candidate positions have
+remains highly stable across different filtering configura-   been accumulated in the pending pool.
+tions. Interestingly, TE-CSA-τ3 slightly outperforms the         Figure 9B further shows that activated embedding posi-
+no-filter setting despite removing multiple low-capacity      tions are sparsely distributed across diffusion timesteps.
+candidate positions. This observation indicates that low-     Most timesteps contribute only a small number of can-
+entropy candidate positions contribute relatively little      didate positions, while a few timesteps provide signifi-
+effective information and may even reduce embedding           cantly richer embedding opportunities. This observation
+utilization efficiency.                                       directly explains why timestep-local embedding strate-
+   Meanwhile, the relative perplexity variation γPPL con-     gies suffer from severe embedding under-utilization.
+sistently decreases as the filtering configuration becomes       Meanwhile, Fig. 9C demonstrates that candidate posi-
+progressively stronger. TE-CSA-no-filter produces the         tions continuously emerge throughout the diffusion
+largest perturbation because embedding operations are         trajectory rather than concentrating only in the final
+performed over all candidate positions, including many        denoising stages. Therefore, restricting embedding oper-
+highly concentrated low-entropy distributions. After          ations to isolated timesteps can leave usable candidate-
+progressively filtering these unstable positions, γPPL        level embedding opportunities across earlier denoising
+decreases from 11.20 to 5.60% while preserving nearly         stages under-utilized.
+identical embedding capacity.                                    Finally, Fig. 9D illustrates the dynamic evolution of
+   This behavior demonstrates that entropy-aware fil-         pending pool size during generation. The pool size grad-
+tering effectively improves the capacity–quality trade-       ually increases as new candidate positions are collected
+off instead of simply reducing embedding quantity. By         and decreases after embedding group construction and
+restricting embedding operations to naturally balanced        candidate consumption. Such behavior demonstrates
+high-entropy candidate positions, TE-CSA reduces              that TE-CSA dynamically balances candidate accumula-
+unnecessary probabilistic distortion and preserves            tion and embedding execution throughout the diffusion
+stronger consistency with the original diffusion genera-      process.
+tion distribution.                                               Overall, these results provide direct empirical evidence
+   Overall, these results validate that entropy-aware fil-    that embedding opportunities in diffusion language
+tering is not merely a quality-control mechanism, but         models are inherently sparse and cross-step distributed
+also an important component for improving effective           throughout denoising trajectories. Consequently, trajec-
+embedding utilization throughout diffusion trajectories.      tory-level aggregation plays a critical role in improving
+Together with the TE-CSA-no-filter results, this ablation     effective embedding utilization.
+further separates the contributions of the two major com-
+ponents. Cross-step aggregation alone already increases       Limitations and scope of application
+embedding capacity substantially over the timestep-local      Although TE-CSA substantially improves embedding
+baseline, while progressively stronger entropy-aware fil-     capacity by exploiting trajectory-level candidate aggre-
+tering mainly reduces generation perturbation without         gation, its benefits are accompanied by several practi-
+sacrificing the capacity gained through aggregation. The      cal trade-offs. First, embedding capacity and generation
+                                                              quality are not completely independent. As shown in
+Deng et al. Cybersecurity   (2026) 9:238                                                                                     Page 25 of 27
+
+
+
+
+Sect. Text quality, increasing the amount of embedded        establishes a group-constrained trajectory-level capac-
+information generally introduces larger distribution per-    ity bound for the adopted three-position redundant
+turbations. Entropy-aware filtering alleviates this effect   embedding mechanism and shows that capacity-sorted
+by removing low-capacity positions, but stronger filter-     grouping attains this bound when the complete retained
+ing may also reduce the number of available candidates.      candidate set is available. Experimental results dem-
+Therefore, the filtering configuration should be selected    onstrate up to an 18.60× improvement in embedding
+according to the desired balance between embedding           capacity and a 20.40× improvement in embedding rate
+capacity and generation quality.                             over the architecture-matched timestep-local diffusion
+   Second, TE-CSA introduces additional candidate            baseline, while maintaining limited runtime overhead
+management operations, including pending-pool main-          and generation-quality degradation. Additional stega-
+tenance, capacity estimation, filtering, sorting, and        nalysis and ablation experiments further support the
+embedding-group construction. These operations               effectiveness of cross-step aggregation and entropy-
+incur modest computational overhead compared with            aware filtering under the evaluated settings.
+timestep-local embedding. However, as demonstrated             Future work will focus on improving the adaptability
+in Sect. Encoding and decoding time, the additional cost     and generalization of TE-CSA. In particular, adaptive
+remains small relative to the diffusion inference process    aggregation and filtering strategies based on trajectory
+because TE-CSA does not require extra denoising itera-       statistics may further improve the capacity–quality–
+tions or auxiliary neural networks.                          efficiency trade-off under dynamic generation condi-
+   Third, the effectiveness of TE-CSA depends on the         tions. Extending the framework to different diffusion
+availability of sufficiently diverse candidate positions     language model architectures, longer text generation,
+throughout the diffusion trajectory. The framework is        and more diverse generation settings will help evalu-
+therefore most suitable for diffusion language models        ate its broader applicability. More advanced generalized
+that expose multiple intermediate token distributions        and LLM-based steganalysis methods may also provide
+and exhibit sparse but reusable embedding opportunities      a more comprehensive assessment of practical secu-
+across denoising timesteps. In settings with very short      rity. In addition, extending trajectory-level information
+trajectories, highly deterministic token distributions, or   hiding to multimodal diffusion generation remains an
+extremely limited candidate diversity, the advantage of      interesting direction for future investigation.
+cross-step aggregation may become less pronounced.
+   Finally, the current implementation uses a fixed aggre-
+                                                             Author Contributions
+gation threshold and predefined entropy-filtering con-       Runxuan Deng conducted the main research, including methodology devel-
+figurations. Although these settings provide stable          opment, software implementation, experimental evaluation, and preparation
+performance under the evaluated generation conditions,       of the manuscript. Xiaowei Yi provided overall supervision, project administra-
+                                                             tion, methodology refinement, funding acquisition, and manuscript review
+adaptive parameter selection according to trajectory sta-    and editing. Hong Zhang, Yun Cao, and Changjun Liu contributed to experi-
+tistics may further improve the capacity–quality–effi-       mental guidance and manuscript revision. All authors discussed the results,
+ciency trade-off. Extending TE-CSA to different diffusion    revised the manuscript, and read and approved the final manuscript.
+architectures, longer text generation, and more dynamic      Funding
+generation settings remains an important direction for       This work was supported by the National Natural Science Foundation of China
+future investigation.                                        under Grant No. 62272456.
+
+                                                             Data availability
+                                                             The data supporting the findings of this study are available from the cor-
+Conclusion                                                   responding author upon reasonable request.
+This paper proposes TE-CSA, a Trajectory Entropy-
+aware Cross-Step Aggregation framework for                   Code availability
+                                                             The source code will be made publicly available in a public repository upon
+high-capacity distribution-preserving linguistic steg-       publication.
+anography in diffusion language models. By aggregat-
+ing candidate positions across denoising timesteps,          Declarations
+TE-CSA transforms fragmented timestep-local embed-
+ding opportunities into jointly usable trajectory-level      Ethics approval and consent to participate
+                                                             Not applicable. This study does not involve human participants, human data,
+resources, while entropy-aware filtering removes low-        human tissue, or animals.
+capacity candidates to improve the capacity–quality
+trade-off. Under the assumed distribution-preserving         Consent for publication
+                                                             Not applicable.
+probabilistic embedding mechanism, these trajectory-
+level operations do not directly modify the underlying       Competing interests
+token probabilities. The theoretical analysis further        The authors declare that they have no competing interest.
+Deng et al. Cybersecurity        (2026) 9:238                                                                                                        Page 26 of 27
+
+
+
+
+Author details                                                                      Lou A, Meng C, Ermon S (2023) Discrete diffusion modeling by estimating the
+1
+  Institute of Information Engineering, Chinese Academy of Sciences, Bei-                 ratios of the data distribution, arXiv:​2310.​16834
+jing 100085, China. 2 School of Cyber Security, University of Chinese Academy       Lv M, Fu H, Yi X, Huang H, Cao Y, Liu C (2025) Towards high-capacity provably
+of Sciences, Beijing 101408, China.                                                       secure steganography via cascade sampling, In: International conference
+                                                                                          on information and communications security. Springer, 533–552
+Received: 13 July 2026 Accepted: 21 September 2026                                  Niu Y, Wen J, Zhong P, Xue Y (2019) A hybrid r-bilstm-c neural network based
+                                                                                          text steganalysis. IEEE Signal Process Lett 26(12):1907–1911
+                                                                                    Pang K (2024) Frestega: a plug-and-play method for boosting imperceptibil-
+                                                                                          ity and capacity in generative linguistic steganography for real-world
+                                                                                          scenarios, arXiv e-prints, pp. arXiv–2412
+References                                                                          Peng W, Zhang J, Xue Y, Yang Z (2021) Real-time text steganalysis based on
+Austin J, Johnson DD, Ho J, Tarlow D, Van Den Berg R (2021) Structured denois-            multi-stage transfer learning. IEEE Signal Process Lett 28:1510–1514
+       ing diffusion models in discrete state-spaces. Adv Neural Inf Process Syst   Provos N, Honeyman P (2003) Hide and seek: an introduction to steganogra-
+       34:17981–17993                                                                     phy. IEEE Secur Priv 1(3):32–44
+Brown T, Mann B, Ryder N, Subbiah M, Kaplan JD, Dhariwal P, Neelakantan A,          Qi Y, Zhao N, Yao Q, Wu B, Zhang W, Yu N, Chen K (2026) Stead: robust provably
+       Shyam P, Sastry G, Askell A et al (2020) Language models are few-shot              secure linguistic steganography with diffusion language model, arXiv:​
+       learners. Adv Neural Inf Process Syst 33:1877–1901                                 2601.​14778
+Cachin C (1998) An information-theoretic model for steganography, In: Inter-        Radford A, Wu J, Child R, Luan D, Amodei D, Sutskever I et al (2019) Language
+       national workshop on information hiding. Springer, 306–318                         models are unsupervised multitask learners. OpenAI blog 1(8):9
+Cao Y, Zhou Z, Chakraborty C, Wang M, Wu QJ, Sun X, Yu K (2022) Genera-             Ren C, Wu B (2024) A robust joint coverless image steganography scheme
+       tive steganography based on long readable text generation. IEEE Trans              based on two independent modules. Cybersecurity 7(1):73
+       Comput Soc Syst 11(4):4584–4594                                              Sahoo SS, Arriola M, Schiff Y, Gokaslan A, Marroquin E, Chiu JT, Rush A, Kule-
+Cao J, Wang Z, Hao Y, Zhang X (2026) Steganalysis of neural networks using                shov V (2024) Simple and effective masked diffusion language models.
+       implicit features. Cybersecurity 9(1):83                                           Adv Neural Inf Process Syst 37:130136–130184
+Ding J, Chen K, Wang Y, Zhao N, Zhang W, Yu N, (2023) Discop: provably secure       Steinebach M (2024) Natural language steganography by chatgpt, In: Proceed-
+       steganography in practice based on distribution copies, In: 2023 IEEE              ings of the 19th international conference on availability, reliability and
+       symposium on security and privacy (SP). IEEE 2238–2255                             security, 1–9
+Fridrich J (2009) Steganography in digital media: principles, algorithms, and       Strudel R, Tallec C, Altché F, Du Y, Ganin Y, Mensch A, Grathwohl W, Savinov N,
+       applications. Cambridge University Press                                           Dieleman S, Sifre L et al., (2022) Self-conditioned embedding diffusion for
+Gong S, Li M, Feng J, Wu Z, Kong L (2022) Diffuseq: sequence to sequence text             text generation, arXiv:​2211.​04236
+       generation with diffusion models, arXiv:​2210.​08933,                        Touvron H, Lavril T, Izacard G, Martinet X, Lachaux M-A, Lacroix T, Rozière B,
+Han X, Kumar S, Tsvetkov Y (2023) Ssd-lm: semi-autoregressive simplex-based               Goyal N, Hambro E, Azhar F et al., (2023) Llama: open and efficient foun-
+       diffusion language model for text generation and modular control, In:              dation language models, arXiv:​2302.​13971
+       Proceedings of the 61st annual meeting of the association for computa-       Vaswani A, Shazeer N, Parmar N, Uszkoreit J, Jones L, Gomez AN, Kaiser Ł, Polo-
+       tional linguistics (Volume 1: Long Papers), 11575–11596                            sukhin I (2017) Attention is all you need, Advances in neural information
+He Z, Sun T, Tang Q, Wang K, Huang X-J, Qiu X (2023) Diffusionbert: improving             processing systems, vol. 30
+       generative masked language models with diffusion models, In: Proceed-        Wang H, Yang Z, Yang J, Chen C, Huang Y (2023) Linguistic steganalysis in few-
+       ings of the 61st annual meeting of the association for computational               shot scenario. IEEE Trans Inf Forensics Secur 18:4870–4882
+       linguistics (volume 1: Long papers), 4521–4534                               Wang Y, Pei G, Chen K, Ding J, Pan C, Pang W, Hu D, Zhang W (2025) ­
+Ho J, Jain A, Abbeel P (2020) Denoising diffusion probabilistic models. Adv               {SparSamp}: efficient provably secure steganography based on sparse
+       Neural Inf Process Syst 33:6840–6851                                               sampling, In: 34th USENIX security symposium (USENIX Security 25),
+Hoogeboom E, Nielsen D, Jaini P, Forré P, Welling M (2021) Argmax flows and               6817–6835
+       multinomial diffusion: learning categorical distributions. Adv Neural Inf    Wang Z, Zhou L, Chen X, Zhou Z, Yang Z (2025) Stlc-kg: a social text steganaly-
+       Process Syst 34:12454–12465                                                        sis method combining large-scale language models and common-sense
+Hopper NJ, Langford J, Von Ahn L (2002) Provably secure steganography, In:                knowledge graphs, In: Proceedings of the AAAI Conference on Artificial
+       Annual international cryptology conference. Springer, 77–92                        Intelligence, vol. 39, no. 24, 25461–25469
+Kaptchuk G, Jois TM, Green M, Rubin AD (2021) Meteor: cryptographically             Wu Z, Wen J, Xue Y, Zhang Z, Zhou Y (2024) GTSD: generative text steganog-
+       secure steganography for realistic distributions, In: Proceedings of the           raphy based on diffusion model, In: International conference on neural
+       2021 ACM SIGSAC conference on computer and communications                          information processing. Springer, 168–183
+       security, 1529–1548                                                          Yang MB, Pang K, Wang H, Huang Y et al., (2024) Towards next-generation
+Kim D, Shin C, Choi J, Jung D, Yoon S (2025) Diffusion-stego: training-free               steganalysis: Llms unleash the power of detecting steganography, arXiv:​
+       diffusion generative steganography via message projection. Inf Sci                 2405.​09090,
+       718:122358                                                                   Yang Z-L, Guo X-Q, Chen Z-M, Huang Y-F, Zhang Y-J (2018) Rnn-stega: linguistic
+Lin Z, Gong Y, Shen Y, Wu T, Fan Z, Lin C, Duan N, Chen W (2023) Text genera-             steganography based on recurrent neural networks. IEEE Trans Inf Foren-
+       tion with diffusion language models: a pre-training approach with                  sics Secur 14(5):1280–1295
+       continuous paragraph denoise, In: International conference on machine        Yang Z, Huang Y, Zhang Y-J (2019) A fast and efficient text steganalysis
+       learning. PMLR, 21051–21064                                                        method. IEEE Signal Process Lett 26(4):627–631
+Lin K, Luo Y, Zhang Z, Ping L (2024) Zero-shot generative linguistic steganog-      Yang Z, Wang K, Li J, Huang Y, Zhang Y-J (2019) Ts-rnn: text steganalysis based
+       raphy, In: Proceedings of the 2024 conference of the North American                on recurrent neural networks. IEEE Signal Process Lett 26(12):1743–1747
+       chapter of the association for computational linguistics: human language     Yang H, Bao Y, Yang Z, Liu S, Huang Y, Jiao S (2020) Linguistic steganalysis via
+       technologies (Volume 1: Long Papers), 5168–5182                                    densely connected lstm with feature pyramid, In: Proceedings of the
+Liu Y, Xu C, Yang F, Zhang P, Wang L (2025) Linguistic steganography via self-            2020 ACM workshop on information hiding and multimedia security,
+       adjusting asymmetric number system, Computational Linguistics, pp.                 5–10
+       1–37                                                                         Yu J, Zhang X, Xu Y, Zhang J (2023) Cross: diffusion model makes controllable,
+Li Y, Zhou K, Zhao WX, Wen J.-R. (2023) Diffusion models for non-autoregres-              robust and secure image steganography. Adv Neural Inf Process Syst
+       sive text generation: a survey, arXiv:​2303.​06574                                 36:80730–80743
+                                                                                    Zhang S, Xiao Y, Tian H, Li X (2025) A multi-image steganography: Iss. Cyberse-
+                                                                                          curity 8(1):20
+Deng et al. Cybersecurity       (2026) 9:238                                     Page 27 of 27
+
+
+
+
+Zhou Z, Su Y, Li J, Yu K, Wu QJ, Fu Z, Shi Y (2022) Secret-to-image reversible
+     transformation for generative steganography. IEEE Trans Dependable
+     Secure Comput 20(5):4118–4134
+Zhou Z, Dong X, Meng R, Wang M, Yan H, Yu K, Choo K-KR (2023) Generative
+     steganography via auto-generation of semantic object contours. IEEE
+     Trans Inf Forensics Secur 18:2751–2765
+Ziegler Z, Deng Y, Rush AM (2019) Neural linguistic steganography, In:
+     Proceedings of the 2019 conference on empirical methods in natural lan-
+     guage processing and the 9th international joint conference on natural
+     language processing (EMNLP-IJCNLP), 1210–1215
+
+
+Publisher’s Note
+Springer Nature remains neutral with regard to jurisdictional claims in pub-
+lished maps and institutional affiliations.
+

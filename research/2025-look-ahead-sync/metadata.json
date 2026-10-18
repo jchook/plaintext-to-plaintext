@@ -1,0 +1,42 @@
+{
+  "id": "2025-look-ahead-sync",
+  "title": "A High-Capacity and Secure Disambiguation Algorithm for Neural Linguistic Steganography (Look-ahead Sync)",
+  "status": "2025 arXiv preprint",
+  "kind": "paper",
+  "source": "https://arxiv.org/abs/2510.02332",
+  "pdf": "https://arxiv.org/pdf/2510.02332",
+  "why": "Retains distinguishable future token paths instead of immediately discarding prefix-overlapping candidates. On Llama3-8B, IMDB, top-k 128 with Discop, reports 2.66 bits/token versus SyncPool's 0.95.",
+  "caveat": "The same setting produces about 0.42 tokens per model call, or 2.38 calls per token. Capacity gains can increase latency. No author implementation was established during the review; theoretical assumptions deserve separate evaluation.",
+  "repo": null,
+  "priority": "capacity experiment",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2025-look-ahead-sync/paper.pdf",
+      "requested_url": "https://arxiv.org/pdf/2510.02332",
+      "resolved_url": "https://arxiv.org/pdf/2510.02332",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:55.621583+00:00",
+      "bytes": 939863,
+      "sha256": "be6a6f4628f7753eeafa560c974a10bf299d43038e2ff12a3936775ca3300136"
+    },
+    {
+      "path": "2025-look-ahead-sync/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 109216,
+      "sha256": "f8a4505398c1c2fbd291bf575ad561029e3d5306ea2637195e7bae0c873a4b7c"
+    },
+    {
+      "path": "2025-look-ahead-sync/source.html",
+      "requested_url": "https://arxiv.org/abs/2510.02332",
+      "resolved_url": "https://arxiv.org/abs/2510.02332",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:55.946759+00:00",
+      "bytes": 42826,
+      "sha256": "fe7e159dfe4ccc48d68cae82bf8ddaf7aa35aad64543c1c154b45fb1437a6bd3"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 13
+}

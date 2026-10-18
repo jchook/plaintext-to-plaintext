@@ -1,0 +1,1372 @@
+{
+  "review_date": "2026-10-18",
+  "archive_updated_at": "2026-10-18T09:49:28.907341+00:00",
+  "scope": "Primary sources and supporting implementations from the three-agent research review.",
+  "entries": [
+    {
+      "id": "2019-neural-linguistic-steganography",
+      "title": "Neural Linguistic Steganography",
+      "status": "EMNLP-IJCNLP 2019",
+      "kind": "paper",
+      "source": "https://aclanthology.org/D19-1115/",
+      "pdf": "https://aclanthology.org/D19-1115.pdf",
+      "why": "Direct prior art for our pretrained language model plus arithmetic coding. Explains how secret bits drive token choices and how the receiver reconstructs those choices from shared probabilities.",
+      "caveat": "A foundational construction, not evidence that our finite framing, candidate filtering, or numerical runtime preserves the original model distribution.",
+      "repo": null,
+      "priority": "foundation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2019-neural-linguistic-steganography/paper.pdf",
+          "requested_url": "https://aclanthology.org/D19-1115.pdf",
+          "resolved_url": "https://aclanthology.org/D19-1115.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:53.026147+00:00",
+          "bytes": 371693,
+          "sha256": "70bcaf5ec14f3ed87b3f7f8604eb58e137b476dc9929cc47075aaf4462578b2c"
+        },
+        {
+          "path": "2019-neural-linguistic-steganography/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 36670,
+          "sha256": "338d0d05624b1384b74672925f7f799175ff7e517b72c6d3114456a386126857"
+        },
+        {
+          "path": "2019-neural-linguistic-steganography/source.html",
+          "requested_url": "https://aclanthology.org/D19-1115/",
+          "resolved_url": "https://aclanthology.org/D19-1115/",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:53.279172+00:00",
+          "bytes": 40948,
+          "sha256": "ed7a101639ad29bc7bee5cc36cbc46ce5821b024801cd39543185c6b1ec0be67"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 6
+    },
+    {
+      "id": "2020-self-adjusting-arithmetic-coding",
+      "title": "Near-imperceptible Neural Linguistic Steganography via Self-Adjusting Arithmetic Coding",
+      "status": "EMNLP 2020",
+      "kind": "paper",
+      "source": "https://aclanthology.org/2020.emnlp-main.22/",
+      "pdf": "https://aclanthology.org/2020.emnlp-main.22.pdf",
+      "why": "Historical follow-up on arithmetic coding that adapts coding decisions to improve the capacity and distribution-distortion tradeoff.",
+      "caveat": "Supporting reference discovered during the survey. Near-imperceptibility and favorable measured KL divergence should not be treated as an audited end-to-end security guarantee.",
+      "repo": null,
+      "priority": "supporting",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2020-self-adjusting-arithmetic-coding/paper.pdf",
+          "requested_url": "https://aclanthology.org/2020.emnlp-main.22.pdf",
+          "resolved_url": "https://aclanthology.org/2020.emnlp-main.22.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:53.053896+00:00",
+          "bytes": 820312,
+          "sha256": "2184dbc7d7f537ce744fd85070fb150f53e310f6ee93a2508a111022fc53a4a8"
+        },
+        {
+          "path": "2020-self-adjusting-arithmetic-coding/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 76646,
+          "sha256": "50e8bf58bbffbb55002dbfc913e12e1eafd128f418ac23bd2fe0b14dbd7831e1"
+        },
+        {
+          "path": "2020-self-adjusting-arithmetic-coding/source.html",
+          "requested_url": "https://aclanthology.org/2020.emnlp-main.22/",
+          "resolved_url": "https://aclanthology.org/2020.emnlp-main.22/",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:53.332341+00:00",
+          "bytes": 40907,
+          "sha256": "b6789881169bd5e710831bd811cc4743c6f098a3336a65b470cf547d23c937cd"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 11
+    },
+    {
+      "id": "2021-adg",
+      "title": "Provably Secure Generative Linguistic Steganography (ADG)",
+      "status": "Findings of ACL-IJCNLP 2021; arXiv author copy",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2106.02011",
+      "pdf": "https://arxiv.org/pdf/2106.02011",
+      "why": "An influential method that recursively groups candidate tokens to carry message bits. Useful for understanding why grouping methods can sacrifice capacity.",
+      "caveat": "Later work qualifies exact distribution-preservation claims: arbitrary discrete probabilities cannot generally be partitioned into perfectly equal-probability groups.",
+      "repo": null,
+      "priority": "supporting",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2021-adg/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2106.02011",
+          "resolved_url": "https://arxiv.org/pdf/2106.02011",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:53.040651+00:00",
+          "bytes": 323381,
+          "sha256": "91e63557ad31741393b568facce6b41128428894dfac170d11aded783a74e087"
+        },
+        {
+          "path": "2021-adg/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 57382,
+          "sha256": "24cf591d5aa221704a2b6a5369096310861d657d3446f1207cad6405c42f385d"
+        },
+        {
+          "path": "2021-adg/source.html",
+          "requested_url": "https://arxiv.org/abs/2106.02011",
+          "resolved_url": "https://arxiv.org/abs/2106.02011",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:53.241565+00:00",
+          "bytes": 40983,
+          "sha256": "6353707821b511760c38d371e846f0cde3580c60c32fb4c9253ec83c5138ace4"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 10
+    },
+    {
+      "id": "2021-meteor",
+      "title": "Meteor: Cryptographically Secure Steganography for Realistic Distributions",
+      "status": "ACM CCS 2021; author-hosted PDF",
+      "kind": "paper",
+      "source": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+      "pdf": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+      "why": "Establishes cryptographic treatment of generative steganography when token entropy varies widely. Relevant to shared randomness, security definitions, and why ordinary arithmetic coding needs careful analysis. Includes historical mobile measurements.",
+      "caveat": "Its guarantee is relative to the agreed generative model. Historical mobile experiments do not validate our current quantized 3B model or phone-to-desktop interoperability.",
+      "repo": null,
+      "priority": "foundation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2021-meteor/paper.pdf",
+          "requested_url": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+          "resolved_url": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:53.141781+00:00",
+          "bytes": 6774738,
+          "sha256": "8ee5858264f895654c20265f3bbd3c81f263186fd189266558c76ef7efde3bdb"
+        },
+        {
+          "path": "2021-meteor/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 155607,
+          "sha256": "237ce9f8ba02f4f7bcf9539d329076ca9c9a8905eb3e2f8505928dfb64ff7565"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 20
+    },
+    {
+      "id": "2023-discop",
+      "title": "Discop: Provably Secure Steganography in Practice Based on Distribution Copies",
+      "status": "IEEE Symposium on Security and Privacy 2023; author-hosted PDF",
+      "kind": "paper",
+      "source": "https://dingjinyang.github.io/uploads/Discop_sp23_paper.pdf",
+      "pdf": "https://dingjinyang.github.io/uploads/Discop_sp23_paper.pdf",
+      "why": "An important distribution-preserving baseline using copies of the token distribution. Its recursive variant improves capacity and appears in many later comparisons.",
+      "caveat": "Requires synchronized sampling and inference. A secure token-level sampler alone does not resolve ambiguous detokenization or message framing.",
+      "repo": "comydream/Discop",
+      "priority": "baseline",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2023-discop/paper.pdf",
+          "requested_url": "https://dingjinyang.github.io/uploads/Discop_sp23_paper.pdf",
+          "resolved_url": "https://ding.ac.cn/uploads/Discop_sp23_paper.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:55.439152+00:00",
+          "bytes": 1693768,
+          "sha256": "de50cefb365694fa5098255a44d74a89a66d96c1d807b0d1c4b5cf89c125f609"
+        },
+        {
+          "path": "2023-discop/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 139208,
+          "sha256": "f4f87a7de8fa4e0810ae8c489c9f7b1260f2eccbfb97defe6cab600fa1cf8f15"
+        },
+        {
+          "path": "2023-discop/repository.html",
+          "requested_url": "https://github.com/comydream/Discop",
+          "resolved_url": "https://github.com/comydream/Discop",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:56.052783+00:00",
+          "bytes": 281837,
+          "sha256": "7a09bad5411000b2902f5d4a5a5b5c6a720b75a246585bc36f6c28392ee8f892"
+        },
+        {
+          "path": "2023-discop/readme-source.json",
+          "requested_url": "https://api.github.com/repos/comydream/Discop/readme",
+          "resolved_url": "https://api.github.com/repos/comydream/Discop/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:56.308090+00:00",
+          "bytes": 7198,
+          "sha256": "68e98b77542b401da8bab23a01df7ec3b5140253a78d22cfa560c795b6d6172d"
+        },
+        {
+          "path": "2023-discop/upstream-readme.md",
+          "source_url": "https://github.com/comydream/Discop/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "08206bd7e9766ba0338d6378825d74e2d5d3c4d3",
+          "derived_from": "readme-source.json",
+          "bytes": 4677,
+          "sha256": "b130021cb106c91378615f193df6f7ca2b9bfb7b35b93d993193ce413b653aa9"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 18
+    },
+    {
+      "id": "2023-minimum-entropy-coupling",
+      "title": "Perfectly Secure Steganography Using Minimum Entropy Coupling",
+      "status": "ICLR 2023; arXiv author copy",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2210.14889",
+      "pdf": "https://arxiv.org/pdf/2210.14889",
+      "why": "Provides the coupling formulation: preserving the cover distribution while maximizing information about the message. Useful theoretical reference for the entropy limit and alternatives to interval coding.",
+      "caveat": "Exact minimum-entropy coupling is computationally hard. Practical approximations and their decoding behavior must be distinguished from the ideal optimization.",
+      "repo": null,
+      "priority": "foundation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2023-minimum-entropy-coupling/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2210.14889",
+          "resolved_url": "https://arxiv.org/pdf/2210.14889",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:53.475781+00:00",
+          "bytes": 564114,
+          "sha256": "c7d1768f9214fe17d3f6a24fbc1727f4109ef99aa853aa5e367228b42177bf7e"
+        },
+        {
+          "path": "2023-minimum-entropy-coupling/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 55517,
+          "sha256": "713335cc2366f23c00f7f755c803210d4470e7cd6085bba913de38ed47e3baa8"
+        },
+        {
+          "path": "2023-minimum-entropy-coupling/source.html",
+          "requested_url": "https://arxiv.org/abs/2210.14889",
+          "resolved_url": "https://arxiv.org/abs/2210.14889",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:53.661320+00:00",
+          "bytes": 43507,
+          "sha256": "01de11b7934c3ec48252dad57efe2b7cc5ce00bc90224ad772256ff1f72e84a7"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 14
+    },
+    {
+      "id": "2024-arimec",
+      "title": "Computing Low-Entropy Couplings for Large-Support Distributions (ARIMEC)",
+      "status": "UAI 2024",
+      "kind": "paper",
+      "source": "https://proceedings.mlr.press/v244/sokota24a.html",
+      "pdf": "https://raw.githubusercontent.com/mlresearch/v244/main/assets/sokota24a/sokota24a.pdf",
+      "why": "Extends practical minimum-entropy coupling to large, autoregressive distributions. Relevant when investigating structured message priors and information-efficient encoding.",
+      "caveat": "A research alternative with different computation and message-distribution assumptions. It is not a replacement for authenticated encryption.",
+      "repo": "ssokota/mec",
+      "priority": "supporting",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2024-arimec/paper.pdf",
+          "requested_url": "https://raw.githubusercontent.com/mlresearch/v244/main/assets/sokota24a/sokota24a.pdf",
+          "resolved_url": "https://raw.githubusercontent.com/mlresearch/v244/main/assets/sokota24a/sokota24a.pdf",
+          "content_type": "application/octet-stream",
+          "retrieved_at": "2026-10-18T09:47:53.629661+00:00",
+          "bytes": 1776761,
+          "sha256": "b7987383b9d32625619f8bab3682cde39025e97f17656d39af8a08644aa9a9d2"
+        },
+        {
+          "path": "2024-arimec/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 92601,
+          "sha256": "adabc04eb14497c4b505e896b5f25b7b27f38cbc9b816eb1b91043878d62c7db"
+        },
+        {
+          "path": "2024-arimec/source.html",
+          "requested_url": "https://proceedings.mlr.press/v244/sokota24a.html",
+          "resolved_url": "https://proceedings.mlr.press/v244/sokota24a.html",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:54.334463+00:00",
+          "bytes": 15255,
+          "sha256": "e33a2893ada595c40d3fd132b109be7a4c77c0cc32979294379ae3f966e7763f"
+        },
+        {
+          "path": "2024-arimec/repository.html",
+          "requested_url": "https://github.com/ssokota/mec",
+          "resolved_url": "https://github.com/ssokota/mec",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:55.095854+00:00",
+          "bytes": 306504,
+          "sha256": "1cda960ce68336e87494c50843dd6335261fd8a05a53b2ad5ad3b583e32fb555"
+        },
+        {
+          "path": "2024-arimec/readme-source.json",
+          "requested_url": "https://api.github.com/repos/ssokota/mec/readme",
+          "resolved_url": "https://api.github.com/repos/ssokota/mec/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:55.338573+00:00",
+          "bytes": 11629,
+          "sha256": "e869904c8e0ae8b6e52a9bcf1a73c7d1de10c8790616957c4db65e358e9f07cc"
+        },
+        {
+          "path": "2024-arimec/upstream-readme.md",
+          "source_url": "https://github.com/ssokota/mec/blob/master/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "cd4e125769ed5e9e88c0787bcf0e77d6efd9f5cb",
+          "derived_from": "readme-source.json",
+          "bytes": 7911,
+          "sha256": "680a96289ee5b25e4daa8e7d42355201480dae6d6bbb3ebcc9718075af8cf81d"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 20
+    },
+    {
+      "id": "2024-syncpool",
+      "title": "Provably Secure Disambiguating Neural Linguistic Steganography (SyncPool)",
+      "status": "IEEE TDSC, online 2024; often cited as 2025; arXiv author copy",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2403.17524v2",
+      "pdf": "https://arxiv.org/pdf/2403.17524v2",
+      "why": "Directly addresses our visible-text requirement. Groups prefix-ambiguous token pieces and uses synchronized cryptographic randomness within groups, preserving the token distribution while allowing decoding.",
+      "caveat": "The within-group randomness carries no payload, so disambiguation can reduce usable capacity. Exact token synchronization still depends on matched inference and shared state.",
+      "repo": "7-yaya/SyncPool",
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2024-syncpool/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2403.17524v2",
+          "resolved_url": "https://arxiv.org/pdf/2403.17524v2",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:54.004865+00:00",
+          "bytes": 2129782,
+          "sha256": "debe8bf442ebd3c669f6af0b1321390068cebc4c6e9d1f03e1980b77bf035ba3"
+        },
+        {
+          "path": "2024-syncpool/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 112694,
+          "sha256": "a1452211bc9ff495f9672e7def1575ee74a39d0eef68faf14adcbfecb900444f"
+        },
+        {
+          "path": "2024-syncpool/source.html",
+          "requested_url": "https://arxiv.org/abs/2403.17524v2",
+          "resolved_url": "https://arxiv.org/abs/2403.17524v2",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:54.225296+00:00",
+          "bytes": 42686,
+          "sha256": "0c587b26bf29941570f1904b0d589b6006a621e91b951985005c663d09df0d01"
+        },
+        {
+          "path": "2024-syncpool/repository.html",
+          "requested_url": "https://github.com/7-yaya/SyncPool",
+          "resolved_url": "https://github.com/7-yaya/SyncPool",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:54.963359+00:00",
+          "bytes": 243601,
+          "sha256": "b6c4eca2ae5ec772867a847931ddf82b4ec932cfbcf0960d6cf86a1e1382ea5d"
+        },
+        {
+          "path": "2024-syncpool/readme-source.json",
+          "requested_url": "https://api.github.com/repos/7-yaya/SyncPool/readme",
+          "resolved_url": "https://api.github.com/repos/7-yaya/SyncPool/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:55.239494+00:00",
+          "bytes": 2935,
+          "sha256": "476c9c4205b33d3fc3c4a349f64b04ac6e200fc705abeb3adbd3e3987bbd6110"
+        },
+        {
+          "path": "2024-syncpool/upstream-readme.md",
+          "source_url": "https://github.com/7-yaya/SyncPool/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "9f30f34726aa15b67e2821008078cde72255bd57",
+          "derived_from": "readme-source.json",
+          "bytes": 1586,
+          "sha256": "e1a22d4f756b23c9f65a2512e6bf86a5a8550c7706cfbb5ea15eda6cfffb1177"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 13
+    },
+    {
+      "id": "2025-look-ahead-sync",
+      "title": "A High-Capacity and Secure Disambiguation Algorithm for Neural Linguistic Steganography (Look-ahead Sync)",
+      "status": "2025 arXiv preprint",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2510.02332",
+      "pdf": "https://arxiv.org/pdf/2510.02332",
+      "why": "Retains distinguishable future token paths instead of immediately discarding prefix-overlapping candidates. On Llama3-8B, IMDB, top-k 128 with Discop, reports 2.66 bits/token versus SyncPool's 0.95.",
+      "caveat": "The same setting produces about 0.42 tokens per model call, or 2.38 calls per token. Capacity gains can increase latency. No author implementation was established during the review; theoretical assumptions deserve separate evaluation.",
+      "repo": null,
+      "priority": "capacity experiment",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2025-look-ahead-sync/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2510.02332",
+          "resolved_url": "https://arxiv.org/pdf/2510.02332",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:55.621583+00:00",
+          "bytes": 939863,
+          "sha256": "be6a6f4628f7753eeafa560c974a10bf299d43038e2ff12a3936775ca3300136"
+        },
+        {
+          "path": "2025-look-ahead-sync/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 109216,
+          "sha256": "f8a4505398c1c2fbd291bf575ad561029e3d5306ea2637195e7bae0c873a4b7c"
+        },
+        {
+          "path": "2025-look-ahead-sync/source.html",
+          "requested_url": "https://arxiv.org/abs/2510.02332",
+          "resolved_url": "https://arxiv.org/abs/2510.02332",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:55.946759+00:00",
+          "bytes": 42826,
+          "sha256": "fe7e159dfe4ccc48d68cae82bf8ddaf7aa35aad64543c1c154b45fb1437a6bd3"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 13
+    },
+    {
+      "id": "2025-sparsamp",
+      "title": "SparSamp: Efficient Provably Secure Steganography Based on Sparse Sampling",
+      "status": "USENIX Security 2025",
+      "kind": "paper",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+      "pdf": "https://www.usenix.org/system/files/usenixsecurity25-wang-yaofei.pdf",
+      "why": "Strong modern baseline combining distribution preservation with low sampling overhead. In the RRC paper's matched Llama-2-7B comparison it reaches 3.38 bits/token and is faster than RRC.",
+      "caveat": "Headline token rates do not include a universal solution to tokenization ambiguity. Compare identical distributions and full transmitted bytes before inferring gains for our POC.",
+      "repo": null,
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2025-sparsamp/paper.pdf",
+          "requested_url": "https://www.usenix.org/system/files/usenixsecurity25-wang-yaofei.pdf",
+          "resolved_url": "https://www.usenix.org/system/files/usenixsecurity25-wang-yaofei.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:54.530465+00:00",
+          "bytes": 1427464,
+          "sha256": "d574b1edd69ebedd948606d1427d10b3c00b50f373f12e4227b40b66c1dd75de"
+        },
+        {
+          "path": "2025-sparsamp/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 125183,
+          "sha256": "67c8cf7d194adc68ef1e5a19baf0f90b412af01b715b16bfbd6ea58b4c0c4c8e"
+        },
+        {
+          "path": "2025-sparsamp/source.html",
+          "requested_url": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+          "resolved_url": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:55.190904+00:00",
+          "bytes": 42050,
+          "sha256": "e63dfcdb6cdb46b7baf9ed2cca744b452e5831913417b4efae50e44de59598b2"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 20
+    },
+    {
+      "id": "2025-stead",
+      "title": "STEAD: Robust Provably Secure Linguistic Steganography with Diffusion Language Model",
+      "status": "NeurIPS 2025",
+      "kind": "paper",
+      "source": "https://papers.nips.cc/paper_files/paper/2025/hash/3d03800841fa1bb2f43ef1750aafcce4-Abstract-Conference.html",
+      "pdf": "https://papers.nips.cc/paper_files/paper/2025/file/3d03800841fa1bb2f43ef1750aafcce4-Paper-Conference.pdf",
+      "why": "Explores resistance to token insertion, deletion, and substitution using diffusion language models and error correction. Relevant if the channel must tolerate edited cover text.",
+      "caveat": "A different model architecture and channel objective from our autoregressive Llama POC. Robustness claims are limited to the evaluated attacks and settings.",
+      "repo": "7-yaya/STEAD",
+      "priority": "robustness",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2025-stead/paper.pdf",
+          "requested_url": "https://papers.nips.cc/paper_files/paper/2025/file/3d03800841fa1bb2f43ef1750aafcce4-Paper-Conference.pdf",
+          "resolved_url": "https://papers.nips.cc/paper_files/paper/2025/file/3d03800841fa1bb2f43ef1750aafcce4-Paper-Conference.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:56.742525+00:00",
+          "bytes": 1529422,
+          "sha256": "cbcd6bc82a0b445a24e76457caecd52055f0d3ab1686e593310e135b72573b1c"
+        },
+        {
+          "path": "2025-stead/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 172037,
+          "sha256": "9ddcee114bbf9c030102e425c2fa9b7d1455f2228af55450cb359eca2df18b4e"
+        },
+        {
+          "path": "2025-stead/source.html",
+          "requested_url": "https://papers.nips.cc/paper_files/paper/2025/hash/3d03800841fa1bb2f43ef1750aafcce4-Abstract-Conference.html",
+          "resolved_url": "https://papers.nips.cc/paper_files/paper/2025/hash/3d03800841fa1bb2f43ef1750aafcce4-Abstract-Conference.html",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:57.776182+00:00",
+          "bytes": 9919,
+          "sha256": "53c335fd58d94f0514c8cbd7bdfeb31ea9eca4ecbaeb61129e712eada88ba970"
+        },
+        {
+          "path": "2025-stead/repository.html",
+          "requested_url": "https://github.com/7-yaya/STEAD",
+          "resolved_url": "https://github.com/7-yaya/STEAD",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:58.420668+00:00",
+          "bytes": 239514,
+          "sha256": "ae21c813c9c20172e27c8346f8a1776367a170a37e6b5b382bcab9e13984e379"
+        },
+        {
+          "path": "2025-stead/readme-source.json",
+          "requested_url": "https://api.github.com/repos/7-yaya/STEAD/readme",
+          "resolved_url": "https://api.github.com/repos/7-yaya/STEAD/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:58.658974+00:00",
+          "bytes": 2794,
+          "sha256": "65dda5ba71ae033b436fb898a7cc0dc2c9a30b39e7b2676af3bde675171ada85"
+        },
+        {
+          "path": "2025-stead/upstream-readme.md",
+          "source_url": "https://github.com/7-yaya/STEAD/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "5a404805c4fcc208650f5d7d2636580f66b95414",
+          "derived_from": "readme-source.json",
+          "bytes": 1500,
+          "sha256": "391e37230cf49f59dda1401268f488f195e5531bc5a345ba773ffc1f8e4a19cc"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 26
+    },
+    {
+      "id": "2025-stegozip",
+      "title": "StegoZip: Enhancing Linguistic Steganography Payload in Practice with Large Language Models",
+      "status": "NeurIPS 2025",
+      "kind": "paper",
+      "source": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+      "pdf": "https://proceedings.neurips.cc/paper_files/paper/2025/file/6c8e215afa321d5d0b295dc1882820df-Paper-Conference.pdf",
+      "why": "Targets our expansion problem by compressing the secret before embedding. Reports about 2.5 times the payload using semantic pruning, rank-based compression, and explicit corrections for restoration errors.",
+      "caveat": "Uses a trained restoration model; main experiments involve larger models, with a 3B ablation. Reported semantic fidelity metrics do not replace our requirement to check exact bytes, Unicode, and whitespace.",
+      "repo": "Jungle0430/StegoZip",
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2025-stegozip/paper.pdf",
+          "requested_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/6c8e215afa321d5d0b295dc1882820df-Paper-Conference.pdf",
+          "resolved_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/6c8e215afa321d5d0b295dc1882820df-Paper-Conference.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:56.406672+00:00",
+          "bytes": 1262705,
+          "sha256": "95c6250b0970d3005504abc1aa07b8bfaf1ba0785d8410f00201bee98d6e0330"
+        },
+        {
+          "path": "2025-stegozip/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 106647,
+          "sha256": "dc0d91e89e6d691eae19e721ee2f6b09def201d052884fb70f4e313307c7e1b1"
+        },
+        {
+          "path": "2025-stegozip/source.html",
+          "requested_url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+          "resolved_url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:56.883368+00:00",
+          "bytes": 9851,
+          "sha256": "0e5c4a9c3da84691313da1a34f1c373290e0a9ab12fb20bde2d91def90a3283c"
+        },
+        {
+          "path": "2025-stegozip/repository.html",
+          "requested_url": "https://github.com/Jungle0430/StegoZip",
+          "resolved_url": "https://github.com/Jungle0430/StegoZip",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:57.619325+00:00",
+          "bytes": 266492,
+          "sha256": "c5022543bd67380972800965b69413c0ebd22436d7efa961dd47b27eecf3683e"
+        },
+        {
+          "path": "2025-stegozip/readme-source.json",
+          "requested_url": "https://api.github.com/repos/Jungle0430/StegoZip/readme",
+          "resolved_url": "https://api.github.com/repos/Jungle0430/StegoZip/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:57.877460+00:00",
+          "bytes": 5269,
+          "sha256": "d1ad773e259b9b1ceca50162485120a7cdd47dfae7a68949111c6477bb664659"
+        },
+        {
+          "path": "2025-stegozip/upstream-readme.md",
+          "source_url": "https://github.com/Jungle0430/StegoZip/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "d58a18e75bfb39beeb8d0f5ff138b578f84d0d18",
+          "derived_from": "readme-source.json",
+          "bytes": 3260,
+          "sha256": "e8fe6c103cf648f6fedc22d6adf3342b2a3a282afa0872a47e5d5b37d192c8df"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 24
+    },
+    {
+      "id": "2025-stepwise-token-verification",
+      "title": "Addressing Tokenization Inconsistency in Steganography and Watermarking Based on Large Language Models",
+      "status": "EMNLP 2025",
+      "kind": "paper",
+      "source": "https://aclanthology.org/2025.emnlp-main.361/",
+      "pdf": "https://aclanthology.org/2025.emnlp-main.361.pdf",
+      "why": "A direct implementation candidate: filters token choices whose detokenization and retokenization would diverge. Could retain more useful choices than our broad prefix-free filtering. The official Consistency repository includes roundtrip experiments.",
+      "caveat": "Filtering changes the reference distribution. Its correctness argument does not remove numerical discrepancies between sender and receiver runtimes.",
+      "repo": "ryehr/Consistency",
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2025-stepwise-token-verification/paper.pdf",
+          "requested_url": "https://aclanthology.org/2025.emnlp-main.361.pdf",
+          "resolved_url": "https://aclanthology.org/2025.emnlp-main.361.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:55.621909+00:00",
+          "bytes": 3448732,
+          "sha256": "348453ce485abdc88e011c02073ba21e28c82f8a351c957ddfcc4d2fb62a645f"
+        },
+        {
+          "path": "2025-stepwise-token-verification/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 138215,
+          "sha256": "e344b5d8c427315ce7fd34bd2f2aff30dced8f79a4f2e69c942928fba99a2943"
+        },
+        {
+          "path": "2025-stepwise-token-verification/source.html",
+          "requested_url": "https://aclanthology.org/2025.emnlp-main.361/",
+          "resolved_url": "https://aclanthology.org/2025.emnlp-main.361/",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:55.956930+00:00",
+          "bytes": 42291,
+          "sha256": "fd84c4362ffdc11821b7cb25abeabca82084f9385a9b395a3c04b833f697c14f"
+        },
+        {
+          "path": "2025-stepwise-token-verification/repository.html",
+          "requested_url": "https://github.com/ryehr/Consistency",
+          "resolved_url": "https://github.com/ryehr/Consistency",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:56.723829+00:00",
+          "bytes": 329756,
+          "sha256": "bdfe5e297702c2af333f296dc2e61f8f46d52437740a858ede93a2dc1626382a"
+        },
+        {
+          "path": "2025-stepwise-token-verification/readme-source.json",
+          "requested_url": "https://api.github.com/repos/ryehr/Consistency/readme",
+          "resolved_url": "https://api.github.com/repos/ryehr/Consistency/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:56.974145+00:00",
+          "bytes": 15994,
+          "sha256": "6b1527f9294b2c36277f46860b26f0cedf3c715f626b02e3d1470eb926f3a07e"
+        },
+        {
+          "path": "2025-stepwise-token-verification/upstream-readme.md",
+          "source_url": "https://github.com/ryehr/Consistency/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "f4cfe14fa8b80797e67d61c2f34abfae22336cc6",
+          "derived_from": "readme-source.json",
+          "bytes": 11053,
+          "sha256": "4d896f45b28f433593a4475639b80fde48041981d0fa2cb0eb241d7ee54b1ee8"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 23
+    },
+    {
+      "id": "2026-adaptive-dynamic-sampling",
+      "title": "Provable Secure Steganography Based on Adaptive Dynamic Sampling",
+      "status": "USENIX Security 2026",
+      "kind": "paper",
+      "source": "https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi",
+      "pdf": "https://www.usenix.org/system/files/usenixsecurity26-pang-kaiyi_0.pdf",
+      "why": "Investigates a model API that accepts a seed without exposing full probabilities. Relevant if we want to work through a constrained serving API rather than a custom logits interface.",
+      "caveat": "The API must reproduce samples for supplied seeds. The authors identify provider nondeterminism as a limitation, so this does not eliminate the need for controlled execution.",
+      "repo": null,
+      "priority": "deployment",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-adaptive-dynamic-sampling/paper.pdf",
+          "requested_url": "https://www.usenix.org/system/files/usenixsecurity26-pang-kaiyi_0.pdf",
+          "resolved_url": "https://www.usenix.org/system/files/usenixsecurity26-pang-kaiyi_0.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:58.969633+00:00",
+          "bytes": 2057083,
+          "sha256": "5c7482d0e021abaddb2fe1dc06cc12d707696faa2a6cb57167aa0d0b9083cfcd"
+        },
+        {
+          "path": "2026-adaptive-dynamic-sampling/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 117163,
+          "sha256": "e99e267439aed9baf8e6c037b352923e27fbf3ef6cb5ce069f1c1457c1f26deb"
+        },
+        {
+          "path": "2026-adaptive-dynamic-sampling/source.html",
+          "requested_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi",
+          "resolved_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:59.566358+00:00",
+          "bytes": 36341,
+          "sha256": "b71ddb231c64f2a38a6c07eed1ec17247aca8bc9df2953e46da971c98894127f"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 18
+    },
+    {
+      "id": "2026-anstega",
+      "title": "Breaking the Generative Steganography Trilemma: ANStega for Optimal Capacity, Efficiency, and Security",
+      "status": "NDSS 2026",
+      "kind": "paper",
+      "source": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+      "pdf": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+      "why": "Near-entropy streaming ANS with cryptographic masking and low coding overhead. Particularly relevant to our size target: reports 3.69 bits/token on Qwen2.5-3B and 4.67 on Phi-2 2.7B in its full-vocabulary experiments.",
+      "caveat": "The decoder consumes the embedder's final ANS state. Transporting or reconstructing that state must be accounted for before treating this as a self-contained cover-text protocol. Numerical compatibility remains necessary.",
+      "repo": null,
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-anstega/paper.pdf",
+          "requested_url": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+          "resolved_url": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:57.210365+00:00",
+          "bytes": 2131738,
+          "sha256": "f24d795b2165b7d6041bcb869ba63016a0668e90f7b419603a199d69ce075cb6"
+        },
+        {
+          "path": "2026-anstega/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 120429,
+          "sha256": "23624475b006d5e5c027c4d398497a520f7b3117d3724ba934e3739368091bc4"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 17
+    },
+    {
+      "id": "2026-hitms",
+      "title": "HiTMS: A High-Throughput Multi-Stream Linguistic Steganography Framework",
+      "status": "July 2026 arXiv preprint, v2",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2607.23597v2",
+      "pdf": "https://arxiv.org/pdf/2607.23597v2",
+      "why": "Adds framing and scheduling for multiple batched cover streams. Reports up to 4.3 times throughput. Its implementation includes Llama3.2-3B, making it relevant to our current model choice.",
+      "caveat": "Throughput gains do not imply shorter total cover. Its protocol-utilization metric must not be confused with entropy utilization. The CUDA implementation and matching batch schedule are not evidence of mobile interoperability.",
+      "repo": "ryehr/HiTMS_steganography",
+      "priority": "deployment",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-hitms/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2607.23597v2",
+          "resolved_url": "https://arxiv.org/pdf/2607.23597v2",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:59.825703+00:00",
+          "bytes": 1653315,
+          "sha256": "37787fc8426e6a8979a42f5164e91588bc81a99869e45e22af3d0eba7d4a0c36"
+        },
+        {
+          "path": "2026-hitms/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 126735,
+          "sha256": "376089ab1007ba1401ab8053dfe53d4d89dd841f86cb90c4487cf0e1665501b1"
+        },
+        {
+          "path": "2026-hitms/source.html",
+          "requested_url": "https://arxiv.org/abs/2607.23597v2",
+          "resolved_url": "https://arxiv.org/abs/2607.23597v2",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:00.072473+00:00",
+          "bytes": 42435,
+          "sha256": "78c2ed09feb2d6630aabb44f782e22e1a0fb0be7214c174ae1cf10fe5793268f"
+        },
+        {
+          "path": "2026-hitms/repository.html",
+          "requested_url": "https://github.com/ryehr/HiTMS_steganography",
+          "resolved_url": "https://github.com/ryehr/HiTMS_steganography",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:00.777023+00:00",
+          "bytes": 341440,
+          "sha256": "f2adbfdd00f15501c37925096b7cebd6c31644601cfa6bf12bafc971c65229a9"
+        },
+        {
+          "path": "2026-hitms/readme-source.json",
+          "requested_url": "https://api.github.com/repos/ryehr/HiTMS_steganography/readme",
+          "resolved_url": "https://api.github.com/repos/ryehr/HiTMS_steganography/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:01.038697+00:00",
+          "bytes": 9795,
+          "sha256": "97de6187972023837ae5d21524f013b13069b5d5a8aefd06c8f6c105bd80faf3"
+        },
+        {
+          "path": "2026-hitms/upstream-readme.md",
+          "source_url": "https://github.com/ryehr/HiTMS_steganography/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "e9c1e1074d22cf97f86ae27acf34442c2495815a",
+          "derived_from": "readme-source.json",
+          "bytes": 6516,
+          "sha256": "082fe30087606cc317a1908fe472714c99c272842d291535eaf4b25aa2820618"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 13
+    },
+    {
+      "id": "2026-list-decoding",
+      "title": "Provably Secure Steganography Based on List Decoding",
+      "status": "April 2026 arXiv preprint, v3",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2604.21394v3",
+      "pdf": "https://arxiv.org/pdf/2604.21394v3",
+      "why": "Keeps candidate messages across tokens and resolves ambiguity with a suffix. Useful as an alternative way to approach the available entropy when instantaneous token choices carry little information.",
+      "caveat": "Needs message length, can maintain up to 2^20 candidates, and allows a small failure probability. A research agent flagged a possible weighted-to-unweighted inequality issue in the capacity argument; this concern was not independently audited. Treat the bound as an author claim pending review.",
+      "repo": null,
+      "priority": "supporting",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-list-decoding/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2604.21394v3",
+          "resolved_url": "https://arxiv.org/pdf/2604.21394v3",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:58.959388+00:00",
+          "bytes": 1142627,
+          "sha256": "5619e7f14b2d964d7b8c23553929b781f2dece3cea67e1887b89f484320d4b54"
+        },
+        {
+          "path": "2026-list-decoding/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 124794,
+          "sha256": "c0aa38acbd7772fb93f59b67d7714a35fd2159196b3e18abc445994668dffb78"
+        },
+        {
+          "path": "2026-list-decoding/source.html",
+          "requested_url": "https://arxiv.org/abs/2604.21394v3",
+          "resolved_url": "https://arxiv.org/abs/2604.21394v3",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:59.242064+00:00",
+          "bytes": 42011,
+          "sha256": "7119e2ee49ae0326938e3ae3e492c29833483e6633d625c562a613f14faf3526"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 14
+    },
+    {
+      "id": "2026-od-stega",
+      "title": "OD-Stega: LLM-Based Relatively Secure Steganography via Optimized Distributions",
+      "status": "EACL 2026",
+      "kind": "paper",
+      "source": "https://aclanthology.org/2026.eacl-long.36/",
+      "pdf": "https://aclanthology.org/2026.eacl-long.36.pdf",
+      "why": "Optimizes the available token entropy subject to a KL or total-variation divergence budget. Addresses a separate bottleneck from coding efficiency and gives a principled alternative to choosing temperature by trial and error.",
+      "caveat": "A nonzero divergence budget deliberately changes the original sampling distribution. Higher capacity must be evaluated against text quality and detectability.",
+      "repo": null,
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-od-stega/paper.pdf",
+          "requested_url": "https://aclanthology.org/2026.eacl-long.36.pdf",
+          "resolved_url": "https://aclanthology.org/2026.eacl-long.36.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:57.659349+00:00",
+          "bytes": 2258684,
+          "sha256": "931424b2eeea6d54cd2b44b33ab17cf2f25c16804c7d0f983712d493494b2d55"
+        },
+        {
+          "path": "2026-od-stega/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 222223,
+          "sha256": "87e97dbfe7570d6458bbad53609aa7a3213f0c15744e61634fd615b0c66d0b3d"
+        },
+        {
+          "path": "2026-od-stega/source.html",
+          "requested_url": "https://aclanthology.org/2026.eacl-long.36/",
+          "resolved_url": "https://aclanthology.org/2026.eacl-long.36/",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:58.044066+00:00",
+          "bytes": 43763,
+          "sha256": "1c5c9950c91c945ff4dce774040c3a579c0875825dc2ef65d8e9ee1e5a69c096"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 25
+    },
+    {
+      "id": "2026-retoksync",
+      "title": "ReTokSync: Self-Synchronizing Tokenization Disambiguation for Generative Linguistic Steganography",
+      "status": "April 2026 arXiv preprint",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2604.25486",
+      "pdf": "https://arxiv.org/pdf/2604.25486",
+      "why": "Resets generation state to the receiver's retokenized view when ambiguity occurs, limiting cascading errors. Promising for retaining capacity with little runtime overhead.",
+      "caveat": "Above 99.7% accuracy refers to bits, not complete messages. Its evaluated 100% recovery uses additional correction covers through a reliable auxiliary channel. It is not yet our one-cover exact-recovery requirement.",
+      "repo": null,
+      "priority": "text transport",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-retoksync/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2604.25486",
+          "resolved_url": "https://arxiv.org/pdf/2604.25486",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:58.950103+00:00",
+          "bytes": 1960896,
+          "sha256": "1f32a6c124dc18bb638c7f3b3c17cfeca28ebbdade71216ceffe5aba1658a795"
+        },
+        {
+          "path": "2026-retoksync/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 145893,
+          "sha256": "6bffe116a9ed74b6a591273fa385b95fbecf954860ffa7084b20a8fc91723aa2"
+        },
+        {
+          "path": "2026-retoksync/source.html",
+          "requested_url": "https://arxiv.org/abs/2604.25486",
+          "resolved_url": "https://arxiv.org/abs/2604.25486",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:59.376817+00:00",
+          "bytes": 43735,
+          "sha256": "5befd10c3e656165be4c0fafe9821e8342d7bc98be6ba40ec2e3a29be14560c3"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 20
+    },
+    {
+      "id": "2026-rrc",
+      "title": "Efficient Provably Secure Linguistic Steganography via Range Coding (RRC)",
+      "status": "ACL 2026",
+      "kind": "paper",
+      "source": "https://aclanthology.org/2026.acl-long.39/",
+      "pdf": "https://aclanthology.org/2026.acl-long.39.pdf",
+      "why": "A leading direct comparison for our interval coder. Reports approximately 100% entropy utilization and 3.57 bits/token on Llama-2-7B. Its repository documents precision, termination, and tokenization failures that matter for a real text-only protocol.",
+      "caveat": "Utilization is supported empirically, not by a rigorous optimality proof. Message length is agreed in advance. Repository tests report 100% recovery from token IDs but about 91% from retokenized text for one 128-bit setting, and require matched inference environments.",
+      "repo": "ryehr/RRC_steganography",
+      "priority": "read first",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-rrc/paper.pdf",
+          "requested_url": "https://aclanthology.org/2026.acl-long.39.pdf",
+          "resolved_url": "https://aclanthology.org/2026.acl-long.39.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:56.697079+00:00",
+          "bytes": 2055118,
+          "sha256": "2117f109bc21037d691b1fce4b37e00542928db5f21ba6235abe713cbef620d4"
+        },
+        {
+          "path": "2026-rrc/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 108391,
+          "sha256": "c45423caf83f0d56f9b9bf103f822d3f2389a80fcff8d387cde1450cfac1822f"
+        },
+        {
+          "path": "2026-rrc/source.html",
+          "requested_url": "https://aclanthology.org/2026.acl-long.39/",
+          "resolved_url": "https://aclanthology.org/2026.acl-long.39/",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:56.996977+00:00",
+          "bytes": 41353,
+          "sha256": "2417aad7f9ecae87ccb757673ee478ef5984888d7774c8333cf19a65bb17e270"
+        },
+        {
+          "path": "2026-rrc/repository.html",
+          "requested_url": "https://github.com/ryehr/RRC_steganography",
+          "resolved_url": "https://github.com/ryehr/RRC_steganography",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:57.701921+00:00",
+          "bytes": 329743,
+          "sha256": "f82c179cc096abbc8b51efadf79f548490b9ec6047816bf6d9c1f50e23625852"
+        },
+        {
+          "path": "2026-rrc/readme-source.json",
+          "requested_url": "https://api.github.com/repos/ryehr/RRC_steganography/readme",
+          "resolved_url": "https://api.github.com/repos/ryehr/RRC_steganography/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:57.964530+00:00",
+          "bytes": 18728,
+          "sha256": "268a1b81c3b10ffbebffd56feb02ea59ab3999831507e335bdd72aa061e886db"
+        },
+        {
+          "path": "2026-rrc/upstream-readme.md",
+          "source_url": "https://github.com/ryehr/RRC_steganography/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "52f693a104e661aa2a02b9c9f2877b4e79944fa3",
+          "derived_from": "readme-source.json",
+          "bytes": 13007,
+          "sha256": "4ff06d312d8ba9ae81db3e1e2c166bb914a48731251a50c0b29d4d2a76c02005"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 18
+    },
+    {
+      "id": "2026-sa-ans",
+      "title": "Linguistic Steganography via Self-Adjusting Asymmetric Number System",
+      "status": "Computational Linguistics 2026",
+      "kind": "paper",
+      "source": "https://aclanthology.org/2026.cl-1.4/",
+      "pdf": "https://aclanthology.org/2026.cl-1.4.pdf",
+      "why": "Another modern ANS-based approach, with adaptive candidate selection and user-selected embedding rates. Useful for comparing capacity, generation quality, and coding overhead.",
+      "caveat": "Keep its rate and distortion definitions separate from claims of exact preservation of an unmodified model distribution. It is a distinct method from ANStega.",
+      "repo": null,
+      "priority": "supporting",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-sa-ans/paper.pdf",
+          "requested_url": "https://aclanthology.org/2026.cl-1.4.pdf",
+          "resolved_url": "https://aclanthology.org/2026.cl-1.4.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:58.247609+00:00",
+          "bytes": 2267732,
+          "sha256": "0b54d54c84d91b5ed5da6bd73fa81b24faafbcf50873cbbea3bcb512a63c5025"
+        },
+        {
+          "path": "2026-sa-ans/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 113114,
+          "sha256": "4ac8623c96668c61cf133bdb298050ac11a5ebb5eed4892a97d0d3214ff810ab"
+        },
+        {
+          "path": "2026-sa-ans/source.html",
+          "requested_url": "https://aclanthology.org/2026.cl-1.4/",
+          "resolved_url": "https://aclanthology.org/2026.cl-1.4/",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:58.690223+00:00",
+          "bytes": 39717,
+          "sha256": "fcd76e140684b6887b5cbb2bab16752858dadc49a73841370316ebac11b9cdab"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 37
+    },
+    {
+      "id": "2026-survey",
+      "title": "A Comprehensive Survey on Linguistic Steganography: Methods, Countermeasures, Evaluation, and Challenges",
+      "status": "August 2026 arXiv survey; authors report EMNLP 2026 acceptance",
+      "kind": "paper",
+      "source": "https://arxiv.org/abs/2608.29077v1",
+      "pdf": "https://arxiv.org/pdf/2608.29077v1",
+      "why": "Map of the field, including 148 steganographic methods, tokenization fixes, evaluation metrics, and engineering limitations. Useful starting point and bibliography for continuing this research.",
+      "caveat": "A survey indexes claims rather than independently validating every method. Return to the primary papers for security assumptions, exact recovery requirements, and comparable capacity measurements.",
+      "repo": null,
+      "priority": "orientation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-survey/paper.pdf",
+          "requested_url": "https://arxiv.org/pdf/2608.29077v1",
+          "resolved_url": "https://arxiv.org/pdf/2608.29077v1",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:59.754571+00:00",
+          "bytes": 1561392,
+          "sha256": "ed54dad5f8bcc1851e3a881f5eaa144d2fd26860b79f1922be63ca41a61073a2"
+        },
+        {
+          "path": "2026-survey/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 272948,
+          "sha256": "a0111fb30a38343b50560c996a62f2a22b18e8d2401566a28177ea5c9a52a525"
+        },
+        {
+          "path": "2026-survey/source.html",
+          "requested_url": "https://arxiv.org/abs/2608.29077v1",
+          "resolved_url": "https://arxiv.org/abs/2608.29077v1",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:00.096517+00:00",
+          "bytes": 40955,
+          "sha256": "4021e40dc0ced71d982bee24686cf59926c46011e6d1fd47756cd74b1b39c5ac"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 36
+    },
+    {
+      "id": "2026-te-csa",
+      "title": "TE-CSA: trajectory entropy-aware cross-step aggregation for improving embedding capacity of distribution-preserving linguistic steganography",
+      "status": "Cybersecurity, 13 October 2026",
+      "kind": "paper",
+      "source": "https://link.springer.com/article/10.1186/s42400-026-00668-2",
+      "pdf": "https://link.springer.com/content/pdf/10.1186/s42400-026-00668-2.pdf",
+      "why": "Recent diffusion-model extension that aggregates embedding opportunities across denoising steps. Reports 1.84 bits/token versus 0.09 for its architecture-matched timestep-local baseline.",
+      "caveat": "Its preservation claim assumes a distribution-preserving underlying embedding mechanism. It is a different architecture from our autoregressive POC, and its relative gains cannot be applied to our byte expansion.",
+      "repo": null,
+      "priority": "robustness",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-te-csa/paper.pdf",
+          "requested_url": "https://link.springer.com/content/pdf/10.1186/s42400-026-00668-2.pdf",
+          "resolved_url": "https://link.springer.com/content/pdf/10.1186/s42400-026-00668-2.pdf?error=cookies_not_supported&code=5035da26-9c28-4910-83d6-1e4b6bfb3e21",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:48:01.806318+00:00",
+          "bytes": 3566820,
+          "sha256": "73538bce986507ae3b304d460b173cf17266fa2afa4a59c6795a4d61dbca73fa"
+        },
+        {
+          "path": "2026-te-csa/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 136881,
+          "sha256": "bfa7583e768c5544cb76af5ee845932bf09eba36f63c4be0964ec6942248f0f9"
+        },
+        {
+          "path": "2026-te-csa/source.html",
+          "requested_url": "https://link.springer.com/article/10.1186/s42400-026-00668-2",
+          "resolved_url": "https://link.springer.com/article/10.1186/s42400-026-00668-2?error=cookies_not_supported&code=2d37b83b-5154-4194-9d12-15afef8028fd",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:03.600030+00:00",
+          "bytes": 489151,
+          "sha256": "9256b61cf9d2e722a7c7113f32e56d85bf6d571af6693fcb208e7b626e121b3a"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 27
+    },
+    {
+      "id": "2026-weak-asymmetry",
+      "title": "From Symmetry toward Weak Asymmetry: Secure Steganography under the Receiver's Partial Channel Knowledge",
+      "status": "USENIX Security 2026",
+      "kind": "paper",
+      "source": "https://www.usenix.org/conference/usenixsecurity26/presentation/liao",
+      "pdf": "https://www.usenix.org/system/files/usenixsecurity26-liao.pdf",
+      "why": "Allows receiver-side information such as token rankings instead of exact probability values. Directly relevant to numerical mismatches and eventual decoding across different devices.",
+      "caveat": "Decoding still depends on the required partial information staying consistent. Precision-mismatch experiments are evidence for that setting, not proof of arbitrary phone-to-desktop compatibility.",
+      "repo": null,
+      "priority": "deployment",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "2026-weak-asymmetry/paper.pdf",
+          "requested_url": "https://www.usenix.org/system/files/usenixsecurity26-liao.pdf",
+          "resolved_url": "https://www.usenix.org/system/files/usenixsecurity26-liao.pdf",
+          "content_type": "application/pdf",
+          "retrieved_at": "2026-10-18T09:47:58.816640+00:00",
+          "bytes": 638649,
+          "sha256": "f2a4414f058a5ccb717d07329a633a80edef7a09671b4f5a7eca7dde401361da"
+        },
+        {
+          "path": "2026-weak-asymmetry/paper.txt",
+          "derived_from": "paper.pdf",
+          "method": "pdftotext -layout",
+          "bytes": 124722,
+          "sha256": "e7a0ea14ae673ee8183d1f98f97d189bb2295c5900be1d114d879398c1553549"
+        },
+        {
+          "path": "2026-weak-asymmetry/source.html",
+          "requested_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/liao",
+          "resolved_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/liao",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:47:59.479521+00:00",
+          "bytes": 37440,
+          "sha256": "572013f15f6603532e899f4088748d8a665679853fd9681d79af2a144e7e7b28"
+        }
+      ],
+      "errors": [],
+      "pdf_pages": 19
+    },
+    {
+      "id": "implementation-meteor-cli",
+      "title": "Independent Meteor CLI",
+      "status": "Repository documentation snapshot; not independently reproduced",
+      "kind": "repository",
+      "source": "https://github.com/rohanssrao/meteor",
+      "repo": "rohanssrao/meteor",
+      "why": "An unofficial small-model implementation using LiquidAI LFM2.5-230M-Base. Relevant to packaging and reducing inference requirements.",
+      "caveat": "Separate from the original Meteor paper's artifact. No convincing cross-device or phone benchmark was established in this review; retain upstream licensing information.",
+      "priority": "implementation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "implementation-meteor-cli/repository.html",
+          "requested_url": "https://github.com/rohanssrao/meteor",
+          "resolved_url": "https://github.com/rohanssrao/meteor",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:01.332901+00:00",
+          "bytes": 266465,
+          "sha256": "bb59a15749c03b5755c7bc196ba92490cf6011935875946905bee5b9542a5cf4"
+        },
+        {
+          "path": "implementation-meteor-cli/readme-source.json",
+          "requested_url": "https://api.github.com/repos/rohanssrao/meteor/readme",
+          "resolved_url": "https://api.github.com/repos/rohanssrao/meteor/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:01.560118+00:00",
+          "bytes": 3713,
+          "sha256": "3b1c3cb4b43f719d3c726a0bb88cff5ebb59c350a3127127836ec0f98c6564ed"
+        },
+        {
+          "path": "implementation-meteor-cli/upstream-readme.md",
+          "source_url": "https://github.com/rohanssrao/meteor/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "b2d14ef65422e4011d52db2e07e659c8afbc176a",
+          "derived_from": "readme-source.json",
+          "bytes": 2140,
+          "sha256": "e3ce6b669cdabb60cd4ab1811666b8abc95770ea7f6b5c701c2437224dd9ffac"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "implementation-perniciosa-vulpis",
+      "title": "Perniciosa Vulpis",
+      "status": "Repository documentation snapshot; not independently reproduced",
+      "kind": "repository",
+      "source": "https://github.com/mikkolehtisalo/perniciosavulpis",
+      "repo": "mikkolehtisalo/perniciosavulpis",
+      "why": "Independent C/C++ Meteor-style library using pinned llama.cpp and Llama3.2 1B/3B GGUF models. Closely related to our local-model deployment and visible-text synchronization requirements.",
+      "caveat": "The reviewed deterministic profile targets x86-64. The displayed 7.211 bits/token example uses a mock backend, not Llama. Documentation was reviewed; code was not run.",
+      "priority": "implementation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "implementation-perniciosa-vulpis/repository.html",
+          "requested_url": "https://github.com/mikkolehtisalo/perniciosavulpis",
+          "resolved_url": "https://github.com/mikkolehtisalo/perniciosavulpis",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:00.320486+00:00",
+          "bytes": 360371,
+          "sha256": "e71bdf41d73c0cf1d7b07bf6777c7e551a026962e6762ac392ca1e7b0782099a"
+        },
+        {
+          "path": "implementation-perniciosa-vulpis/readme-source.json",
+          "requested_url": "https://api.github.com/repos/mikkolehtisalo/perniciosavulpis/readme",
+          "resolved_url": "https://api.github.com/repos/mikkolehtisalo/perniciosavulpis/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:00.578740+00:00",
+          "bytes": 17468,
+          "sha256": "6aa3636661c4fb2abbd8176fe01335cbb63d14ba07eb8d59c3615b9ec4bf3bc4"
+        },
+        {
+          "path": "implementation-perniciosa-vulpis/upstream-readme.md",
+          "source_url": "https://github.com/mikkolehtisalo/perniciosavulpis/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "c37d0bbd214a77ca02874bdcc3b2af39f6ea6de7",
+          "derived_from": "readme-source.json",
+          "bytes": 12052,
+          "sha256": "495d573484afa6fa7fb047cf64e655bb403ff6d5031f004a8fd4c0500d81cf71"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "implementation-stegtext-framework",
+      "title": "StegText Framework",
+      "status": "Repository documentation snapshot; not independently reproduced",
+      "kind": "repository",
+      "source": "https://github.com/lxjf12138/stegtext-framework",
+      "repo": "lxjf12138/stegtext-framework",
+      "why": "Comparison harness exposing several coders and disambiguators, with a Qwen2.5-3B CUDA quickstart. Useful for controlled experiments rather than reimplementing every baseline.",
+      "caveat": "Repository claims were not reproduced. Author provenance and equivalence of every algorithm implementation were not independently established.",
+      "priority": "implementation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "implementation-stegtext-framework/repository.html",
+          "requested_url": "https://github.com/lxjf12138/stegtext-framework",
+          "resolved_url": "https://github.com/lxjf12138/stegtext-framework",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:00.799860+00:00",
+          "bytes": 299140,
+          "sha256": "d2266094411de1e314be349938e544cb5ab615fc6f7e2a1eb6df77c851d021c1"
+        },
+        {
+          "path": "implementation-stegtext-framework/readme-source.json",
+          "requested_url": "https://api.github.com/repos/lxjf12138/stegtext-framework/readme",
+          "resolved_url": "https://api.github.com/repos/lxjf12138/stegtext-framework/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:01.065157+00:00",
+          "bytes": 6498,
+          "sha256": "fe4d9b36b25d018c8e18cb24c864b27d99ebc4a81fd2df351783d4bbb3643914"
+        },
+        {
+          "path": "implementation-stegtext-framework/upstream-readme.md",
+          "source_url": "https://github.com/lxjf12138/stegtext-framework/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "c283cc3f5cbe6243fe94a45807b9bca9cefc18c5",
+          "derived_from": "readme-source.json",
+          "bytes": 4107,
+          "sha256": "300d71d985094938195ecf15ec0bdaa98732a7887cb3a6acb62a34fa8af72d61"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "reference-paper-collection",
+      "title": "Awesome Linguistic Steganography",
+      "status": "Repository documentation snapshot; not independently reproduced",
+      "kind": "repository",
+      "source": "https://github.com/ryehr/awesome-linguistic-steganography",
+      "repo": "ryehr/awesome-linguistic-steganography",
+      "why": "The survey authors' curated source list, useful for finding papers beyond the primary sources in this archive.",
+      "caveat": "A discovery aid, not evidence that listed claims have been reproduced or that every new method is suitable for exact text transport.",
+      "priority": "orientation",
+      "review_date": "2026-10-18",
+      "artifacts": [
+        {
+          "path": "reference-paper-collection/repository.html",
+          "requested_url": "https://github.com/ryehr/awesome-linguistic-steganography",
+          "resolved_url": "https://github.com/ryehr/awesome-linguistic-steganography",
+          "content_type": "text/html; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:02.078859+00:00",
+          "bytes": 855871,
+          "sha256": "dbc72519ff4b1ca89149a60848124e75c8918ce24b572ba50797b4ae31b53bdb"
+        },
+        {
+          "path": "reference-paper-collection/readme-source.json",
+          "requested_url": "https://api.github.com/repos/ryehr/awesome-linguistic-steganography/readme",
+          "resolved_url": "https://api.github.com/repos/ryehr/awesome-linguistic-steganography/readme",
+          "content_type": "application/json; charset=utf-8",
+          "retrieved_at": "2026-10-18T09:48:02.403382+00:00",
+          "bytes": 163728,
+          "sha256": "420a7629c14512d4286c8e586f57c83ada7f73e030e02b8cb91fa501d1050506"
+        },
+        {
+          "path": "reference-paper-collection/upstream-readme.md",
+          "source_url": "https://github.com/ryehr/awesome-linguistic-steganography/blob/main/README.md",
+          "upstream_path": "README.md",
+          "git_blob_sha": "db3af76d2dfa9ec58167a73ffd4ee079a004761b",
+          "derived_from": "readme-source.json",
+          "bytes": 118173,
+          "sha256": "31f9c7f7975b5dfbb27ccf9442abab49e4077e2b6ef986071d9c9bfe6896e045"
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

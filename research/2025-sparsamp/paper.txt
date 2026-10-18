@@ -1,0 +1,1293 @@
+           SparSamp: Efficient Provably Secure
+        Steganography Based on Sparse Sampling
+Yaofei Wang, Hefei University of Technology; Gang Pei, Hefei University Of Technology;
+  Kejiang Chen and Jinyang Ding, University of Science and Technology of China;
+    Chao Pan, Weilong Pang, and Donghui Hu, Hefei University of Technology;
+          Weiming Zhang, University of Science and Technology of China
+       https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei
+
+
+
+
+          This paper is included in the Proceedings of the
+                 34th USENIX Security Symposium.
+                       August 13–15, 2025 • Seattle, WA, USA
+                                   978-1-939133-52-6
+
+
+                         Open access to the Proceedings of the
+                34th USENIX Security Symposium is sponsored by USENIX.
+                          SparSamp: Efficient Provably Secure Steganography
+                                     Based on Sparse Sampling
+
+                       Yaofei Wang∗       Gang Pei∗     Kejiang Chen†      Jinyang Ding†
+                      Chao Pan  ∗     Weilong Pang∗     Donghui Hu   ∗    Weiming Zhang†
+              ∗ Hefei University of Technology    † University of Science and Technology of China
+
+
+
+
+                             Abstract                                                              Shared
+                                                                                                Key Generator
+Steganography embeds confidential data within seemingly                                                K
+innocuous communications. Provable security in steganog-                                           PRNG
+                                                                                 Embedding                        Extracting
+raphy, a long-sought goal, has become feasible with deep                         Message
+                                                                                                Sparse Sampling
+                                                                                                                  Message
+generative models. However, existing methods face a critical                                     Generative
+trade-off between security and efficiency. This paper intro-                                       Model
+                                                                       Sender                                                  Receiver
+duces SparSamp, an efficient provably secure steganography             （Alice）
+                                                                                  AIGC
+                                                                                                    Public
+                                                                                                                    AIGC
+                                                                                                                               （Bob）
+method based on sparse sampling. SparSamp embeds mes-
+sages by combining them with pseudo-random numbers to                                             Warden
+                                                                                                  （Eve）
+obtain message-derived random numbers for sampling. It
+enhances extraction accuracy and embedding capacity by
+increasing the sampling intervals and making the sampling               Figure 1: A graphical depiction of steganography.
+process sparse. SparSamp preserves the original probability
+distribution of the generative model, thus ensuring security. It
+introduces only O(1) additional complexity per sampling step,         Steganography [45], the art and science of hiding confiden-
+enabling the fastest embedding speed without compromising          tial messages within seemingly innocuous objects. It enables
+generation speed. SparSamp is designed to be plug-and-play;        a sender to embed secret messages within ordinary content,
+message embedding can be achieved by simply replacing the          ensuring that the communication appears normal, as shown
+sampling component of an existing generative model with            in Figure 1. This technique can help evade even the most op-
+SparSamp. We implemented SparSamp in text, image, and              pressive adversaries, as using encryption may raise suspicion.
+audio generation models. It can achieve embedding speeds           Additionally, steganography facilitates digital “dead-drop” de-
+of up to 755 bits/second with GPT-2, 5046 bits/second with         ployments [5], where encoded messages are left on the public
+DDPM, and 9,223 bits/second with WaveRNN.                          internet, allowing the intended recipient to retrieve them with-
+                                                                   out leaving evidence of direct communication.
+                                                                      Traditional steganography typically embeds secret mes-
+1    Introduction                                                  sages directly into existing content (such as images) in a mod-
+                                                                   ification manner. One of the most frequently utilized methods
+The vulnerability of digital communication to eavesdrop-
+                                                                   in traditional steganography is Least Significant Bit embed-
+ping has been a persistent challenge since the advent of
+                                                                   ding. However, it can be statistically detected with ease [30].
+electronic communications. While cryptography effectively
+                                                                   To reduce the number of modifications and fortify the security
+conceals message content, it fails to hide the act of trans-
+                                                                   of steganography, researchers have introduced the matrix-
+mission itself, and disclosing this metadata can have lethal
+                                                                   based steganography embedding technique [18, 57, 58]. By
+consequences [12]. Besides, as governments’ suspicion of en-
+                                                                   considering the impact of modifications at different locations
+crypted communication continues to grow around the world
+                                                                   on anti-detection performance, researchers have developed
+(e.g., Kids Online Safety Act in the USA [13], Online Safety
+                                                                   a minimal distortion steganography framework, which has
+Act in the UK [38] etc.), it is essential to adopt more covert
+                                                                   become a seminal framework in the realm of image steganog-
+communication methods that can complement existing secure
+                                                                   raphy [17]. However, it is essential to note that the security
+communication technologies.
+                                                                   of these methods cannot be proven and remain susceptible to
+    Donghui Hu is the corresponding author.                        detection by advanced steganalysis techniques [6].
+
+
+
+USENIX Association                                                                         34th USENIX Security Symposium            6817
+   Although the concept of provably secure steganography           to generate output. Throughout the generation process, the
+(PSS) has long been theoretically feasible [8, 25], achieving      time spent on sampling is negligible compared to the time
+this level of security in real-life human communications was       spent predicting probability distributions. A key component in
+considered out of reach due to stringent requirements such as      implementing PSS with generative models is steganographic
+the necessity of a perfect sampler [8, 24, 26, 32, 33]. However,   coding. Current PSS methods usually replace the sampling
+recent advancements in deep learning have led to powerful          process of generative models with steganographic coding
+generative models [20, 21, 31] that serve as samplers and are      to embed messages. For the PSS, the primary goal is to en-
+capable of producing a wide array of artificial intelligence-      sure steganography security while maintaining the model’s
+generated content (AIGC). Notable examples like ChatGPT            inference capability. Therefore, it is crucial not to alter the
+and DALL-E [43] have demonstrated impressive capabilities          probability distribution. Second, according to information
+in generating high-quality text and images. As AIGC gains          theory, the maximum expected number of bits that can be
+popularity across various industries, researchers have begun       embedded in a token equals the sum of the information en-
+exploring its potential for steganography, aiming to conceal       tropy of the probabilities. Therefore, steganographic coding
+confidential information within generated content while evad-      should effectively leverage these probability distributions, al-
+ing censorship measures [10,14,16,28,53,59]. In this context,      lowing tokens with lower probability values to carry longer
+steganographic schemes aim to make the stego content in-           messages. Thirdly, the embedding process should resemble
+distinguishable from regularly generated AI output, rather         the original sampling to avoid impacting the generation speed.
+than from natural training data. This shift in focus makes         Finally, different messages should result in distinct outputs
+generative models a valuable tool for implementing PSS.            after embedding to guarantee accurate extraction. In this pa-
+   Yang et al. [53] first introduced the PixelCNN for secure im-   per, we combine messages with pseudo-random numbers for
+age steganography. Chen et al. [9, 10] utilized text-to-speech     sampling to achieve the above requirements.
+generative models for secure audio steganography. Ziegler             We know that when we sample once using a random num-
+et al. [59] also proposed a linguistic steganography based         ber from the probability distribution inferred by the model,
+on language models. These methods used arithmetic cod-             we generate a single token. By conducting multiple samplings
+ing (AC) for invertible transformations to embed and extract       with different random numbers, we can produce multiple to-
+messages. Kaptchuk et al. [28] highlight the “randomness           kens. When the difference between two random numbers
+reuse” issue when directly employing AC, which may lead            is significant, the likelihood of sampling duplicate tokens
+to potential risk. Then, they proposed a PSS method called         decreases. Leveraging this characteristic, we can combine dif-
+Meteor [28], based on the ranged randomness recoverable            ferent equal-length messages with a pseudo-random number
+sampling scheme (RRRSS), a distinct form of AC. However,           to get different message-derived random numbers (denoted
+all of the above methods slightly alter the original probability   as MRNs) for sampling. In this way, we can preserve the
+distributions. Then, Ding et al. [16] proposed a PSS method        statistical properties of random sampling without altering the
+based on “distribution copies” called Discop. Witt et al. [14]     model’s probability distribution.
+introduced an iterative minimum entropy coupling method               We define the sampling interval as the difference between
+(iMEC) to achieve PSS. While these methods successfully            adjacent MRNs. The number of MRNs, or the length of each
+maintain the original distribution, their embedding capacity       embedded message, determines this sampling interval. To
+is significantly lower than AC-based steganography’s, par-         avoid different MRNs sampling the same result, we need to
+ticularly in low entropy situations. In addition, Discop [16],     sparsify the sampling, which will increase the difference be-
+iMEC [14], and Meteor [28] introduce high computational            tween adjacent MRNs (the sampling interval). This ensures
+complexity, with embedding time consumption that is even           that the result sampled by the MRN originating from the
+ten or hundreds of times longer than the inference time of the     message to be embedded (denoted as eMRN) will not over-
+model, which is unacceptable. In light of these observations,      lap with the results sampled by other MRNs (referred to as
+this paper asks                                                    oMRNs).
+     How can we embed more message bits with lower com-               In this paper, we determine the sampling interval based
+     plexity without modifying the probability distribution of     on the number of MRNs that previously sampled the same
+     model inference?                                              result. This way allows us to incrementally increase the sam-
+                                                                   pling interval and decrease the number of MRNs that sample
+   To achieve the above goal, We need to design a low-             the same token until the result can be uniquely sampled by
+complexity, high-embedding-rate steganographic algorithm           eMRN. Therefore, we refer to this steganographic method as
+that is plug-and-play for the generative model. The trained        SparSamp.
+generative model, like the GPT series [7, 37, 41, 42], two            Through theoretical and experimental evidence, we have
+steps are usually repeated (as shown in Figure 2): first, it       demonstrated that SparSamp can embed messages of varying
+predicts probability distributions for the next token based on     lengths without altering the probability distribution predicted
+the context, and second, it samples from these distributions       by the generative model. The embedding rate achieved by
+
+
+
+6818    34th USENIX Security Symposium                                                                      USENIX Association
+SparSamp, measured in bits per token, closely approximates          I want to eat
+
+the information entropy of the probability distribution. Ad-                                Probability distribution
+                                                                                                                                    Random sampling
+ditionally, the extra computational overhead introduced by                                with
+                                                                                         later    0.04
+                                                                                                                0.14
+                                                                                                                                      or SparSamp
+SparSamp during each sampling operation is minimal, with a           LLM
+                                                                                          now
+                                                                                      outside
+                                                                                                     0.07
+                                                                                                            0.12                                          now
+                                                                                                                                       Pick a token at
+complexity of only O(1), ensuring that the original model’s                              here
+                                                                                    sandwich       0.05
+                                                                                                                             0.28
+                                                                                                                                    random according to
+                                                                                                                                       the distribution
+normal generation process remains unaffected, preserving                               apple
+                                                                                        pizza             0.1
+                                                                                                                       0.2
+
+
+both speed and quality. Moreover, SparSamp adopts a plug-
+and-play design; users can achieve message embedding by
+                                                                                Figure 2: A generation process of LLM
+simply replacing the sampling component in the generative
+models. In this paper, SparSamp has been successfully imple-
+mented in various models, including large language models              including text, audio, and image generation, and com-
+(LLMs) such as GPT-2 [42], Qwen-2.5 [51], Llama-3 [1].                 pared it with other methods, demonstrating its excellent
+It has also been used in image generation models like the              performance in speed, capacity, and security.
+Denoising Diffusion Probabilistic Model (DDPM) [11] and
+text-to-speech models like WaveRNN [27].
+   The main contributions of this paper can be summarized as    2      Background and Related Work
+follows:
+  • A novel approach to embedding messages. We pro-             2.1        Deep Generative Models
+    pose an innovative method for embedding messages by
+                                                                Achieving PSS requires creating a perfect simulation of the
+    transforming them into message-driven sampling. This
+                                                                cover distribution. However, due to the complexity of digital
+    approach combines messages with pseudo-random num-
+                                                                media such as traditional photographs and human-written
+    bers for sampling, eliminating the need to adjust prob-
+                                                                text, this level of perfection has been historically unattainable.
+    ability distributions or sorting. As a result, our method
+                                                                Nevertheless, recent advances in generative models for natural
+    ensures steganography security while ensuring efficient
+                                                                languages [7, 41, 42], images [15, 44], and sounds [4, 46]
+    message embedding.
+                                                                present promising opportunities for achieving perfect security
+  • Strategy for accurate decoding and improving em-            in real-world applications. These models utilize well-defined
+    bedding rate. We employed a technique called “Sparse        sampling mechanisms to generate content that closely mimics
+    Sampling” to achieve accurate decoding and a high em-       human-created output.
+    bedding rate. This technique involves determining the          This paper will primarily use LLMs to illustrate our pro-
+    number and interval of current samples based on how         posed method. In recent years, significant advancements have
+    many MRNs produced the same result in the previous          been made in the LLM, primarily due to the introduction of
+    sampling step. This technique helps ensure that the sam-    the Transformer model [48] and the success of the GPT series
+    pling results are not mistakenly attributed to multiple     models [7, 37, 41, 42]. LLMs have demonstrated remarkable
+    MRNs while adaptively distributing the message across       capabilities in chatbot development, machine translation, and
+    consecutive sampling results.                               code generation tasks.
+                                                                   The LLM employs a vocabulary V consisting of tokens
+  • Achieving O(1) time complexity. The longer the mes-
+                                                                (which can be words or word fragments), typically containing
+    sage length for each embedding in SparSamp, the denser
+                                                                around 50,000 tokens or more [42]. For next-token (vi ) pre-
+    the sampling becomes, resulting in more MRNs sam-
+                                                                diction, an LLM is represented as a neural network function
+    pling the same outcome. This could potentially lead to
+    increased time complexity. In this paper, we address this
+                                                                G that takes a sequence of known tokens v<i as input and
+                                                                produces a probability distribution Pi = p (vi | v<i ) = G (v<i )
+    issue by achieving an O(1) time complexity through the
+                                                                over the vocabulary using a softmax function. Subsequently,
+    homogenization of sampling. Our approach requires only
+                                                                random sampling is often utilized to select a token based on
+    two mathematical operations to determine the number
+                                                                this probability distribution, as illustrated in Figure 2.
+    of MRNs sampled the same outcome. This effectively
+    reduces the impact on the generation speed of the model
+    when using SparSamp.                                        2.2 Information-theoretic                                              Security            of
+  • Capability of detecting token ambiguity. Although the           Steganography
+    tokens LLMs are not uniquely decodable, SparSamp can
+                                                                Information-theoretic security is highly valued in steganog-
+    detect token ambiguity before extracting a segment of
+                                                                raphy, as it offers robust protection against various forms
+    the message, aiding in correct parsing.
+                                                                of detection [8]. Assuming that both communicating parties
+  • Benchmarking and comparison. SparSamp is easy to            have access to the exact distribution of the object x, security is
+    deploy. We have deployed it in three generative services,   defined by the Kullback-Leibler divergence (KLD) between
+
+
+
+USENIX Association                                                                               34th USENIX Security Symposium                           6819
+                                                                        AC-based steganography expresses messages through the
+         Table 1: Comparison of different methods
+                                                                     shared prefix of the sampled result interval. This approach
+                                Computational          Probability   provides high embedding rates, approaching the information
+          Method
+                                  complexity           unchanged     entropy for long messages. However, it necessitates updat-
+ AC-based [10, 47, 53, 59]           O(N)                  ×         ing the probability intervals after each sampling step, which
+      Meteor [28]              O(N), O(2⌈H(P )⌉ N)         ×         leads to a time complexity of O(N), where N is the number
+        ADG [56]                  O(N log N)               ×         of candidate tokens. Moreover, precision limitations during
+      Discop [16]                 O(1), O(N)               ✓         these updates can modify the original distribution, which may
+       iMEC [14]                  O(N log N)               ✓         compromise security.
+  SparSamp (proposed)                O(1)                  ✓            Meteor: Kaptchuk et al. [28] pointed out an issue with
+                                                                     the AC-based scheme known as the reuse of randomness
+                                                                     problem. When a message is not re-encrypted each time it is
+the cover distribution Pc and the stego distribution Ps . This       used for sampling, there is a risk of the stego being detected,
+divergence can be calculated using the following formula:            potentially leading to information leaks. To address this issue,
+                                                                     they introduced a new steganography scheme called Meteor.
+                                            Pc (x)                   However, we disagree with this perspective because the AC-
+             DKL (Pc ∥Ps ) = ∑ Pc (x) log          .        (1)
+                             x∈C            Ps (x)                   based steganography scheme updates the probability of the
+                                                                     next token to avoid the reuse of randomness (this falls outside
+The KLD essentially measures how different two distribu-             the scope of this paper).
+tions are - the smaller the value, the more similar they are.           Meteor embeds messages like AC-based steganography but
+When it equals zero, the distributions are identical, making         doesn’t update probability intervals, and the message is re-
+it impossible to distinguish between cover and stego. Under          encrypted before each sampling, thereby avoiding the reuse
+these conditions, a steganalyzer would have no advantage             of randomness. However, treating each sample independently
+over random guessing. Therefore, in PSS based on generative          leads to shorter or no shared prefixes, resulting in lower em-
+models, it is essential to ensure both the invariance of the         bedding rates. To improve this, Meteor reorders probabilities,
+model’s predictive probabilities and the randomness of the           which introduces O(2⌈H(P )⌉ N) complexity, where H(P ) is the
+sampling process.                                                    entropy in the distribution. Additionally, due to limitations in
+                                                                     calculation precision, Meteor truncates probabilities, which
+2.3 Attempts to Provably Secure Steganogra-                          may impact security.
+                                                                        ADG: Zhang et al. [56] proposed a steganography method
+    phy in the AIGC Era                                              that utilizes adaptive dynamic grouping (ADG). ADG dynam-
+Several methods have been proposed for realizing PSS by              ically groups the probability distribution of all tokens in the
+utilizing the probability distribution provided by generative        vocabulary at each time step into 2r groups, with each group
+models. In the following, we will analyze the characteristics of     having approximately the same total probability. Each group
+each method concerning computational complexity, security,           represents message bits of length r, and all tokens within a
+and embedding rate. The comparison of different methods is           group are associated with the same message bits. To embed
+shown in Table 1.                                                    a message, a random sample is taken from the normalized
+   AC-based steganography: Arithmetic coding (AC) is a               distribution of the selected group to generate the next token.
+data compression technique designed to encode sequences of              ADG assumes that the message bits follow a uniform distri-
+elements with known probability distributions. This method           bution, meaning each group has an equal probability of being
+is particularly effective for long sequences, as it can achieve      selected. In theory, perfect security can be achieved only if the
+compression close to the information entropy value. Ross An-         grouping is perfectly balanced. However, given the discrete
+derson [3] suggested that a steganography scheme can achieve         nature of probability distributions, achieving this balanced
+perfect security if there is a perfect compression scheme. Fol-      grouping is highly unlikely. Consequently, the actual distribu-
+lowing this, Le et al. [47] developed coding schemes called          tion used for embedding messages is a balanced distribution,
+P-codes using AC. At that time, however, practical samplers          which often deviates from the original distribution. Addition-
+were not available. It was not until the advent of deep learn-       ally, the runtime for dynamic grouping is O(N log N), which
+ing that researchers began to explore new AC-based stegano-          adds significant computational complexity to the process.
+graphic schemes. Yang et al. [53] introduced an autoregres-             Discop: Ding et al. [16] proposed a steganography scheme
+sive generative model, PixelCNN to create a secure image             based on “distribution copies” named Discop. In this scheme,
+steganography scheme. Chen et al. [10] extended this method          several “distribution copies” are generated by rotating all in-
+from image generation to text-to-speech applications. Addi-          tervals by specific displacements. At each time step, the mes-
+tionally, Ziegler et al. [59] proposed a steganography method        sage determines which “distribution copy” to sample from. To
+based on AC that utilized LLMs.                                      enhance the embedding rate, Discop decomposes the multi-
+
+
+
+6820    34th USENIX Security Symposium                                                                         USENIX Association
+variate distribution into multiple bivariate distributions using   ri ∼ U[0, 1) denote the initial pseudo-random number gener-
+a Huffman tree, constructing “distribution copies” for each        ated by a pseudo-random number generator (PRNG) at step i.
+bivariate distribution recursively.                                We define:
+   Discop strictly maintains the original distribution and thus
+achieve PSS due to the probability of each token in different         • V : the candidate vocabulary
+“distribution copies” is equal. By constructing Huffman trees,        • vi ∈ V : the sampled token at step i
+Discop can achieve high embedding rates. However, the com-
+plexity of creating a Huffman tree is O(N), and the average           • Pi : the probability distribution at step i, sorted according
+complexity of walking from the root node to a leaf node of              to the model’s default order
+the tree is O(log N). Therefore, Discop incurs certain time
+overhead.                                                          The sampling of token vi based on Pi using ri is represented
+   iMEC: Witt et al. [14] analyzed information-theoretic           by the following sampling function:
+steganography using the concept of minimum entropy cou-
+                                                                                            S (Pi , ri ) = vi ,                  (2)
+pling. They proved that perfect steganographic security is
+equivalent to a coupling problem and that achieving maxi-          And the corresponding algorithm is shown in Algorithm 1.
+mum transmission efficiency in a perfectly secure system is
+equivalent to a minimum entropy coupling problem. Their
+                                                                    Algorithm 1: sample(Pi , ri ): Sampling in the proba-
+proposed iMEC scheme fully leverages the properties of cou-
+                                                                    bility distribution of candidate tokens using a random
+pling and minimum entropy coupling.
+                                                                    number
+   Similar to Discop, iMEC theoretically does not disrupt
+                                                                     Input: The pseudo-random number ri , Probability
+the probability distribution and thus achieve PSS. However,
+                                                                              distribution Pi
+iMEC does have a certain bit error rate. To achieve minimum
+                                                                   1 cuml ← 0, SEi ← [0, 0]
+entropy coupling and enhance the embedding rate, a con-
+                                                                   2 for k ← 0 to |Pi | − 1 do
+siderable amount of computational complexity, specifically
+                                                                   3      cuml ← cuml + Pi (k)
+O(N log N), is necessary to couple the probabilities.
+                                                                   4      if cuml > ri then
+   Based on the previous analysis, we can find that the in-
+                                                                   5          vi ← corresponding to the k-th token (in
+crease in computational complexity stems from operations
+                                                                                default order);
+such as scaling [59], reordering [16, 28, 56], and coupling the
+                                                                   6          SEi ← [cuml − Pi (k), cuml];
+probability distribution [14]. The destruction of the probabil-
+                                                                   7          break;
+ity distribution is attributed to two factors: (1) truncation of
+                                                                   8      end
+probabilities [56] and (2) limitations in computational pre-
+                                                                   9 end
+cision [28, 59]. In this paper, we aim to design an efficient
+message embedding scheme that can embed more message                 Output: Sampled token vi , Start and end positions of
+bits with lower complexity without changing the probability                     the sampled token SEi
+distribution of model inference.
+                                                                      To combine the message with the pseudo-random number,
+                                                                   we transform a message m with the length of lm into a number
+3    SparSamp Methodology                                          in the interval [0, 1) using a function bin2num(), defined as:
+In this section, we will first introduce a novel message em-                                           bin2dec(m)
+bedding method based on message-driven sampling. Our ap-                            bin2num(m) =                    ,            (3)
+                                                                                                             2lm
+proach embeds message segments sequentially, enabling effi-
+cient handling of arbitrary-length messages. We then demon-        where bin2dec(m) is m’s decimal representation. We then use
+strate how to achieve O(1) computational complexity per            modular addition to combine bin2num(m) with the pseudo-
+sampling step, ensuring no degradation in model’s generation       random number ri , obtaining the “message-derived random
+speed. Finally, we will address the issue of token ambiguity       number (MRN)”, denoted as ri (m):
+in LLMs.
+                                                                                 ri (m) = [ri + bin2num (m)] mod 1.              (4)
+
+                                                                   We distinguish between two types of MRN:
+3.1 Message Embedding via Message-Driven
+    Sampling                                                          • eMRN: The MRN of the actual message m to be em-
+                                                                        bedded
+To achieve message-driven sampling without destroying the
+distribution, we borrowed the idea of using pseudo-random             • oMRN: MRN of other messages m′ that have the same
+numbers from Discop [16] to perform random sampling. Let                length as the embedded message m
+
+
+
+USENIX Association                                                                    34th USENIX Security Symposium           6821
+ 𝑟! = 0.575                              Ambiguity                       Ambiguity                   3-bits     𝑟! 100 𝑟! 101 𝑟! 110 𝑟! 111 𝑟! 000 𝑟! 001 𝑟! 010 𝑟! 011
+      𝑟! 100           𝑟! 101   𝑟! 110    𝑟! 111     𝑟! 000     𝑟! 001   𝑟! 010      𝑟! 011
+
+                                                                                                     2-bits     𝑟! 10                𝑟! 11       𝑟! 00        𝑟! 01
+            a             b                  c                             d
+     0.00       0.10            0.30                     0.60                           1.00
+                                                                                                     1-bit       𝑟! 1                            𝑟! 0
+               5                                          0
+  𝑟! 101 = 𝑟! + mod 1 = 0.200                𝑟! 000 = 𝑟! + mod 1 = 0.575
+               8                                          8
+                                                                                                𝑟! = 0.575           a           b           c                 d
+                                                                                                              0.00       0.10        0.30           0.60              1.00
+
+Figure 3: An example of sampling based on MRNs. The
+initial pseudo-random number is ri = 0.575. The message                                        Figure 4: Sampling based on different number/length (lm )
+length lm to be embedded is 3, and the MRNs are ri (xxx).                                      of MRNs/message. The red arrow represents sampling that
+                                                                                               causes decoding ambiguity.
+
+   We transform message embedding into message-driven
+sampling by replacing pseudo-random numbers with eMRNs                                         or scaling probabilities, which can increase complexity and
+for sampling. An example of this process is illustrated in                                     distort distributions, we scale the sampling interval by in-
+Figure 3. Let’s assume the pseudo-random number is ri =                                        creasing the distance between neighbouring MRNs. When
+0.575 and the message length to be embedded is lm = 3. We                                      the interval between adjacent MRNs is sufficiently large, it
+can generate eight (2lm = 8) MRNs based on the length of                                       becomes highly improbable to sample the same token, ef-
+the message. For embedding the messages “100” or “101”,                                        fectively avoiding ambiguity. Therefore, ambiguity can be
+tokens “a” or “b” can be sampled according to eMRN ri (100)                                    avoided. Next, we will introduce which MRNs to choose to
+or ri (101), respectively. The receiver, who knows both the                                    increase the sampling interval.
+message bit length and pseudo-random numbers, can decode
+“100” or “101” based on the sampled tokens “a” or “b”. This                                    3.2     Sparse Sampling
+decoding is achievable because eMRN uniquely sampled
+these specific tokens.                                                                         Our previous analysis demonstrated that multiple MRNs may
+                                                                                               sample the same token, as illustrated in Figures 3 and 4. In
+                                                                                               such cases, the receiver can only infer a range of possible
+Decoding ambiguity However, the above embedding has
+                                                                                               messages. To narrow this range, we record all MRNs that
+the problem of causing “ambiguity” in the decoding. We de-
+                                                                                               sample the same token as the eMRN and use these recorded
+fine “ambiguity” as the receiver’s inability to determine which
+                                                                                               MRNs for subsequent sampling steps. Consequently, we need
+specific MRN led to the observed sampling result. This ambi-
+                                                                                               to update the transformation function bin2num() (Equation
+guity arises because multiple MRNs can potentially sample
+                                                                                               (3)) for converting message into number as follows:
+the same token. To illustrate this point, consider the sampling
+indicated by the orange block in Figure 3. When embedding                                                                       bin2num(m) = km /Nm                    (5)
+the message “000”, sampling based on the eMRN ri (000)
+produces “c”. However, sampling based on oMRNs ri (110)                                        where Nm is the number of candidate messages, and km de-
+and ri (111) also results in “c”. As a result, the receiver has no                             notes the index of the message to be embedded in the candi-
+way to know which MRN led to “c”, impeding the extraction                                      date messages, and km ∈ [0, Nm ).
+of the embedded message.
+                                                                                               Message Embedding as Index Embedding Our embed-
+Conflict Our analysis reveals that successful message em-                                      ding process can be conceptualized as embedding an index
+bedding and extraction hinges on the uniqueness of the sam-                                    within a set of candidate messages. According to Equations
+pling result caused by eMRN. To mitigate ambiguity, one                                        (3) and (5), the embedded message represents its index among
+could reduce the message embedding length, but this approach                                   all possible candidates, which the receiver is also aware of.
+compromises the embedding rate. Figure 4 illustrates this                                          Figure 5 illustrates this concept: when embedding the mes-
+trade-off: 1) Shorter messages (e.g., 1-bit) create larger sam-                                sage “111” in step i with the pseudo-random ri = 0.575,
+pling interval between adjacent MRNs, reducing ambiguity                                       we have km = 7, Nm = 8. The corresponding eMRN is
+rate. 2) Longer messages increase the probability of multiple                                  ri (111) = 0.450. Based on the sampled token “c”, the re-
+MRNs sampling the same token (indicated by red arrows).                                        ceiver can determine that the embedded message is one of
+This scenario underscores an inherent conflict between mes-                                    “110”, “111” or “000” at this step. To clarify to the receiver
+sage length and extraction accuracy.                                                           which message we have embedded, we use these three candi-
+   To address this decoding ambiguity and enhance the embed-                                   date messages for sampling in the next step. Consequently, in
+ding length, we borrow the idea of scaling from the iMEC [14]                                  the next step i + 1, the index of the message to be embedded
+and the AC-based method [47, 59]. But instead of coupling                                      within the set of candidate messages is updated to km = 1 and
+
+
+
+6822        34th USENIX Security Symposium                                                                                                              USENIX Association
+                                                                                      Input context 𝐶, message “111” and random number seed
+
+         sparse      𝑘! = 7, 𝑁! = 8                                 sample
+                                                                                                                                  6
+                                                                                                                    𝑟! 110 = 𝑟! +   mod 1 = 0.325
+                               7                                                                                                  8
+           𝑟" 111 = 𝑟" +         mod 1 = 0.450                                                                      𝑟! 000 = 𝑟! +
+                                                                                                                                  0
+                                                                                                                                    mod 1 = 0.575
+                               8                                                      Ambiguity                                   8
+
+                                                                             𝑟! 110    𝑟! 111      𝑟! 000
+         shared      context 𝐶
+                                                      a              b                      c                               d
+                  𝑟! = 0.575                  0.00         0.10               0.30                     0.60                                1.00
+                                                                                                                                            Sparse
+                                 Generative                                                                                                Sampling
+        seed        PRNG
+                                   Model             𝑟!"# 111                  𝑟!"# 000                       𝑟!"# 110
+                  𝑟!"# = 0.754
+                                                       a                        b                               c                    d
+                                              0.00          0.125                               0.50                        0.80              1.00
+
+
+         sparse      𝑘! = 1, 𝑁! = 3                                 sample                                                               Output “c”, “a”
+
+                                 1
+        𝑟"#$ 111 = 𝑟"#$ +            mod 1 = 0.087
+                                 3
+
+
+                                     Figure 5: An example of embedding based on Sparse Sampling.
+
+
+Nm = 3. To avoid the repeated use of randomness, we use a                             to the starting point SEi (0) and the end point SEi (1) of the
+new pseudo-random number ri at each step. Using Equation                              sampled token. The relevant calculations are presented in Al-
+(4), we can derive the new eMRN, ri+1 (111) = 0.087, for                              gorithm 2, which we refer to as Sparse. As a result, SparSamp
+sampling in step i + 1. At this point, only the token “a” will                        introduces only O(1) additional time complexity in each sam-
+be sampled based on this eMRN, allowing the message “111”                             pling step.
+to be uniquely decoded.
+   Our objective is to gradually narrow down the range of                               Algorithm 2: sparse(SEi , Nm , km , ri ): Sparse the num-
+candidate messages until the receiver can clearly identify                              ber and interval of sampling by updating the param-
+the embedded message (when Nm = 1). Initially, when Nm                                  eters of the number of candidate messages and the
+is large, a fraction of oMRNs will sample the same token                                index of the message to be embedded
+as eMRN, which leads to a reduction in Nm in the subse-
+                                                                                         Input: Start and end positions of sampled token SEi ,
+quent round. This process effectively reduces the range of
+                                                                                                 The number of candidate messages Nm , The
+possible embedded messages. As Nm decreases, the distance
+                                                                                                 index of the message to be embedded km , The
+between adjacent MRNs, given by N1m , increases. This results
+                                                                                                 pseudo-random number ri
+in sparser sampling, thereby reducing decoding ambiguity.
+                                                                                       1 temp0 = ⌈(SEi (0) − ri ) ∗ Nm ⌉
+Due to this characteristic, we name this approach SparSamp.
+                                                                                       2 temp1 = ⌈(SEi (1) − ri ) ∗ Nm ⌉
+                                                                                       3 if km + ri ∗ Nm >= Nm then
+3.3   Achieving O(1) time complexity                                                   4     km = km − Nm − temp0
+                                                                                       5 else
+The time required by SparSamp is mainly attributed to the up-                          6     km = km − temp0
+dates of Nm and km to get eMRN. When we update Nm and km                               7 end
+by comparing and counting, longer embedded messages lead                               8 Nm = temp1 − temp0
+to an increased number of candidate messages that need to be                             Output: The updated Nm and km
+compared and counted. This results in higher time complexity,
+which is not desirable. Therefore, based on the characteristic
+of uniform sampling, Nm and km can be calculated using only
+two computations.                                                                     3.4       Overview of SparSamp
+   As km represents the position of eMRN within MRNs that
+sampled to the same token. Since the difference between ad-                           Figure 6 illustrates the overview of SparSamp. The sender
+jacent MRNs is N1m , as indicated in Equations (3)-(5), we can                        and receiver must share the same settings, which include the
+obtain km and Nm by calculating the distance from eMRN                                initial context, the PRNG seed, and the generative model. This
+
+
+
+USENIX Association                                                                                             34th USENIX Security Symposium              6823
+                                Embedding                                                            Extracting
+
+                      Message Bits                                      Key                Message Bits
+                                                                      Generator
+                         …010 111 010…                                                           …010111010…
+                    Split message bits          … 𝑟! , 𝑟!"# , …         PRNG             … 𝑟! , 𝑟!"# , …      Merge message bits
+
+
+                                Sparse Sampling                        Context
+
+
+                                                                  …   Generative
+                          I   Once    Hello           The
+                                                                        Model
+                                                                                             I   Once      Hello           The
+
+
+
+                          I      fellow       world     upon      …                          I       fellow        world     upon
+
+
+
+                      Send                                            Hello world                                   Receive
+
+
+Figure 6: Overview of SparSamp. To ensure effective covert communication, both the sender and receiver need to have the same
+generative model, context, pseudo-random number generator (PRNG), and key. The sender continuously samples the next token
+with the message and pseudo-random number, until the entire message is embedded. Once the stego is created, it is sent to the
+receiver. The receiver can then synchronize with the sender’s states and extract the message by using the reverse process.
+
+
+synchronization ensures that both parties maintain consistent                       randomness of the sampling process, which is crucial for
+states throughout the process. It is important to note that it is                   security.
+unnecessary to transmit the model itself because many large
+                                                                                 3. Computational Efficiency: By eliminating the need for
+models are readily available to the public on platforms like
+                                                                                    sorting or combining probability distributions, it enables
+Hugging Face and GitHub. Therefore, both parties only need
+                                                                                    rapid embedding and decoding.
+to agree on which model to use and then load it separately.
+   Algorithm 3 demonstrates how SparSamp embeds mes-                             4. Resumable embed and extract: Although SparSamp em-
+sages during the model generation process. The whole mes-                           beds and extracts messages in segments, if a segment of
+sage is divided into equal chunks of size (lm ) and embed-                          the message is not fully embedded or extracted, it can be
+ded sequentially. When the model samples the EOS (end-of-                           resumed in the next stage. The variables in parentheses
+sequence) token, any unembedded messages along with their                           shown in Algorithm 3 and 4, such as Nm and km , serve as
+associated states (Nm , km ) are carried over to the next conver-                   input and output parameters that facilitate this resumable
+sation round. Conversely, if the entire message is embedded                         functionality.
+before the model terminates, the normal sampling continues
+until termination occurs naturally. It’s important to note that               3.5     Dealing with Token Ambiguity
+SparSamp does not alter the model’s generation process; it
+only replaces the original sampling method without affecting                  For state-of-the-art PSS methods [14, 16, 28, 56, 59], includ-
+the model’s termination conditions. With SparSamp, once the                   ing SparSamp, successful decoding relies on the token path
+message and random number are determined, the correspond-                     generated by the sender and receiver matching precisely at
+ing output of the model based on each message is fixed and                    the encoding and decoding process. However, for LLMs such
+unique. The corresponding extracting process is shown in                      as GPT-2, the vocabulary is not prefix-free due to the use
+Algorithm 4.                                                                  of byte-pair encoding (BPE) [19]. Consequently, token am-
+                                                                              biguity (TA) may occur. This ambiguity can be mitigated
+                                                                              by utilizing alternative tokenizers, such as word-based or
+Advantages      In summary, SparSamp offers the following
+                                                                              character-based tokenizers, or by employing disambiguat-
+advantages.:
+                                                                              ing techniques [5, 36, 40, 50]. Given that token disambigua-
+  1. Preservation of Distribution: It maintains the original                  tion techniques are plug-and-play and generalizable, better
+     probability distribution Pi , ensuring statistical consis-               steganographic coding in combination with these token dis-
+     tency.                                                                   ambiguation techniques will also lead to better results.
+                                                                                 Currently, only two disambiguating methods can be utilized
+  2. Sampling Randomness: The method retains the inherent                     without compromising the probability distribution, namely,
+
+
+
+6824    34th USENIX Security Symposium                                                                                              USENIX Association
+  Algorithm 3: The main loop of SparSamp’s message                 Algorithm 4: The main loop of SparSamp’s message
+  embedding algorithm                                              extracting algorithm
+   Input: Context C , Generative Model G , PRNG,                    Input: Context C , Stego S , Generative Model G ,
+          message to embed M, Length of the message to                      PRNG, Length of the message to be embedded
+          be embedded each time lm , (Nm , km )                             each time lm , (Nm ,temparr     arr
+                                                                                                      0 , Nm )
+ 1 v ← “ ”, S ← “ ”, count ← 0, (Nm ← 1)
+                                                                                        l        arr
+                                                                  1 M ← “ ”, (Nm ← 2 ,temp0 , Nm ← [])
+                                                                                         m             arr
+
+ 2 while v is not “EOS” do                                        2 for v in S do
+              // Terminate the embedding process                  3     r ← PRNG.next()
+      until the model samples the                                 4     P ← G (C )                   // Model infers the
+      end-of-sequence token (EOS)                                         probability distribution based on the
+ 3    r ← PRNG.next()                                                     context
+ 4    P ← G (C )                 // Model infers the              5     Get the SE of v based on P
+        probability distribution based on the                     6     C ← C ∥v                       // Update context
+        context                                                   7     temp0 = ⌈(SE(0) − r) ∗ Nm ⌉
+ 5    if count × lm < |M| then                                    8     temp1 = ⌈(SE(1) − r) ∗ Nm ⌉
+ 6        if Nm = 1 then                                          9     temparr0 .append(temp0 )
+ 7             km ← bin2dec(M[count × lm :                       10     Nm = temp1 − temp0
+                (count + 1) × lm − 1])  // Convert a             11     Nmarr .append(Nm )
+                portion of the lm -bit binary                    12     if Nm = 1 then
+                message in M to the decimal km                   13         count = |temparr0 |−2
+ 8             Nm ← 2lm                                          14         km ← temp0
+ 9             count ← count + 1                                 15         while count ≥ 0 do
+10        end                                                   16              km ← temparr0 (count) +
+                  km
+                                                                                 ((km + Nmarr (count)) mod Nmarr (count))
+11        rm ←    Nm + r   mod 1;
+                                                                 17              count ← count − 1
+12        v, SE ← sample(P , rm )                                18         end
+13        Nm , km ← sparse(SE, Nm , km , r)                      19         km ← ((km + 2lm ) mod 2lm )
+14    else                                                                     M = M∥dec2bin(km , lm ) // Convert the
+15        v ← sample(P , r)       // Normal sampling                           decimal km into an lm -bit binary
+16    end                                                                      message and add it to M
+17    S ← S ∥v                       // Update stego             20         Nm ← 2lm
+18    C ← C ∥v                     // Update context                        temparr    arr
+                                                                 21               0 , Nm ← []
+19 end
+                                                                 22     end
+   Output: Stego S ,(Nm , km )
+                                                                 23 end
+                                                                    Output: Message M, (Nm ,temparr          arr
+                                                                                                       0 , Nm )
+
+
+backtracking with checkpoints (BackCheck) [5] and SyncPool
+[40]. Each of these methods has its pros and cons. SyncPool      tent with the token path adopted in embedding, according to
+does not affect the complexity of generation and decoding        Algorithm 4, there may be a situation where Nm = 0, which
+but diminishes the embedding rate. In contrast, BackCheck        means that the message cannot be extracted, and this situ-
+inserts checkpoints at each segment of the message, which        ation will only occur after the TA has appeared, according
+has a lesser impact on the embedding rate and does not alter     to which we can infer the approximate location of the TA’s
+the generation process; however, it requires repeated back-      appearance ahead of time for backtracking, instead of needing
+tracking to identify the correct token path during extraction,   to backtrack after the message has been extracted.
+thus increasing the complexity on the extraction side.
+   BackCheck was initially combined with the AC-based ap-
+proach [5]. We believe that SparSamp is better suited to work    3.6    Proof of Security
+with BackCheck for several reasons. First, BackCheck does
+not influence the embedding complexity and embedding rate.       SparSamp ensures the security of steganography in two im-
+Second, a sparser sample results in fewer tokens being se-       portant ways, as outlined in Section 3.1. First, it preserves the
+lected for the random number determination, which signifi-       original probability distribution at each step for sampling. Sec-
+cantly reduces the amount of backtracking needed. Finally,       ond, it maintains randomness in the sampling process within
+when the token path used in SparSamp decoding is not consis-     this distribution throughout each step.
+
+
+
+USENIX Association                                                                  34th USENIX Security Symposium          6825
+Theorem 1 For any polynomial-time distinguisher A , it is                  Given that the only difference between the stego and the cover
+computationally infeasible to distinguish between samples                  is the random variable used during the sampling process, and
+drawn from Pi using ri and using ri (m).                                   the distributions of ri (m) and ri are computationally indistin-
+                                                                           guishable, it follows that the stego and cover distributions are
+Proof 1 We prove this theorem as follows.                                  also computationally indistinguishable.
+
+ 1. Pseudo-random number generator: In this paper, we
+    use pseudo-random numbers for sampling. Let PRNG                       4     Evaluation
+    be a deterministic polynomial-time algorithm such that
+    for any λ-bit input s ∈ {0, 1}λ , the algorithm PRNG out-              In this section, we will conduct experiments and compare
+    puts a bit string of length ℓ(λ), where ℓ is a polynomial.             SparSamp with the previous steganography methods pursu-
+    For all λ, it holds that ℓ(λ) > λ. For all probabilistic               ing provable security, namely AC-based [59], Meteor [28],
+    polynomial-time distinguishers A , there exists a negli-               ADG [56], Discop [16], and iMEC [14].
+    gible function negl such that the following inequality
+    holds:                                                                 4.1     Experimental Setup
+        Pr[A (PRNG(s)) = 1] − Pr A s′ = 1 ≤ negl(λ)
+                                               
+                                                                           Generative Models: In this study, we employ a diverse range
+                                                          (6)              of generative models, including LLMs (GPT-2 [42], Qwen-
+    Where the seed s is uniformly chosen from {0, 1}λ , and                2.5 [51], Llama-3 [2]), image generation model (DDPM [11]),
+    s′ is uniformly chosen from {0, 1}ℓ(λ) , both being true               and audio generation model (WaveRNN [27]). To enhance the
+    random bit strings.                                                    generation process, we implement two sampling techniques:
+
+ 2. The precision of the pseudo-random number: In prac-                        • Top-k sampling [23]: This method selects the next word
+    tice, the precision of the pseudo-random numbers we use                      from the k most probable choices in the vocabulary. It
+    is consistent with the pseudo-random numbers used in                         limits the selection to a fixed number of top candidates.
+    the model, which is actually the same PRNG. Assuming
+    the precision is h bits, at each time step i, consecutive                  • Nucleus sampling (or top-p sampling) [22]: This is a
+    h bits bhi , bhi+1 , . . . , bhi+h−1 are sequentially taken from             widely adopted technique in generation tasks that con-
+    PRNG(s), and by calculating a pseudo-random number                           strains the vocabulary size from which we sample. In-
+                                            ∑h−1 b    ×2t                        stead of using a fixed number like top-k, it dynamically
+    within the interval [0, 1), ri = t=0 2hi+th     . Thus, for all
+              −h                                                                selects from the smallest words whose cumulative prob-
+    a ∈ i×2        i=0,...,2h −1
+                                 , there exists a negligible func-
+                                                                                 ability exceeds the threshold p.
+    tion ε with respect to the security parameter λ such that
+    the following inequality holds:                                        We utilize a range of truncation parameters to assess per-
+                               h          i                                formance across various scenarios: p = {0.80, 0.95, 1.00},
+                            Pr r(t) = a − 2−h ≤ ε(λ)                       and k = [2 : 4 : 98]. This approach allows us to evaluate the
+                                 h         i                    (7)        steganography performance under different levels of vocabu-
+            2−h − ε(λ) ≤ Pr r(t) = a ≤ 2−h + ε(λ)                          lary restriction.
+                                                                              Generative Tasks: We deploy the steganographic algo-
+                                                                           rithm across three generative tasks:
+ 3. Computationally indistinguishable: Since Nkmm ∈ [0, 1),
+    the sum ri + Nkmm lies in [0, 2). Applying the modulo op-                  • Text generation. We employ three pre-trained LLMs:
+    eration ( mod 1) ensures   that ri (m) remains in [0, 1). Im-                GPT-2 version [42], Qwen-2.5 [51] and Llama-3 [2].
+    portantly, for a ∈ t × 2−h t=0,...,2h −1 , we have
+                        
+                                                                                 From the IMDB dataset [34], we randomly select 100
+                                                                                 text samples and generate approximately 100 to 200
+                                                                                 tokens based on the first three sentences of each sample.
+             ∑ |Pr [ri (m) = a] − Pr [ri = a]| = 2h+1 · ε(λ)         (8)
+              a
+                                                                               • Image generation. We employ a learning-free method for
+    Since h is a constant independent of λ, there exists a                       controlling the generation of unconditional DDPM [11],
+    negligible function ε′ (λ) = 2h+1 · ε(λ) with respect to λ                   which is trained on FFHQ dataset [29]. We quantize the
+    such that the following inequality holds:                                    continuous probabilities from the last layer into discrete
+                                                                                 probabilities that correspond to 256 pixel values for sam-
+                  ∑             |Pr [ri (m) = a] − Pr [ri = a]| ≤ ε′ (λ)         pling, which are then saved as 8-bit images based on
+       a∈{t×2−h }t=0,...,2h−1                                                    the StegaDDPM approach [39]. A total of 100 pairs of
+                                                                     (9)         images are generated for evaluation.
+
+
+
+6826     34th USENIX Security Symposium                                                                              USENIX Association
+   • Text-to-speech (TTS). Using pre-trained Tacotron [49]                  average extent to which the steganography method
+     and WaveRNN [27] models, we generate approximately                     alters the original distribution. Lower values are
+     3-second speech segments corresponding to the first sen-               better.
+     tence of 100 text samples from the IMDB dataset.
+                                                                         – Maximum KLD (Max KLD): The highest KLD
+   Token Ambiguity (TA): For a fair comparison, we first                   value across all time steps, indicating the most se-
+evaluate performance using sentences that do not have TA in                vere alteration to the original distribution. Lower
+subsections 4.3-4.5. We then address TA based on SynPool                   values are better.
+[40] and BackCheck [5] in subsection 4.8.
+   All experiments were conducted using consistent hardware
+configurations: an Intel Xeon Gold 6330 CPU (2.00GHz),
+128GB RAM, and an NVIDIA GeForce RTX 4090 GPU.                   4.3    Evaluating SparSamp with Different lm
+To ensure uniformity, all model queries were executed on a
+single GPU. We employ the default double-precision floats in     SparSamp embeds the whole message by dividing it into sub-
+Python for our numerical computations.                           messages with length lm , as illustrated in Algorithm 3. We
+                                                                 evaluated varying lengths lm on GPT-2 using top-p sampling
+                                                                 (with p = 1.00). The results shown in Table 2 indicate that,
+4.2   Metrics                                                    due to the limitations of double-precision calculations, the
+We evaluate the performance of SparSamp using metrics            maximum length lm can reach is 1023. As long as lm does
+that assess the efficiency of the steganography in terms of      not exceed 1023, we can achieve a 100% decoding accuracy
+time/speed, capacity, and security.                              without a TA. Generally, the longer the lm , the higher the
+                                                                 utilization. And when lm is greater than 32, the improvements
+   • Time/Speed: To measure the complexity and embedding         in both speed and utilization become less significant. For the
+     efficiency of different steganographic algorithms, we use   subsequent experiments, we set lm = 64.
+     the following metrics:
+        – Average Token Sampling Time (ATST): The mean           4.4 Comparison of Time and Speed Across Dif-
+          time taken to sample each token during the sam-
+                                                                     ferent Steganographic Methods
+          pling phase.
+        – Sampling-to-Inference Time Ratio (SITR): The           In this section, we compare the sampling time and generation
+          ratio of sampling time to model inference time.        speed of various steganographic methods based on the GPT-2
+                                                                 model under different sampling spaces (Top-p), as shown in
+        – Generation Speed: The number of tokens generated
+                                                                 Table 3. As the p-value increases, we observe that the Aver-
+          per second.
+                                                                 age Token Sampling Time (ATST) increases for all stegano-
+        – Embedding Speed: The number of bits embedded           graphic algorithms except for AC [59], Meteor (w/o sort) [28]
+          per second.                                            and SparSamp. This increase in ATST can be attributed to
+        – Decoding Speed: The number of bits decoded per         the significant rise in the number of candidate tokens as the
+          second.                                                p-value grows. Methods that require sorting to achieve higher
+                                                                 embedding rates, such as the sorted versions of Meteor and
+   • Capacity: We use two metrics to describe the capacity       Discop [16], ADG, and iMEC [14], experience greater com-
+     of a steganography method:                                  putational complexity. In contrast, SparSamp demonstrates
+                                                                 the fastest sampling speed. When compared to normal gener-
+        – Embedding rate: The average number of bits of
+                                                                 ation (random sampling), it incurs only negligible additional
+          information embedded in each generated token.
+                                                                 sampling time, further confirming its O(1) time complexity,
+        – Utilization rate of entropy (Utilization): Follow-     as discussed in Section 3.3.
+          ing [16], we use this metric to measure embedding         Additionally, we analyzed the ratio of sampling time to
+          ability. It is defined as the ratio of the total em-   model inference time (SITR). In typical generation processes,
+          bedded message length to the entropy sum over          sampling time constitutes only a tiny fraction of the total time,
+          all time steps, indicating how close the embedding     approximately 0.02 of the inference time. However, other
+          rate is to its theoretical limit.                      steganographic methods exhibit a significant increase in sam-
+   • Security: We use two KLD metrics:                           pling time as the candidate token space expands, sometimes
+                                                                 reaching tens (ADG [56] and Discop [16]) or even hundreds
+        – Average KLD (Ave KLD): The mean KLD over all           (Meteor [28] and iMEC [14]) of times the inference time. In
+          time steps is calculated by dividing the cumulative    contrast, SparSamp maintains a sampling time nearly identi-
+          KLD by the total number of tokens. It indicates the    cal to normal sampling.
+
+
+
+USENIX Association                                                                  34th USENIX Security Symposium          6827
+                          Table 2: The performance of the SparSamp with different lm using GPT-2 under p = 1.00.
+               lm                             2            4         8            16           32           64      128       256        512          1023      ≥ 1024
+       Utilization ↑                      27.5%       44.7%        64.5%      78.8%         87.3%      97.4%       98.0%     98.5%      98.7%      99.5%             /
+ Embedding Speed ↑ (bits/s)               214.7       358.4        504.0      640.4         705.1      755.4       731.0     656.3      709.7      706.0             /
+  Decoding Speed ↑ (bits/s)               203.7       339.7        477.7      606.7         667.3      715.6       699.6     629.9      678.0      672.4             /
+    Decoding Accuracy                     100%        100%         100%       100%          100%       100%        100%      100%       100%       100%             0%
+
+
+
+
+                  Table 3: Comparison of ATST, SITR, and generation speed for different steganographic methods
+                             Random                                                   Meteor [28]                    Discop [16]
+   GPT-2              p                           ADG [56]        AC [59]                                                                 iMEC [14]          SparSamp
+                             Sampling                                               sort      w/o sort             sort      w/o sort
+                  0.80       1.31E-04             1.13E-03        1.78E-03        2.83E-02      1.67E-03         6.66E-04    3.96E-04     3.64E-03            1.53E-04
+   ATST ↓
+                  0.95       1.32E-04             8.91E-03        1.76E-03        2.86E-01      1.68E-03         5.71E-03    6.83E-04     1.46E-02            1.57E-04
+  (s/token)
+                  1.00       6.41E-04             6.67E-01        2.41E-03        5.00E+00      2.26E-03         2.78E-01    1.04E-02     2.00E+00            7.21E-04
+                  0.80            0.02             0.15             0.23            3.71            0.22          0.09         0.05         0.48                0.02
+  SITR ↓          0.95            0.02             1.19             0.24           38.12            0.22          0.76         0.09         1.94                0.02
+                  1.00            0.09             97.41            0.35           730.57           0.33          40.59        1.52        292.23               0.11
+ Generation       0.80          128.9              118.3           109.7            27.7            110.9         123.5        125.0           88.0             125.8
+  Speed ↑         0.95          131.1              61.5            109.5            3.4             110.5         75.8         122.4           45.2             130.6
+ (tokens/s)       1.00          133.6               1.5            109.9            0.2             111.7          3.5         52.8            0.5              132.3
+
+
+
+
+                       Table 4: Comparison of embedding capacity and speed for different steganographic methods
+                                     Random                                               Meteor [28]               Discop [16]
+          GPT-2             p                         ADG [56]        AC [59]                                                          iMEC [14]       SparSamp
+                                    (Entropy)                                           sort    w/o sort          sort    w/o sort
+       Embedding           0.80          3.69              3.01            3.85        3.12         2.63         3.65       1.86         2.86                3.60
+           Rate            0.95          5.22              4.16            5.31        4.45         3.71         5.04       2.09         3.62                5.16
+       (bits/token)        1.00          6.00              4.76            5.60        4.95         4.17         5.63       2.24         4.13                5.98
+                           0.80           /            73.9%             99.3%         79.6%        63.8%        92.3%      47.5%       76.8%            95.3%
+       Utilization ↑       0.95           /            79.1%             99.4%         83.0%        70.4%        95.1%      40.9%       71.9%            94.9%
+                           1.00           /            90.0%             99.6%         85.2%        71.8%        95.4%      37.5%       68.9%            97.4%
+       Embedding           0.80           /             341.9            410.3         81.7         279.5        422.4      223.8        251.7           461.7
+        Speed ↑            0.95           /             258.3            567.2         15.1         410.0        370.7      259.5        163.6           628.2
+        (bits/s)           1.00           /              7.6             647.3          1.1         512.7         19.8      120.4         2.1            755.4
+        Decoding           0.80           /             348.9            441.6         89.7         322.7        442.2      221.9        226.1           421.4
+        Speed ↑            0.95           /             247.7            639.9         14.7         475.9        386.2      246.2        123.0           560.4
+         (bits/s)          1.00           /              7.9             762.3          0.9         576.7         20.8      146.3         0.7            715.6
+
+
+
+
+              Table 5: Comparison of KLD for different steganographic methods using GPT-2 under various p-values
+                GPT-2               p                ADG [56]                           AC [59]                  Meteor w/ sort [28]       SparSamp
+              Ave / Max            0.80       7.70E-03 / 5.58E-02             5.08E-02 / 9.29E+00                5.15E-02 / 6.68E+00             0/0
+                 KLD               0.95       1.08E-02 / 5.22E-02             2.93E-03 / 2.52E+00                2.85E-03 / 1.80E+00             0/0
+              (bit/token)          1.00       1.26E-02 / 5.38E-02             1.79E-04 / 2.21E-01                1.13E-06 / 1.62E-05             0/0
+
+
+
+
+6828     34th USENIX Security Symposium                                                                                                        USENIX Association
+                                     4                                                               1
+
+                                    3.5
+                                                                                                   0.8
+
+
+
+
+      Embedding Rate (bits/token)
+                                     3
+
+                                    2.5
+                                                                                                   0.6
+
+
+                                                                                     Utilization
+                                     2
+
+                                                                                                   0.4
+                                    1.5                          AC                                                                           AC
+                                                                 SparSamp                                                                     SparSamp
+                                                                 Discop sort                                                                  Discop sort
+                                      1
+                                                                 iMEC                                                                         iMEC
+                                                                 Meteor sort
+                                                                                                   0.2                                        Meteor sort
+                                    0.5                          ADG                                                                          ADG
+                                                                 Meteor w/o sort                                                              Meteor w/o sort
+                                                                 Discop w/o sort                                                              Discop w/o sort
+                                     0                                                              0
+                                          20   40           60   80            100                             20        40           60      80            100
+                                                    Top-k                                                                     Top-k
+
+
+Figure 7: Comparison of embedding rate and utilization for various steganographic methods in low-entropy environments using
+GPT-2 with Top-k sampling
+
+
+4.5 Comparison of Embedding Capacity and                                                           lization of other methods (except for Discop w/o sort and
+    the Speed of Embedding and Decoding                                                            iMEC), gradually increased with higher k values, reaching a
+    Across Different Steganographic Methods                                                        maximum of only 0.9.
+
+This section compares the embedding capacity and speed
+of various steganographic methods using the GPT-2 model
+across different sampling spaces, as shown in Table 4. As
+the p increases, the embedding rate for all steganographic                                         4.6    Comparison of Security
+methods rises. This increase is attributed to the higher infor-
+mation entropy of the token probability distribution Pi at each
+generation step with higher p, as the random sampling shows.                                       In this section, we compare the KLD induced by different
+   However, the embedding rate alone does not accurately                                           steganographic methods based on GPT-2 under various p-
+reflect the embedding capacity, as the embedded messages                                           values, as shown in Table 5. Notably, SparSamp maintains
+are random and the sampled tokens differ, leading to vary-                                         zero average and maximum KLD due to its preservation of
+ing entropy levels at each step. Therefore, we also take into                                      distribution probabilities. In contrast, AC [59], Meteor [28],
+account the entropy utilization rate. The AC method [59]                                           and ADG [54] introduce varying degrees of KLD. Particularly,
+shows the highest entropy utilization, which aligns with its                                       the KLD of these three methods is significant, potentially
+performance in compression tasks. SparSamp generally has                                           allowing adversaries to gain a non-negligible advantage in
+the second-highest utilization, following AC.                                                      detection.
+   In terms of embedding speed, SparSamp significantly out-                                           To complement our theoretical security proof of SparSamp
+performs existing methods, achieving a embedding speed of                                          and ensure a comprehensive evaluation, we conducted em-
+755.4 bits/s on GPT-2. This performance advantage stems                                            pirical tests using various established steganalysis methods.
+from its O(1) complexity, which eliminates the need for com-                                       These tests aimed to distinguish between cover text generated
+putationally intensive operations like probability reordering                                      by random sampling and stego text produced by SparSamp.
+or interval scaling. Furthermore, SparSamp maintains a com-                                        We generated 10,000 pairs of cover and stego texts under
+parable decoding speed, ensuring rapid message extraction                                          the truncation parameter p = 0.95. We employed three deep
+without error.                                                                                     learning-based steganalysis methods that have demonstrated
+   In particular, we compared the embedding rate and utiliza-                                      effectiveness in benchmark tests: FCN [55], R-BiLSTM-C
+tion in low-entropy environments. To create such an environ-                                       [35], BiLSTM-Dense [52]. Table 6 presents the results of our
+ment, we employed top-k sampling with GPT-2, setting the k                                         analysis. Notably, the detection error rate PE for SparSamp ap-
+value range from 2 to 100. In this setting, each sampling step                                     proaches 50%. Since a bias of less than 0.5% can currently be
+had only k candidate tokens, resulting in significantly lower                                      considered negligible in steganalysis, our experimental results
+entropy compared to top-p sampling. As shown in Figure                                             (<0.5%) can be considered indistinguishable. This indicates
+7, both SparSamp and AC [59] demonstrated high embed-                                              that the steganalysis methods perform no better than random
+ding rates across different k values. For k values greater than                                    guessing in identifying stego content generated by SparSamp,
+2, SparSamp’s utilization approached 1. In contrast, the uti-                                      thereby empirically confirming its security.
+
+
+
+USENIX Association                                                                                                   34th USENIX Security Symposium               6829
+          Table 6: Steganalysis results for SparSamp                Table 8: Analyze the token ambiguity with BackCheck [5]
+ Methods     FCN [55]    R-BiLSTM-C [35]       BiLSTM-Dense [52]                  Frequency         AC [59] / SparSamp
+                                                                        Model
+                                                                                    of TA
+    PE        49.63%           50.09%               49.58%                                    Frequency of    Average distance
+                                                                                              detecting TA       from TA
+                                                                        GPT-2      2.49%      0% / 79.3%          5.5 / 3.6
+Table 7: Performance of SparSamp across different models
+                                                                       Qwen-2.5    0.67%      0% / 73.2%          8.0 / 6.6
+               Embedding          Embedding
+  Model                                             Utilization        Llama-3     3.81%      0% / 65.4%         10.1 / 6.9
+              Speed (bits/s)    Rate (bits/token)
+Qwen-2.5           117.2                3.31           95.8%
+ Llama-3           90.1                 2.66           96.6%            Table 9: Performance of SparSamp with SynPool [40]
+ DDPM             5046.8                2.33           98.5%           Model (p = 0.8)     GPT-2   Qwen-2.5      Llama-3
+WaveRNN           9223.4                4.83           96.5%
+                                                                       Embedding Rate       2.41      1.35         0.70
+                                                                         Utilization       72.8%     65.4%        70.2%
+4.7 Deployment on Different Generative Mod-
+    els
+                                                                   on the LLM architecture.
+We deployed SparSamp on four additional models: the re-               When BackCheck is used without considering checkpoints,
+cently open-sourced LLM Qwen-2.5 [51] and Llama-3 [2], the         the AC-based method is unable to detect the presence of TA.
+image generation model DDPM [11], and the audio generation         In contrast, SparSamp can identify the presence of TA with a
+model WaveRNN [27]. The implementation was straightfor-            probability of 65% to 79%, i.e., Nm = 0 when extracted accord-
+ward, requiring only the replacement of the sampling compo-        ing to Algorithm 4. This ability allows for shorter checkpoints
+nent in these models with SparSamp encoding.                       and enhances the embedding capacity according to [5]. In ad-
+   Table 7 illustrates SparSamp’s performance across these         dition, we assess the distance from TA of a token encountered
+various models, with utilization consistently exceeding 95%        with Nm = 0 during SparSamp extraction. Using SparSamp
+for all of them. The embedding speed achieved with the Wa-         reduces the number of queries for two tokens on average com-
+veRNN model was particularly impressive, reaching 9,223            pared to the number of queries needed to locate the TA after
+bits/s. This remarkable speed opens up the possibility for         the AC has extracted the message. Consequently, SparSamp
+real-time, high-capacity covert communication. Based on the        requires only about half the length of the checkpoint to detect
+DDPM, the embedding rate we can achieve is 2.33 bits/token,        the location of the TA faster than AC, and it also reduces the
+which means we can embed a 0.29 size of the secret image           impact on the embedding capacity. We verified that for every
+in the stego image. Examples of stego texts and stego im-          60-bit embedding, only 4 bits of the checkpoint are needed to
+ages generated with the LLM and DDPM can be found in               backtrack to the correct path thus enabling accurate extraction
+Appendix A.                                                        based on SaprSamp.
+                                                                      We also use SynPool [40] to deal with the TA. The results
+                                                                   are shown in Table 9. SynPool is suitable for settings in LLM
+4.8 Evaluating SparSamp in combination with                        with a low p value because a high p value reduces utilization
+    the Token Disambiguating Technique                             according to [40].
+                                                                      Finally, we would like to say that TA is not as bad as we
+In previous experiments, we demonstrated that with no TA,
+                                                                   think, and we counted that most TA is caused by some spe-
+the decoding accuracy of SparSamp reached 100%, and its
+                                                                   cial symbols (e.g., “....”,“)...”), rather than words. And these
+decoding speed was exceptionally fast. When there is TA,
+                                                                   special symbols are relatively easy to find the correct parsing.
+existing steganographic coding [14, 16, 28, 56, 59] all face
+the problem of being unable to decode accurately. However,
+it can be resolved by the token disambiguating technique           5     Conclusion
+without changing the probability distribution and sacrificing
+the security [5, 40].                                              We propose SparSamp, a novel PSS that employs message-
+   We first use BackCheck [5] to deal with the TA. We embed-       driven sampling for embedding messages, achieving unam-
+ded 64-bit messages at a time and generated 10,000 pairs of        biguous message embedding and extraction with high embed-
+stego texts based on different LLMs and steganography meth-        ding rate. We demonstrate that SparSamp introduces minimal
+ods, and we counted the frequency of TA. As quantified in          computational overhead, with an added complexity of only
+Table 8, the TA occurrence rate per 64-bit embedding remains       O(1). Crucially, SparSamp preserves the original probabil-
+exceptionally low—ranging from 0.67% to 3.81% depending            ity distribution, ensuring provable security. We demonstrate
+
+
+
+6830     34th USENIX Security Symposium                                                                      USENIX Association
+the performance of the SparSamp through text, image and            [3] R.J. Anderson and F.A.P. Petitcolas. On the limits of
+speech generation tasks, and the experimental results show             steganography. IEEE Journal on Selected Areas in Com-
+that SparSamp offers high capacity, rapid decoding speed and           munications, 16(4):474–481, 1998.
+the fastest embedding speed among comparable methods. In
+the future, we hope to further extend SparSamp to realize          [4] Sercan Ö. Arik, Mike Chrzanowski, Adam Coates,
+robust PSS and build public-key PSS.                                   Gregory Frederick Diamos, Andrew Gibiansky, Yong-
+                                                                       guo Kang, Xian Li, John Miller, Andrew Ng, Jonathan
+                                                                       Raiman, Shubho Sengupta, and Mohammad Shoeybi.
+Acknowledgments                                                        Deep voice: Real-time neural text-to-speech. ArXiv,
+                                                                       abs/1702.07825, 2017.
+We thank the reviewers for their valuable comments. This
+work was supported in part by the Natural Science Foundation       [5] Luke A. Bauer, James K. Howes, Sam A. Markelon, Vin-
+of China under Grant 62302146, 62472398, U2336206, and                 cent Bindschaedler, and Thomas Shrimpton. Leveraging
+U2436601.                                                              generative models for covert messaging: Challenges and
+                                                                       tradeoffs for "dead-drop" deployments. In Proceedings
+                                                                       of the Fourteenth ACM Conference on Data and Applica-
+6   Ethics Considerations                                              tion Security and Privacy, CODASPY ’24, page 67–78,
+                                                                       New York, NY, USA, 2024. Association for Computing
+We used open-source models and datasets for research trans-            Machinery.
+parency. SparSamp efficiently embeds messages while op-
+timizing time and resources. Our ethical approach ensures          [6] Mehdi Boroumand, Mo Chen, and Jessica Fridrich.
+secure communication with minimal computational impact.                Deep residual network for steganalysis of digital im-
+We aim to mitigate potential negative outcomes.                        ages. IEEE Transactions on Information Forensics and
+   Steganography is a double-edged sword. It enables secure,           Security, 14(5):1181–1193, 2019.
+covert communication. However, it also raises ethical con-
+cerns, as it can be misused for illegal activities or spreading    [7] Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie
+misinformation. Steganography complicates law enforcement              Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind
+efforts by obscuring communication content and intent. While           Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+valuable for clandestine communication, it poses risks that            Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen
+require careful societal consideration.                                Krueger, T. J. Henighan, Rewon Child, Aditya Ramesh,
+                                                                       Daniel M. Ziegler, Jeff Wu, Clemens Winter, Christo-
+                                                                       pher Hesse, Mark Chen, Eric Sigler, Mateusz Litwin,
+7   Open Science                                                       Scott Gray, Benjamin Chess, Jack Clark, Christopher
+                                                                       Berner, Sam McCandlish, Alec Radford, Ilya Sutskever,
+We hereby commit to full compliance with the open sci-                 and Dario Amodei. Language models are few-shot learn-
+ence policy. We acknowledge the importance of transparency             ers. ArXiv, abs/2005.14165, 2020.
+and reproducibility in research. Our implementation ex-
+clusively utilizes open-source models (GPT-2, Qwen-2.5,            [8] Christian Cachin. An information-theoretic model for
+Llama-3, DDPM, WaveRNN) and publicly available datasets                steganography. In Information and Computation, 1998.
+(IMDB, FFHQ) to ensure reproducibility. Our research ar-
+tifacts related to the SparSamp are openly available at            [9] Kejiang Chen, Hang Zhou, Dongdong Hou, Hanqing
+https://doi.org/10.5281/zenodo.14736967. The artifact pro-             Zhao, Weiming Zhang, and Nenghai Yu. Provably
+vides a Python implementation for encoding and decoding                secure steganography on generative media. CoRR,
+messages using the SparSamp method based on the genera-                abs/1811.03732, 2018.
+tive model. The core functionalities are encapsulated in the
+encode_spar and decode_spar functions. We believe that            [10] Kejiang Chen, Hang Zhou, Hanqing Zhao, Dongdong
+sharing our research artifacts will not only enhance the valid-        Chen, Weiming Zhang, and Nenghai Yu. Distribution-
+ity of our work but also foster collaboration and innovation in        preserving steganography based on text-to-speech gen-
+the field of steganography.                                            erative models. IEEE Transactions on Dependable and
+                                                                       Secure Computing, 2021.
+
+References                                                        [11] Jooyoung Choi, Sungwon Kim, Yonghyun Jeong,
+                                                                       Youngjune Gwon, and Sungroh Yoon. Ilvr: Conditioning
+ [1] https://llama.meta.com.                                           method for denoising diffusion probabilistic models. In
+                                                                       2021 IEEE/CVF International Conference on Computer
+ [2] AI@Meta. Llama 3 model card. 2024.                                Vision (ICCV), pages 14347–14356, 2021.
+
+
+
+USENIX Association                                                                 34th USENIX Security Symposium       6831
+[12] David Cole.     We kill people based on meta-               [23] Ari Holtzman, Jan Buys, Maxwell Forbes, Antoine
+     data. https://www.nybooks.com/online/2014/05/                    Bosselut, David Golub, and Yejin Choi. Learning
+     10/we-kill-people-based-metadata/, May 2014.                     to write with cooperative discriminators. In Iryna
+                                                                      Gurevych and Yusuke Miyao, editors, Proceedings of
+[13] United States Congress.    Kids online safety                    the 56th Annual Meeting of the Association for Com-
+     act.          https://www.congress.gov/bill/                     putational Linguistics (Volume 1: Long Papers), pages
+     118th-congress/house-bill/7891, April 2024.                      1638–1649, Melbourne, Australia, July 2018. Associa-
+                                                                      tion for Computational Linguistics.
+[14] Christian Schroeder de Witt, Samuel Sokota, J Zico
+     Kolter, Jakob Nicolaus Foerster, and Martin Strohmeier.     [24] Nicholas Hopper, Luis von Ahn, and John Langford.
+     Perfectly secure steganography using minimum entropy             Provably secure steganography. IEEE Transactions on
+     coupling. In The Eleventh International Conference on            Computers, 58(5):662–676, 2009.
+     Learning Representations, 2023.
+                                                                 [25] Nicholas J Hopper. Toward a theory of Steganography.
+[15] Prafulla Dhariwal and Alex Nichol. Diffusion models              Carnegie Mellon University, 2004.
+     beat gans on image synthesis. ArXiv, abs/2105.05233,        [26] Nicholas J. Hopper, John Langford, and Luis von Ahn.
+     2021.                                                            Provably secure steganography. In Moti Yung, editor,
+                                                                      Advances in Cryptology — CRYPTO 2002, pages 77–92,
+[16] Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao,
+                                                                      Berlin, Heidelberg, 2002. Springer Berlin Heidelberg.
+     Weiming Zhang, and Neng H. Yu. Discop: Provably
+     secure steganography in practice based on "distribution     [27] Nal Kalchbrenner, Erich Elsen, Karen Simonyan, Seb
+     copies". 2023 IEEE Symposium on Security and Privacy             Noury, Norman Casagrande, Edward Lockhart, Florian
+     (SP), pages 2238–2255, 2023.                                     Stimberg, Aaron van den Oord, Sander Dieleman, and
+                                                                      Koray Kavukcuoglu. Efficient neural audio synthesis. In
+[17] Tomáš Filler, Jan Judas, and Jessica Fridrich. Minimiz-          Jennifer Dy and Andreas Krause, editors, Proceedings
+     ing additive distortion in steganography using syndrome-         of the 35th International Conference on Machine Learn-
+     trellis codes. IEEE Transactions on Information Foren-           ing, volume 80 of Proceedings of Machine Learning
+     sics and Security, 6(3):920–935, 2011.                           Research, pages 2410–2419. PMLR, 10–15 Jul 2018.
+[18] Jessica Fridrich. Minimizing the embedding impact           [28] Gabriel Kaptchuk, Tushar M. Jois, Matthew Green, and
+     in steganography. In Proceedings of the 8th Workshop             Aviel D. Rubin. Meteor: Cryptographically secure
+     on Multimedia and Security, MM&Sec ’06, page 2–10,               steganography for realistic distributions. Proceedings
+     New York, NY, USA, 2006. Association for Computing               of the 2021 ACM SIGSAC Conference on Computer and
+     Machinery.                                                       Communications Security, 2021.
+
+[19] Philip Gage. A new algorithm for data compression. C        [29] Tero Karras, Samuli Laine, and Timo Aila. A style-
+     Users J., 12(2):23–38, February 1994.                            based generator architecture for generative adversarial
+                                                                      networks. 2019 IEEE/CVF Conference on Computer
+[20] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza,                 Vision and Pattern Recognition (CVPR), pages 4396–
+     Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron                4405, 2018.
+     Courville, and Yoshua Bengio. Generative adversar-
+     ial nets. In Z. Ghahramani, M. Welling, C. Cortes,          [30] Andrew D Ker. Improved detection of lsb steganogra-
+     N. Lawrence, and K.Q. Weinberger, editors, Advances              phy in grayscale images. In International workshop on
+     in Neural Information Processing Systems, volume 27.             information hiding, pages 97–115. Springer, 2004.
+     Curran Associates, Inc., 2014.                              [31] Diederik P Kingma and Max Welling. Auto-encoding
+                                                                      variational bayes. arXiv preprint arXiv:1312.6114,
+[21] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denois-
+                                                                      2013.
+     ing diffusion probabilistic models. In Proceedings of
+     the 34th International Conference on Neural Informa-        [32] Tri Van Le. Efficient provably secure public key
+     tion Processing Systems, NIPS’20, Red Hook, NY, USA,             steganography. Cryptology ePrint Archive, Paper
+     2020. Curran Associates Inc.                                     2003/156, 2003. https://eprint.iacr.org/2003/
+                                                                      156.
+[22] Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and
+     Yejin Choi. The curious case of neural text degeneration.   [33] Maciej Liśkiewicz, Rüdiger Reischuk, and Ulrich
+     In International Conference on Learning Representa-              Wölfel. Grey-box steganography. In Mitsunori Ogi-
+     tions, 2020.                                                     hara and Jun Tarui, editors, Theory and Applications of
+
+
+
+6832   34th USENIX Security Symposium                                                                   USENIX Association
+     Models of Computation, pages 390–402, Berlin, Heidel-       [43] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott
+     berg, 2011. Springer Berlin Heidelberg.                          Gray, Chelsea Voss, Alec Radford, Mark Chen, and Ilya
+                                                                      Sutskever. Zero-shot text-to-image generation. In Ma-
+[34] Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan              rina Meila and Tong Zhang, editors, Proceedings of the
+     Huang, Andrew Y. Ng, and Christopher Potts. Learning             38th International Conference on Machine Learning,
+     word vectors for sentiment analysis. In Dekang Lin,              volume 139 of Proceedings of Machine Learning Re-
+     Yuji Matsumoto, and Rada Mihalcea, editors, Proceed-             search, pages 8821–8831. PMLR, 18–24 Jul 2021.
+     ings of the 49th Annual Meeting of the Association for
+     Computational Linguistics: Human Language Technolo-         [44] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott
+     gies, pages 142–150, Portland, Oregon, USA, June 2011.           Gray, Chelsea Voss, Alec Radford, Mark Chen, and Ilya
+     Association for Computational Linguistics.                       Sutskever. Zero-shot text-to-image generation. ArXiv,
+                                                                      abs/2102.12092, 2021.
+[35] Yan Niu, Juan Wen, Ping Zhong, and Yiming Xue. A
+     hybrid r-bilstm-c neural network based text steganalysis.   [45] Gustavus J. Simmons. The prisoners’ problem and the
+     IEEE Signal Processing Letters, 26:1907–1911, 2019.              subliminal channel. In Annual International Cryptology
+                                                                      Conference, 1983.
+[36] Jumon Nozaki and Yugo Murawaki. Addressing seg-
+     mentation ambiguity in neural linguistic steganography.     [46] Aäron van den Oord, Sander Dieleman, Heiga Zen,
+     In Yulan He, Heng Ji, Sujian Li, Yang Liu, and Chua-             Karen Simonyan, Oriol Vinyals, Alex Graves, Nal Kalch-
+     Hui Chang, editors, Proceedings of the 2nd Conference            brenner, Andrew W. Senior, and Koray Kavukcuoglu.
+     of the Asia-Pacific Chapter of the Association for Com-          Wavenet: A generative model for raw audio. ArXiv,
+     putational Linguistics and the 12th International Joint          abs/1609.03499, 2016.
+     Conference on Natural Language Processing (Volume 2:
+     Short Papers), pages 109–116, Online only, November         [47] Tri Van Le and Kaoru Kurosawa. Bandwidth optimal
+     2022. Association for Computational Linguistics.                 steganography secure against adaptive chosen stego-
+                                                                      text attacks. In Jan L. Camenisch, Christian S. Coll-
+[37] Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida, Car-              berg, Neil F. Johnson, and Phil Sallee, editors, Informa-
+     roll L. Wainwright, Pamela Mishkin, Chong Zhang,                 tion Hiding, pages 297–313, Berlin, Heidelberg, 2007.
+     Sandhini Agarwal, Katarina Slama, Alex Ray, John                 Springer Berlin Heidelberg.
+     Schulman, Jacob Hilton, Fraser Kelton, Luke E. Miller,
+     Maddie Simens, Amanda Askell, Peter Welinder,               [48] Ashish Vaswani, Noam M. Shazeer, Niki Parmar, Jakob
+     Paul Francis Christiano, Jan Leike, and Ryan J. Lowe.            Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser,
+     Training language models to follow instructions with             and Illia Polosukhin. Attention is all you need. In Neural
+     human feedback. ArXiv, abs/2203.02155, 2022.                     Information Processing Systems, 2017.
+[38] United Kingdom Parliament.    Online safety act             [49] Yuxuan Wang, R.J. Skerry-Ryan, Daisy Stanton,
+     2023.      https://bills.parliament.uk/bills/                    Yonghui Wu, Ron J. Weiss, Navdeep Jaitly, Zongheng
+     3137, 2023.                                                      Yang, Ying Xiao, Zhifeng Chen, Samy Bengio, Quoc
+                                                                      Le, Yannis Agiomyrgiannakis, Rob Clark, and Rif A.
+[39] Yinyin Peng, Donghui Hu, Yaofei Wang, Kejiang Chen,
+                                                                      Saurous. Tacotron: Towards End-to-End Speech Syn-
+     Gang Pei, and Weiming Zhang. Stegaddpm: Genera-
+                                                                      thesis. In Proc. Interspeech 2017, pages 4006–4010,
+     tive image steganography based on denoising diffusion
+                                                                      2017.
+     probabilistic model. In Proceedings of the 31st ACM
+     International Conference on Multimedia, MM ’23, page        [50] Ruiyi Yan, Yating Yang, and Tian Song. A secure
+     7143–7151, New York, NY, USA, 2023. Association for              and disambiguating approach for generative linguis-
+     Computing Machinery.                                             tic steganography. IEEE Signal Processing Letters,
+                                                                      30:1047–1051, 2023.
+[40] Yuang Qi, Kejiang Chen, Kai Zeng, Weiming Zhang,
+     and Nenghai Yu. Provably secure disambiguating neu-         [51] An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui,
+     ral linguistic steganography. IEEE Transactions on De-           Bo Zheng, Bowen Yu, Chengyuan Li, Dayiheng Liu,
+     pendable and Secure Computing, pages 1–14, 2024.                 Fei Huang, Haoran Wei, Huan Lin, Jian Yang, Jianhong
+[41] Alec Radford and Karthik Narasimhan. Improving lan-              Tu, Jianwei Zhang, Jianxin Yang, Jiaxi Yang, Jingren
+     guage understanding by generative pre-training. 2018.            Zhou, Junyang Lin, Kai Dang, Keming Lu, Keqin Bao,
+                                                                      Kexin Yang, Le Yu, Mei Li, Mingfeng Xue, Pei Zhang,
+[42] Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario            Qin Zhu, Rui Men, Runji Lin, Tianhao Li, Tingyu Xia,
+     Amodei, and Ilya Sutskever. Language models are un-              Xingzhang Ren, Xuancheng Ren, Yang Fan, Yang Su,
+     supervised multitask learners. 2019.                             Yichang Zhang, Yu Wan, Yuqiong Liu, Zeyu Cui, Zhenru
+
+
+
+USENIX Association                                                                 34th USENIX Security Symposium         6833
+       Zhang, and Zihan Qiu. Qwen2.5 technical report. arXiv     LLMs such as Qwen-2.5 and Llama-3 generate a longer stego
+       preprint arXiv:2412.15115, 2024.                          text but more realistic content.
+                                                                    Figure 8 gives examples of employing DDPM [11] to per-
+[52] Hao Yang, YongJian Bao, Zhongliang Yang, Sheng Liu,         form image generation. The DDPM is pre-trained on the
+     Yongfeng Huang, and Saimei Jiao. Linguistic steganal-       FFHQ dataset. SparSamp integration in the final sampling
+     ysis via densely connected lstm with feature pyramid.       step of DDPM according to [39]. The size of the generated
+     Proceedings of the 2020 ACM Workshop on Information         image is 256 × 256. An average of 457,000 bits can be em-
+     Hiding and Multimedia Security, 2020.                       bedded in each image. The embedding rate is 2.33 bits/token.
+                                                                 This means that we can losslessly embed an image of the
+[53] Kuan Yang, Kejiang Chen, Weiming Zhang, and Neng-
+                                                                 same type with 0.29 times the number of pixels of a stego
+     hai Yu. Provably secure generative steganography based
+                                                                 image.
+     on autoregressive model. In International Workshop on
+     Digital Watermarking, 2018.
+
+[54] Kuan Yang, Kejiang Chen, Weiming Zhang, and Neng-
+     hai Yu. Provably Secure Generative Steganography
+     Based on Autoregressive Model. In Chang D. Yoo,
+     Yun-Qing Shi, Hyoung Joong Kim, Alessandro Piva,
+     and Gwangsu Kim, editors, Digital Forensics and Wa-
+     termarking, pages 55–68, Cham, 2019. Springer Inter-
+     national Publishing.
+
+[55] Zhongliang Yang, Yongfeng Huang, and Yujin Zhang. A
+     fast and efficient text steganalysis method. IEEE Signal
+     Processing Letters, 26:627–631, 2019.
+
+[56] Siyu Zhang, Zhongliang Yang, Jinshuai Yang, and
+     Yongfeng Huang. Provably secure generative linguistic
+     steganography. In Chengqing Zong, Fei Xia, Wenjie Li,
+     and Roberto Navigli, editors, Findings of the Associa-
+     tion for Computational Linguistics: ACL-IJCNLP 2021,
+     pages 3046–3055, Online, August 2021. Association for
+     Computational Linguistics.
+
+[57] Weiming Zhang and Xin Wang. Generalization of the
+     zzw embedding construction for steganography. Trans.
+     Info. For. Sec., 4(3):564–569, sep 2009.
+
+[58] Xinpeng Zhang and Shuozhong Wang. Efficient stegano-
+     graphic embedding by exploiting modification direction.
+     IEEE Communications Letters, 10(11):781–783, 2006.
+
+[59] Zachary M. Ziegler, Yuntian Deng, and Alexander M.
+     Rush.    Neural linguistic steganography.   CoRR,
+     abs/1909.01496, 2019.
+
+
+A      Examples of Output of SparSamp
+This appendix contains stego text and image outputs generated
+by SparSamp using several different model types.
+   Table 10 gives examples of employing different LLMs to
+perform secret message encoding and stego text generation.
+We set the truncation p = 1. We first use the model itself to
+encode the secret message into a bit string based on AC as
+in [59]. Then, we embed the bit string by generating the stego
+text using the same LLM with SparSamp. We can see that
+
+
+
+6834     34th USENIX Security Symposium                                                                 USENIX Association
+                                Table 10: Stego text generated by different LLM with SparSamp
+ Secret message:
+ In a strategic military operation, soldiers were tasked with disrupting enemy supply lines by breaking a critical road with C4
+ explosives. Under cover of darkness, the soldiers approached the road, carefully placing the explosives at key points. With precision
+ timing, they detonated the C4, creating massive craters that rendered the road impassable. The explosion’s force was so great that
+ it could be heard for miles around. The operation was a success, cutting off enemy forces from vital resources and slowing their
+ advance. The soldiers withdrew safely, leaving behind a road turned into a wasteland of debris and destruction.
+ Length of bit string after encoding the secret message using GPT-2 with AC: 533
+ Prompt: Once upon a time,
+ Stego text generated by GPT-2 with SparSamp:
+ evidence here bearing against Los Angeles had accumulated, especially in evidence van Creussel went to the Lens in Los Angeles
+ for evidence covering his trial that fell onto the paper. We were looking for witnesses, not documents. This was the obvious case,
+ and he was acquitted. Given the having uncovered all this evidence, and also the claim– by Los Angeles law firm colleagues in
+ 1980 that he was ordered to pay bribe when bribe gained confidence–that a certified deposition must form the basis for conviction
+ Length of bit string after encoding the secret message using Qwen-2.5 with AC: 360
+ Prompt: Give me a short introduction to large language model.
+ Stego text generated by Qwen-2.5 with SparSamp:
+ Large language models (LLMs) are a type of artificial intelligence designed to process and generate human-like language. These
+ models operate on vast amounts of text data, often exceeding the scope of the training dataset, achieving impressive natural
+ language understanding and generation performance. Key characteristics of these models include:
+ 1. **Capacity for Knowledge Expansion**: LLMs continuously expand their domains of understanding, complemented by
+ continual pretraining. 2. **Enhanced Resource Use**: Unlike simpler models, LLMs can utilize larger corpora and more compute
+ resources to perform well across various tasks. 3. **Multi-Aspect Handling**: They can handle syntax, semantics, and pragmatic
+ components of language comprehensively. 4. **Task Adaptability**: Through fine-tuning, LLMs can be effectively retrained for
+ specific applications such as language translation, summarization, question-answering, and creative writing.
+ These models are foundational for achieving advanced functionalities in natural language applications.
+ Length of bit string after encoding the secret message using Llama-3 with AC: 336
+ Prompt: Why do dogs love to stick out their tongues in summer?
+ Stego text generated by Llama-3 with SparSamp:
+ Here are the possible reasons: 1. Cooling down: Dogs don’t have sweat glands all over their body like humans do, so they need to
+ find other ways to cool down. Licking their body, including their tongue, helps to regulate their body temperature. As they exhale,
+ their tongue picks up heat and dries out, making them feel cooler. 2. Hydration: Tongue-sticking and panting are two ways dogs
+ regulate their hydration levels. By sticking their tongue out, they help to dissipate excess heat and humidity. This also helps them
+ to rehydrate, as they lick their tongue and reabsorb moisture. 3. Social bonding: Sticking out their tongue, also known as ""flehmen
+ response,"" is a natural behavior that can be a sign of bonding and affection in dogs. They may use it to communicate with their
+ human family members or other pets. 4. Relaxation: Dogs often stick out their tongues when they’re feeling relaxed and at ease.
+ This could be due to the sensation of the tongue touching the air or the release of tension in their mouth. 5. Instinctual behavior: In
+ the wild, dogs used to stick out their tongues to inspect their surroundings, detect prey, and gather information. This behavior
+ has been passed down through generations, and even domesticated dogs exhibit it as a natural behavior. 6. Sensory experience:
+ Sticking out their tongue can be a sensory experience for dogs. The sensation of the tongue touching air, the movement of their
+ tongue, and the perception of their own breath may provide a calming or enjoyable sensation.
+
+
+
+
+                                  Figure 8: Stego image generated by DDPM with SparSamp
+
+
+
+USENIX Association                                                                      34th USENIX Security Symposium         6835
+

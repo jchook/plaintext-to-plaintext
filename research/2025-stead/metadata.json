@@ -1,0 +1,69 @@
+{
+  "id": "2025-stead",
+  "title": "STEAD: Robust Provably Secure Linguistic Steganography with Diffusion Language Model",
+  "status": "NeurIPS 2025",
+  "kind": "paper",
+  "source": "https://papers.nips.cc/paper_files/paper/2025/hash/3d03800841fa1bb2f43ef1750aafcce4-Abstract-Conference.html",
+  "pdf": "https://papers.nips.cc/paper_files/paper/2025/file/3d03800841fa1bb2f43ef1750aafcce4-Paper-Conference.pdf",
+  "why": "Explores resistance to token insertion, deletion, and substitution using diffusion language models and error correction. Relevant if the channel must tolerate edited cover text.",
+  "caveat": "A different model architecture and channel objective from our autoregressive Llama POC. Robustness claims are limited to the evaluated attacks and settings.",
+  "repo": "7-yaya/STEAD",
+  "priority": "robustness",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2025-stead/paper.pdf",
+      "requested_url": "https://papers.nips.cc/paper_files/paper/2025/file/3d03800841fa1bb2f43ef1750aafcce4-Paper-Conference.pdf",
+      "resolved_url": "https://papers.nips.cc/paper_files/paper/2025/file/3d03800841fa1bb2f43ef1750aafcce4-Paper-Conference.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:56.742525+00:00",
+      "bytes": 1529422,
+      "sha256": "cbcd6bc82a0b445a24e76457caecd52055f0d3ab1686e593310e135b72573b1c"
+    },
+    {
+      "path": "2025-stead/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 172037,
+      "sha256": "9ddcee114bbf9c030102e425c2fa9b7d1455f2228af55450cb359eca2df18b4e"
+    },
+    {
+      "path": "2025-stead/source.html",
+      "requested_url": "https://papers.nips.cc/paper_files/paper/2025/hash/3d03800841fa1bb2f43ef1750aafcce4-Abstract-Conference.html",
+      "resolved_url": "https://papers.nips.cc/paper_files/paper/2025/hash/3d03800841fa1bb2f43ef1750aafcce4-Abstract-Conference.html",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:57.776182+00:00",
+      "bytes": 9919,
+      "sha256": "53c335fd58d94f0514c8cbd7bdfeb31ea9eca4ecbaeb61129e712eada88ba970"
+    },
+    {
+      "path": "2025-stead/repository.html",
+      "requested_url": "https://github.com/7-yaya/STEAD",
+      "resolved_url": "https://github.com/7-yaya/STEAD",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:58.420668+00:00",
+      "bytes": 239514,
+      "sha256": "ae21c813c9c20172e27c8346f8a1776367a170a37e6b5b382bcab9e13984e379"
+    },
+    {
+      "path": "2025-stead/readme-source.json",
+      "requested_url": "https://api.github.com/repos/7-yaya/STEAD/readme",
+      "resolved_url": "https://api.github.com/repos/7-yaya/STEAD/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:58.658974+00:00",
+      "bytes": 2794,
+      "sha256": "65dda5ba71ae033b436fb898a7cc0dc2c9a30b39e7b2676af3bde675171ada85"
+    },
+    {
+      "path": "2025-stead/upstream-readme.md",
+      "source_url": "https://github.com/7-yaya/STEAD/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "5a404805c4fcc208650f5d7d2636580f66b95414",
+      "derived_from": "readme-source.json",
+      "bytes": 1500,
+      "sha256": "391e37230cf49f59dda1401268f488f195e5531bc5a345ba773ffc1f8e4a19cc"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 26
+}

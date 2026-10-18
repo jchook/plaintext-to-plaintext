@@ -1,0 +1,33 @@
+{
+  "id": "2021-meteor",
+  "title": "Meteor: Cryptographically Secure Steganography for Realistic Distributions",
+  "status": "ACM CCS 2021; author-hosted PDF",
+  "kind": "paper",
+  "source": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+  "pdf": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+  "why": "Establishes cryptographic treatment of generative steganography when token entropy varies widely. Relevant to shared randomness, security definitions, and why ordinary arithmetic coding needs careful analysis. Includes historical mobile measurements.",
+  "caveat": "Its guarantee is relative to the agreed generative model. Historical mobile experiments do not validate our current quantized 3B model or phone-to-desktop interoperability.",
+  "repo": null,
+  "priority": "foundation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2021-meteor/paper.pdf",
+      "requested_url": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+      "resolved_url": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:53.141781+00:00",
+      "bytes": 6774738,
+      "sha256": "8ee5858264f895654c20265f3bbd3c81f263186fd189266558c76ef7efde3bdb"
+    },
+    {
+      "path": "2021-meteor/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 155607,
+      "sha256": "237ce9f8ba02f4f7bcf9539d329076ca9c9a8905eb3e2f8505928dfb64ff7565"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 20
+}

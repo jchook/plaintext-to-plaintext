@@ -1,0 +1,42 @@
+{
+  "id": "2019-neural-linguistic-steganography",
+  "title": "Neural Linguistic Steganography",
+  "status": "EMNLP-IJCNLP 2019",
+  "kind": "paper",
+  "source": "https://aclanthology.org/D19-1115/",
+  "pdf": "https://aclanthology.org/D19-1115.pdf",
+  "why": "Direct prior art for our pretrained language model plus arithmetic coding. Explains how secret bits drive token choices and how the receiver reconstructs those choices from shared probabilities.",
+  "caveat": "A foundational construction, not evidence that our finite framing, candidate filtering, or numerical runtime preserves the original model distribution.",
+  "repo": null,
+  "priority": "foundation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2019-neural-linguistic-steganography/paper.pdf",
+      "requested_url": "https://aclanthology.org/D19-1115.pdf",
+      "resolved_url": "https://aclanthology.org/D19-1115.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:53.026147+00:00",
+      "bytes": 371693,
+      "sha256": "70bcaf5ec14f3ed87b3f7f8604eb58e137b476dc9929cc47075aaf4462578b2c"
+    },
+    {
+      "path": "2019-neural-linguistic-steganography/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 36670,
+      "sha256": "338d0d05624b1384b74672925f7f799175ff7e517b72c6d3114456a386126857"
+    },
+    {
+      "path": "2019-neural-linguistic-steganography/source.html",
+      "requested_url": "https://aclanthology.org/D19-1115/",
+      "resolved_url": "https://aclanthology.org/D19-1115/",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:53.279172+00:00",
+      "bytes": 40948,
+      "sha256": "ed7a101639ad29bc7bee5cc36cbc46ce5821b024801cd39543185c6b1ec0be67"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 6
+}

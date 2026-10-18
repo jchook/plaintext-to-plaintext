@@ -1,0 +1,42 @@
+{
+  "id": "2026-weak-asymmetry",
+  "title": "From Symmetry toward Weak Asymmetry: Secure Steganography under the Receiver's Partial Channel Knowledge",
+  "status": "USENIX Security 2026",
+  "kind": "paper",
+  "source": "https://www.usenix.org/conference/usenixsecurity26/presentation/liao",
+  "pdf": "https://www.usenix.org/system/files/usenixsecurity26-liao.pdf",
+  "why": "Allows receiver-side information such as token rankings instead of exact probability values. Directly relevant to numerical mismatches and eventual decoding across different devices.",
+  "caveat": "Decoding still depends on the required partial information staying consistent. Precision-mismatch experiments are evidence for that setting, not proof of arbitrary phone-to-desktop compatibility.",
+  "repo": null,
+  "priority": "deployment",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-weak-asymmetry/paper.pdf",
+      "requested_url": "https://www.usenix.org/system/files/usenixsecurity26-liao.pdf",
+      "resolved_url": "https://www.usenix.org/system/files/usenixsecurity26-liao.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:58.816640+00:00",
+      "bytes": 638649,
+      "sha256": "f2a4414f058a5ccb717d07329a633a80edef7a09671b4f5a7eca7dde401361da"
+    },
+    {
+      "path": "2026-weak-asymmetry/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 124722,
+      "sha256": "e7a0ea14ae673ee8183d1f98f97d189bb2295c5900be1d114d879398c1553549"
+    },
+    {
+      "path": "2026-weak-asymmetry/source.html",
+      "requested_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/liao",
+      "resolved_url": "https://www.usenix.org/conference/usenixsecurity26/presentation/liao",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:59.479521+00:00",
+      "bytes": 37440,
+      "sha256": "572013f15f6603532e899f4088748d8a665679853fd9681d79af2a144e7e7b28"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 19
+}

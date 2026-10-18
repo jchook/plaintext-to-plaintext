@@ -1,0 +1,42 @@
+{
+  "id": "implementation-meteor-cli",
+  "title": "Independent Meteor CLI",
+  "status": "Repository documentation snapshot; not independently reproduced",
+  "kind": "repository",
+  "source": "https://github.com/rohanssrao/meteor",
+  "repo": "rohanssrao/meteor",
+  "why": "An unofficial small-model implementation using LiquidAI LFM2.5-230M-Base. Relevant to packaging and reducing inference requirements.",
+  "caveat": "Separate from the original Meteor paper's artifact. No convincing cross-device or phone benchmark was established in this review; retain upstream licensing information.",
+  "priority": "implementation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "implementation-meteor-cli/repository.html",
+      "requested_url": "https://github.com/rohanssrao/meteor",
+      "resolved_url": "https://github.com/rohanssrao/meteor",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:01.332901+00:00",
+      "bytes": 266465,
+      "sha256": "bb59a15749c03b5755c7bc196ba92490cf6011935875946905bee5b9542a5cf4"
+    },
+    {
+      "path": "implementation-meteor-cli/readme-source.json",
+      "requested_url": "https://api.github.com/repos/rohanssrao/meteor/readme",
+      "resolved_url": "https://api.github.com/repos/rohanssrao/meteor/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:01.560118+00:00",
+      "bytes": 3713,
+      "sha256": "3b1c3cb4b43f719d3c726a0bb88cff5ebb59c350a3127127836ec0f98c6564ed"
+    },
+    {
+      "path": "implementation-meteor-cli/upstream-readme.md",
+      "source_url": "https://github.com/rohanssrao/meteor/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "b2d14ef65422e4011d52db2e07e659c8afbc176a",
+      "derived_from": "readme-source.json",
+      "bytes": 2140,
+      "sha256": "e3ce6b669cdabb60cd4ab1811666b8abc95770ea7f6b5c701c2437224dd9ffac"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,42 @@
+{
+  "id": "2026-retoksync",
+  "title": "ReTokSync: Self-Synchronizing Tokenization Disambiguation for Generative Linguistic Steganography",
+  "status": "April 2026 arXiv preprint",
+  "kind": "paper",
+  "source": "https://arxiv.org/abs/2604.25486",
+  "pdf": "https://arxiv.org/pdf/2604.25486",
+  "why": "Resets generation state to the receiver's retokenized view when ambiguity occurs, limiting cascading errors. Promising for retaining capacity with little runtime overhead.",
+  "caveat": "Above 99.7% accuracy refers to bits, not complete messages. Its evaluated 100% recovery uses additional correction covers through a reliable auxiliary channel. It is not yet our one-cover exact-recovery requirement.",
+  "repo": null,
+  "priority": "text transport",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-retoksync/paper.pdf",
+      "requested_url": "https://arxiv.org/pdf/2604.25486",
+      "resolved_url": "https://arxiv.org/pdf/2604.25486",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:58.950103+00:00",
+      "bytes": 1960896,
+      "sha256": "1f32a6c124dc18bb638c7f3b3c17cfeca28ebbdade71216ceffe5aba1658a795"
+    },
+    {
+      "path": "2026-retoksync/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 145893,
+      "sha256": "6bffe116a9ed74b6a591273fa385b95fbecf954860ffa7084b20a8fc91723aa2"
+    },
+    {
+      "path": "2026-retoksync/source.html",
+      "requested_url": "https://arxiv.org/abs/2604.25486",
+      "resolved_url": "https://arxiv.org/abs/2604.25486",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:59.376817+00:00",
+      "bytes": 43735,
+      "sha256": "5befd10c3e656165be4c0fafe9821e8342d7bc98be6ba40ec2e3a29be14560c3"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 20
+}

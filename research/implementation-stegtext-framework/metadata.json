@@ -1,0 +1,42 @@
+{
+  "id": "implementation-stegtext-framework",
+  "title": "StegText Framework",
+  "status": "Repository documentation snapshot; not independently reproduced",
+  "kind": "repository",
+  "source": "https://github.com/lxjf12138/stegtext-framework",
+  "repo": "lxjf12138/stegtext-framework",
+  "why": "Comparison harness exposing several coders and disambiguators, with a Qwen2.5-3B CUDA quickstart. Useful for controlled experiments rather than reimplementing every baseline.",
+  "caveat": "Repository claims were not reproduced. Author provenance and equivalence of every algorithm implementation were not independently established.",
+  "priority": "implementation",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "implementation-stegtext-framework/repository.html",
+      "requested_url": "https://github.com/lxjf12138/stegtext-framework",
+      "resolved_url": "https://github.com/lxjf12138/stegtext-framework",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:00.799860+00:00",
+      "bytes": 299140,
+      "sha256": "d2266094411de1e314be349938e544cb5ab615fc6f7e2a1eb6df77c851d021c1"
+    },
+    {
+      "path": "implementation-stegtext-framework/readme-source.json",
+      "requested_url": "https://api.github.com/repos/lxjf12138/stegtext-framework/readme",
+      "resolved_url": "https://api.github.com/repos/lxjf12138/stegtext-framework/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:48:01.065157+00:00",
+      "bytes": 6498,
+      "sha256": "fe4d9b36b25d018c8e18cb24c864b27d99ebc4a81fd2df351783d4bbb3643914"
+    },
+    {
+      "path": "implementation-stegtext-framework/upstream-readme.md",
+      "source_url": "https://github.com/lxjf12138/stegtext-framework/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "c283cc3f5cbe6243fe94a45807b9bca9cefc18c5",
+      "derived_from": "readme-source.json",
+      "bytes": 4107,
+      "sha256": "300d71d985094938195ecf15ec0bdaa98732a7887cb3a6acb62a34fa8af72d61"
+    }
+  ],
+  "errors": []
+}

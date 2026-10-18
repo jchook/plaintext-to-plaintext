@@ -1,0 +1,1189 @@
+        Computing Low-Entropy Couplings for Large-Support Distributions
+
+
+    Samuel Sokota1               Dylan Sam1                   Christian Schroeder de Witt2                Spencer Compton3
+                            Jakob Foerster2                                         J. Zico Kolter1,4
+                                                  1
+                                                  Carnegie Mellon University
+                                                    2
+                                                      University of Oxford
+                                                     3
+                                                       Stanford University
+                                                           4
+                                                             Bosch AI
+                                                ssokota@andrew.cmu.edu
+
+                         Abstract                                   While MEC is NP-hard [Kovačević et al., 2015], recent
+                                                                    works have provided approaches that achieve provable
+                                                                    approximations of MECs [Kocaoglu et al., 2017, Cicalese
+     Minimum-entropy coupling (MEC)—the process                     et al., 2019, Rossi, 2019, Li, 2021, Compton, 2022, Comp-
+     of finding a joint distribution with minimum en-               ton et al., 2023, Shkel and Yadav, 2023] in log-linear time
+     tropy for given marginals—has applications in ar-              (i.e., O(N log N )) in the cardinality of the support of the
+     eas such as causality and steganography. However,              marginals. Unfortunately, the supports of many distributions
+     existing algorithms are either computationally in-             of interest, such as those of generative AI models, are in-
+     tractable for large-support distributions or limited           tractably large for these provable approximation algorithms.
+     to specific distribution types and sensitive to hyper-
+     parameter choices. This work addresses these limi-             To handle such cases, Sokota et al. [2022] introduced a
+     tations by unifying a prior family of iterative MEC            class of heuristic algorithms for producing low-entropy
+     (IMEC) approaches into a generalized partition-                couplings. These algorithms work by iteratively coupling
+     based formalism. From this framework, we de-                   components of random vectors using provable MEC
+     rive a novel IMEC algorithm called ARIMEC, ca-                 approximation algorithms in such a way that guarantees
+     pable of handling arbitrary discrete distributions,            the aggregate joint distribution is a coupling. In practice,
+     and introduce a method to make IMEC robust to                  both Sokota et al. [2022] and Schroeder de Witt et al.
+     suboptimal hyperparameter settings. These inno-                [2023] find that these iterative minimum-entropy coupling
+     vations facilitate the application of IMEC to high-            (IMEC) approaches produce low-entropy couplings for
+     throughput steganography with language models,                 distributions with very large supports—binary images
+     among other settings. Our codebase is available at             and trajectories of Atari games [Bellemare et al., 2013]
+     https://github.com/ssokota/mec.                                in the work of Sokota et al. [2022] and binary strings
+                                                                    and generative models (including GPT-2 [Radford et al.,
+                                                                    2019], WaveRNN [Kalchbrenner et al., 2018], and Image
+                                                                    Transformer [Parmar et al., 2018]) in the work of Schroeder
+1    INTRODUCTION                                                   de Witt et al. [2023]. Unfortunately, the applicability of the
+                                                                    IMEC algorithms Sokota et al. [2022] introduced is limited
+Given two marginal distributions, a coupling is a bivariate         to problems in which one distribution either has small
+joint distribution with the given marginals. In general, there      support or is factorable. Moreover, these algorithms can
+may be many couplings for a particular pair of marginals.           be sensitive to hyperparameter choices, requiring careful
+The problem of computing a coupling with the minimum                tuning for optimal performance. As a result, at the time of
+amount of joint entropy among all feasible couplings is             writing, there exist no techniques for producing low-entropy
+called minimum-entropy coupling (MEC) [Kovačević et al.,          couplings of general large-support distributions, let alone
+2015]. Further detailed in Compton et al. [2023], applica-          any that are also robust to hyperparameter settings.
+tions of MEC include causal inference [Kocaoglu et al.,
+2017, Compton et al., 2020, Javidian et al., 2021, Compton          In this work, we make multiple contributions regarding
+et al., 2022], communication [Sokota et al., 2022], steganog-       the IMEC line of research. First, we unify existing IMEC
+raphy [Schroeder de Witt et al., 2023], random number gen-          algorithms under a single formalism using sets of partitions,
+eration [Li, 2021], multimodal learning [Liang et al., 2023],       where each partition is over the sample space of one of the
+functional representations [Cicalese et al., 2019], and dimen-      given marginals. IMEC couples distributions by iteratively
+sionality reduction [Vidyasagar, 2012, Cicalese et al., 2016].      performing (approximate) MECs between a conditional
+
+
+          Proceedings of the 40th Conference on Uncertainty in Artificial Intelligence (UAI 2024), PMLR 244:3279–3298.
+distribution of one marginal and the posterior over the            2.1   MINIMUM-ENTROPY COUPLING
+blocks of a partition associated with the other marginal. In
+particular, at each iteration, IMEC uses a partition whose         We begin by formalizing the ideas of couplings and
+associated posterior maximizes entropy.                            minimum-entropy couplings.
+Leveraging this formalism, we derive the first algorithm
+                                                                   Definition 2.1 (Coupling). Let µ : X → [0, 1] be a probabil-
+for computing low-entropy couplings for arbitrary large-
+                                                                   ity distribution over a finite set X and let ν : Y → [0, 1]
+support distributions, which we call autoregressive IMEC
+                                                                   be a probability distribution over a finite set Y. A cou-
+(ARIMEC). ARIMEC uses a set of partitions, which we
+                                                                   pling of µ and ν is a bivariate joint probability distribution
+call the prefix tree partition set, in which each partition cor-
+                                                                   γ : X × Y → [0, 1] that marginalizes to µ and ν. In other
+responds to a node of the prefix tree of one of the sample
+                                                                   words, γ satisfies
+spaces. These prefix trees can have large numbers of nodes
+(and thereby induce large numbers of partitions). Thus, to                     X
+facilitate an efficient implementation, we introduce tech-                             γ(x′ , y) = ν(y), for all y ∈ Y,      (1)
+niques to 1) lazily update the posterior over different blocks                x′ ∈X
+                                                                               X
+and 2) quickly search over partitions using pruning.                                   γ(x, y ′ ) = µ(x), for all x ∈ X.     (2)
+                                                                              y ′ ∈Y
+Finally, recognizing IMEC’s general brittleness to partition
+set choice, we introduce a technique, called merging, to
+improve its robustness. At each iteration, this technique          We use Γ(µ, ν) = {γ | γ satisfies (1) & (2)} to denote the
+merges sample realizations into groups with identical pos-         set of all couplings for µ and ν.
+terior updates. Merging uses these groupings to perform
+                                                                   Definition 2.2 (Joint Entropy). Given a coupling γ, the joint
+additional MECs when entropy would otherwise be wasted
+                                                                   entropy is defined as
+due to suboptimal partition sets or other factors.
+We empirically validate the utility of our innovations in two                  H(γ) = −E(X,Y )∼γ log γ(X, Y ).
+settings: Markov coding games [Sokota et al., 2022] and
+steganography [Cachin, 1998]. In Markov coding games,
+the objective is to encode messages into the trajectories          Throughout the paper, we will use capital letters to denote
+of a Markov decision process while achieving a high ex-            random variables, as is done in the definition above.
+pected return. In steganography, the goal is to embed sen-
+sitive information into innocuous content such that an ad-         Definition 2.3 (Minimum-Entropy Coupling). Given two
+versary cannot detect the hidden information. Our results          marginal distributions µ, ν, a minimum-entropy coupling
+show that ARIMEC achieves substantially improved com-              is a coupling γ ∈ Γ(µ, ν) such that
+munication rates in both settings, illustrating its ability to
+use autoregressive prior information about realistic mes-                     H(γ) = min{H(γ ′ ) | γ ′ ∈ Γ(µ, ν)}.
+sages. Additionally, we demonstrate that merging signifi-
+cantly enhances IMEC’s robustness to suboptimal partition
+set choices, thereby facilitating easier out-of-the-box appli-     2.2   COMPUTING AND APPROXIMATING
+cation. Overall, our results suggest ARIMEC with merging                 MINIMUM-ENTROPY COUPLINGS
+as a practical approach to applications involving computing
+low-entropy couplings for large-support distributions, such        While computing an exact minimum-entropy coupling is
+as high-throughput steganography with language models.             NP-hard [Kovačević et al., 2015], there has been a series of
+                                                                   recent works that construct O(N log N ) approximation al-
+                                                                   gorithms, where N is the size of the sample space. Cicalese
+                                                                   et al. [2019] introduce an approximation algorithm that
+                                                                   they show guarantees a coupling within 1 bit of minimum
+                                                                   entropy. Rossi [2019] show that Kocaoglu et al. [2017]’s
+2   BACKGROUND AND NOTATION                                        greedy approach guarantees a coupling within 1 bit of
+                                                                   minimum entropy. Li [2021] introduce a third approach for
+                                                                   which he also proved a 1 bit approximation guarantee. Most
+For our background, we formally introduce minimum-                 recently, Compton et al. [2023] show an improved guarantee
+entropy coupling and discuss existing techniques for com-          for Kocaoglu et al. [2017]’s greedy approach of about 0.53
+puting and (heuristically) approximating minimum-entropy           bits, while also showing that Cicalese et al. [2019] and Li
+couplings. Thereafter, we introduce notation for partitions        [2021]’s algorithms cannot match this guarantee. Compton
+of sets, which we will later use to unify existing methods in      et al. [2023] also give approaches that guarantee exact
+one general framework.                                             MECs, though they require exponential time.
+
+
+                                                               3280
+Algorithm 1 Tabular IMEC: Y | X = x                                Algorithm 2 Factored IMEC: Y | X=x
+   procedure TIMEC(µ, ν, x)                                           procedure FIMEC(µ, ν, x)
+      γ(X) ← µ(X)                                                        γ(X) ← µ(X)
+      for j = 1, . . . , m do                                            for j = 1, . . . , m do
+          γ(X, Yj | Y1:j−1 ) ← MEC(γ(X | Y1:j−1 ),                           i∗ ← argmaxi H(γ(Xi | Y1:j−1 ))
+                                   ν(Yj | Y1:j−1 ))                          γ(Xi∗ , Yj | Y1:j−1 ) ← MEC(γ(Xi∗ | Y1:j−1 ),
+          Yj ∼ γ(Yj | x, Y1:j−1 )                                     ν(Yj | Y1:j−1 ))
+      end for                                                                γ(X, Yj | Y1:j−1 ) ←Qγ(Xi , Yj | Y1:j−1 )·
+                                                                                                         ∗
+
+      return Y                                                                                     i̸=i∗ γ(Xi | Y1:j−1 )
+   end procedure                                                             Yj ∼ γ(Yj | x, Y1:j−1 )
+                                                                         end for
+                                                                         return Y
+2.3       ITERATIVE MINIMUM-ENTROPY COUPLING                          end procedure
+          WITH A TABULAR POSTERIOR
+
+In some settings, it is desirable to (non-provably) approxi-       we refer to as factored IMEC (FIMEC)2 , in which X is also
+mate minimum-entropy couplings where one random vari-              assumed to be a random vector. Furthermore, crucially, it is
+able is a vector that ranging over such a large number of          assumed to be factorable.
+possible outcomes that the approaches described in Sec-
+tion 2.2 are inapplicable. Sokota et al. [2022] propose an                                   Q X = (X1 , . . . , Xn ) is a
+                                                                   Assumption 2.4 (Factorability).
+iterative approach to such settings that assumes that this         random vector with µ(x) = i µ(xi ) for all x ∈ X.
+random vector is autoregressively specified. In this work,
+we refer to Sokota et al. [2022]’s algorithm as tabular IMEC       As with TIMEC, FIMEC guarantees that the resulting distri-
+(TIMEC). TIMEC guarantees that the resulting joint dis-            bution is a coupling, supports likelihood queries to both con-
+tribution is a coupling, supports conditional sampling and         ditionals and the joint distribution, and heuristically achieves
+likelihood queries for both X | Y and Y | X, where Y is            low entropy. It can similarly be defined in terms of either
+the random vector, and heuristically achieves low entropy.         conditional generative process (X | Y or Y | X). We
+It can either be defined using the conditional generative          again focus on the Y | X case (Algorithm 2), and defer
+process for sampling Y | X or the conditional generative           the X | Y case to Appendix A. The basic structure of Al-
+process for sampling X | Y , as both induce the same joint         gorithm 2 is analogous to that of Algorithm 1. However,
+distribution. We focus on the process for generating Y | X,        rather than performing MECs using γ(X | Y1:j−1 ), FIMEC
+which is formalized in Algorithm 1, in the main body but           uses γ(Xi∗ | Y1:j−1 ), where Xi∗ is a component of X with
+include the process for generating X | Y in Algorithm 5 in         maximum posterior entropy. The other components Xi for
+Appendix A. Algorithm 1 works iteratively in two steps:            i ̸= i∗ are left independent of Yj | Y1:j−1 .
+
+1. First, it performs an (approximate) MEC between the             2.5       PARTITIONS OF SETS
+   posterior over X given Y1:j−1 (inductively defined via
+   Bayes’ Theorem) and the conditional distribution ν(Yj |         As discussed in the introduction, we will show the IMEC
+   Y1:j−1 ).1 The joint posterior over X and Yj given Y1:j−1       algorithms discussed in the previous two sections can be
+   is assigned to the output of this coupling.                     unified into a single algorithm using partitions over X. We
+2. Second, it samples Yj from the posterior over Yj given          use the following definitions and notation for partitions.
+   both X = x and Y1:j−1 (also inductively defined via
+   Bayes’ Theorem).                                                Definition 2.5 (Partition). A partition P of a set X is a
+                                                                   collection of blocks {B1 , . . . , Bℓ } where:
+                                                                   1. Each block is a subset of X.
+2.4       ITERATIVE MINIMUM-ENTROPY COUPLING                       2. Each pair of distinct blocks has an empty intersection.
+          WITH A FACTORED POSTERIOR                                3. The union of blocks is equal to X.
+Unfortunately, requiring approximate MECs over distri-             Definition 2.6 (Block Function). For a partition P of a set
+butions of size |X| makes TIMEC inapplicable to many               X, the block function BP : X → P maps x to the block of
+settings, such as steganography with large message sizes           the partition of which it is an element. When X is a random
+[Schroeder de Witt et al., 2023]. To ameliorate this issue,        variable, we use BP = BP (X) to denote the block of P, as
+Sokota et al. [2022] also proposed a second approach, which        a random variable, to which X belongs.
+      1                                                                  2
+      Note that we use upper-bound-inclusive indexing, so Y1:0 =       Schroeder de Witt et al. [2023] use the name iMEC for this
+(), Y1:1 = (Y1 ), Y1:2 = (Y1 , Y2 ), etc.                          approach.
+
+
+                                                               3281
+Note that the probability distribution of BP is defined by         Algorithm 3 IMEC (Generic Form): Y | X = x
+                                      X                               procedure IMEC(µ, ν, x, P)
+       µ(BP = B) = µ(X ∈ B) =             µ(X = x).                      γ(X) ← µ(X)
+                                             x∈B
+                                                                         for j = 1, . . . , m do
+                                                                             P ← arg maxP∈P H(γ(BP | Y1:j−1 ))
+3       A UNIFICATION OF ITERATIVE                                           γ(BP , Yj | Y1:j−1 ) ← MEC(γ(BP | Y1:j−1 ),
+        MINIMUM-ENTROPY COUPLING                                                                          ν(Yj | Y1:j−1 ))
+                                                                             Yj ∼ γ(Yj | BP (x), Y1:j−1 )
+We are now ready to describe our unification of existing                 end for
+IMEC algorithms. In this unification, different instances of             return Y
+IMEC are specified using different sets of partitions                 end procedure
+
+                  P ⊂ {P | P is a partition of X}.
+                                                                   3.1   THEORY
+Instances of this unified perspective guarantee that the re-
+sulting distribution is a coupling, support conditional and        The general form of IMEC possesses the following two
+likelihood queries for both X | Y and Y | X, and heuristi-         properties, which reduce to the results of Sokota et al. [2022]
+cally produce low entropy. We define this unified perspective      as a special case.
+to IMEC using the conditional generative process given in
+Algorithm 3, which samples from Y |X. (Equivalently, it is         Proposition 3.1 (Coupling). IMEC induces a coupling of µ
+defined by the generative process given in Algorithm 7 in          and ν.
+Appendix A, which samples from X|Y ). Algorithm 3 works
+iteratively in three steps:                                        Proposition 3.2 (Greediness). If the partition of singletons
+                                                                   is in P, IMEC approximately minimizes H(X, Y1:j ) subject
+1. First, it computes a partition P ∈ P inducing a                 to µ, ν, γ(X, Y1:j−1 ) on the jth iteration, for each j.
+   maximum-entropy posterior. The entropy induced by
+   a partition P at iteration j is defined in terms of the prob-   Proofs for these statements are provided in Appendix B.2
+   abilities over the blocks of the partition under γ, given       and Appendix B.3, respectively.
+   Y1:j−1 . That is,
+                                                                   The general form of IMEC also possesses the following run-
+     H(γ(BP | Y1:j−1 ))                                            time guarantee, which says that IMEC can be implemented
+         X                                                         efficiently whenever maximum-entropy posterior partition
+     =−      γ(X ∈ B | Y1:j−1 ) log γ(X ∈ B | Y1:j−1 ).            computation is efficient.
+              B∈P
+                                                                   Proposition 3.3 (IMEC Runtime). Given a polynomial-
+    The intuition behind selecting the maximum-entropy par-        time function for computing the maximum-entropy posterior
+    tition is that it heuristically offers the opportunity to      partition, IMEC can be implemented in polynomial time in
+    reduce the joint entropy by the largest amount.3               maxj |Yj |, maxi |Xi |, m, n.
+2. Second, it performs an (approximate) MEC between the
+   posterior over the blocks of the chosen partition P and         We prove Proposition 3.3 in Appendix B.1.
+   the conditional distribution ν(Yj | Y1:j−1 ). The joint pos-
+   terior over the block BP and Yj given Y1:j−1 is assigned
+                                                                   3.2   SPECIAL CASES
+   to the output of this coupling.
+3. Third, it samples Yj from the posterior over Yj given           Tabular Posterior To implement TIMEC using Algo-
+   both the block BP (x) and Y1:j−1 .                              rithm 3, we can select the partition set P to be the set of
+                                                                   all partitions of X. As per Lemma B.3, which is stated and
+    3
+        A justification is as follows. Recall that                 derived in Appendix B.4, the partition of singletons (or a
+                                                                   partition that is equivalent up to measure zero) will always
+         max(H(C), H(D)) ≤ H(C, D) ≤ H(C) + H(D),
+                                                                   be selected, as it achieves maximum entropy. Coupling with
+where H(C, D) achieves its upper bound when C and D are inde-      the partition of singletons is equivalent to coupling over the
+pendent. Thus, the maximum reduction in joint entropy achievable   whole set, which is exactly what TIMEC does.
+by performing a coupling is upper bounded by
+                                                                   Using Proposition 3.3, we derive the following runtime
+H(C) + H(D) − max(H(C), H(D)) = min(H(C), H(D)).                   guarantee for TIMEC in Appendix B.1.
+
+Therefore, maximizing H(C) maximizes an upper bound on the         Corollary 3.1 (TIMEC Runtime). TIMEC can be imple-
+joint entropy reduction.                                           mented in polynomial time in maxj |Yj |, |X|, m.
+
+
+                                                               3282
+X1 X2 X3                                                         essential to choose a partition set compatible with a univer-
+    ⇥       ⇥
+                {    ⇥   ⇥
+                              ,
+                                   ⇥    ⇥
+                                            ,
+                                                 ⇥    ⇥
+                                                          }      sal model of distributions (i.e., one capable of representing
+                                                                 any distribution). The autoregressive model, which de-
+        X                    Partition P2                        composes a distribution over vectors into component-wise
+                                                                 conditional distributions via the chain rule of probability, is
+Figure 1: (Left) A set X of sequences of length 3; (right) a     one such universal model. This section formalizes ARIMEC
+partition P2 used by FIMEC.                                      using a partition set specifically tailored to align with the
+                                                                 tree-like output structure inherent in autoregressive models.
+                                                                 In order to define this partition set, which we call the prefix
+Note that TIMEC’s polynomial time guarantee is in contrast
+                                                                 tree partition set, we first define prefixes.
+to a direct application of an approximate MEC algorithm,
+which would require exponential time as a function of the        Definition 4.1 (Prefix/Extension). We write v ⊏ v ′ to mean
+same quantities.                                                 that v is a prefix of v ′ in the substring sense and, equivalently,
+                                                                 that v ′ is an extension of v in the substring sense.
+Factored Posterior To implement FIMEC using Al-
+gorithm 3, we can select the partition set as P =                Definition 4.2 (Immediate Prefix/Extension). We say v is
+{P1 , . . . , Pn }, where for each i,                            the immediate prefix of v ′ and, equivalently, that v ′ is the
+                                                                 immediate extension of v, if v ⊏ v ′ and v ′ is one character
+Pi = {X1 ×· · ·×Xi−1 ×{xi }×Xi+1 ×· · ·×Xn | xi ∈ Xi }           longer than v.
+
+and where Xi denotes the sample space for Xi . An example        Next, we define the prefix tree of a set of vectors. The prefix
+is shown in Figure 1. From this perspective, selecting Pi        tree is a directed graph over prefixes of vectors with edges
+on a particular iteration is equivalent to selecting Xi as the   pointing to immediate extensions, as stated below. (Note
+component with which to couple.                                  that our usage of the term is graph theoretic and does not
+                                                                 pertain to the trie data structure.)
+Using Proposition 3.3, we derive the following runtime
+guarantee for FIMEC in Appendix B.1.                             Definition 4.3 (Prefix Tree). The prefix tree for a set of
+                                                                 vectors X is a directed graph (V, E), where the vertex set
+Corollary 3.2 (FIMEC Runtime). Let Assumption 2.4 hold.
+Then FIMEC can be implemented in polynomial time in                                  V = {v ⊏ x | x ∈ X}
+maxj |Yj |, maxi |Xi |, m, n.
+                                                                 is the set of prefixes of elements of X and the set of edges
+Note that FIMEC’s polynomial-time guarantee is in contrast          E = {(v, c) | v, c ∈ V, c is an immediate extension of v}
+to a direct application of both an approximate MEC algo-
+rithm and TIMEC, which would each require exponential            is the set of pairs of vertices and their immediate extensions.
+time in the same quantities.                                     For distinct vertices v, u, we use the notation Vv→u to mean
+                                                                 the subset of V \ {v} touchable by paths that start from v
+                                                                 and contain u.
+4       ITERATIVE MINIMUM-ENTROPY
+        COUPLING WITH AN                                         We can view each vertex v in the prefix tree as partitioning
+        AUTOREGRESSIVE POSTERIOR                                 X in a manner that aligns with the sampling paths of autore-
+                                                                 gressive models. This perspective naturally induces what
+Building on our unified framework, we now derive a               we call the prefix tree partition set, where each partition
+new IMEC algorithm, which we call autoregressive IMEC            corresponds to a prefix upon which an autoregressive model
+(ARIMEC). ARIMEC improves upon the applicability of              could be conditioned.
+FIMEC by eliminating the factorability assumption. We
+present ARIMEC in two parts. First, we introduce the pre-        Definition 4.4 (Prefix Tree Partition Set). Let (V, E) be the
+fix tree partition set, which allows us to formally define       prefix tree for X. Then the prefix tree partition set is defined
+ARIMEC using Algorithm 3. Second, we detail insights to          as P = {Pv | v ∈ V}, where
+make a practical implementation of ARIMEC.                               Pv = {Bc⊏ | (v, c) ∈ E} ∪ {Bv̸⊏ } ∪ {Bv= },
+
+                                                                 and where
+4.1     MATHEMATICAL FORMALIZATION
+                                                                 • Bc⊏ = {x ∈ X | c ⊏ x} denotes the subset of X that is
+In the framing of Algorithm 3, the defining characteristic         an extension of the child c;
+of IMEC algorithms is their partition sets. Therefore, to        • Bv̸⊏ = {x ∈ X | v ̸⊏ x} denotes the subset of X that
+develop an IMEC algorithm of maximal applicability, it is          does not extend v;
+
+
+                                                             3283
+      X1       X2                                                      B     @        B     @
+                                                                                                         B 6@
+           ⇥
+                                                                  {{           }, {           }, {          ,        }
+                                                                                                                     }
+           X                        Prefix Tree                                       Partition P
+
+Figure 2: (Left) A set X of sequences of length 2; (middle) the prefix tree for X; (right) the partition induced by the left-most
+depth one node of the prefix tree.
+
+
+• Bv= = {x ∈ X | v = x} denotes the (either singleton or          while lazily and (provably) efficiently computing the pos-
+  empty) subset of X equal to v.                                  terior (and posterior entropy) of each partition that it does
+                                                                  search. This procedure has two components. The first is a
+For distinct vertices v, u, we use the notation Bv→u to mean
+                                                                  polynomial time algorithm for lazily computing posteriors
+the subset of Pv \ {Bv= } touchable by paths that start from
+                                                                  (and posterior entropies) for particular partitions. The sec-
+v and contain u.
+                                                                  ond is a search procedure for finding a maximum-entropy
+                                                                  partition that prunes partitions that are provably not max-
+A visualization of the prefix tree and one partition that it      imum entropy. In practice, we observe that the procedure
+induces is shown in Figure 2.                                     is highly efficient, often only requiring the evaluation of
+Having defined the prefix tree partition set, ARIMEC’s for-       one or two nodes to prove a maximum-entropy partition,
+malization is immediate.                                          though we do not formally prove its runtime complexity;
+                                                                  see Appendix D.1 for further details.
+Definition 4.5 (ARIMEC). ARIMEC is the instance of
+Algorithm 3 in which the set of partitions P is selected to       Posterior Updates The core idea behind our approach to
+be the prefix tree partition set.                                 posterior updates is that, given an updated posterior for the
+                                                                  partition associated to node v, we can immediately derive
+ARIMEC can be thought of as, at each iteration, operat-           the posterior of the partition for any adjacent node u. The
+ing at a working prefix v whose associated partition Pv           posterior over Pu is dictated by two rules. First, that
+maximizes posterior entropy. As information is gained, the
+likelihood of one the blocks (such as some Bc⊏ ) will be-                    γ(Bu→v | Y1:j ) = 1 − γ(Bv→u | Y1:j ),
+come large. As a result, the entropy associated with the
+working prefix’s partition Pv will become small, causing          by the complement law of probability. Second, that
+the (entropy-maximizing) working prefix to change—often
+to a child of the existing working prefix. Over iterations, the                   γ(B | Y1:j ) ∝ γ(B | Y1:j−1 )
+working prefix will tend to traverse downward in the prefix
+tree toward the true value of X. However, it is also possible     for B ∈ Pu \ Bu→v , as direct evidence about BPv does not
+for it to move upward if the probability of B̸⊏v (for working     differentiate between the elements of Pu \ Bu→v . These
+prefix v) becomes large. This backtracking mechanism al-          ideas are formalized in Lemma B.4.
+lows ARIMEC to recover from cases in which the working            We can compute the posterior for any partition Pu in poly-
+prefix deviates from prefixes of X.                               nomial time by iteratively applying Lemma B.4 to the par-
+We provide visual intuition for ARIMEC in Figure 3, show-         titions along the undirected path from v to u, as is stated
+ing example iterations for marginals of length two and its        below and proven in Appendix B.5.
+corresponding path down the tree in Figure 4.                     Proposition 4.1 (Posterior Updates). Assume that the pos-
+                                                                  terior over a partition is updated if and only if its corre-
+4.2   EFFICIENT IMPLEMENTATION                                    sponding node is touched and that nodes are touched by
+                                                                  traversing edges of the tree (i.e., without jumps). Let Pv be
+While Definition 4.5 formalizes ARIMEC at a mathematical          a partition whose posterior was updated on iteration j. If
+level, constructing a practical implementation is challenging     v, u are neighbors and u was last visited on iteration j ′ ≤ j,
+due to the exponentially large number of nodes in the prefix      then the iteration j posterior for any partition Pu can be
+tree, which makes naive maximum-entropy posterior parti-          computed in polynomial time in maxi |Xi |, n.
+tion computations intractable. To address this challenge, we
+propose a procedure that seeks to prove a maximum-entropy         Maximum-Entropy Posterior Partition Search The
+partition by searching over as few partitions as possible,        core idea behind our search procedure is to prune nodes
+
+
+                                                              3284
+                                    Figure 3: Visualization of two iterations of ARIMEC.
+
+
+
+
+                   Figure 4: Path shown down the prefix tree corresponding to the procedure in Figure 3.
+
+
+of the prefix tree whose partitions provably cannot be max-       For any neighbor u of v, if
+imal entropy. To prune nodes, we make use of an upper
+bound on entropy. This upper bound—stated formally in                            γ(Bv→u | y1:j ) < 1 − 1/κ,
+Lemma B.5—shows, roughly speaking, that the entropy of
+any distribution with one sufficiently probable element can-      then, for all u′ ∈ Vv→u ,
+not exceed the entropy of the distribution that would divide
+the remaining mass uniformly.                                             H(γ(BPu′ | y1:j )) ≤ U(γ(Bu→v | y1:j )).
+
+We can apply this upper bound on large numbers of nodes
+simultaneously: If a prefix v is unlikely, then γ(Bu→v | Y1:j )   Using Proposition 4.2, we can prove a maximum-entropy
+will be large for every u in the subtree rooted at v. On the      partition by searching only over the nodes for which we can-
+other hand, if a prefix v is likely, then γ(Bu→v | Y1:j ) will    not prove an upper bound that is smaller than a previously
+be large for every u in complement of the subtree rooted at       observed entropy, as is described in Algorithm 4.
+v. We prove this result, stated in Proposition 4.2 below, in
+Appendix B.6.
+                                                                  5   MITIGATING ENTROPY WASTE VIA
+Proposition 4.2 (Maximum-Entropy Partition). Let                      MERGING
+              κ ≥ max |{B ∈ P | µ(B) > 0}|
+                   P∈P
+                                                                  One suboptimality of ARIMEC, and more generally of all
+be an upper bound on the number of blocks with positive           IMEC algorithms, results from the fact that, on a particular
+probability. Define                                               iteration, it may be the case that
+                                            1−q
+          U : q 7→ −q log q − (1 − q) log       .                       H(ν(Yj | Y1:j−1 )) − H(γ(BP | Y1:j−1 )) > 0.
+                                            κ−1
+
+                                                              3285
+Algorithm 4 Maximum-Entropy Partition Search                                                         Approach               ARIMEC                 FIMEC
+  procedure M AX E NT PARTITION(v, γ(· | Y1:j ))
+                                                                                                     Log Inverse          -10         0.1      5
+     queue ← [Pv ]                                                                                                                                     6
+                                                                                                     Temperature
+     while queue non-empty do
+                                                                                                             CodeCart                       CodePong
+
+
+
+
+                                                                     Error Rate (Token-wise)
+         Pu ← queue.pop()                                                                      1.0
+         if H(γ(BPu | Y1:j )) is max ent so far then
+             max ent partition ← Pu                                                            0.8
+
+         end if                                                                                0.6
+         for each node u′ adjacent to u do
+                                                                                               0.4
+             q ← γ(Bu→u′ | Y1:j )
+             if q > 1 − κ1 or U(q) > max ent so far then                                       0.2
+                  queue.append(Pu′ )                                                           0.0
+             end if                                                                                  10                         100 10                     100
+         end for
+                                                                                                                        Message Size (Tokens)
+     end while
+     return max ent partition                                     Figure 5: Results for the Markov coding games CodeCart
+  end procedure                                                   and CodePong using MaxEntRL policies with different tem-
+                                                                  peratures with 95% bootstrap confidence intervals drawn
+                                                                  from 100 games.
+In such a case, IMEC necessarily wastes at least H(ν(Yj |
+Y1:j−1 )) − H(γ(BP | Y1:j−1 )) bits of information because
+Yj possesses more information than is necessary to encode                                                                {y1 , y2 }    {y3 }
+BP . This waste can stem from bad hyperparameter selec-                                                            b1      1/2           0 .
+tion (i.e., the partitions in P are low entropy) or reduced                                                        b2       0           1/2
+uncertainty about X due to previous approximate MECs.
+While the latter is typically desirable (as it indicates we’ve    Under merging, if the group {y1 , y2 } is sampled, the sub-
+achieved low conditional entropy), the former can negatively      sequent coupling is performed between the new maximum-
+impact performance [Schroeder de Witt et al., 2023].              entropy partition and
+To address this, we introduce a technique that we call merg-
+ing. At each iteration j, after performing a coupling, merg-                                                ν(Yj | Y1:j−1 , Yj ∈ {y1 , y2 }).
+ing groups the possible realizations of Yj by the posterior
+                                                                  If the sampled group has more than two elements, this pro-
+update over BP they induce. Instead of sampling a real-
+                                                                  cess may repeat multiple times before proceeding to itera-
+ization of Yj , merging samples one of these groups. If the
+                                                                  tion j + 1.
+sampled group contains multiple elements, merging per-
+forms an additional coupling between the posterior over
+that group and the new maximum-entropy partition. This            6                            EXPERIMENTS
+process repeats until the sampled group consists of a single
+element, at which point iteration j + 1 begins.                   To demonstrate the effectiveness of ARIMEC and merging,
+                                                                  we perform experiments in two settings: Markov coding
+An Example of Merging          To illustrate this process, con-   games [Sokota et al., 2022] and steganography [Cachin,
+sider a case in which                                             1998].
+             ν(Yj | Y1:j−1 ) = [1/4, 1/4, 1/2],
+                                                                  6.1                          MARKOV CODING GAMES
+               γ(BP | Y1:j−1 ) = [1/2, 1/2].
+Then the following is a minimum-entropy coupling:                 In a Markov coding game (MCG) [Sokota et al., 2022],
+                                                                  the goal is to communicate messages via the trajectories of
+                         y1     y2     y3                         a Markov decision process (MDP), while simultaneously
+                                                                  achieving a high expected return in the MDP. Messages are
+                   b1    1/4    1/4     0 .
+                                                                  sampled independently from a distribution known to both
+                   b2     0      0     1/2
+                                                                  the player sending them and the player receiving them. For
+                                                                  a more complete description, see Appendix D.2.
+In this coupling, the posterior over BP remains the same
+whether Yj is realized as y1 or y2 (specifically, the proba-      Sokota et al. [2022] give a principled approach to this setting
+bility of b1 is one), indicating wasted entropy over y1 , y2 .    called MEME that works in two steps. First, MEME trains
+Merging post-processes such couplings to yield:                   a maximum-entropy reinforcement learning (MaxEntRL)
+
+
+                                                              3286
+[Ziebart et al., 2008] policy for the MDP. (The intuition is                                                           Approach             ARIMEC                                    FIMEC
+that this policy balances between performing well in the
+
+
+
+
+                                                                    Joint Entropy (Bytes)                                                        Error Rate (Byte-wise)
+MDP and having high bandwidth through which informa-                                        160
+                                                                                                                                                                          0.8
+tion can be communicated.) Second, MEME computes (or
+approximates) a minimum-entropy coupling between the                                                                                                                      0.6
+
+distribution over messages and, roughly speaking, the distri-                                                                                                             0.4
+bution over trajectories induced by the MaxEntRL policy.4
+                                                                                                                                                                          0.2
+MEME guarantees that the expected return in the MCG is
+the same as in the MDP; furthermore, at each time step,                                     60                                                                            0.0
+MEME greedily maximizes the amount of information en-                                              10                                      100                                  10            100
+
+coded into the trajectory. For a more complete description,                                                                            Ciphertext Size (Bytes)
+see Appendix D.3.
+                                                                    Figure 6: Results for information-theoretic steganography
+Because the second step of MEME requires computing or
+                                                                    with 95% bootstrap confidence intervals drawn from 100
+approximating a MEC, prior to this work, it was only ap-
+                                                                    samples.
+plicable to MCGs whose message distributions had small
+or factorable supports. Thus our extension of IMEC to arbi-
+trary distributions also serves as an extension of MEME to                                                                               ARIMEC                                      FIMEC
+
+
+
+
+                                                                                                  Error Rate (Token-wise)
+arbitrary MCGs.
+To illustrate the benefits of MEME’s extended applicability,                                                                0.8
+we perform experiments in two MCGs based on Cartpole
+                                                                                                                            0.6
+and Pong [Bellemare et al., 2013], which we call CodeCart
+and CodePong, that were previously beyond MEME’s ap-                                                                        0.4
+plicability. For these MCGs, the distribution over messages
+is dictated by GPT-2 [Radford et al., 2019] with top-50 sam-                                                                0.2
+pling. For each game, we trained two policies with using
+different entropy bonus temperatures that each achieved per-                                                                0.0
+fect scores in 100 of 100 games. As a baseline, we compare                                                                        10                                                    100
+against a naive version of MEME that assumes that the mes-                                                                             Plaintext Size (Tokens)
+sage was sampled from a uniform distribution over tokens
+and uses FIMEC. Note that this baseline sacrifices MEME’s           Figure 7: Results for unencrypted steganography with 95%
+expected return guarantee.                                          bootstrap confidence intervals drawn from 100 samples.
+We show the rate at which trajectories are decoded incor-
+rectly for each variant of IMEC in these settings (Figure 5).
+While both FIMEC and ARIMEC maintain perfect expected               strings generated using shared private keys) with distribu-
+return in the MDP, ARIMEC produces substantially more               tions of covertext (innocuous content). For a more complete
+efficient encodings.                                                description, see Appendix D.4.
+                                                                    In this setting, Assumption 2.4 holds; thus, we would expect
+6.2       STEGANOGRAPHY                                             FIMEC to perform well relative to the ARIMEC. We show
+                                                                    both the resulting joint entropy and the rate at which the ci-
+In steganography, the goal is to encode information (called         phertext is decoded incorrectly in Figure 6, using 100 tokens
+plaintext) into innocuous-seeming content (called stegotext),       sampled from GPT-2 as the covertext. This error rate can be
+such that an adversary would not realize that the innocuous-        written as EX∼X EY ∼γ(Y |X) I[X ̸= arg maxx γ(x | Y )].
+seeming content contains hidden information. We consider            Interestingly, while FIMEC produces lower joint entropy
+two kinds of steganography for our experiments.                     than ARIMEC, ARIMEC appears to produce a lower error
+                                                                    rate. This could be because the ARIMEC focuses on maxi-
+Information-Theoretic Steganography The first is                    mizing the certainty of the bytes earlier in the string, while
+information-theoretic steganography [Cachin, 1998], which           FIMEC focuses on reducing the uncertainty about the most
+seeks formal security guarantees. Schroeder de Witt et al.          uncertain bytes.
+[2023] proved that this problem can be reduced to minimum-
+entropy coupling distributions of ciphertext (random bit-           Linguistic Steganography The second setting is linguis-
+                                                                    tic steganography, a broader concept than language-based
+      4
+    To be more precise about the latter distribution requires nu-   information-theoretic steganography. Unlike the latter, lin-
+ance since environment transitions cannot be correlated with the    guistic steganography does not necessarily involve shared
+message. See Sokota et al. [2022] for details.                      private keys. While not using private keys results in less
+
+
+                                                                3287
+robust security guarantees, it offers two significant advan-
+tages. First, applicability is widened to settings in which a
+                                                                                           140
+                                                                                                 Stegotext Size (Tokens)
+private key exchange is not possible. Second, potential in-                                130       10
+formation throughput is much higher, as the sender can use
+
+
+
+
+                                                                    Joint Entropy (Bits)
+realistic priors about plaintext messages, which have signifi-                             120       20
+cantly lower entropy compared to the uniform distribution                                        Method
+of ciphertexts in information-theoretic steganography.
+                                                                                           110       No merging
+                                                                                                     Merging
+In the specific setting we consider, we aim to encode the                                  100
+output of one language model into that of another language
+                                                                                            90
+model. The first language model acts as a prior on the plain-
+text messages that the sender may send, while the second                                    80
+language model serves as an approximate covertext distri-                                            20         40         60    80
+bution. In practice, one could achieve high throughput by                                                 Number of Components
+first constructing a desired plaintext message and then trans-
+lating it into a semantically equivalent message with a high
+likelihood under the prior.                                      Figure 8: Comparing merging and not merging with 95%
+                                                                 bootstrap confidence intervals drawn from 1000 samples.
+For our experiments, the covertext distribution is gener-
+ated by sampling 100 tokens from GPT-2 with the prompt
+“Here’s an innocuous message:” and the plaintext message         we increase the robustness of IMEC algorithms to the choice
+distribution is generated by GPT-2 with the prompt “Here’s       of partition set by introducing a merging technique. Finally,
+a secret message:”. We compared ARIMEC with the correct          we empirically show the utility of these innovations in MCG
+prior against FIMEC under an assumed uniform prior over          and steganography applications.
+tokens. The results of this experiment are shown in Figure 7.
+Our findings indicate that ARIMEC substantially outper-          For future work, there are at least two application direc-
+forms FIMEC in terms of information throughput, reflecting       tions in which it would be interesting to push further with
+its ability to leverage the prior.                               ARIMEC and merging. First is linguistic steganography.
+                                                                 This direction is promising because ARIMEC can achieve
+                                                                 high throughput rates, as we observed in Figure 7, and be-
+6.3   MERGING                                                    cause of the recent proliferation of effective language mod-
+                                                                 els. Thus, there may be real-world settings in which it is
+To evaluate the performance of our merging technique, we         applicable. Second, because ARIMEC is the first IMEC
+consider a setting in which the objective is to transmit 10      algorithm capable of handling arbitrary discrete distribu-
+bytes of ciphertext via GPT-2 stegotext. The results of this     tions, it potentially opens the door to using large-support
+experiment, which we conducted using FIMEC, are depicted         distributions for other minimum-entropy coupling applica-
+in Figure 8. The y-axis represents the joint entropy in bits,    tions in which the distributions may not be factorable, such
+while the x-axis shows the dimension of the random vector        as entropic causal inference, random number generation,
+X—i.e., n in our notation.                                       functional representations, and dimensionality reduction.
+As discussed in Section 5, poor choices of partition sets can
+negatively impact the performance of IMEC. In this case,         8                    ACKNOWLEDGEMENTS
+FIMEC’s performance significantly decreases (i.e., joint
+entropy increases) with the number of components, even           This work was supported by ONR grant #N000142212121.
+though the entropy of X is held constant. However, our
+merging technique substantially reduces IMEC’s vulnerabil-
+ity to this issue, as desired.                                   REFERENCES
+
+                                                                 M. G. Bellemare, Y. Naddaf, J. Veness, and M. Bowling. The
+7     CONCLUSION AND FUTURE WORK                                   arcade learning environment: An evaluation platform for
+                                                                   general agents. Journal of Artificial Intelligence Research,
+In this work, we investigated the problem of computing low-
+                                                                   2013.
+entropy couplings for large-support distributions, making
+four main contributions. First, we unify existing algorithms     C. Cachin. An information-theoretic model for steganogra-
+under the formalism of partition sets. Second, using this uni-     phy. In Information Hiding, 1998.
+fied perspective, we introduce ARIMEC—the first approach
+to computing low-entropy couplings for large-support distri-     F. Cicalese, L. Gargano, and U. Vaccaro. Approximating
+butions that can be applied to arbitrary distributions. Third,      probability distributions with short vectors, via informa-
+
+
+                                                             3288
+  tion theoretic distance measures. In IEEE International        M. Rossi. Greedy additive approximation algorithms for
+  Symposium on Information Theory (ISIT), 2016.                   minimum-entropy coupling problem. In IEEE Interna-
+                                                                  tional Symposium on Information Theory (ISIT), 2019.
+F. Cicalese, L. Gargano, and U. Vaccaro. Minimum-entropy
+   couplings and their applications. IEEE Transactions on        C. Schroeder de Witt, S. Sokota, J. Z. Kolter, J. N. Foerster,
+   Information Theory, 2019.                                       and M. Strohmeier. Perfectly secure steganography using
+                                                                   minimum entropy coupling. In International Conference
+S. Compton. A tighter approximation guarantee for greedy
+                                                                   on Learning Representations (ICML), 2023.
+   minimum entropy coupling. In IEEE International Sym-
+   posium on Information Theory (ISIT), 2022.                    Y. Y. Shkel and A. K. Yadav. Information spectrum converse
+                                                                    for minimum entropy couplings and functional represen-
+S. Compton, M. Kocaoglu, K. Greenewald, and D. Katz.
+                                                                    tations. In IEEE International Symposium on Information
+   Entropic causal inference: Identifiability and finite sam-
+                                                                    Theory (ISIT), 2023.
+   ple results. Advances in Neural Information Processing
+  Systems (NeurIPS), 2020.                                       S. Sokota, C. Schroeder De Witt, M. Igl, L. M. Zintgraf,
+                                                                    P. Torr, M. Strohmeier, Z. Kolter, S. Whiteson, and J. Fo-
+S. Compton, K. Greenewald, D. A. Katz, and M. Kocaoglu.
+                                                                    erster. Communicating via Markov decision processes. In
+   Entropic causal inference: Graph identifiability. In In-
+                                                                   International Conference on Machine Learning (ICML),
+   ternational Conference on Machine Learning (ICML),
+                                                                    2022.
+   2022.
+S. Compton, D. Katz, B. Qi, K. Greenewald, and M. Ko-            M. Vidyasagar. A metric between probability distributions
+   caoglu. Minimum-entropy coupling approximation guar-           on finite sets of different cardinalities and applications
+   antees beyond the majorization barrier. In International       to order reduction. IEEE Transactions on Automatic
+  Conference on Artificial Intelligence and Statistics (AIS-      Control, 2012.
+   tats), 2023.                                                  B. D. Ziebart, A. L. Maas, J. A. Bagnell, and A. K. Dey.
+M. A. Javidian, V. Aggarwal, F. Bao, and Z. Jacob. Quantum         Maximum entropy inverse reinforcement learning. In
+  entropic causal inference. In Quantum Information and            AAAI Conference on Artificial Intelligence (AAAI), 2008.
+ Measurement VI, 2021.
+N. Kalchbrenner, E. Elsen, K. Simonyan, S. Noury,
+  N. Casagrande, E. Lockhart, F. Stimberg, A. Oord,
+  S. Dieleman, and K. Kavukcuoglu. Efficient Neural Au-
+  dio Synthesis. In International Conference on Machine
+  Learning (ICML)), 2018.
+M. Kocaoglu, A. Dimakis, S. Vishwanath, and B. Hassibi.
+ Entropic causal inference. AAAI Conference on Artificial
+ Intelligence (AAAI), 2017.
+M. Kovačević, I. Stanojević, and V. Šenk. On the entropy
+ of couplings. Information and Computation, 2015.
+C. T. Li. Efficient approximate minimum entropy coupling
+  of multiple probability distributions. IEEE Transactions
+  on Information Theory, 2021.
+P. P. Liang, C. K. Ling, Y. Cheng, A. Obolenskiy, Y. Liu,
+   R. Pandey, A. Wilf, L.-P. Morency, and R. Salakhutdinov.
+   Quantifying interactions in semi-supervised multimodal
+   learning: Guarantees and applications. In International
+   Conference on Learning Representations (ICLR), 2023.
+N. J. Parmar, A. Vaswani, J. Uszkoreit, L. Kaiser, N. Shazeer,
+  A. Ku, and D. Tran. Image transformer. In International
+  Conference on Machine Learning (ICML), 2018.
+A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, and
+  I. Sutskever. Language models are unsupervised multitask
+  learners. 2019.
+
+
+                                                             3289
+A     INVERSE GENERATIVE PROCESSES
+
+Algorithm 5 Tabular IMEC: X | Y = y
+    procedure TIMEC(µ, ν, y)
+       γ(X) ← µ(X)
+       for j = 1, . . . , m do
+           γ(X, Yj | y1:j−1 ) ← MEC(γ(X | y1:j−1 ), ν(Yj | y1:j−1 ))
+       end for
+       X ∼ γ(X | y)
+       return X
+    end procedure
+
+
+Algorithm 6 Factored IMEC: X | Y = y
+    procedure FIMEC(µ, ν, y)
+       γ(X) ← µ(X)
+       for j = 1, . . . , m do
+           i∗ ← argmaxi H(γ(Xi | y1:j−1 ))
+           γ(Xi∗ , Yj | y1:j−1 ) ← MEC(γ(Xi∗ | y1:j−1    ), ν(Yj | y1:j−1 ))
+                                                        Q                         
+           γ(X, Yj | y1:j−1 ) ← γ(Xi∗ , Yj | y1:j−1 ) ·     i̸=i∗ γ(Xi | y 1:j−1 )
+       end for
+       X ∼ γ(X | y)
+       return X
+    end procedure
+
+
+Algorithm 7 IMEC (Generic Form): X | Y = y
+    procedure IMEC(µ, ν, y, P)
+       γ(X) ← γ(µ)
+       for j = 1, . . . , m do
+           P ← arg maxP∈P H(γ(BP | y1:j−1 ))
+           γ(BP , Yj | y1:j−1 ) ← MEC(γ(BP | y1:j−1 ), ν(Yj | y1:j−1 ))
+       end for
+       X ∼ γ(X | y)
+       return X
+    end procedure
+
+
+
+B     THEORY
+
+B.1    RUNTIME COMPLEXITY
+
+Proposition 3.3 (IMEC Runtime). Given a polynomial-time function for computing the maximum-entropy posterior partition,
+IMEC can be implemented in polynomial time in maxj |Yj |, maxi |Xi |, m, n.
+
+Proof. Let M = maxj |Yj | and N = maxi |Xi |.
+It suffices to show that each of the operations in the main loop requires only polynomial time, as the main loop runs m times.
+
+    • By assumption, the maximum-entropy posterior partition requires only polynomial time.
+    • Performing an approximate minimum-entropy coupling on distributions of size O(max(M, N )) requires only polyno-
+      mial time.
+    • Marginalizing a joint distribution for variables of support O(M ), O(N ) requires only polynomial time.
+
+
+                                                               3290
+   • Sampling from a distribution of support O(M ) requires only polynomial time.
+
+
+
+Corollary B.1 (TIMEC Runtime). TIMEC can be implemented in polynomial time in maxj |Yj |, |X|, m.
+
+Proof. Let M = maxj |Yj |. Per Proposition 3.3, it suffices to show that maximum-entropy posterior partition computation
+is a polynomial time operation. Per Lemma B.3, the partition of singletons is always maximum entropy. Thus, since
+computing the posterior over X is polynomial time in M, |X|, the result follows.
+Corollary B.2 (FIMEC Runtime). Let Assumption 2.4 hold. Then FIMEC can be implemented in polynomial time in
+maxj |Yj |, maxi |Xi |, m, n.
+
+Proof. Let M = maxj |Yj | and N = maxi |Xi |. Per Proposition 3.3, it suffices to show that maximum-entropy posterior
+partition computation is a polynomial time operation. Since computing the posterior over each block—and the entropy of
+that posterior—is polynomial in N, M , and there are only n blocks, the result follows.
+
+B.2   COUPLING
+
+Proposition 3.1 (Coupling). IMEC induces a coupling of µ and ν.
+
+Proof. We proceed by induction on m. For the base case, consider m = 1. Then for any y ∈ Y
+                                      X              X
+                                           γ(x, y) =      µ(x)γ(y | x)                                                    (3)
+                                          x∈X                 x∈X
+                                                               X X
+                                                        =                   µ(x)γ(y | B)                                  (4)
+                                                              B∈P (1) x∈B
+                                                               X                   X
+                                                        =               γ(y | B)         µ(x)                             (5)
+                                                              B∈P (1)              x∈B
+                                                               X
+                                                        =               γ(y | B)µ(B)                                      (6)
+                                                              B∈P (1)
+                                                               X
+                                                        =               γ(y, B)                                           (7)
+                                                              B∈P (1)
+                                                        = ν(y),                                                           (8)
+
+where P (m) denotes the partition selected at step m. Step (3) follows from chain rule; step (4) follows by construction; step
+(7) follows by chain rule; step (8) follows by the definition of a coupling. Now, assume the result holds up to m = m̄, and
+consider m = m̄ + 1. Observe, for any y ∈ Y
+                                 X               X
+                                      γ(x, y) =     µ(x)γ(y1:m̄ | x)γ(ym̄+1 | x, y1:m̄ )                                   (9)
+                                 x∈X             x∈X
+                                                    X         X
+                                             =                      γ(y1:m̄ , x)γ(ym̄+1 | B, y1:m̄ )                     (10)
+                                                 B∈P (m̄+1) x∈B
+                                                    X                                  X
+                                             =                γ(ym̄+1 | B, y1:m̄ )         γ(y1:m̄ , x)                  (11)
+                                                 B∈P (m̄+1)                          x∈B
+                                                    X
+                                             =                γ(ym̄+1 | B, y1:m̄ )γ(y1:m̄ , B)                           (12)
+                                                 B∈P (m̄+1)
+                                                    X
+                                             =                γ(y, B, y1:m̄ )                                            (13)
+                                                 B∈P (m̄+1)
+                                             = ν(y).                                                                     (14)
+
+Step (9) follows from chain rule; step (10) follows by construction; step (13) follows by chain rule; step (14) follows by
+definition of a coupling.
+
+                                                                3291
+B.3   GREEDINESS
+
+Proposition 3.2 (Greediness). If the partition of singletons is in P, IMEC approximately minimizes H(X, Y1:j ) subject to
+µ, ν, γ(X, Y1:j−1 ) on the jth iteration, for each j.
+
+
+Proof. Consider that performing a coupling with the partition of singletons (or a partition that it is equivalent up to elements
+with zero probability) is equivalent to performing a partition with X itself. Then, invoking Lemma B.3, it suffices to show
+that the statement holds for X.
+To see this, first recall
+
+                                                  H(X, Y ) = H(Y | X) + H(X)
+
+Because the entropy of X is fixed (as it is determined by its marginal µ), minimum-entropy coupling is equivalent to
+minimum-conditional-entropy coupling. Then, note that, by chain rule, we have
+
+                                   j
+                                   X                                                   j−1
+                                                                                       X
+                   H(Y1:j | X) =           H(Yk | X, Y1:k−1 ) = H(Yj | X, Y1:j−1 ) +         H(Yk | X, Y1:k−1 ).
+                                   k=1                                                 k=1
+
+At iteration j, all terms below j have already been determined. Thus, the rightmost summation term is fixed and minimizing
+H(X, Yj−1 ) is reduced to minimizing H(Yj | X, Y1:j−1 ). By again invoking the equivalence between minimum-entropy
+coupling and minimum-conditional-entropy coupling, this is equivalent to minimizing H(X, Yj | Y1:j−1 ), which is exactly
+what IMEC minimizes at iteration j.
+
+
+
+B.4   CONDITION SATISFACTION FOR SPECIAL CASES
+
+Lemma B.3. Let P be the set of all partitions over X. For any distribution over X, any maximum-entropy partition is
+equivalent to the partition of singletons up to zero-probability elements.
+
+
+Proof. Consider a block B of some partition P of X. The entropy that B contributes is
+
+                                                         −γ(B) log γ(B).
+
+The first derivative of this function is
+                                                         − log γ(B) − 1.
+The second derivative is
+                                                                   1
+                                                              −        .
+                                                                  γ(B)
+Since the second derivative is always negative, the contribution of B to the total entropy is strictly concave. Thus, further
+subdividing B increases its contribution to the total entropy, up to elements with zero probability.
+
+
+
+B.5   POSTERIOR UPDATES
+
+Lemma B.4 (Posterior Updates). Let (V, E) be the prefix tree for X. Assume that the posterior over a partition is updated if
+and only if its corresponding node is touched and that nodes are touched by traversing edges of the tree (without jumps).
+Let Pv be a partition whose posterior was updated on iteration j. If v, u are neighbors and u was last visited on iteration
+j ′ ≤ j, then
+                                          γ(Bu→v | Y1:j ) = 1 − γ(Bv→u | Y1:j )
+and, for B′ ∈ Pu such that B′ ̸= Bu→v ,
+                                                    γ(B′ | Y1:j ) ∝ γ(B | Y1:j ).
+
+
+                                                               3292
+Proof. First consider that Bu→v , Bv→u are pairs of complementary events. Thus, their probabilities must sum to one by the
+complement rule.
+Now, consider that, if u was last visited on iteration j ′ , it follows that no element of Bv→u can have been visited since
+iteration j ′ . (This follows because every path from Bv→u to v must touch u by definition of a tree.) Therefore, every partition
+updated since Pu was last updated must correspond to a vertex in Vu→v . Partitions corresponding to vertices in Vu→v can
+only influence the blocks of Pu via Bv→u . Thus, because Bv→u = ∪B∈Pu \Bu→v B, direct evidence about Bv→u changes the
+probability of each element of Pu \ Bu→v by the same factor.
+Proposition 4.1 (Posterior Updates). Assume that the posterior over a partition is updated if and only if its corresponding
+node is touched and that nodes are touched by traversing edges of the tree (i.e., without jumps). Let Pv be a partition whose
+posterior was updated on iteration j. If v, u are neighbors and u was last visited on iteration j ′ ≤ j, then the iteration j
+posterior for any partition Pu can be computed in polynomial time in maxi |Xi |, n.
+
+Proof. Let N = maxi |Xi |. If u is a neighbor of v, then, using Lemma B.4, the posterior over Pu can be computed in
+O(maxi |Xi |) time. If u is not a neighbor of v, then we can compute the posterior over Pu by iteratively applying Lemma B.4
+along the path from v to u. Because path length is upper bounded by O(n), the total time is polynomial in maxi |Xi |, n.
+
+B.6   ENTROPY UPPER BOUND
+
+Lemma B.5 (Entropy Upper Bound). Let µ be a probability distribution over κ elements. Fix any element µ(x∗ ). Then for
+any q such that κ1 ≤ q ≤ µ(x∗ ), we have
+                                         (
+                                          −q log q − (1 − q) log (1−q)
+                                                                  κ−1   q ∈ [1/κ, 1)
+                                  H(µ) ≤
+                                          0                             q = 1.
+
+Proof. First note that if µ(x∗ ) = 1 then H(µ) = 0 and the upper bound holds trivially.
+Next, consider the case in which µ(x∗ ) < 1. We will show that this upper bound holds in the case when q = µ(x∗ ). We first
+observe that the entropy is given by
+                                     X                                         X
+                          H(µ) = −      µ(x) log µ(x) = −µ(x∗ ) log µ(x∗ ) −        µ(x) log µ(x)
+                                       x                                                x̸=x∗
+
+Now, we can consider another probability distribution µ′ over n − 1 values (everything except x∗ ), which is given by
+           µ(x)                                                                                                   1
+µ′ (x) = 1−µ(x              ∗                                                                        ′
+               ∗ ) , ∀x ̸= x . Since entropy is maximized by a uniform distribution, we have that H(µ ) ≤ − log( n−1 ).
+
+
+We observe that
+                                           X
+                            H(µ′ ) = −             µ′ (x) log µ′ (x)
+                                           x̸=x∗
+                                           1        X
+                                   =−         ∗
+                                                         µ(x) log µ′ (x)
+                                      (1 − µ(x ))
+                                                   x̸=x∗
+                                           1        X                                  
+                                   =−         ∗
+                                                         µ(x) log µ(x) − log(1 − µ(x∗ ))
+                                      (1 − µ(x ))
+                                                   x̸=x∗
+                                                                                         
+                                           1          X                 
+                                   =−                     µ(x) log µ(x) + log(1 − µ(x∗ ))
+                                      (1 − µ(x∗ ))       ∗   x̸=x
+
+
+Then, plugging this into the inequality for H(µ′ ) gives us that
+                                                                                                             
+                           X                                                      1
+                       −       µ(x) log µ(x) ≤ (1 − µ(x∗ )) − log                           − log(1 − µ(x∗ ))
+                                                                                 n−1
+                          x̸=x∗
+
+                                                                               1 − µ(x∗ )
+                                                                                           
+                                                    = −(1 − µ(x∗ )) log
+                                                                                 n−1
+
+
+                                                                    3293
+Thus, this gives us that
+
+                                                                                          1 − µ(x∗ )
+                                                                                                      
+                                   H(µ) ≤ −µ(x∗ ) log µ(x∗ ) − (1 − µ(x∗ )) log
+                                                                                            n−1
+
+as desired.
+Next, we will show that this upper bound decreases in q. We can consider taking the partial derivative with the upper bound
+with respect to q, which gives us that
+
+                                              (1 − q)                             (1 − q)                     (1 − q)
+                                                       
+              Dq       −q log q − (1 − q) log               = − log q − 1 + log           + 1 = − log q + log         .
+                                               n−1                                 n−1                         n−1
+
+Setting this equal to zero gives us that
+
+                                                                      1−q
+                                                        log q − log        =0
+                                                                      n−1
+                                                                            1
+                                                                      =⇒ q = .
+                                                                            n
+
+Next, we observe that the second derivative of the upper bound with respect to q is given by
+
+                                                    (1 − q)                      (1 − q)
+                                                                                      
+                                                                                                 1
+                       Dq Dq −q log q − (1 − q) log           = Dq − log q + log           =          .
+                                                     n−1                          n−1        q(q − 1)
+
+Thus, this is negative for all values of 0 < q < 1, which gives us that the upper bound is decreasing in q on the interval
+[ n1 , 1). Therefore, since it holds for q = µ(x∗ ), it must hold for q ∈ [1/n, µ(x∗ )].
+
+Proposition 4.2 (Maximum-Entropy Partition). Let
+
+                                                 κ ≥ max |{B ∈ P | µ(B) > 0}|
+                                                        P∈P
+
+
+be an upper bound on the number of blocks with positive probability. Define
+
+                                                                                   1−q
+                                              U : q 7→ −q log q − (1 − q) log          .
+                                                                                   κ−1
+
+For any neighbor u of v, if
+                                                    γ(Bv→u | y1:j ) < 1 − 1/κ,
+
+then, for all u′ ∈ Vv→u ,
+                                             H(γ(BPu′ | y1:j )) ≤ U(γ(Bu→v | y1:j )).
+
+
+Proof. Observe
+
+                                                            γ(Bv→u | Y1:j ) < 1 − 1/κ
+                                                 ⇐⇒ −γ(Bv→u | Y1:j ) > −1 + 1/κ
+                                              ⇐⇒ 1 − γ(Bv→u | Y1:j ) > 1/κ
+                                                  ⇐⇒ γ(Bu→v | Y1:j ) > 1/κ.
+
+Fix any u′ ∈ Vv→u . Then, Bu→v ⊂ Bu′ →v . Therefore, we have γ(Bu′ →v | Y1:j ) ≥ γ(Bu→v | Y1:j ). The bound follows
+from applying Lemma B.5.
+
+
+
+                                                                   3294
+C     VISUALIZATIONS
+
+
+
+
+                                    Figure 9: Visualization of two iterations of FIMEC.
+
+
+For comparison to ARIMEC, Figure 9 shows two iterations of FIMEC.
+
+
+D     EXPERIMENTS
+
+D.1    MAXIMUM-ENTROPY PARTITION SEARCH
+
+In Proposition 3.3, we demonstrated that instances of IMEC are efficient if and only if the maximum-entropy posterior
+partition can be computed efficiently. For ARIMEC, we established in Proposition 4.1 that the posterior of individual nodes
+can be computed efficiently. However, we did not prove that Algorithm 4 searches through only a polynomial number of
+nodes, raising concerns about the practical efficiency of ARIMEC. Fortunately, our empirical observations indicate that the
+search procedure is highly effective. To illustrate this, in Figure 10, we show the number of nodes the search procedure
+required, on average, to compute the maximum-entropy posterior partition as a function of the number of nodes in the prefix
+tree for two distributions: GPT-2 and random bytestrings. We find that, even as the prefix tree grows very large, average the
+number of nodes touched per iteration remains manageable.
+
+
+D.2    MARKOV CODING GAMES
+
+Sokota et al. [2022] specify Markov coding games as the following setting:
+
+      An MCG is a tuple ⟨(S, A, T , R), M, µ, ζ⟩, where (S, A, T , R) is a Markov decision process, M is a set of
+      messages, µ is a distribution over M (i.e., the prior over messages), and ζ is a non-negative real number we call
+      the message priority. An MCG proceeds in the following steps:
+      1. First, a message M ∼ µ is sampled from the prior over messages and revealed to the sender.
+
+
+                                                            3295
+                           Nodes Touched Per Search
+                                                      3
+
+
+
+
+                                                      2
+
+                                                                                         µ
+                                                                                         GPT-2
+                                                                                         Random Bytestrings
+                                                      1
+
+                                                          1033      1089        10145         10201
+                                                          Number of Nodes in Prefix Tree
+      Figure 10: Results for number of nodes touched with 95% bootstrap confidence intervals drawn from 100 samples.
+
+
+       2. Second, the sender uses a message conditional policy π|M , which takes states s ∈ S and messages m ∈ M as
+          input and outputs distributions over MDP actions ∆(A), to generate a trajectory Z ∼ (T , π|M ) from the MDP.
+       3. Third, the sender’s terminal MDP trajectory Z is given to the receiver as an observation.
+       4. Fourth, the receiver uses a terminal MDP trajectory conditional policy π|Z , which takes terminal trajectories
+          z ∈ Z as input and outputs distributions over messages ∆(M), to estimate the message M̂ ∼ π|Z (Z).
+       The objective of the agents
+                              h      is to maximize the expectedi weighted sum of the return and the accuracy of the
+       receiver’s estimate E R(Z) + ζI[M = M̂ ] | π|M , π|Z . Optionally, in cases in which a reasonable distance
+       function is available, we allow for the objective to be modified to minimizing the distance between the message
+       and the guess d(M, M̂ ), rather than maximizing the probability that the guess is correct.
+
+
+D.3     MEME
+
+Sokota et al. [2022] specify MEME as follows:
+
+       Step One: Maximum Entropy Reinforcement Learning In the first step, MEME uses MaxEnt RL to construct
+       an MDP policy π. This policy is an MDP policy, not an MCG policy, and therefore does not depend on the
+       message. Note that this policy depends on the choice of temperature α used for the MaxEnt RL algorithm.
+       Step Two: Minimum Entropy Coupling In the second step, at execution time, MEME constructs a message-
+       conditional policy online using MECs. Say that, up to time t, the sender is in state st , history ht and has played
+                                                              :t
+       according to the state and message conditional policy π|M so far. Let
+
+                                                                                  :t
+                                                                 bt = P(M | ht , π|M )
+
+       be the posterior over the message, conditioned on the history and the historical policy. MEME performs a MEC
+       between the posterior over the message bt and distribution over actions π(st ), as determined by the MDP policy.
+       Let ν = MEC(bt , π(st )) denote joint distribution over messages and actions resulting from the coupling. Then
+       MEME sets the sender to act according to the message conditional distribution
+                                                              t
+                                                             π|M (st , m) = ν(At | M = m)
+
+       of the coupling distribution ν = MEC(bt , π(st )).
+
+
+                                                                         3296
+       Given the sender’s MDP trajectory, MEME’s receiver uses the sender’s MDP policy and MEC procedure to
+       reconstruct the sender’s message conditional policy along the trajectory; thereafter, the receiver computes the
+       posterior and guesses the maximum a posteriori (MAP) message.
+
+D.4     INFORMATION-THEORETIC STEGANOGRAPHY
+
+Schroeder de Witt et al. [2023] summarize Cachin [1998]’s information-theoretic steganography setting as follows:
+
+       Problem Setting The objects involved in information-theoretic steganography can be divided into two classes:
+       those which are externally specified and those which require algorithmic specification. Each class contains three
+       objects. The externally specified objects include the distribution over plaintext messages M, the distribution over
+       covertext C, and the random source generator.
+       • The distribution over plaintext messages M may be known by the adversary, but is not known by the sender or
+         the receiver. However, the sender and receiver are aware of the domain M over which M ranges. The sampled
+         plaintext message M is explicitly known by the sender, but not to the receiver or the adversary.
+       • The covertext distribution C is assumed to be known by the sender, the receiver, and the adversary.
+       • The random source generator provides the sender with a mechanism to take random samples from distributions.
+         This random source is known to the sender but not to the receiver or adversary.
+       The objects requiring algorithmic specification, which are collectively referred to as a stegosystem, are the key
+       generator, the encoder, and the decoder.
+       • The key generator produces a private key K in the form of a binary string. This private key is shared between
+         the sender and receiver over a secure channel prior to the start of the stegoprocess and can be used to coordinate
+         encryption and decryption. The key generation process may be known to the adversary, but the realization of the
+         key K is not.
+       • The encoder takes a private key K, a plaintext message M , and a source of randomness R as input and produces
+         a stegotext S in the space of covertexts C.
+       • The decoder takes a private key K and a stegotext S as input and returns an estimated plaintext message M̂ .
+
+They specify the following objectives and methodological outline for the setting:
+
+
+
+       Definition D.1. [Cachin, 1998] Given covertext distribution C and plaintext message space M, a stegosystem
+       is ϵ-secure against passive adversaries if the KL divergence between the distribution of covertext C and the
+       distribution of stegotext S less than ϵ; i.e., KL(C, S) < ϵ. It is perfectly secure if the KL divergence is zero; i.e.,
+       KL(C, S) = 0.
+       In other words, a steganographic system is perfectly secure if the distribution of stegotext S communicated by the
+       sender is exactly the same as the distribution of covertext C.
+       In addition to security, it is desirable for stegosystems to transmit information efficiently. Mutual information
+       between messages and stegotexts is one way to quantify efficiency.
+       Definition D.2. The mutual information I(M ; S) = H(M ) − H(M | S) between the message M and stegotext
+       S is the expected amount of uncertainty in the message M that is removed by conditioning on the stegotext S.
+
+       Methodological Outline A common class of stegosystems uses two-step encoding and two-step decoding
+       processes, as described below:
+       1. The sender uses the private key K to injectively map the plaintext message M into ciphertext X = {0, 1}ℓ in
+          such a way that the induced distribution over ciphertext X is uniformly random, regardless of the distribution
+          of M.5
+   5
+     For example, if K is drawn from a uniform random distribution, bin(M ) denotes a deterministic binarization of M , and XOR
+represents the component-wise exclusive-or function, then X = XOR(bin(M ), K) is guaranteed to be distributed uniformly randomly,
+regardless of the distribution of messages M.
+
+
+                                                               3297
+       2. The sender uses a (potentially stochastic) mapping f : X ⇝ C to transform the ciphertext X into stegotext S
+          (which exists in the space of covertexts C).
+       3. The receiver estimates the ciphertext X̂ from the stegotext S.
+       4. The receiver inverts the estimated ciphertext X̂ to a plaintext message M̂ with private key K.6
+
+Given the definition below Schroeder de Witt et al. [2023] show the following guarantees:
+
+
+
+       Definition D.3. We say that an encoding procedure f : X ⇝ C is induced by a coupling if there exists γ ∈ Γ(X , C)
+       such that for all x ∈ X, c ∈ C, P(f (x)=c) = γ(C=c | X=x).
+
+       Theorem D.4. A steganographic encoding procedure is perfectly secure if and only if it is induced by a coupling.
+       Theorem D.5. Among perfectly secure encoding procedures, a procedure f : X ⇝ C maximizes the mutual
+       information I(M ; S) if and only if f is induced by a minimum entropy coupling.
+
+
+
+
+   6
+     For the example in footnote 5, the receiver can recover the binarized message bin(M ) using the mapping X 7→ XOR(X, K) and
+invert the binarization to recover the plaintext M .
+
+
+                                                            3298
+

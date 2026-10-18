@@ -1,0 +1,1146 @@
+              Breaking the Generative Steganography
+             Trilemma: ANStega for Optimal Capacity,
+                     Efficiency, and Security
+                   Yaofei Wang∗      Weilong Pang∗       Kejiang Chen†     Jinyang Ding†
+                            Donghui Hu  ∗    Weiming Zhang    †    Nenghai Yu†
+           ∗ Hefei University of Technology    † University of Science and Technology of China
+       ∗
+ Email: {wyf@,pangwl@mail.,hudh@}hfut.edu.cn         † {chenkj@,source@mail.,zhangwm@,ynh@}ustc.edu.cn
+
+
+
+
+   Abstract—Generative steganography shows immense promise
+for covert communication, yet existing methods are often con-
+strained by a trilemma of capacity, efficiency, and security.
+Methods based on Huffman Coding (HC) suffer from poor
+efficiency and security, while those based on Arithmetic Coding
+(AC), despite achieving optimal capacity, also pose security
+risks. Although recent provably secure methods have addressed
+the security issue, they often do so at the cost of elevated
+embedding complexity or diminished capacity—failing to match
+the high capacity exhibited by AC-based methods. To address
+this trilemma, we adapt Asymmetric Numeral Systems (ANS)
+for steganography. Our core insight is to repurpose the ANS
+state machine, using its decoding function for embedding and its
+encoding function for extraction. To translate this concept into a
+practical system, we introduce several key innovations. First, we
+incorporate a streaming architecture with state renormalization
+to enable the stable embedding of arbitrarily long messages.
+Second, we employ direct floating-point arithmetic, avoiding
+costly probability-to-frequency conversions to reduce complexity
+and precision loss. More critically, we introduce an innova-
+tive cryptographic mask mechanism that ensures the sampling
+process is driven by a cryptographically secure pseudo-random
+number generator, thereby achieving provable security. Finally,      Fig. 1: Comparison of entropy-coding schemes for gen-
+by optimizing core computations into highly efficient bitwise        erative steganography. Top: Huffman coding maps bits to
+shift operations, ANStega achieves exceptional embedding and
+                                                                     tokens via dynamic trees, causing distributional deviation.
+extraction speeds. Experimental results validate that ANStega
+simultaneously achieves optimal embedding capacity, optimal ef-      Middle: Arithmetic Coding (AC) operates on cumulative in-
+ficiency (embedding complexity with O(1)) and optimal security,      tervals but suffers from precision limitations and rescaling
+successfully resolving the long-standing trilemma in generative      overhead. Bottom: ANStega (ours) utilizes constant-time state
+steganography.                                                       updates based on Asymmetric Numeral Systems, achieving
+                       I. I NTRODUCTION                              near-entropy capacity with distributional indistinguishability.
+   In today’s environment of increasing online surveillance
+and widespread traffic analysis [1], [2], the ability to share
+information without revealing that a conversation is taking          by adversaries to infer relationships between individuals or
+place has become as important as protecting the content of           to enforce censorship. Steganography [4] addresses this by
+the messages themselves. While encryption protects content,          embedding secret data within innocuous media. This method
+it exposes metadata [3]. This vulnerability can be exploited         ensures that the act of sending messages remains undetectable
+                                                                     and appears indistinguishable from normal data exchange.
+  Corresponding authors: Donghui Hu and Weiming Zhang                Furthermore, these covert channels facilitate digital “dead
+                                                                     drop” workflows [5], allowing a hidden message to be posted
+                                                                     in a public forum and discreetly retrieved by the intended
+                                                                     recipient without any traceable interaction. This approach
+                                                                     extends privacy protections beyond what encryption alone can
+Network and Distributed System Security (NDSS) Symposium 2026        offer.
+23-27 February 2026, San Diego, CA, USA
+ISBN 979-8-9919276-8-0                                                  Recently, the emergence of powerful generative models,
+https://dx.doi.org/10.14722/ndss.2026.240605
+www.ndss-symposium.org
+TABLE I: The Capacity-Efficiency-Security trilemma in generative steganography.                 •
+                                                                                      denotes that the method achieves the
+optimal goal for the corresponding property, whereas ◦ indicates a sub-optimal solution. Our work, ANStega, is the first to
+resolve this trilemma.
+                Method                    Optimal Capacity      Optimal Efficiency   Optimal Security          Modality
+                                         (Near Entropy Limit)   (O(1) Complexity)      (DKL ≤ ϵ)
+                Huffman-based [6], [7]           • *                    ◦                   ◦                    Text †
+                AC-based [8]–[11]                • *                    ◦                   ◦               Text / Audio †
+                ADG [12]                          ◦                     ◦                   ◦                    Text †
+                Meteor [13]                       ◦                     ◦                   •                    Text †
+                Discop [14]                       ◦                     ◦                   •           Text / Image / Audio †
+                iMEC [15]                         ◦                     ◦                   •           Text / Image / Audio †
+                SA-ANS [16]                       ◦                     ◦                   ◦                    Text †
+                FDPSS [17]                        ◦                     ◦                   •                    Text †
+                Shimmer [18]                      ◦                     •                   •                    Text †
+                SparSamp [19]                     ◦                     •                   •           Text / Image / Audio †
+                Image-based Methods:
+                Pulsar [20]                       ◦                     ◦                   •                   Image
+                StegaDDPM [21]                    ◦                     •                   •                   Image
+                ANStega (Ours)                    •                     •                   •               Text / Image †
+*
+ These methods achieve near-optimal capacity by altering the model’s original probability distribution.
+†
+ Note that the coding algorithms are theoretically modality-agnostic; the listed modalities reflect the specific implementations in the cited
+works.
+
+
+particularly Large Language Models (LLMs), has catalyzed                  embedding capacity and computational performance, limiting
+a significant shift in steganographic methodologies. Unlike               their practicality. Even recent methods such as SparSamp [19],
+traditional approaches that modify existing covers and risk               which achieve optimal security and efficiency, exhibit only
+detectable statistical anomalies [22], [23], generative steganog-         a slight shortfall in embedding capacity—despite effectively
+raphy leverages powerful generative models to synthesize                  reaching the entropy limit—due to constraints inherent to
+high-entropy, natural-looking media directly. Consequently,               sparse sampling. Beyond the modality-agnostic coding algo-
+generative steganography has flourished across various modal-             rithms, generative steganography has also been explored in
+ities, including text [11], [12], images [9], and audio [10].             image generation using diffusion models, yet similar trade-offs
+Researchers leverage these models’ rich, high-dimensional                 persist. For example, StegaDDPM [21] achieves high opera-
+probability distributions to construct covert channels with high          tional efficiency by integrating embedding into the diffusion
+capacity and minimal statistical detectability                            sampling steps, but its capacity is low. On the other hand,
+   Historically, generative steganography is encoding-driven,             Pulsar [20] prioritizes cryptographic security and extraction,
+adapting long-standing entropy coding techniques to stegano-              however, this comes at the cost of computational overhead
+graphic use. Anderson and Petitcolas [24] first highlighted               and reduced effective embedding rates.
+a critical insight—the duality between steganography and                     Despite this promising direction, generative steganogra-
+inverse compression. Early generative approaches adapted                  phy remains fundamentally constrained by the Capacity-
+classical entropy coders, predominantly Huffman Coding (HC)               Efficiency-Security Trilemma, illustrated in Table I. An op-
+and Arithmetic Coding (AC), to navigate generative model                  timal steganographic method should simultaneously achieve
+distributions. HC-based methods [6], [7], despite their concep-           three goals: (1) Optimal Capacity, approaching the Shannon
+tual simplicity, suffer from frequent tree reconstruction over-           entropy limit with a vanishing gap (near-entropy embed-
+head and unavoidable distribution modifications, resulting in             ding); (2) Optimal Efficiency, characterized by constant-
+suboptimal efficiency and compromised security. Conversely,               time complexity O(1); and (3) Optimal Security, ensuring
+AC-based methods [9]–[11] achieve near-optimal capacity                   statistical indistinguishability between the stego-content and
+but incur significant computational overhead due to probabil-             the cover-content. However, existing methods have invariably
+ity scaling, and also introduce precision-induced distortions,            compromised at least one of these crucial attributes.
+weakening security. As illustrated in Fig. 1, entropy-coding-                This fragmented landscape highlights the need for a funda-
+based steganography navigates the model distribution to “de-              mentally novel coding paradigm to comprehensively resolve
+compress” a secret bitstream into tokens, thereby aligning                the trilemma. In this context, we identify Asymmetric Numeral
+embedding with generative sampling.                                       Systems (ANS), introduced by Duda [25], as an overlooked
+   Recognizing these limitations, subsequent research empha-              yet promising entropy coder. ANS uniquely combines the
+sized provable security, as seen in schemes like Meteor [13],             computational simplicity reminiscent of Huffman Coding with
+Discop [14], and iMEC [15]. Although these schemes guaran-                the high compression efficiency characteristic of Arithmetic
+tee robust security, they often impose substantial penalties on           Coding. Its robust industrial adoption by major technology
+
+
+
+                                                                      2
+firms, including Meta [26], Apple [27], Google [28], and Mi-
+crosoft [29], underscores its practical strengths. While recent
+studies have begun to explore ANS for steganography [16],
+fully harnessing its potential to simultaneously achieve opti-
+mal capacity, constant-time efficiency, and provable security
+remains an open challenge.
+   We present ANStega, a strictly provably secure stegano-
+graphic encoder built on the ANS framework. Unlike concur-             Fig. 2: A concrete example of LLM-based Steganography.
+rent approaches that focus primarily on sampling strategies
+[16], we do not merely transplant ANS: a naı̈ve port fails
+to provide long-message support, constant-time embedding,                 We prove that ANStega preserves the original model
+or rigorous distributional security. We therefore introduce a             distribution, achieving optimal security.
+                                                                        • Extensive empirical evaluations validate that ANStega
+set of steganography-specific modifications: streaming rANS
+with bounded state to embed arbitrarily long messages without             achieves optimal embedding performance across capacity,
+numerical blow-up; direct probability updates without global              efficiency, and security metrics, successfully resolving the
+rescaling (no convert/renormalize over the full vocabulary),              long-standing generative steganography trilemma.
+preserving the model distribution while maintaining O(1) per-                   II. BACKGROUND AND R ELATED WORK
+step work; a per-step MASK (CSPRNG-based) that enforces
+sampling randomness and independence, yielding distribu-              A. Steganographic Model
+tional indistinguishability; and a reimplementation of core              Steganography enables two communicating parties to ex-
+arithmetic in bitwise primitives, further improving embed-            change secret messages over a public channel without an
+ding throughput. Together, these changes make ANS fit for             adversary detecting the existence of communication. A classic
+steganography: ANStega attains near-entropy capacity with             formalization of this scenario is Simmons’ “Prisoners’ Prob-
+constant-time embedding and provable security, while remain-          lem” [30], in which two prisoners, Alice and Bob, wish to
+ing practical for high-throughput LLM generation.                     plan an escape by exchanging seemingly innocuous messages.
+   ANStega uniquely solves the generative steganography               A prison warden inspects all messages carefully, rejecting any
+trilemma, achieving simultaneous optimal performance across           communication that appears suspicious. This scenario captures
+embedding capacity, security, and efficiency. We experimen-           two fundamental requirements of steganography:
+tally validate that ANStega approaches the theoretical entropy           1) Correctness: Bob must reliably recover the hidden mes-
+limit, matches AC-based methods in capacity, and significantly              sage M from the received stego medium S without
+exceeds them in computational efficiency and statistical secu-              errors.
+rity. Our theoretical proofs and extensive empirical evalua-             2) Undetectability: The warden’s ability to distinguish the
+tions confirm that ANStega preserves model distributions and                stego medium S from a legitimate cover medium C
+achieves O(1) complexity by eliminating the scaling overhead                should be no better than random guessing.
+typical in AC-based schemes.                                             Steganographic models generally fall into two principal
+   Our main contributions are as follows:                             paradigms: modification-based and generation-based.
+                                                                         In modification-based steganography, given a cover medium
+  • We propose ANStega, a generative steganographic
+                                                                      C ∈ C, a secret message M ∈ M, and a secret key K,
+    scheme based on Asymmetric Numeral Systems. Rather
+                                                                      the embedding process produces a stego medium S ∈ S by
+    than directly adopting ANS, we systematically redesign
+                                                                      minimally altering the cover medium:
+    it for steganographic encoding by reversing its encoding-
+    decoding roles, aligning seamlessly with LLM-based to-                                   S = E(C, M, K),                       (1)
+    ken generation.
+  • We introduce a tailored streaming rANS approach, al-              where K is shared secretly between Alice and Bob. The
+    lowing the stable embedding of arbitrarily long messages          embedding process ensures S is visually or statistically in-
+    by maintaining bounded state intervals. This strategy             distinguishable from C to unauthorized observers.
+    effectively eliminates numerical overflow issues inherent            In contrast, generation-based steganography directly syn-
+    in traditional ANS implementations.                               thesizes a stego medium from the secret message without
+  • To enhance efficiency, we devise a direct floating-point          relying on a pre-existing cover. Formally, this generation
+    update strategy that avoids global probability rescal-            process is represented as:
+    ing, and further accelerate embedding through bitwise                                     S = G(M, K),                         (2)
+    arithmetic transformations, resulting in a constant-time
+    embedding complexity (O(1)).                                      where G denotes a generative function parameterized by the
+  • We ensure provable steganographic security by integrat-           secret key K. The principal advantage of generative steganog-
+    ing a cryptographic masking mechanism (MASK), which               raphy lies in eliminating explicit modification artifacts, poten-
+    guarantees uniform randomness during token sampling.              tially complicating detection.
+
+
+
+                                                                  3
+   To facilitate a better understanding of the generation-based         begun to explore ANS for linguistic steganography. However,
+steganographic model, we introduce a concrete running exam-             SA-ANS relies on direct state-dependent sampling without
+ple based on LLM steganography, as illustrated in Figure 2.             cryptographic masking, leaving statistical artifacts detectable
+   Consider a scenario where a sender wishes to conceal a               by analysis. Furthermore, it lacks optimal complexity and
+secret message, m = ’10’, within a generated text stream.               employs fixed-rate consumption that limits capacity on low-
+The process operates as follows:                                        entropy distributions.
+   1) Context and Distribution: The LLM receives a prompt                  Generative steganography has also developed beyond text:
+      (e.g., “I want to eat”) and computes a probability distri-        PixelCNN-based approaches for images [9], audio steganog-
+      bution Pi for the next token. In our example, the tokens          raphy via TTS models [10], and diffusion-based frame-
+      “later” (11), “now” (10), and “here” (0) are assigned             works [20], [21] have all explored embedding messages during
+      probabilities of 0.25, 0.25, and 0.5, respectively.               generation. Collectively, these advances demonstrate modality-
+   2) Embedding (Encoding): Rather than sampling the next               wide applicability of generative steganography in AIGC,
+      token purely at random—which is standard in normal                covering encoding-based designs and alternative mechanisms
+      generation—the sender utilizes a steganographic algo-             alike.
+      rithm to map the message bits m to a specific token.                 Despite this rich body of work, no existing approach si-
+      Here, the message ’10’ maps directly to the token “now”.          multaneously achieves (i) near-entropy embedding rate, (ii)
+   3) Output: The token “now” is selected and appended                  constant-time efficiency (O(1)), and (iii) provable distribu-
+      to the text, resulting in “I want to eat now”. To an              tional indistinguishability. In particular, while ANS—a coding
+      outside observer, this selection appears to be a natural          paradigm with Huffman-like efficiency and AC-level com-
+      continuation of the sentence, statistically consistent with       pression effectiveness—has attracted recent attention [16],
+      the distribution Pi .                                             its potential to fundamentally resolve this trilemma remains
+                                                                        unrealized. Our work fills that gap by systematically adapting
+B. Generative Steganography                                             ANS to the steganographic setting, enabling efficient, provably
+    Early theoretical work on steganography established prov-           secure, and high-capacity generative steganography.
+ably secure techniques for “cover-free” channels, yet these
+methods remained largely impractical due to the inability               C. Asymmetric Numeral Systems
+to sample realistic media distributions [31]. The advent of
+high-quality generative models—LLMs for text, diffusion or                 Asymmetric Numeral Systems (ANS) is a family of entropy
+GAN/flow models for images and audio—has fundamentally                  coders introduced by Duda that combines AC–like compres-
+changed the landscape by enabling realistic, high-entropy               sion effectiveness with Huffman-like efficiency [36]. Two
+content synthesis that supports covert message embedding with           widely used ANS variants are table-based ANS (tANS) and
+minimal detectability.                                                  range-based ANS (rANS). tANS precomputes state transitions
+    In text, early LSTM-based schemes such as Fang et al. [32]          in lookup tables so that runtime encoding/decoding primarily
+encoded bits by selecting tokens from fixed vocabulary bins,            performs bit-shifts, additions, and table reads; rANS maintains
+but suffered from detectability issues. RNN-Stega [33] im-              a single integer state and updates it with integer multiply–add
+proved capacity by using Huffman coding over conditional                and div/mod operations analogous to range (arithmetic) cod-
+token probabilities, though the required tree reconstruction            ing. ANS has seen broad industrial adoption: Zstandard [26],
+and distribution distortion limited security and efficiency. The        [37] and Apple’s LZFSE [27] employ Finite State Entropy,
+introduction of Arithmetic Coding (AC) with LLMs (e.g.                  and the JPEG XL standard [38] supports ANS as one of
+Ziegler et al. [11]) allowed near-entropy embedding, but                its entropy coders. For steganographic use with generative
+AC’s rescaling operations introduce precision loss and runtime          models, we favor rANS because the target token distribution
+overhead.                                                               changes at every step, making tANS lookup tables impractical
+    Subsequent work aimed to establish provably secure                  to precompute or maintain.
+schemes. Meteor [34] mitigated randomness-reuse risks in                   The core idea of ANS is to represent a sequence of
+AC-based embedding via recoverable-range sampling, improv-              symbols as a single natural number, effectively capturing
+ing cryptographic security at the cost of added complexity.             the entire message’s information content. This is achieved
+Adaptive Dynamic Grouping (ADG) [35] dynamically par-                   by maintaining a state variable x, which is updated as each
+titions the token space to align with the LLM distribution,             symbolPis processed. Let fs denote the frequency of symbol
+                                                                                                                              P       s,
+enhancing imperceptibility. Distribution-copy methods such as           Cs = a<s fa its cumulative frequency, and M = a∈Σ fa
+Discop [14] and minimum-entropy coupling like iMEC [15]                 the total frequency. Each symbol s is encoded via:
+further preserve statistical indistinguishability by constructing                           
+                                                                                              x
+exact distributional copies or couplings—but both incur sig-                          x←          · M + Cs + (x mod fs ),            (3)
+                                                                                             fs
+nificant runtime cost. More recently, SparSamp [19] achieved
+O(1) embedding and perfect security in practice, but still              after all symbols have been processed, the final state x and any
+exhibits a minor capacity gap due to its sparse-sampling                residual bits are written out as the compressed output. During
+design. Very recently, concurrent work SA-ANS [16] has                  decoding the process is reversed, successively recovering
+
+
+
+                                                                    4
+symbols while restoring earlier states—thereby reproducing              to investigating this hypothesis. We present the adaptation of
+the original message exactly.                                           ANS for generative steganography, describing the necessary
+   The decoding in rANS proceeds by inverting the encoding              innovations to harness its theoretical strengths.
+transformation to recover the original message from the final
+state x. At each step, the current symbol s is identified by the                             IV. T HREAT M ODEL
+residue:                                                                   We analyze ANStega against a passive adversary (the
+                  s ← symbol (x mod M ) ,                    (4)        warden, Eve) whose goal is steganographic detection. Eve
+                                                                        observes the public channel between the sender (Alice) and the
+the state is then updated as
+                       jxk                                              receiver (Bob) and seeks to distinguish stego text S (carries
+              x ← fs ·         + (x mod M ) − Cs ,          (5)         a hidden message) from cover text C (does not). This is
+                         M                                              a binary hypothesis test; Eve’s success is measured by any
+this process iterates until all symbols are decoded in order.           distinguishing advantage over random guessing.
+                      III. M OTIVATION                                        a) Kerckhoffs-aligned capabilities: We adopt a strong,
+                                                                        standard model in which security relies only on secret keys,
+   The relationship between entropy coding and stegano-                 not on algorithm secrecy.
+graphic encoding provides a useful duality for modern gen-
+                                                                           • System knowledge. Eve knows the generative model G
+erative steganography. In classical information theory, entropy
+                                                                              (architecture, parameters, and sampling hyperparameters
+coders such as Huffman Coding and Arithmetic Coding com-
+                                                                              such as temperature) and the complete ANStega algo-
+press data by removing statistical redundancy, transforming
+                                                                              rithm and its implementation details.
+a symbol sequence into a bitstream that is close to uni-
+                                                                           • Channel access. Eve intercepts the full token sequence
+form [39]. Anderson and Petitcolas [24] noted a consequence
+                                                                              and the prompt/context Φ for every message sent over
+for steganography: if one has a (near-)perfect generative model
+                                                                              the public channel. She may perform arbitrary statistical
+of the cover distribution and an invertible coder, then the
+                                                                              tests or train detectors using in-distribution corpora, and
+inverse mapping can “decompress” a random bitstream (e.g.,
+                                                                              she may query G (black-box sampling) to draw matched
+encrypted data) into plausible samples from that distribution.
+                                                                              reference samples.
+Informally, steganographic embedding can be viewed as the
+                                                                           • No access to secrets. Eve does not know the shared key
+inverse of entropy coding: instead of compressing symbols
+                                                                              kseed used to derive the per-step MASK via a CSPRNG.
+into bits, we map a secret bitstream into symbols that follow
+                                                                              Internal ANS states and MASK values are never revealed
+the model’s target distribution.
+                                                                              on the public channel.
+   This perspective naturally motivated adapting classical
+coders for steganography. However, direct use of HC/AC                        b) Passive Adversary: We focus on a passive adversary
+exposes a persistent capacity–efficiency–security tension:              model, which is the standard setting for linguistic steganog-
+   • AC-based methods can approach the entropy limit and
+                                                                        raphy aiming for high capacity [6]–[19]. In this model, Eve
+      thus offer high embedding capacity [8]–[11]. In practice,         monitors the public channel to detect anomalies but does
+      each token step requires range updates and renormal-              not modify traffic. We defer the discussion of active adver-
+      ization under finite precision, plus converting model             saries—who may inject or alter tokens to disrupt synchroniza-
+      probabilities to scaled integers. Although amortized time         tion—to Section VIII, noting that resistance to such attacks
+      per step is constant, these operations introduce nontrivial       typically requires sacrificing the near-entropy capacity that
+      overhead and sensitivity to precision/rounding, which             ANStega aims to achieve.
+      complicates accurate sampling of low-probability tokens                              V. P ROPOSED M ETHOD
+      and can affect security if randomness management is not
+      careful.                                                          A. Overview of Steganography System Based on ANS
+   • HC-based methods, while fast in static compression, lose             The foundational principle of our system lies in mapping
+      that advantage here: the model distribution changes at            the ANS framework to the generative steganography task.
+      every step, implying frequent tree rebuilds or reweighting.       Instead of merely using ANS as a black-box compressor, we
+      Moreover, HC requires dyadic probabilities; quantization          repurpose its core state machine for message embedding and
+      to dyadic weights induces a systematic mismatch to                extraction. The key correspondences are established as follows
+      the target distribution, yielding suboptimal capacity and         (and illustrated in Figure 3):
+      measurable KL divergence [6], [7].                                  • ANS Symbol Sequence ↔ StegoText S: The sequence
+   In this paper, we hypothesize that the unique properties of               of symbols produced by the state machine constitutes the
+ANS provide the ideal foundation for resolving the stegano-                  final steganographic text.
+graphic trilemma. Its near-optimal compression ratio suggests             • ANS Alphabet ↔ Model Vocabulary V: The set of all
+the potential to achieve maximum capacity; its low-complexity                possible symbols corresponds to the vocabulary of the
+points toward O(1) efficiency; and its precise, scale-free                   generative model G.
+arithmetic offers a way to avoid the distributional distortions           • ANS Frequency Table ↔ Model Probability Distribu-
+that plague other methods. Therefore, this paper is dedicated                tion P (s | ·): The symbol frequencies are determined
+
+
+
+                                                                    5
+                                                                       that overcomes this limitation through a streaming architecture
+                                                                       and targeted optimizations.
+                                                                          1) Addressing State Overflow with Streaming rANS: To
+                                                                       solve the problem of unbounded state growth, we adapt our
+                                                                       system to use Streaming rANS. This approach constrains the
+                                                                       state value x to a fixed operational range [L, H], ensuring
+                                                                       numerical stability. Whenever an operation causes x to fall
+                                                                       outside this range, a renormalization step is performed by
+                                                                       streaming bits in or out. We adopt the standard configuration
+                                                                       where L = α · M and H = 2L − 1, for a hyperparameter α
+                                                                       and M = 2precision .
+                                                                          This is accomplished by integrating two core operations,
+Fig. 3: Mapping the core components of ANS to the generative           Expand and Shrink, into our steganographic functions:
+steganography task.                                                      • Expand (during Embedding): During the embedding
+                                                                           process (EncodeG ), a state update can cause x to become
+                                                                           too small (i.e., x < L). To renormalize it, the Expand
+      at each step by the next-token probability distribution              operation repeatedly shifts in bits from the secret message
+      predicted by the generative model.                                   m into the low-order bits of the state until x is back
+   • ANS Bitstream ↔ Secret Message m: The secret
+                                                                           within the [L, H] range. This is the primary mechanism
+      message provides the bits that drive the state machine’s             by which the secret message is consumed.
+      evolution.                                                         • Shrink (during Extraction): In the extraction process
+   The central innovation of our approach lies in inverting                (DecodeG ), to ensure that the state variable x consis-
+the conventional roles of the ANS state transition functions,              tently remains within the predefined valid interval I =
+C(s, x) (encode) and D(x) (decode). This inverse design is                 [L, H] after each update, we introduce a preprocessing
+intuitive for generative tasks:                                            operation named Shrink. This operation is performed
+   • Standard ANS decoding takes a state xt+1 and produces                 before each state update with ExtractStep (Equation 3).
+      a symbol st . This is precisely the functionality required           Its purpose is to pre-adjust x to guarantee that the new
+      for generative steganography, where we need to generate              state value after the update will fall within I. A direct
+      a token (symbol) based on the current state, which is                implementation would be to use a loop that speculatively
+      derived from the secret message.                                     calls ExtractStep to check if the next state is valid, but
+   • Conversely, standard ANS encoding consumes a se-                      this is inefficient due to the repeated, costly function calls.
+      quence of symbols to produce a final state. This mirrors             As we prove in Appendix A-A, this complex check is
+      our message extraction process, which consumes the                   equivalent to a much more efficient condition that only
+      sequence of received tokens to reconstruct the state and             involves the current state x: while (x ≥ 2αfs ). Therefore,
+      thereby reveal the original secret message.                          the optimized Shrink loop simply uses this fast condition.
+   Therefore, we formally define our embedding function                    In each iteration, it outputs the least significant bit (LSB)
+EncodeG as the ANS decoding function D, and our extraction                 of x and then performs a right-shift, continuing until x
+function DecodeG as the ANS encoding function C:                           is small enough.
+                                                                          While Streaming rANS ensures stability, we introduce two
+             Embedding :      (xt , st ) = D(xt+1 )                    further optimizations to maximize the performance and preci-
+                                                             (6)       sion of ANStega.
+               Extraction :   xt+1 = C(st , xt )
+                                                                          2) Avoiding Rescale for Higher Fidelity: Traditionally,
+   A critical consequence of this “decode-first, encode-later”         using generative models with entropy coders requires con-
+architecture is the need to synchronize the extractor’s initial        verting the model’s floating-point probabilities into integer
+state with the embedder’s final state. To correctly reconstruct        frequencies for a range [0, M ]. This rescaling process is
+the message, the extractor must begin its computation from             computationally expensive and, more importantly, introduces
+the exact state value, xfinal , where the embedder finished.           quantization errors that distort the original probability distri-
+B. Construction of the ANStega System                                  bution. To eliminate this, we perform all arithmetic directly
+                                                                       in the floating-point domain. This is achieved by normalizing
+   The previous section established the theoretical framework          the state value on the fly (i.e., using x (mod M)
+                                                                                                                         ) and adapting
+                                                                                                                   M
+for using an ANS state machine for generative steganography.           the state update function 5 accordingly:
+However, a direct implementation faces a significant practical
+challenge: the state value x can grow indefinitely when pro-
+                                                                               fsscaled ← ⌈Ps · M ⌉, Csscaled ← ⌈Cs · M ⌉
+cessing a long message, leading to numerical overflow. This                                   jxk                                     (7)
+section details how we engineer ANStega, an efficient system                   x ← fsscaled ·      + (x mod M ) − Csscaled
+                                                                                               M
+
+
+                                                                   6
+                                       Fig. 4: An example of ANStega encoding process.
+
+
+This approach preserves the model’s distribution while also             therefore reduces to the secrecy of kseed and the strength of the
+reducing computational overhead.                                        underlying CSPRNG, elevating ANStega’s indistinguishability
+   3) Securing Randomness with a Cryptographic Mask:                    guarantee from heuristic to cryptographic.
+Although the Avoiding Rescale optimisation preserves the                   4) Computational Simplification with Bitwise Operations:
+language-model distribution exactly, the residue r =                    The rANS state update formulas rely heavily on integer
+(x mod M )/M is uniform only if the least-significant bits              division and modulo operations. These can be computationally
+of the ANS state x are themselves unbiased. Increasing the              intensive. By setting our range parameter M to be a power of
+normalisation factor α mitigates—but cannot eliminate—bias,             two (i.e., M = 2precision ), all division and modulo operations
+and it provides no formal guarantee.                                    with respect to M can be replaced with highly efficient bitwise
+   To obtain unconditional uniformity we transform ANStega              shift and AND operations. This optimization dramatically re-
+into a symmetric-key scheme that injects cryptographic ran-             duces the computational load, making ANStega exceptionally
+domness at every generation step:                                       fast and well-suited for deployment on resource-constrained
+   1) Shared seed. Sender and receiver agree on a secret                devices.
+      key kseed and seed an identical cryptographically secure             5) Algorithmic Implementation: The mechanisms de-
+      pseudo-random number generator (CSPRNG).                          scribed above are implemented as a set of core algorithms.
+   2) Mask Generation: At each step t, the CSPRNG gener-                The Expand and Shrink algorithms handle the state renormal-
+      ates a precision-bit pseudo-random value, which serves            ization for the streaming protocol. As shown in Algorithm 1,
+      as a cryptographic mask, Rt .                                     Expand normalizes a state x < L by consuming bits from
+   3) State Scrambling: The sampling variable r is then                 the message queue m and appends them to the state’s least
+      computed by first applying this mask to the low-order             significant bits. Algorithm 2 preemptively adjusts the state
+      bits of the state via a bitwise XOR operation:                    x to ensure that the subsequent state, after performing one
+                                                                        extraction step, remains within the interval I.
+                              (x mod M ) ⊕ Rt
+                       r←                                     (8)          The core inverse operations are realized in Algorithm 3
+                                      M                                 and Algorithm 4. Figure 4 provides a detailed, step-by-step
+       where ⊕ denotes the bitwise XOR operation.                       walkthrough of this embedding process, illustrating the state
+   Because Rt is computationally indistinguishable from uni-            transitions and token generation. The Sample function, de-
+form, the resulting r is provably uniform regardless of any             tailed in Algorithm 3, performs the embedding step: it uses
+latent structure in x or the choice of α. Steganographic security       the state x to generate a uniform random value r, samples a
+
+
+
+                                                                    7
+token s according to the model’s distribution P , and computes
+the new, smaller state using the rANS decoding formula. The
+EncodeStep function performs the inverse extraction step: it           Algorithm 3: Sample(x, P ): Sample token and up-
+takes the received token s and current state x to compute the          date state (Embedding Step)
+new, larger state using the rANS encoding formula, ensuring             Input: State x, Probability Distribution P
+perfect reversibility.                                                  Output: New State x, Sampled Token s
+   Finally, Algorithms 5 and 6 orchestrate the entire process.          Initialization: C ← Cumulative(P )
+The main embedding loop, EncodeG , iteratively calls Sample             r ← (x mod M )/M
+to generate a token and Expand to renormalize the state.                s ← InverseTransformSample(C, r)           // Find
+The main extraction loop, DecodeG , processes tokens in                  token s where Cs−1 ≤ r < Cs
+reverse, calling EncodeStep to update the state and Shrink              // This is the rANS decoding formula
+to renormalize and extract the hidden message bits.                          adapted for direct float
+                                                                             probabilities
+ Algorithm 1: Expand(x, m): Expand state x by con-                      x ← ⌊x/M ⌋ × ⌈Ps · M ⌉ + (x (mod M )) − ⌈Cs · M ⌉
+ suming message bits                                                    return x, s
+  Input: State x, Message Queue m
+  Output: Expanded State x
+  while x < L do
+      b ← m.pop front() // Get next bit from
+       message                                                         Algorithm 4: ExtractStep(x, P, s): Update state with
+      x ← (x ≪ 1) | b    // Append bit to LSB,                         token (ANS Encoding function)
+       increasing state value                                           Input: State x, Distribution P , Token s
+  end                                                                   Output: New State x
+  return x                                                              Initialization: C ← Cumulative(P )
+                                                                        fsscaled ← ⌈Ps · M ⌉
+                                                                        Csscaled
+                                                                                ← ⌈Cs ·M ⌉                            
+ Algorithm 2: Shrink(x, s, P ): Shrink state x and                      x ← x/fsscaled · M + Csscaled + x mod fsscaled
+ extract message bits                                                   return x
+  Input: State x, Symbol s, Probability Distribution P
+  Output: Shrunk State x, Extracted Bits bits
+  Initialization: bits ← ∅
+  fsscaled ← ⌈Ps · M ⌉
+  xmax ← 2 · t · fsscaled                                              Algorithm 5: EncodeG : Main Loop of the ANStega
+  while x ≥ xmax do                                                    Embedding
+       b ← x mod 2
+                                                                        Input: Message m, Context Φ, Generative Model G,
+       bits.prepend(b)        // Extract LSB and
+                                                                                Seed kseed
+        prepend to bits list
+                                                                        Output: Stegotext S, Final State x
+       x←x≫1                      // Shrink state
+                                                                        Initialization:
+  end
+                                                                        M ← 2precision , L ← M × α, H ← 2L − 1, S ← ∅
+  return x, bits
+                                                                        x ← bits2int(m[: ⌈log2 (H)⌉])       // Initialize
+                                                                         state with first bits of m
+                  VI. S ECURITY A NALYSIS                               CSPRNG.Setup(kseed )
+                                                                        while generation is not finished do
+A. Security Definition                                                      mask ← CSPRNG.next()
+   Unlike information-theoretic steganography which assumes                 xmask ← x ⊕ mask // XOR the lower bits
+perfect randomness [15], we analyze ANStega under the stan-                  of x with mask
+dard cryptographic model of computational indistinguishabil-                P ← G(Φ)
+ity. The security of our system relies on the inability of a                (x, s) ← Sample(xmask , P )
+polynomial-time adversary (Eve) to distinguish the distribution             x ← Expand(x, m)
+of the stego-text PS from the cover-text distribution PG (the               S←S∥s
+language model).                                                            Φ←Φ∥s
+   Let G(Φ, s<t ) denote the true next-token distribution of            end
+the language model. Previous methods, such as those based               return S, x
+on HC or AC, inherently modify this distribution to fit
+dyadic intervals or integer frequencies, resulting in a non-zero
+
+
+
+                                                                   8
+ Algorithm 6: DecodeG : Main Loop of the ANStega                   B. Computational Security Analysis
+ Extraction                                                           The security proof proceeds by reduction. We show that
+  Input: Stegotext S, Context Φ, Model G, Final State              distinguishing the stego-text from the cover-text is computa-
+          xfinal , Seed kseed                                      tionally equivalent to distinguishing the CSPRNG output from
+  Output: Decoded Message m                                        a truly random sequence.
+  Initialization:                                                  1. Ideal Randomness Case (Information-Theoretic Base-
+  M ← 2precision , L ← M × α, H ← 2L − 1, m ← ∅,                   line): Consider an idealized version of ANStega, denoted
+   x ← xfinal                                                      as Πideal , where the mask Rt is drawn from a uniform
+  CSPRNG.setup(kseed ), mask list = []                             distribution U{0, M − 1} where M = 2precision .
+  for each token s in S do                                            As defined in Eq. (9), the sampling variable is derived
+      mask ← CSPRNG.next()                                         via r ← [(x (mod M )) ⊕ Rt ] /M . Since Rt is perfectly
+      mask list.append(mask)                                       uniform and independent of the state x, the One-Time Pad
+  end                                                              property ensures that the resulting bits (x mod M ) ⊕ Rt are
+  for each token s in reverse(S) do                                perfectly uniform over {0, . . . , M − 1}. Consequently, the
+      // 1. Get distribution for the                               normalized residue r is uniform on [0, 1). Because the Sample
+           PREVIOUS step                                           algorithm uses Inverse Transform Sampling on the exact model
+      Φcontext ← prefix of S before s                              distribution PG driven by this uniform r, the sampled token
+      P ← G(Φcontext )                                             st follows PG exactly. Thus, in the ideal case:
+      // 2. pre-adjust state and extract
+                                                                     PSideal (st | s<t ) ≡ PG (st | s<t ) =⇒ DKL PG ∥PSideal = 0
+                                                                                                                             
+           message bits
+      (x, out bits) ← Shrink(x)                                                                                                 (10)
+      // 3. Update state using the token                           2. Real-World Case (Pseudo-Randomness): In the actual
+           (ANS encoding)                                          ANStega protocol Πreal , Rt is generated by a CSPRNG seeded
+      x ← ExtractStep(x, P, s)                                     with key kseed . If there exists a PPT adversary A that can
+      // 4. Recover state x via XOR the                            distinguish PS from PG with non-negligible advantage ϵ, we
+           same mask                                               can construct a distinguisher B for the CSPRNG. B receives a
+      mask ← mask list.pop back()                                  sequence of masks and runs the ANStega sampling procedure.
+      x ← x ⊕ mask                                                 If the masks are true random, the output follows PG (as proven
+      m ← out bits ∥ m                                             in Case 1); if they are pseudo-random, the output follows PS .
+  end                                                              Therefore, A’s ability to distinguish the text implies B’s ability
+  Finalization:                                                    to distinguish the CSPRNG output from random noise.
+  out bits ← to binary(x)     // The final state
+                                                                                        Advstega
+                                                                                           A     ≤ AdvPRNG
+                                                                                                      B                         (11)
+   contains the message’s first bits
+  m ← out bits ∥ m                                                 Since AdvPRNGB      is negligible for a secure CSPRNG, the
+  return m                                                         resulting distribution PS is computationally indistinguishable
+                                                                   from PG .
+                                                                                          VII. E XPERIMENT
+Kullback-Leibler (KL) divergence (DKL (PG ||PS ) > 0) even            In this section, we empirically evaluate ANStega to address
+with perfect randomness.                                           three key questions: (1) How does ANStega fundamentally
+   In contrast, ANStega is designed such that the intended         perform against other entropy coding-based methods and what
+sampling distribution is identical to PG . Ideally, assuming       is the impact of hyperparameters? (2) How robust is its security
+access to a True Random Number Generator (TRNG), the               under theoretical analysis and steganalysis? (3) How do its
+residue rt used for sampling is perfectly uniform, implying        capacity and efficiency compare with the leading methods? By
+DKL (PG ||PS ) = 0. However, in practice, we rely on a             systematically addressing these questions, we aim to provide
+CSPRNG. Therefore, we define security via the advantage of         a holistic assessment of the superiority of ANStega as a well-
+an adversary A in the steganographic distinguishing game:          balanced steganographic solution.
+                                                                   A. Experimental Setup
+        Advstega = |Pr[A(S) = 1] − Pr[A(C) = 1]|         (9)          1) Models and Dataset: We evaluate ANStega on six
+           A
+                                                                   representative generative models—GPT-2 (124M) [40], Llama
+                                                                   3 (8B) [41], Qwen2.5 (3B) [42], DeepSeek-R1-Distilled-Qwen
+where S is the stego-text sequence and C is a cover-text           (1.5B), SmolLm2(135M) [43] and Phi-2(2.7B) [44], using the
+sequence sampled natively from the model. We claim that            IMDB [45] movie review dataset. The task involves contex-
+for any probabilistic polynomial-time (PPT) adversary A,           tual text completion, where 100 text samples are randomly
+Advstega
+     A   is negligible, provided the underlying CSPRNG is          selected, and the first three sentences of each are used as input
+secure.                                                            context.
+
+
+
+                                                               9
+   2) Baselines and Parameters: To ensure fair compari-                 TABLE II: Impact of α and the cryptographic mask on
+son, we adopt standardized settings across all methods. Two             ANStega’s performance (Llama3, Top-p, p = 1.0).
+sampling strategies are used: top-k sampling [46], which                  α    Mask         ER        UR       ES          GS         SITR
+selects from the k most probable tokens, and nucleus (top-p)                           (bits/token)          (bits/s)   (tokens/s)
+sampling [47], which samples from the smallest set of tokens                   w/o         2.03       0.86    72.60       35.63      1.26E-02
+                                                                          1
+                                                                               w/          2.63       1.00    92.11       34.92      1.49E-02
+with cumulative probability above p. For precision-sensitive                   w/o         2.44       0.97    87.92       35.94      1.26E-02
+baselines like AC [11], we use 32-bit precision (β = 32),                 4
+                                                                               w/          2.54       0.99    88.44       34.79      1.46E-02
+while methods like iMEC [15], SparSamp [19] and SA-ANS                    16
+                                                                               w/o         2.37       0.97    85.70       36.03      1.27E-02
+[16] retain their standard configurations (block sizes of 10, 64               w/          2.48       0.98    86.52       34.83      1.47E-02
+                                                                               w/o         2.65       1.02    95.22       35.87      1.28E-02
+and 16, respectively).                                                    64
+                                                                               w/          2.70       1.01    94.38       34.84      1.46E-02
+   3) Implementation Details: All experiments are conducted
+on a high-performance computing platform equipped with
+an Intel Xeon Gold 6330 CPU and an NVIDIA RTX 4090                      tests confirms that the CSPRNG-driven sampling introduces no
+GPU. The implementation is developed using PyTorch 2.0                  statistically detectable bias compared to a true random source.
+with CUDA 11.8 to ensure efficient and reproducible results.               Standard steganographic methods often alter the genera-
+                                                                        tive distribution to embed information (e.g., via probability
+B. Evaluation Metrics
+                                                                        quantization or space partitioning). To quantify this inherent
+   To comprehensively assess ANStega and other baseline                 statistical distortion, we compute the algorithmic Kullback-
+steganographic methods, we evaluate their performance on                Leibler (KL) divergence between the model’s original next-
+three key dimensions: capacity, efficiency, and security.               token probability distribution and the steganographic sampling
+   1) Capacity: We evaluate embedding capacity using two                distribution at each time step.
+metrics. The Embedding Rate (ER) measures the average                      To assess real-world detectability, we measure steganalysis
+number of secret bits embedded per generated token:                     accuracy (Acc) by training classifiers to distinguish stego-text
+                           Encoded bits                                 from cover-text:
+                   ER =                                   (12)
+                        Generated tokens                                                           Correct predictions
+                                                                                            Acc =                                  (16)
+The Utilized Entropy Rate (UR) normalizes capacity by com-                                           Total predictions
+paring actual embedding to the model’s theoretical limit:               An accuracy near 50% indicates strong resistance to detection.
+                             PT
+                                   Ct                                   C. Hyperparameter Analysis of ANStega
+                     UR = PTt=1                           (13)
+                               t=1 Et                                      To thoroughly evaluate the performance and security of
+where Ct is the number of bits embedded at time step t, and Et          ANStega and to determine its optimal configuration for sub-
+is the model’s Shannon entropy. Higher ER and UR indicate               sequent experiments, we conduct an in-depth analysis of two
+greater embedding capacity.                                             key hyperparameters: the scale factor α and the cryptographic
+   2) Efficiency: We assess computational efficiency through            mask. The scale factor α defines the normalization range
+both throughput and overhead. Specifically, we use Embedding            [L, H] (where L = α · M ) and thus directly impacts the
+Speed (ES) and Generation Speed (GS) to measure bits and                frequency and efficiency of state updates. The mask is a
+tokens processed per second:                                            CSPRNG-derived perturbation on the low-order state used to
+                                                                        drive sampling randomness.
+            Encoded bits             Generated tokens                      Our analysis targets two questions: (1) how α and the
+    ES =                 ,    GS =                         (14)
+           Encoding time              Encoding time                     mask affect efficiency and capacity; and (2) how they affect
+To quantify algorithmic overhead, we introduce the Sampling-            the statistical randomness of the per-step sampling—which
+to-Inference Time Ratio (SITR), which captures the relative             directly impacts security.
+cost of steganographic sampling:                                           1) Capacity and Efficiency: We first measure capacity and
+                                                                        efficiency under varying α and with/without the mask, using
+                            Sampling time                               Llama 3 with Top-p sampling (p = 1.0). The results (Table II)
+                   SITR =                                   (15)
+                            Inference time                              lead to following observations. Without the mask, ANStega
+An efficient method should achieve high ES/GS and low SITR.             attains near-entropy capacity only at larger α (e.g., UR = 0.90
+   3) Security: We evaluate security from three complemen-              at α = 1 vs. UR = 1.00 at α = 64), indicating that small
+tary perspectives: randomness quality, statistical fidelity, and        normalization ranges distort the per-step sampling bits and
+practical undetectability.                                              depress capacity. With the mask enabled, capacity becomes
+   Since our method’s security relies on the indistinguisha-            essentially α-insensitive: ER and UR remain at the near-
+bility of the cryptographic mask from uniform noise, we                 entropy frontier across settings (e.g., UR ≈ 0.99–1.01 for
+employ the NIST Statistical Test Suite (STS). We evaluate               α ∈ {1, 4, 16, 64}). Importantly, increasing α or enabling the
+the bitstreams derived from the per-step sampling variates              mask does not introduce a computational burden: ES/GS and
+against this industry-standard battery of tests. Passing these          SITR stay nearly constant across all configurations.
+
+
+
+                                                                   10
+TABLE III: NIST STS results on per-step sampling. (✓: pass,               is slightly suboptimal at lower k values (e.g., UR = 0.89 at
+✗: fail)                                                                  k=8).
+ Test                     Random/Vanilla          ANStega                    ANStega effectively overcomes these limitations. It
+ Mask                           -                w/o       w/             achieves near-perfect entropy utilization (UR ≈ 1.01) across
+ α                              -           1    16  32   1–32            all settings, avoiding the dyadic approximation artifacts found
+ ApproximateEntropy            ✓            ✗    ✗    ✗    ✓
+ BlockFrequency                ✓            ✗    ✗    ✗    ✓              in Huffman coding. Crucially, as detailed in Table V, ANStega
+ CumulativeSums                ✓            ✗    ✓   ✓     ✓              yields zero algorithmic KL divergence because the proba-
+ FFT                           ✓            ✗    ✗    ✗    ✓              bility distribution is not rescaled or quantized prior to sam-
+ Frequency                     ✓            ✗    ✓   ✓     ✓
+ LinearComplexity              ✓            ✓    ✓   ✓     ✓              pling—surpassing both AC and SA-ANS in statistical fidelity.
+ LongestRun                    ✓            ✗    ✓   ✓     ✓              Leveraging constant-time rANS updates and bitwise optimiza-
+ NonOverlappingTemplate        ✓            ✗    ✗    ✗    ✓              tions, ANStega matches the high throughput of AC and SA-
+ OverlappingTemplate           ✓            ✗    ✗    ✗    ✓
+ Rank                          ✓            ✓    ✓   ✓     ✓              ANS while incurring the lowest sampling overhead (consistent
+ Runs                          ✓            ✗    ✓   ✓     ✓              SITR = 0.01). This represents an 8× reduction in overhead
+ Serial                        ✓            ✗    ✗    ✗    ✓              compared to SA-ANS, securing optimal efficiency alongside
+ Universal                     ✓            ✗    ✗    ✗    ✓
+                                                                          provable security.
+
+
+   2) Security Analysis (NIST Statistical Randomness Test):
+We evaluated the per-step sampling randomness using the                   E. Comparative Analysis with Other Secure Steganographic
+NIST STS battery on one million bits generated from a static              Methods
+distribution {0.1, 0.2, 0.3, 0.4}. Table III highlights a critical
+distinction: the unmasked ANStega is sensitive to α, with                    To demonstrate that ANStega successfully solves the
+lower values leading to increased test failures due to residual           trilemma, we benchmarked its performance against a range of
+state structure. Conversely, the masked ANStega is robust to              state-of-the-art, secure steganography methods. The evaluation
+α variations, passing the full NIST suite across all configu-             focuses on the critical dimensions of embedding capacity
+rations. These results mirror the random baseline, empirically            and computational efficiency, where previous methods have
+confirming that the CSPRNG mask is essential for ensuring                 been forced to make significant compromises. The cross-model
+the generated variability is statistically indistinguishable from         comparison is presented in Table VI, while a detailed analysis
+standard sampling.                                                        of sampling hyperparameters (p) on Llama 3 is provided in
+   Because security with mask is essentially α-insensitive                Table VII.
+while efficiency has already plateaued at small α, we fix α = 4              The results clearly demonstrate the superiority of ANStega
+and enable the mask for all subsequent experiments.                       in terms of embedding capability. As an entropy-based
+                                                                          encoding method, ANStega achieves nearly perfect entropy
+D. Performance Comparison against Traditional Coding Ap-                  utilization (UR ≈ 1.0) across all tested models and sampling
+proaches                                                                  configurations. This allows ANStega to attain a significantly
+   Tables IV and V contrast the four entropy coding-based                 higher embedding rate (ER) than competitors. For instance,
+steganographic methods on Llama 3 with top-k sampling.                    on Llama 3 with p = 1.00, ANStega’s ER of 1.93 bits/token
+   The Huffman-based method suffers from significant com-                 is substantially higher than that of SparSamp (1.77), Meteor-
+putational overhead due to the frequent tree reconstruction               reorder (1.42), and iMEC (1.35). This high-capacity perfor-
+required for the large vocabulary of Llama 3. Consequently,               mance is robust across different model architectures (Table
+its embedding speed starts high (47.82 bits/s at k = 8) and               VI) and scalable with the entropy of the sampling space.
+collapses further to 6.93 bits/s at k = 1024 as shown in                     In terms of computational efficiency, ANStega demon-
+Table IV. Although its entropy-utilization rate (UR) exceeds              strates a decisive advantage. Its O(1) complexity translates
+1 due to forcing token probabilities onto dyadic weights,                 to extremely high embedding speed (ES) and a minimal
+this approximation severely distorts the model distribution. As           sampling-to-inference time ratio (SITR). As seen in Table VI,
+shown in Table V, the average / max KL divergence reaches                 under the rigorous setting of p = 1.0, ANStega’s throughput
+0.72/10.60 at k = 8, signaling a clear statistical fingerprint.           consistently surpasses all other methods. While SparSamp
+The AC-based method better balances capacity and speed:                   [19] also exhibits excellent O(1) efficiency with a low SITR,
+UR remains near entropy (0.98 ∼ 1.02) and ES increases                    ANStega is unique in achieving this top-tier speed without
+with k. However, rescaling the range per-step still introduces            sacrificing capacity. In stark contrast, methods like iMEC [15]
+algorithmic distortion, with KL divergence remaining in the               and Meteor [13] incur a devastating computational cost on
+10−2 ∼ 10−4 range. The concurrent work SA-ANS [16]                        larger models or full sampling distributions, with SITR values
+adopts the ANS framework to improve capacity, achieving                   orders of magnitude higher (e.g., SITR > 600 for iMEC on
+significantly lower KL divergence (∼10−6 ) than AC. However,              GPT-2), rendering them impractical for real-time applications.
+it still incurs noticeable sampling overhead (SITR ≈ 0.08) due            Thus, ANStega uniquely occupies the optimal position in the
+to its state adjustment mechanism, and its embedding capacity             landscape of secure steganography.
+
+
+
+                                                                     11
+              TABLE IV: Capacity and efficiency comparison of entropy coding-based steganography on Llama 3.
+                                ES (bits/s)                                          UR                                          SITR
+ Top-k
+           Huffman      AC       SA-ANS † [16]     ANStega      Huffman      AC       SA-ANS     ANStega      Huffman     AC       SA-ANS     ANStega
+   8        47.82      46.83           48.66        50.39         1.48       0.99       0.89      1.01          0.07      0.03       0.08      0.01
+   32       53.61      62.75           61.62        63.45         1.36       1.00       0.93      1.01          0.26      0.03       0.08      0.01
+  128       35.79      70.72           71.87        71.57         1.30       0.98       0.97      1.01          1.26      0.03       0.08      0.01
+  512       11.82      75.31           81.93        83.01         1.26       1.00       0.99      1.01          5.40      0.04       0.08      0.01
+  1024       6.93      84.62           81.61        86.43         1.25       1.02       0.99      1.02         13.91      0.04       0.08      0.01
+   † For SA-ANS, we calculate the effective embedding rate (per-token throughput) based on actual consumed bits rather than the theoretical parameter.
+
+
+
+
+TABLE V: Comparison of algorithmic KL divergence (Ave /                          sampling step of a Denoising Diffusion Probabilistic Model
+Max) across methods on Llama 3.                                                  (DDPM) [52] pre-trained on the FFHQ dataset. As illustrated
+Top-k       8                     128                   1024
+                                                                                 in Figure 5, the resulting 256 × 256 stego-images are high-
+Huffman     7.23E-01 / 10.60      5.60E-01 / 7.99       5.47E-01 / 8.60          fidelity and visually coherent, demonstrating that the core
+AC          7.92E-02 / 2.41       9.44E-04 / 0.07       2.86E-05 / 0.003         principles of ANStega can be effectively adapted to different
+SA-ANS      1.72E-06/8.68E-05     2.07E-06/9.46E-05     3.05E-06/1.08E-04
+ANStega     0/0                   0/0                   0/0
+                                                                                 generative processes and data modalities.
+                                                                                             VIII. D ISCUSSION AND L IMITATIONS
+                                                                                    While ANStega achieves optimal capacity, efficiency, and
+F. Resistance to Steganalysis                                                    provable security, we acknowledge limitations inherent to
+   To complement our theoretical security guaranties, we con-                    high-capacity steganography.
+ducted empirical steganalysis experiments to assess ANStega’s                       Robustness vs. Capacity. ANStega is fragile against active
+practical undetectability. We constructed a balanced dataset of                  attacks (e.g., token insertion or reordering); unlike robust
+20,000 samples generated under identical nucleus sampling                        watermarking, it requires the stego-text to be received exactly
+settings (p = 0.95). Specifically, we generated 10,000 benign                    as generated. However, this fragility is a necessary trade-off
+cover texts using the base model and 10,000 correspond-                          for bandwidth, allowing ANStega to achieve embedding rates
+ing stego texts using ANStega. The dataset was partitioned                       over 200× higher than robust schemes [53]. It is best suited
+into an 80/20 train-test split. On this data, we trained and                     for reliable channels rather than copyright protection.
+evaluated four widely-used steganalysis architectures: a Fully                      Passive Threat Model. We assume a passive adversary who
+Connected Network (FCN) [48], a Convolutional Neural Net-                        monitors but does not modify traffic. While active interference
+work (CNN) [49], and two specialized Bi-LSTM with a                              can disrupt the channel, widespread traffic alteration imposes
+classification layer R-BiLSTM-C [50] and BiLSTM-Dense                            high operational costs on wardens. Consequently, the passive
+[51].                                                                            model remains the standard assumption for high-bandwidth
+   The results, presented in Table VIII, demonstrate ANStega’s                   covert communication.
+security. All four classifiers performed at a statistically equiv-                  Deployment Requirements. Successful decoding demands
+alent level to random guessing, with accuracies hovering                         strict synchronization of models and sampling parameters;
+around the 50% mark. This indicates that even sophisticated,                     even minor floating-point non-determinism across hardware
+deep learning-based detectors were unable to find any reliable                   can cause errors. Standardization is required to mitigate these
+statistical artifacts in the stego-text generated by ANStega.                    precision issues [5]. Additionally, as a symmetric system,
+These empirical findings provide strong practical evidence                       ANStega requires secure initial seed exchange, though subse-
+for our theoretical claim that ANStega-generated content is                      quent keys can be rotated via message embedding to minimize
+indistinguishable from model output.                                             overhead.
+G. Qualitative Analysis and Cross-Modal Application                                                   IX. C ONCLUSION
+   In addition to quantitative metrics, it is crucial to assess                    In this work, we addressed the long-standing Capacity-
+the qualitative nature of the generated stego-media. To this                     Efficiency-Security Trilemma that has constrained the field of
+end, we present examples that demonstrate both the fluency                       generative steganography. We identified the root of this prob-
+of ANStega’s text outputs and its versatility for application in                 lem in the inherent limitations of adapting classical entropy
+other modalities.                                                                coders like Huffman and Arithmetic Coding. To break this
+   Table IX presents several text continuations generated by                     impasse, we introduced ANStega, a steganographic system
+ANStega using the Llama 3 model. The examples confirm                            built upon the powerful paradigm of ANS.
+that the stego-text maintains high semantic coherence with the                     Our main contribution lies not only in the application of
+provided context and exhibits a natural, fluent style, rendering                 ANS, but also in the systematic reconstruction of its core
+it qualitatively indistinguishable from benign model outputs.                    mechanisms to meet the unique requirements of steganog-
+   To showcase ANStega’s flexibility, we also applied it to                      raphy. Through innovative reverse application of state ma-
+image generation. Following the integration methodology of                       chines, customized streaming architecture, and key crypto-
+Wang et al. [19], we embedded ANStega into the final                             graphic masking mechanisms, we have designed a system that
+
+
+
+                                                                            12
+                        TABLE VI: Capacity and efficiency comparison on different models (Top-p, p = 1.0).
+                                                                    Meteor [13]            Discop [14]
+           Metrics          Models     ADG [12]    iMEC [15]                                               SparSamp [19]    ANStega
+                                                                 base     reorder      base      huffman
+                             GPT-2        5.25        4.53        4.67      5.73        2.40        5.78        5.67            5.95
+                           Qwen2.5        2.80        2.88        2.67      3.67        1.53        3.73        3.48            3.69
+              ER
+                            Llama 3       1.63        0.70       1.62       1.67        1.06        2.19        2.37            2.56
+         (bits/token)
+                           DeepSeek       2.57        2.33        2.57      3.20        1.48        3.41        3.50            3.59
+                           SmolLm2        4.43        3.46       2.01       4.42        4.10        5.12        5.12            5.50
+                             Phi-2       3.56         2.57       1.76       3.99       3.30         4.40        4.32            4.67
+                             GPT-2        0.85        0.70        0.77      0.89        0.38        0.95        0.93            1.00
+                           Qwen2.5        0.73        0.68        0.70      0.83        0.40        0.93        0.97            1.01
+             UR             Llama 3       0.63        0.73       0.66       0.72        0.42        0.90        0.97            1.00
+                           DeepSeek       0.69        0.73        0.70      0.83        0.39        0.92        0.96            0.99
+                           SmolLm2        0.81        0.68       0.38       0.84        0.75        0.94        0.94            1.01
+                             Phi-2        0.76        0.68       0.38       0.86       0.73         0.95        0.93            1.01
+                             GPT-2        7.82        0.91      636.57      0.84      155.79       22.42      821.56          879.79
+                           Qwen2.5        3.46        0.05       95.74       0.5       29.94        4.76      127.18          136.82
+             ES
+                            Llama 3       1.61        0.02      57.10       0.41       22.35        3.31       84.28           94.67
+           (bits/s)
+                           DeepSeek       1.82        0.04      115.88      0.31       32.97        4.62      157.14          169.51
+                           SmolLm2        6.61        0.50      51.32       0.60      137.10       15.77      187.82          212.31
+                             Phi-2        7.30        0.35      48.07       0.83      128.59       13.06      173.12          186.81
+                             GPT-2        1.49        0.20      136.45      0.15       65.01        3.88      144.69          147.76
+                           Qwen2.5        1.24        0.02       35.65      0.14       19.60        1.28       36.52           37.05
+             GS
+                            Llama 3       0.98        0.03      35.16       0.25       21.02        1.51       35.53           36.91
+          (tokens/s)
+                           DeepSeek       0.71        0.02       45.09      0.10       22.29        1.32       46.06           47.17
+                           SmolLm2        1.48        0.14      25.47       0.13       33.39        3.07       36.62           38.56
+                             Phi-2       2.04         0.13      27.28       0.20      38.94         2.96       40.01           39.98
+                             GPT-2       93.75       640.56       0.11     730.36       1.16       30.81        0.03            0.04
+                           Qwen2.5       28.02      1891.82       0.03     245.61       0.77       24.67        0.01            0.01
+            SITR            Llama 3      35.51      1151.72      0.03      129.53       0.65       20.86        0.01            0.01
+                           DeepSeek      59.77      1774.04       0.03     424.71       0.97       29.52        0.01            0.01
+                           SmolLm2       22.77       187.50      0.33      162.29       0.03       10.27        0.01            0.01
+                             Phi-2       18.07       261.24      0.40      182.69      0.03        11.94        0.01            0.01
+
+
+                                   TABLE VII: Capacity and efficiency comparison on Llama 3 (Top-p).
+                                                                Meteor [13]           Discop [14]
+               Metrics         p      ADG [12]    iMEC [15]                                            SparSamp [19]   ANStega
+                                                               base  reorder        base   huffman
+                              0.80      0.64        0.85       0.66     0.73        0.72      1.01          0.90           1.20
+                  ER
+                              0.95      1.14        1.35       1.22     1.42        0.95      1.69          1.77           1.93
+             (bits/token)
+                              1.00      1.63        0.70       1.62     1.67        1.06      2.19          2.37           2.56
+                              0.80      0.52        0.86       0.55     0.61        0.58      0.85          0.99           1.00
+                  UR          0.95      0.60        0.79       0.64     0.73        0.48      0.87          0.99           1.01
+                              1.00      0.63        0.73       0.66     0.72        0.42      0.90          0.97           1.00
+                              0.80      21.45       26.31      22.00    23.47       23.90    34.53         30.17           43.98
+                 ES
+                              0.95      37.51       39.42      40.37    33.18       31.36    55.00         59.20           64.21
+               (bits/s)
+                              1.00       1.61        0.02      57.10     0.41       22.35     3.31         84.28           94.67
+                              0.80      33.43       31.10      33.09    32.16       33.07    34.15         33.21           33.92
+                 GS
+                              0.95      32.95       29.19      33.06    23.32       32.94    32.62         33.29           33.31
+              (tokens/s)
+                              1.00       0.98        0.03      35.16     0.25       21.02     1.51         35.53           36.91
+                              0.80       0.01        0.08      0.02     0.05        0.02      0.01          0.01           0.01
+                SITR          0.95       0.02        0.15      0.02     0.46        0.02      0.02          0.01           0.01
+                              1.00      35.51      1151.72     0.03    129.53       0.65     20.86          0.01           0.01
+
+
+
+
+Fig. 5: Representative 256×256 stego-faces synthesized by a DDPM equipped with ANStega. Despite their natural appearance,
+each image conceals roughly 463 kbits of payload.
+
+
+
+                                                                       13
+    TABLE VIII: Steganalysis accuracy against ANStega.                                 [5] L. A. Bauer, J. K. Howes, S. A. Markelon, V. Bindschaedler, and
+                                                                                           T. Shrimpton, “Leveraging generative models for covert messaging:
+                                                                                           Challenges and tradeoffs for ”dead-drop” deployments,” in Proceedings
+              FCN        CNN        R-BiLSTM-C          BiLSTM-Dense
+                                                                                           of the Fourteenth ACM Conference on Data and Application Security
+     Acc     49.92%     50.28%          49.35%               50.15%                        and Privacy, ser. CODASPY ’24. New York, NY, USA: Association
+                                                                                           for Computing Machinery, 2024, p. 67–78. [Online]. Available:
+                                                                                           https://doi.org/10.1145/3626232.3653264
+                                                                                       [6] Z.-L. Yang, X.-Q. Guo, Z.-M. Chen, Y.-F. Huang, and Y.-J. Zhang, “Rnn-
+         TABLE IX: Context and generation examples.                                        stega: Linguistic steganography based on recurrent neural networks,”
+                                                                                           IEEE Transactions on Information Forensics and Security, vol. 14, no. 5,
+ Context                         ANStega Generation                                        pp. 1280–1295, 2019.
+ Beneath the quiet sky,          Yet, in the stillness of the night, what lies         [7] F. Dai and Z. Cai, “Towards near-imperceptible steganographic text,”
+ dreams wander like              hidden, unseen by mortal eyes, is a dance                 in Proceedings of the 57th Annual Meeting of the Association for
+ fireflies, glowing softly       of shadows, an art of darkness, an eternal                Computational Linguistics, A. Korhonen, D. Traum, and L. Màrquez,
+ in the silence of hope.         sway of the pierced heart.                                Eds. Florence, Italy: Association for Computational Linguistics, Jul.
+ Even the darkest night          Every experience, no matter how                           2019, pp. 4303–4308. [Online]. Available: https://aclanthology.org/
+ cannot extinguish a heart       difficult, is an opportunity to learn, grow,              P19-1422/
+ that burns with purpose.        and rise above the challenges that we                 [8] T. Van Le and K. Kurosawa, “Bandwidth optimal steganography secure
+                                 face. Courage and perseverance can help                   against adaptive chosen stegotext attacks,” in Information Hiding, J. L.
+                                 us overcome the impossible and lead us                    Camenisch, C. S. Collberg, N. F. Johnson, and P. Sallee, Eds. Berlin,
+                                 to new heights of success and fulfillment.                Heidelberg: Springer Berlin Heidelberg, 2007, pp. 297–313.
+ Titanic is not just a           James Cameron’s sweeping epic is a                    [9] K. Yang, K. Chen, W. Zhang, and N. Yu, “Provably secure generative
+ love story set against          masterclass in filmmaking, a testament to                 steganography based on autoregressive model,” in International
+ tragedy—it’s a cinematic        the power of storytelling, and a reminder                 Workshop on Digital Watermarking, 2018. [Online]. Available:
+ elegy to fleeting beauty,       that even the most epic of tragedies                      https://api.semanticscholar.org/CorpusID:59524394
+ human hubris, and the           can be told with a disparate array of                [10] K. Chen, H. Zhou, H. Zhao, D. Chen, W. Zhang, and N. Yu,
+ moments that define a           miniatures, models, and digital wizardry.                 “When provably secure steganography meets generative models,” 2019.
+ lifetime.                                                                                 [Online]. Available: https://arxiv.org/abs/1811.03732v2
+                                                                                      [11] Z. Ziegler, Y. Deng, and A. M. Rush, “Neural linguistic steganography,”
+                                                                                           in Proceedings of the 2019 Conference on Empirical Methods in Natural
+                                                                                           Language Processing and the 9th International Joint Conference on
+                                                                                           Natural Language Processing (EMNLP-IJCNLP), 2019, pp. 1210–1215.
+successfully balances the three competing goals. Our exten-                           [12] S. Zhang, Z. Yang, J. Yang, and Y. Huang, “Provably secure
+sive theoretical analysis and empirical evaluation demonstrate                             generative linguistic steganography,” in Findings of the Association
+that ANStega is the first method to simultaneously achieve                                 for Computational Linguistics: ACL-IJCNLP 2021, C. Zong, F. Xia,
+                                                                                           W. Li, and R. Navigli, Eds. Online: Association for Computational
+the following three objectives: (1) near-optimal embedding                                 Linguistics, Aug. 2021, pp. 3046–3055. [Online]. Available: https:
+capacity, (2) constant-time O(1) computational efficiency, and                             //aclanthology.org/2021.findings-acl.268
+(3) provable security. Beyond raw metrics, ANStega preserves                          [13] G. Kaptchuk, T. M. Jois, M. Green, and A. D. Rubin, “Meteor:
+                                                                                           Cryptographically secure steganography for realistic distributions,”
+the stylistic fidelity of natural text and yields visually coherent                        Proceedings of the 2021 ACM SIGSAC Conference on Computer
+diffusion images, demonstrating its applicability across modal-                            and Communications Security, 2021. [Online]. Available: https:
+ities. These results position ANStega provides both a practical,                           //api.semanticscholar.org/CorpusID:235309313
+                                                                                      [14] J. Ding, K. Chen, Y. Wang, N. Zhao, W. Zhang, and N. H.
+high-performance tool for secure communication and a new,                                  Yu, “Discop: Provably secure steganography in practice based
+powerful paradigm for steganographic research. We hope that                                on ”distribution copies”,” 2023 IEEE Symposium on Security
+our work will provide valuable insights for the next generation                            and Privacy (SP), pp. 2238–2255, 2023. [Online]. Available:
+                                                                                           https://api.semanticscholar.org/CorpusID:260002610
+of secure, efficient, and high-capacity covert communication                          [15] C. S. de Witt, S. Sokota, J. Z. Kolter, J. N. Foerster, and
+systems.                                                                                   M. Strohmeier, “Perfectly secure steganography using minimum
+                                                                                           entropy coupling,” in The Eleventh International Conference on
+                                                                                           Learning Representations, 2023. [Online]. Available: https://openreview.
+                         ACKNOWLEDGMENT                                                    net/forum?id=HQ67mj5rJdR
+                                                                                      [16] Y. Liu, C. Xu, F. Yang, P. Zhang, and L. Wang, “Linguistic
+                                                                                           steganography via self-adjusting asymmetric number system,”
+  The authors thank the reviewers for their valuable com-                                  Computational Linguistics, pp. 1–35, 09 2025. [Online]. Available:
+ments. This work was supported in part by the Natural Science                              https://doi.org/10.1162/coli.a.22
+Foundation of China under Grant 62302146, 62472398, and                               [17] G. Liao, J. Yang, W. Shao, and Y. Huang, A framework for designing
+U2336206.                                                                                  provably secure steganography. USA: USENIX Association, 2025.
+                                                                                      [18] M. Bai, K. Pang, G. Liao, J. Yang, and Y. Huang, “Shimmer: a
+                                                                                           provably secure steganography based on entropy collecting mechanism,”
+                                                                                           in Proceedings of the 34th USENIX Conference on Security Symposium,
+                             R EFERENCES                                                   ser. SEC ’25. USA: USENIX Association, 2025.
+                                                                                      [19] Y. Wang, G. Pei, K. Chen, J. Ding, C. Pan, W. Pang, D. Hu, and
+ [1] U. S. Congress, “Kids online safety act,” https://www.congress.gov/bill/              W. Zhang, “SparSamp: Efficient provably secure steganography based
+     118th-congress/house-bill/7891, April 2024.                                           on sparse sampling,” in 34th USENIX Security Symposium (USENIX
+ [2] U. K. Parliament, “Online safety act 2023,” https://bills.parliament.uk/              Security ’25). USENIX Association, Aug. 2025.
+     bills/3137, 2023.                                                                [20] T. M. Jois, G. Beck, and G. Kaptchuk, “Pulsar: Secure steganography
+ [3] D. Cole, “We kill people based on metadata,” https://www.nybooks.com/                 for diffusion models,” in Proceedings of the 2024 on ACM SIGSAC
+     online/2014/05/10/we-kill-people-based-metadata/, May 2014.                           Conference on Computer and Communications Security, ser. CCS ’24.
+ [4] G. J. Simmons, “The prisoners’ problem and the subliminal channel,” in                New York, NY, USA: Association for Computing Machinery, 2024,
+     Annual International Cryptology Conference, 1983. [Online]. Available:                p. 4703–4717. [Online]. Available: https://doi.org/10.1145/3658644.
+     https://api.semanticscholar.org/CorpusID:2674577                                      3690218
+
+
+
+
+                                                                                 14
+[21] Y. Peng, D. Hu, Y. Wang, K. Chen, G. Pei, and W. Zhang,                         [48] Z. Yang, Y. Huang, and Y.-J. Zhang, “A fast and efficient text steganaly-
+     “Stegaddpm: Generative image steganography based on denoising                        sis method,” IEEE Signal Processing Letters, vol. 26, no. 4, pp. 627–631,
+     diffusion probabilistic model,” in Proceedings of the 31st ACM                       2019.
+     International Conference on Multimedia, ser. MM ’23. New York,                  [49] ——, “Ts-csw: text steganalysis and hidden capacity estimation
+     NY, USA: Association for Computing Machinery, 2023, p. 7143–7151.                    based on convolutional sliding windows,” Multimedia Tools Appl.,
+     [Online]. Available: https://doi.org/10.1145/3581783.3612514                         vol. 79, no. 25–26, p. 18293–18316, Jul. 2020. [Online]. Available:
+[22] A. D. Ker, “Improved detection of lsb steganography in grayscale                     https://doi.org/10.1007/s11042-020-08716-w
+     images,” in International workshop on information hiding. Springer,             [50] Y. Niu, J. Wen, P. Zhong, and Y. Xue, “A hybrid r-bilstm-c neural net-
+     2004, pp. 97–115.                                                                    work based text steganalysis,” IEEE Signal Processing Letters, vol. 26,
+[23] M. Boroumand, M. Chen, and J. Fridrich, “Deep residual network                       no. 12, pp. 1907–1911, 2019.
+     for steganalysis of digital images,” IEEE Transactions on Information           [51] H. Yang, Y. Bao, Z. Yang, S. Liu, Y. Huang, and S. Jiao,
+     Forensics and Security, vol. 14, no. 5, pp. 1181–1193, 2019.                         “Linguistic steganalysis via densely connected lstm with feature
+[24] R. Anderson and F. Petitcolas, “On the limits of steganography,” IEEE                pyramid,” Proceedings of the 2020 ACM Workshop on Information
+     Journal on Selected Areas in Communications, vol. 16, no. 4, pp. 474–                Hiding and Multimedia Security, 2020. [Online]. Available: https:
+     481, 1998.                                                                           //api.semanticscholar.org/CorpusID:219980226
+[25] J. Duda, “Asymmetric numeral systems,” 2009. [Online]. Available:               [52] J. Choi, S. Kim, Y. Jeong, Y. Gwon, and S. Yoon, “Ilvr: Conditioning
+     https://arxiv.org/abs/0902.0271                                                      method for denoising diffusion probabilistic models,” in 2021 IEEE/CVF
+[26] https://github.com/facebook/zstd.                                                    International Conference on Computer Vision (ICCV), 2021, pp. 14 347–
+[27] https://github.com/lzfse/lzfse.                                                      14 356.
+[28] https://github.com/google/pik.                                                  [53] M. Bai, J. Yang, K. Pang, X. Xu, Z. Yang, and Y. Huang, “Provably
+[29] D. E. Gladding, S. Gopalakrishnan, S. D. Kumbhani, and L. Hsu-Kuei,                  robust and secure steganography in asymmetric resource scenario,” in
+     “Features of range asymmetric number system encoding and decoding,”                  2025 IEEE Symposium on Security and Privacy (SP), 2025, pp. 1438–
+     Jan. 25 2022, uS Patent 11,234,023.                                                  1456.
+[30] G. J. Simmons, “The prisoners’ problem and the subliminal channel,”
+     in Advances in Cryptology: Proceedings of Crypto 83. Springer, 1984,                               A PPENDIX A
+     pp. 51–67.                                                                      N ORMALIZATION M ECHANISM OF THE S TREAMING R ANS
+[31] N. J. Hopper, J. Langford, and L. von Ahn, “Provably secure steganog-
+     raphy,” in Advances in Cryptology — CRYPTO 2002, M. Yung, Ed.                                       E NCODER
+     Berlin, Heidelberg: Springer Berlin Heidelberg, 2002, pp. 77–92.
+                                                                                     A. Derivation of the Normalization Condition
+[32] T. Fang, M. Jaggi, and K. Argyraki, “Generating steganographic text
+     with lstms,” in Proceedings of ACL 2017, Student Research Workshop,                A fundamental requirement of the rANS encoder is that after
+     2017, pp. 100–106.
+[33] Z.-L. Yang, X.-Q. Guo, Z.-M. Chen, Y.-F. Huang, and Y.-J. Zhang, “Rnn-
+                                                                                     encoding any symbol s, the new state C(s, x) must remain
+     stega: Linguistic steganography based on recurrent neural networks,”            within the normalization interval I. This can be expressed as:
+     IEEE Transactions on Information Forensics and Security, vol. 14, no. 5,        L ≤ C(s, x) < 2L. To avoid a computationally expensive
+     pp. 1280–1295, 2019.
+[34] G. Kaptchuk, T. M. Jois, M. Green, and A. D. Rubin, “Meteor:
+                                                                                     trial-and-error loop to enforce this condition, we derive an
+     Cryptographically secure steganography for realistic distributions,” in         equivalent but far simpler direct condition on x. The derivation
+     Proceedings of the 2021 ACM SIGSAC Conference on Computer and                   proceeds as follows. First, we substitute the definitions of
+     Communications Security, 2021, pp. 1529–1548.
+                                                                                     C(s, x) and L = α × M into inequality (1):
+[35] S. Zhang, Z. Yang, J. Yang, and Y. Huang, “Provably secure generative
+     linguistic steganography,” in Findings of the Association for Computa-                          
+                                                                                                      x
+     tional Linguistics: ACL-IJCNLP 2021, 2021, pp. 3046–3055.                           α×M ≤            + Cs + (x mod fs ) < 2 × α × M (17)
+[36] J. Duda, “Asymmetric numeral systems: entropy coding combining                                  fs
+     speed of huffman coding with compression rate of arithmetic coding,”
+     arXiv preprint arXiv:1311.2540, 2013.                                           Dividing all parts of the inequality by M yields:
+[37] Y. Collet and M. Kucherawy, “Zstandard Compression and the                                      
+     application/zstd Media Type,” RFC 8478, Oct. 2018. [Online].                                     x
+     Available: https://www.rfc-editor.org/info/rfc8478
+                                                                                              α≤          + [Cs + (x mod fs )]/M < 2α                        (18)
+                                                                                                      fs
+[38] J. Sneyers, J. Alakuijala, L. Versari, Z. Szabadka, S. Boukortt,
+     A. Cohen-Tidhar, M. Firsching, E. Kliuchnikov, T. Lev-Ami, E. Portis,              Let us analyze the fractional term [Cs + (x mod fs )]/M .
+     T. Richter, and O. Watanabe, “The jpeg xl image coding system:
+     History, features, coding tools, design rationale, and future,” 2025.           By definition, Cs + fs ≤ M . Since 0 ≤ (x mod fs ) < fs , it
+     [Online]. Available: https://arxiv.org/abs/2506.05987                           follows that 0 ≤ Cs +(x mod fs ) < Cs +fs ≤ M . Therefore,
+[39] T. Cover and J. Thomas, Elements of information theory.         Wiley-          the value of the fractional term is bounded within the range
+     Interscience, 2006.
+[40] https://huggingface.co/openai-community/gpt2.
+                                                                                     [0, 1).
+[41] https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct.
+[42] https://huggingface.co/Qwen/Qwen2.5-3B-Instruct.                                                  0 ≤ [Cs + (x mod fs )] /M < 1                         (19)
+[43] https://huggingface.co/HuggingFaceTB/SmolLM2-135M.
+[44] https://huggingface.co/microsoft/phi-2.                                            Given that ⌊x/fs ⌋ is an integer and the fractional term is in
+[45] https://ai.stanford.edu/∼amaas/data/sentiment/.
+[46] A. Holtzman, J. Buys, M. Forbes, A. Bosselut, D. Golub, and                     [0, 1), the inequality18 can be simplified by considering only
+     Y. Choi, “Learning to write with cooperative discriminators,” in                the integer parts:
+     Proceedings of the 56th Annual Meeting of the Association for
+     Computational Linguistics (Volume 1: Long Papers), I. Gurevych and
+                                                                                                                   
+                                                                                                                    x
+     Y. Miyao, Eds. Melbourne, Australia: Association for Computational                                      α≤          < 2α                    (20)
+     Linguistics, Jul. 2018, pp. 1638–1649. [Online]. Available: https:                                             fs
+     //aclanthology.org/P18-1152
+[47] A. Holtzman, J. Buys, L. Du, M. Forbes, and Y. Choi, “The curious               Based on the properties of the floor function, inequality (5) is
+     case of neural text degeneration,” in International Conference                  equivalent to:
+     on Learning Representations, 2020. [Online]. Available: https:                                               x
+     //openreview.net/forum?id=rygGQyrFvH                                                                    α≤       < 2α                      (21)
+                                                                                                                  fs
+
+
+                                                                                15
+Finally, multiplying all parts by fs gives the direct constraint        B. Artifact Installation & Configuration
+on the state x:                                                           [Estimated time: 10-15 minutes, plus model download time]
+                       αfs ≤ x < 2αfs                       (22)          1) Unzip the artifact:
+                        A PPENDIX B                                          unzip anstega_artifact.zip
+                    A RTIFACT A PPENDIX                                      cd anstega_artifact
+                                                                          2) Create a Python virtual environment:
+   This appendix provides a self-contained guide for evaluating
+                                                                             python3 -m venv venv
+the artifact for this paper.
+                                                                             source venv/bin/activate
+A. Description & Requirements                                             3) Install dependencies: Install all required Python pack-
+                                                                             ages using the provided requirements.txt file.
+  This section details the necessary components to set up the
+                                                                             pip install -r requirements.txt
+experimental environment and run the artifact.
+                                                                          4) Model Preparation:
+  1) How to access: The artifact is provided as a supple-
+mentary .zip file. A permanent, archived version is publicly                   • Option       1     (Quick     Test):     No    action
+accessible via the Zenodo repository at https://doi.org/10.5281/                 needed. The scripts run_single.py and
+zenodo.17943483.                                                                 run_batch.py will default to loading
+  2) Hardware dependencies:                                                      openai-community/gpt2 from Hugging
+                                                                                 Face if the specified model_name path is not
+  • CPU: A modern multi-core CPU (e.g., Intel Xeon Gold
+                                                                                 found.
+    6330, as used in the paper).
+                                                                               • Option 2 (Full Reproduction): To reproduce re-
+  • GPU: An NVIDIA GPU with sufficient VRAM is re-
+                                                                                 sults for other models (e.g., Llama 3), manually
+    quired for running the language models. An NVIDIA
+                                                                                 download the model from Hugging Face and save
+    RTX 4090 (24GB) was used for the paper’s experiments.
+                                                                                 it to a local directory. You will then need to update
+    A GPU with at least 16GB of VRAM is recommended
+                                                                                 the model_name variable in run_single.py or
+    for the larger models (Llama 3 8B). The gpt2 model can
+                                                                                 run_batch.py to point to this local path (e.g.,
+    be run on smaller-VRAM GPUs.
+                                                                                 model_name = ’./LLaMA3_8B/’).
+  3) Software dependencies:
+                                                                        C. Experiment Workflow
+  • Python ≥ 3.10
+  • PyTorch   (CUDA 11.8 version is specified                 in          The evaluation workflow is straightforward:
+    requirements.txt)                                                     1) Installation: Set up the environment and dependencies
+  • All  other Python dependencies are listed                 in             as described in Section B.
+    requirements.txt.                                                     2) Functional Test: Run run_single.py to perform a
+  4) Benchmarks:                                                             single encoding and decoding pass. This verifies that the
+                                                                             core ANStega algorithm is working correctly.
+  • Models: The artifact is designed to work with Hugging
+                                                                          3) Performance Evaluation: Run run_batch.py to
+    Face-compatible causal language models. The paper eval-
+                                                                             execute the algorithm over 100 different contexts. This
+    uates:
+                                                                             script computes and reports the average performance
+      – GPT-2 (openai-community/gpt2)                                        metrics (ER, UR, ES, GS, SITR) that directly correspond
+      – Llama 3 8B (meta-llama/Meta-Llama-3-8B                               to the results presented in the paper.
+         -Instruct)
+      – Qwen2.5 3B (Qwen/Qwen2.5-3B-Instruct)                           D. Major Claims
+      – DeepSeek-R1-Distilled-Qwen                         1.5B           This artifact supports the following major claims from the
+         (deepseek-ai/DeepSeek-R1-Distill                               paper:
+         -Qwen-1.5B)
+                                                                          • (C1) Optimal Capacity: ANStega achieves near-optimal
+      – SmolLm2 (HuggingFaceTB/SmolLM2-135M)
+                                                                            embedding capacity, approaching the Shannon entropy
+      – Phi-2 (microsoft/phi-2)
+                                                                            limit (Utilization Rate, UR ≈ 1.0) and outperforming
+    The scripts will automatically download gpt2 if no local                prior secure methods. This is proven by experiment (E2)
+    path is provided. Other models must be downloaded by                    and corresponds to the ’ER’ (bits/token) and ’UR’ metrics
+    the user from Hugging Face.                                             in Tables V and VI.
+  • Datasets:                                                             • (C2) Optimal Efficiency: ANStega has O(1) embedding
+      – imdb_context.xlsx: (Provided) Contains 1,000                        complexity, resulting in high Embedding Speed (ES),
+         contexts from the IMDB movie review dataset. The                   Generation Speed (GS), and a minimal Sampling-to-
+         batch script uses the first 100 entries for evaluation.            Inference Time Ratio (SITR) that is competitive with
+      – message.txt: (Provided) A binary string used as                     AC-based methods and vastly superior to other provably
+         the secret message payload.                                        secure methods. This is proven by experiment (E2) and
+
+
+
+                                                                   16
+     corresponds to the ’ES’, ’GS’, and ’SITR’ metrics in                   to the metrics for Claims C1 and C2. The evaluator
+     Tables IV, V, and VI.                                                  can compare these generated values directly with the
+                                                                            rows for ANStega in Tables IV, V, and VI of the paper
+E. Evaluation
+                                                                            (for the corresponding model). Note: Exact speed metrics
+   This section provides the operational steps to validate the              (ES, GS) will vary based on hardware, but the ER and
+artifact and reproduce the paper’s key results.                             UR values should be very close to the paper’s reported
+   Experiment (E1): Functional & Correctness Test: [∼5                      results.
+human-minutes + <5 compute-minutes]
+   This experiment validates the correctness of the ANStega             F. Customization
+implementation by encoding a message and verifying that it                The experiments can be customized by modifying
+can be perfectly decoded.                                               the parameters at the top of run_single.py and
+   • [Preparation]                                                      run_batch.py.
+        1) Ensure the environment is set up (Section B).                  • model_name: Path to the local Hugging Face model
+        2) No other preparation is needed. The script                       directory.
+            run_single.py is configured to use gpt2 by                    • seed: Random seed for reproducibility.
+            default if no other model is found.                           • precision: ANS precision parameter.
+
+   • [Execution] Run the single test script:                              • ans_t: ANS scale factor (referred to as α in the paper,
+
+      python run_single.py                                                  Table II).
+                                                                          • top_p: Nucleus sampling (top-p) value.
+   • [Results] The script will:
+                                                                          • token_num: Number of tokens to generate.
+        1) Print its configuration (token num, precision, etc.).
+        2) Print the auto-selected device (e.g., cuda).
+        3) Print the generated stego text.
+        4) Print a result_dict with the performance met-
+            rics (ER, UR, ES, GS, SITR) for this single run.
+        5) Crucially, it will end by printing:
+            success!
+      This     ”success!”     message      confirms that    the
+      outbits_list from decoding perfectly matched
+      the encoded_message from encoding.
+   Experiment (E2): Performance & Capacity Evaluation
+(Batch): [∼5 human-minutes + 30-90 compute-minutes, de-
+pending on GPU/model]
+   This experiment reproduces the core performance metrics
+(ER, UR, ES, GS, SITR) presented in Tables IV, V, and VI
+by running a batch evaluation over 100 contexts.
+   • [Preparation]
+        1) Ensure the environment is set up (Section B).
+        2) Ensure       the     imdb_context.xlsx           and
+            message.txt files are in the same directory.
+        3) (Optional but recommended) To reproduce the pa-
+            per’s main results for larger models, download
+            the Qwen2.5-3B-Instruct model (or other mod-
+            els like Qwen) from Hugging Face... and edit
+            run_batch.py. Change the model name vari-
+            able to point to its local path:
+            model_name = ’/path/to/your/model/’
+   • [Execution] Run the batch test script:
+      python run_batch.py
+      A tqdm progress bar will show the progress as it iterates
+      through the 100 contexts.
+   • [Results] After the batch run is complete, the script
+      will print a final result_dict containing the average
+      metrics over all 100 runs. Example (values will vary
+      based on hardware and model): These values correspond
+
+
+
+                                                                   17
+

@@ -1,0 +1,1067 @@
+   Provable Secure Steganography Based
+      on Adaptive Dynamic Sampling
+          Kaiyi Pang and Minhao Bai, Tsinghua University
+https://www.usenix.org/conference/usenixsecurity26/presentation/pang-kaiyi
+
+
+
+
+  This paper is included in the Proceedings of the
+         35th USENIX Security Symposium.
+             August 12–14, 2026 • Baltimore, MD, USA
+                         ISBN 978-1-939133-58-8
+
+
+                  Open access to the Proceedings of the
+                    35th USENIX Security Symposium
+                            is sponsored by
+          Provable Secure Steganography Based on Adaptive Dynamic Sampling
+
+                                                        Kaiyi Pang∗ , Minhao Bai∗
+                                                           Tsinghua University
+
+
+
+
+                              Abstract                                 generation-based. With the rapid advancement of generative
+The security of private communication is increasingly at risk          models capable of approximating target data distributions
+due to widespread surveillance. Steganography, a technique             and synthesizing realistic carriers (e.g., ChatGPT generating
+for embedding secret messages within innocuous carriers, en-           human-like text or Diffusion models creating high-quality
+ables covert communication over monitored channels. Prov-              images), generative steganography has become a popular ap-
+ably Secure Steganography (PSS), which ensures computa-                proach [3, 4, 9]. It eliminates the need for pre-existing cover
+tional indistinguishability between the normal model output            carriers and significantly boosts capacity by leveraging the ex-
+and steganography output, is the state-of-the-art in this field.       plicit distributions produced by the generative models. Many
+However, current PSS methods often require obtaining the               researchers have developed advanced steganography tech-
+explicit distributions of the model. In this paper, we propose         niques for mapping the distributions produced by language
+a provably secure steganography scheme that only requires a            models to secret messages, such as Bins [10], Arithmetic
+model API that accepts a seed as input. Our core mechanism             Coding (AC) [11], Huffman Coding (HC) [9], and Adaptive
+involves sampling a candidate set of tokens and construct-             Dynamic Grouping (ADG) [12], enabling the generation of
+ing a map from possible message bit strings to these tokens.           fluent stegotext with high capacity. However, these heuristic
+The output token is selected by applying this mapping to the           methods often alter the original generative model’s distribu-
+real secret message, which provably preserves the original             tion, introducing security risks. Well-designed steganalysis
+model’s distribution. To ensure correct decoding, we address           classifiers [13, 14] can exploit this feature, gaining a notice-
+collision cases, where multiple candidate messages map to              able advantage in distinguishing between cover and stego
+the same token, by maintaining and strategically expanding a           distributions.
+dynamic collision set within a bounded size range. Extensive              Researchers have begun exploring provably secure
+evaluations of three real-world datasets and three large lan-          steganography since 2 decades ago [15, 16]. In 1998, Cachin
+guage models demonstrate that our sampling-based method                [15] modeled steganography systems from an information-
+is comparable with existing PSS methods in efficiency and              theoretic perspective, using Kullback–Leibler (KL) diver-
+capacity.                                                              gence between cover and stego distributions to evaluate secu-
+                                                                       rity. From a computational complexity perspective, Hooper
+                                                                       [16] laid the groundwork for provably secure steganogra-
+1    Introduction                                                      phy. A stegosystem is considered secure if any probabilistic
+                                                                       polynomial-time distinguisher cannot effectively differentiate
+Steganography is a technique for embedding and transmitting            between the distributions of stego and cover.
+private messages within seemingly innocuous carriers, such                Recent advancements in generative models have enabled
+as images or text, over monitored channels [1–4]. Its primary          the simulation and generation of realistic carrier distributions,
+goal is to conceal not only the content of secret messages             driving the practical application of provably secure steganog-
+but also the fact that secret communication is taking place. A         raphy. For textual carriers, current Large Language Models
+normal carrier is referred to as a cover, while a carrier that         (LLMs) can produce a precise distribution over the next to-
+contains hidden information but still appears normal is called         ken. State-of-the-art methods like METEOR [3], DISCOP [4],
+a stego.                                                               iMEC [17], and SparSamp [18], generate secure stegos by
+   Steganography methods can be roughly categorized                    manipulating the sampling process based on the model distri-
+into modification-based [5, 6], retrieval-based [7, 8], and            butions and the secret messages.
+    ∗ These authors contributed equally to this work.                     However, current provably secure methods depend entirely
+
+
+
+USENIX Association                                                                        35th USENIX Security Symposium          3143
+on the explicit distributions provided by generative models.                 Method            Mode       Complexity        Correct?
+In real-world scenarios, Many high-quality generative models
+do not expose their output distributions, for example, because             METEOR [3]         Stream        O(|V |)          100%
+providers want to protect intellectual property and prevent               METEOR(R.) [3]      Stream     O(2|H(P )| |V |)    100%
+model distillation. Instead, they only provide the output sam-              DISCOP [4]        Stream        O(|V |)          100%
+ples (such as texts). This lack of access to model distributions          DISCOP(R.) [4]      Stream     O(|V |log|V |)      100%
+makes it impossible to apply these provably secure meth-                     iMEC [17]        Block       O(2B |V |)        Unstable
+ods [3, 4, 18] in scenarios where the model’s distribution is              SparSamp [18]      Block         O(2B )           100%
+unknown.                                                                       Ours           Stream        O(2N )           100%
+   In this paper, we propose a provably secure steganog-
+raphy method that does not rely on explicit model distri-             Table 1: Comparison of provable secure steganography
+butions, in contrast to existing PSS methods that require             schemes, where the (R.) represents the reordered version. |V |
+them [3, 4, 18–20]. Our approach operates effectively using           represents the size of model vocabulary, typically between
+a model API that accepts a seed as input and outputs only             217 ∼ 219 for LLM. H(P ) represents the entropy of the model
+tokens. Building upon the METEOR scheme [3], we adapt                 distribution, typically between 0.91 ∼ 1.05 for model M IS -
+its principles to the setting of API-only access. As METEOR           TRAL . B represents the size of a block, which can vary be-
+encodes secret bits by converting them into a decimal value           tween 8 ∼ 64. 2N is the maximum number of samples in our
+to perform inverse transform sampling, it becomes infeasible          scheme. 2N can vary from 22 ∼ 215 .
+in API-only scenarios due to the absence of distribution. Our
+method overcomes this limitation, enabling secure steganog-           messages can allow higher throughput.
+raphy under practical constraints.                                      The main contributions of this paper are as follows:
+   Our approach is based on two insights. First, by sampling
+multiple candidate tokens from the model API and selecting                • We propose a provably secure steganography scheme
+one uniformly, the output distribution should be the same                   based on making queries to an appropriate model API
+as the model’s prediction. This allows constructing a map-                  with seed support and provide a formal security proof.
+ping F from all possible N-bit strings to sampled tokens, and
+choosing the token by applying the mapping F to the secret                • We propose a sampling strategy that maintains a list of
+message. Second, collisions, where different message strings                possible candidate secret messages at any intermediate
+are mapped to the same token, do not hinder embedding but                   step, as long as the number of candidates does not exceed
+complicate decoding. Instead of avoiding collisions as ME-                  a certain limit. The number of samples in each step
+TEOR, we maintain a list of all colliding strings (including                dynamically varies in response to the current number
+the true secret message). In subsequent steps, it is feasible               of candidate messages and can allow higher throughput.
+to sample as many candidates as there are elements in the                 • Extensive experiments show that our scheme is both
+collision set, which typically shrinks to size 1 after a few steps.         effective and efficient. Without access to the explicit
+To prevent capacity loss from prolonged small collision set                 model’s distribution, our method achieves comparable
+sizes, we dynamically expand the list by appending ‘0‘ and                  or even superior embedding capacity to methods that
+‘1‘ to each element, doubling its size until a predefined limit             require explicit distribution.
+(e.g., 2n ) is reached. This bounds the size of the collision set
+between 2n−1 and 2n , ensuring sufficient samples for high
+capacity. At the end of the text, we extract the shared prefix        2     Related Work
+of the colliding strings, minimizing the negative impact of
+frequently doing prefix extraction which reduces capacity.            2.1    Definition of Security
+   Basically, our steganography scheme has 3 main differ-             There are two definitions of security in steganography. Cachin
+ences from the METEOR scheme. First is that we draw sam-              [15] first modeled steganographic security by the Kullback-
+ples from a model API rather than get access to the model             Leibler Divergence (KL-Divergence) between the stegotext
+distribution. Directly applying METEOR to model APIs will             and covertext:
+require sampling for 232 or more times, which is not feasible.
+While in our scheme, we can sample for 24 or fewer times but                                                      PS (x)
+                                                                                  DKL (PS ||PC ) = ∑ PS (x) log          < ε,      (1)
+still maintain the security. Second, our scheme maintains a list                                   x              PC (x)
+of possible candidate messages during the encoding process,
+which avoids the loss of capacity introduced by frequently            where DKL (PS ||PC ) = 0 denotes perfect security.
+extracting the shared prefix. Third, the number of samples in           Different from the Cachin, another widely used steganog-
+our scheme can vary, and dynamically varying the number               raphy security is based on the complexity theory in the per-
+of samples in response to the current number of candidate             spective of chosen hiddentext attacks [16]. It requires that
+
+
+
+3144    35th USENIX Security Symposium                                                                             USENIX Association
+for all probabilistic polynomial-time (PPT) adversaries A ,         2.4    Distribution Copies
+k ← KeyGen(1λ ), the probability that A can effectively dis-
+tinguish between stego and cover is negligible:                     Ding et al. [4] proposed a provably secure steganography
+                                                                    method based on copies of the model distribution. In the sit-
+  |Pr[A Encodek (·,·) = 1] − Pr[A Model(·,·) = 1]| < negl(λ), (2)   uation that the random numbers r ∈ [0, 1) and r + 21 mod 1
+                                                                    point to different tokens in the copies, these 2 special to-
+where Model denotes the generative model, Encode repre-             kens can be chosen according to the secret bit 0 or 1. If
+sents the steganography encoding algorithm, and negl(λ) is a        the random numbers r, r + 21n mod 1, r + 22n mod 1, ... ,
+                                                                         n
+negligible function.                                                r + 2 2−1
+                                                                           n    mod 1 point to different tokens, the embedding ca-
+                                                                    pacity is n bits. Since repeated copies of the distribution can
+                                                                    exhibit substantial overlap, the embedding rate is severely
+2.2    Entropy Coding Based Steganography                           constrained and becomes asymptotically limited by the mini-
+Baron et al. [21] were the first to introduce the duality between   mum entropy. To further increase capacity, they proposed a
+information embedding and source coding. Building on this           Huffman-tree–based variant. Considering the typical case of
+connection, Ziegler et al. [11] explored the use of arithmetic      constructing a Huffman tree, the computational complexity is
+coding (AC) for steganography, while Satir et al. [22] and          O(|V | log |V |), where |V | denotes the vocabulary size of the
+Yang et al. [9] applied Huffman coding (HC). These meth-            model.
+ods leverage entropy coding to assign codewords to symbols
+based on their probabilities. As the codewords are prefix-          2.5    Minimum Entropy Coupling (MEC)
+free, secret bits can be matched to a single codeword, and the
+corresponding symbol transmitted. However, these entropy-           Minimum Entropy Coupling (MEC) is the problem that given
+coding-based steganographic schemes raise security concerns.        the marginal distribution of the random variables, comput-
+Ziegler’s construction [11] suffers from a randomness-reuse         ing the joint distribution that has the minimum entropy. The
+issue, as highlighted by Kaptchuk [3]. HC-based approaches          core of this problem is to find how relevant it is likely to be
+suffer from mismatched probabilities between codewords and          between these variables. More details can be found in the
+symbols, as symbol probabilities are not always negative in-        excellent work of Cicalese et al. [23]. De Witt et al. [17] first
+tegral powers of 2. This causes the generated stego to be           explore using MEC to construct secure and efficient steganog-
+more detectable. Despite these limitations, entropy coding          raphy. They try to compute MEC matrix between the uniform
+represents the theoretical upper limit for channel entropy uti-     distributed n-bit codewords and the distribution predicted by
+lization. With improved security measures, the focus will shift     language models. Then they choose the n-bit prefix of secret
+towards maximizing the steganographic embedding rate, with          messages as the chosen codeword, and randomly sample a
+entropy coding offering valuable insights for future research.      token from the marginal distribution of this codeword. Usu-
+                                                                    ally, the n-bit codewords cannot be embedded in one loop;
+                                                                    this process will be repeated several times until the bits can
+2.3    METEOR                                                       be uniquely decoded. However, computing the minimum en-
+Kaptchuk et al. [3] proposed METEOR, a secure steganogra-           tropy coupling is an NP-hard problem. Many efforts have
+phy that re-encrypts the embedded bits step by step. This work      been made to design a poly-time algorithm to asymptoti-
+points out that previous methods [9, 11] have the problem of        cally approach the MEC [23–26]. MEC-based steganography
+randomness reuse, which will cause the leakage of hidden            has 2 weaknesses: (i) up to now, the best MEC algorithm is
+information. METEOR collects several tokens until the en-           only able to compute a joint distribution whose entropy is
+tropy is enough for embedding, and re-encrypts the rest of the      within 1 bit of MEC, resulting in sustained loss of capacity
+bits to avoid information leakage. This method is computa-          and (ii) the complexity is at least O(nlogn) [23]. Therefore,
+tionally secure, but the entropy is not fully used. After each      the large set of codewords will make this type of steganog-
+embedding, the secret bits are re-encrypted, which effectively      raphy inefficient. Moreover, practical deployment exposes
+truncates the coding process and wastes entropy at the end          additional issues, such as decoding errors and potential dead
+of every embedding step. When the model distribution has            cycles. Since iMEC relies on probabilistic decoding, it cannot
+very low entropy (as is often the case for LLMs), there may         provide a deterministic guarantee on the decoding error rate.
+be no common prefix at all, leading to low embedding capac-         MEC-based steganography still needs more exploration.
+ity. In order to further improve the expectation of embedding
+capacity, an reorder algorithm is proposed for METEOR. The          2.6    SparSamp
+computational complexities of the original and reordered al-
+gorithms are O(|V |) and O(2|H(P )| |V |), respectively, where      Wang et al proposed SparSamp [18], a provably secure
+|V | is the model’s vocabulary size and H(P ) is the entropy of     steganographic algorithm that represents the latest advance-
+the model distribution.                                             ment in provable security within the field. Based on DIS-
+
+
+
+USENIX Association                                                                     35th USENIX Security Symposium          3145
+COP [4], the embedding capacity is improved by increas-             Definition 1 (Sampleable channel). A sampleable channel
+ing the spacing between sampling intervals and cumulating           Ck (h) −
+                                                                           → t is a keyed function that outputs a unit of covertext
+entropy, without introducing additional computational com-          t based on some history h.
+plexity. Although SparSamp is claimed to achieve O(1) com-
+plexity, we cautiously suggest that in practice, its effective         So if the sender and the receiver share a secret key, they
+complexity may still depend on the choice of block size B.          can get the same samples from the sampleable channel Ck (h).
+However, this method still requires both the sender and re-         As we use model API to get the samples, in the rest of this
+ceiver to share the same model distribution. Moreover, due          paper, we often write the channel as Modelseed (h). Here we
+to the fixed-length embedding of secret information, the ap-        formally describe the steganography scheme.
+proach does not fully exploit the entropy of the cover text,        Definition 2 (Steganography scheme). A steganography
+leaving room for further improvement in embedding capacity.         scheme ΣModel is a triple of probabilistic algorithms ΣModel =
+                                                                    (KeyGen, EncModel,k , DecModel,k ).
+3     Method                                                           • KeyGen(1λ ) is a randomized algorithm that takes an
+                                                                         arbitrary input of length λ and generates the key k shared
+Figure 1 presents the overall architecture of covert communi-
+                                                                         between the sender and receiver.
+cation. The sender and receiver share a secret key, the history,
+and a model API that accepts a seed as input. Given the secret         • EncModel,k (m, h) is a keyed randomized algorithm that
+message, the sender applies the encoding algorithm by query-             takes a secret message m ∈ {0, 1}∗ and the channel his-
+ing the model API multiple times to generate samples, and                tory h as input and outputs a stegotext s.
+then selects the sample corresponding to the secret message
+as output. The stegotext is generated autoregressively until           • DecModel,k (s, h) is a keyed randomized algorithm that
+the sentence naturally terminates. The decoding algorithm ex-            takes as input the key k, the stegotext s and the history h
+ecutes the inverse procedure, given the stegotext, it performs           and outputs the secret message m.
+the same sampling procedure over the model API to recover
+                                                                       Basically, a useful steganography scheme ΣModel should
+the secret message.
+                                                                    satisfy correctness and security.
+
+3.1     Notations                                                   Definition 3 (Correctness). We say a steganography scheme
+                                                                    ∑Model is correct if for any history h and any message m, the
+In this paper, we mainly use the following notations:               stegotext generated by EncModel,k (m, h) should be recovered
+                                                                    by the decoding algorithm only with negligible probability of
+    • Parameters. We use k to represent the private key and λ       error.
+      to denote the security parameter.
+                                                                     Pr[DecModel,k (EncModel,k (m, h), h) = m] ≥ 1 − negl(λ), (3)
+    • Sets. We use {0, 1}N to denote the set of all N-bit strings
+      and {0, 1} to denote the bit strings with finite length.      where negl(λ) is the negligible function that correlates to the
+                                                                    secure parameter λ.
+    • Adversaries. We use A to denote the adversaries. In
+      most of the paper, the adversary is often written as          Definition 4 (Security). We say a steganography scheme
+      A Oracle (1λ ). Here the superscript Oracle means that the    ΣModel is secure if given the fixed secret message m, for any
+      adversary can query the Oracle for at most polynomial         history h, for all probabilistic polynomial-time adversary A ,
+      times, and 1λ is the internal randomness of the adversary.    he cannot effectively distinguish the stegotext generated by
+                                                                    Enc and the covertext generated by Model.
+    • Algorithms. We typically write algorithm names in a
+       font. For instance, the encoding algorithm is denoted          | Pr[A EncModel,k (m,h) (1λ ) = 1] − Pr[A Model(h) (1λ ) = 1]|
+      as EncModel,k (m, h). Here, the subscripts Model and the                                                                         (4)
+                                                                                                                       ≤ negl(λ).
+      key k are hyperparameters of the algorithm, whereas the
+      message m and the history h are its input.                    Here the 1λ represents the internal randomness of adversary
+                                                                    A , and A outputs 1 if he recognizes the output of Enc or
+3.2     Prelimilary                                                 Model as stegotext.
+
+According to Hopper’s notion [16], steganography schemes
+                                                                    3.3    Intuition
+should be based on some efficiently sampleable channels. As
+we use the model API to get samples, we formally define the         We mainly follow the METEOR [3], which requires the ex-
+sampleable channel C as follows.                                    plicit model distribution for codec. Our goal is to convert the
+
+
+
+3146    35th USENIX Security Symposium                                                                           USENIX Association
+               Encoding                                                                                               Decoding
+                                                                   Model API                  Adaptive
+                                                                                              Dynamic
+                   Secret Message
+                                                                                              Sampling
+                 010010100100...
+                 (37)10                    Model API              Secret Key                         Sample
+
+                                                      Sample
+                          Adaptive
+                                                                     History                                  Recovered Bits
+                          Dynamic
+                          Sampling         36 37 38                                                            0100101...
+
+                                                                                             Model API
+
+                    Stego token:     day
+                                                                                                       Stego tokens
+                                               Send                                        Receive
+                                                               Stego text: Tomorrow
+                                                                  is another day
+
+
+
+                                           Figure 1: Overall framework of covert communication.
+
+
+METEOR scheme into a steganography scheme that can work                     token should obey the distribution of the model.
+when access is limited to a model API. In METEOR, it uses                      In some lucky cases when the secret message corresponds
+a binary mask string bm to XOR with the secret bit string bs ,              uniquely to a sampling result, we can decode the secret mes-
+the result b = bm ⊕ bs is a pseudorandom bit string. Then, the              sage at that moment. However, if the sampling result corre-
+encoding algorithm transforms the string b in to a decimal                  sponding to one possible secret message is the same as that of
+             |b|
+form b̄ = ∑i=1 bi · 2−i , where the bi is the i-th bit of b, and |b|        another possible secret message, this is known as a collision
+is the length of b. After that, the encoding algorithm uses the b̄          (time t + 2 in Figure 2, where the "101001" and "101000"
+as the random number to sample from the model distribution.                 are mapped to the same sample). In METEOR, the collision
+In a different view, we can describe the encoding procedure of              forces the decoding algorithm to extract the shared prefix of
+METEOR as first generating 2|b| samples, then compute the b̄                all collision strings. But we think there is a patient and more
+and choose one sample corresponding to b̄. If we do have the                effective strategy. Our second insight is about the collision
+explicit distribution, there is no need to generate 2|b| samples            phenomenon.
+as we only have to compute b̄ and sample from the distribu-                    It is easy to observe that a collision does not affect the
+tion according to b̄. However, if we only have a model API,                 embedding process of the secret message. It only affects the
+sampling 2|b| times may be too large to be realistic. When                  decoding process. So when the collision happens, We do not
+using METEOR, the window length of the secret message is                    avoid the collisions but record all of the strings colliding with
+often set as 32 or 64, which is not suitable for sampling from              the true secret message in a list (including the secret message).
+model API. Therefore, our goal is to decrease the number of                 In the next encoding step, in order to construct the one-to-one
+samples while ensure the security.                                          map F, the number of samples should be the same as the
+   Here we have 2 key insights to design our steganography                  number of elements in the recorded collision set. Within a
+scheme. The first insight is about the sampling strategy. If we             few encoding steps, the size of the collision set should shrink
+sample multiple candidate tokens from the API and uniformly                 to 1, which only contains the secret message.
+choose one of them to output, the distribution of the output                   However, decreasing the number of samples may bring
+token should be the same as the channel distribution. Suppose               in some unlucky cases. For example, when there are only 2
+that we have taken 2N samples, we can construct a one-to-one                elements in the collision set, one of them is the true message
+map from all of the N-bit strings to these samples. Obviously,              while the other is a fake one, we may continuously get 2
+this map is a function from {0, 1}N to the model’s vocabulary               identical samples and take a long time to distinguish the true
+V , denoted as F : {0, 1}N −→ V . Because the messages exist                message. Moreover, if the model API outputs an end-of-text
+before we query for these samples, we can use the pseudoran-                token before the above process completes, we can only extract
+dom generator to generate a seed seedm for each message m.                  the shared prefix of them. Such a problem has a negative effect
+And then use the seed to sample from the model API to con-                  on the capacity of the steganography scheme. Therefore, it
+struct the map F(m) := Modelseedm (h). As Figure 2 shows,                   is better to maintain the size of the collision set at a high
+if we sample four times, the four samples can correspond to                 level, to ensure that in each step we can rule out a part of
+fragments of the possible secret messages: "00", "01", "10",                the messages. This observation requires that we expand the
+and "11" respectively. If the secret message starts with "10",              collision set in a reasonable way. We know that for an N-bit
+then we choose the token corresponding to "10" to output. If                prefix of the secret message, the next N + 1 bit is either 1 or
+the secret message is randomized by XOR, then the output                    0. So we can append 1 and 0 to all of the elements in the
+
+
+
+USENIX Association                                                                             35th USENIX Security Symposium          3147
+Figure 2: An example of encoding algorithm 1 when the maximum size of the collision set is set to 4 at each time step (N=2).
+Here, m represents the secret message, st is the stego token output at time t, and seed10 represents the seed for message 10. The
+arrows (↓) indicate the sampling outcomes (balls) based on the seed determined by the candidate messages. Red secret message
+in m denotes the already embedded secret bits, and underlined text in m represents the secret message that can be immediately
+extracted.
+
+
+collision set to double its size. To avoid the out-of-memory         (KeyGen, EncModel,k,N , DecModel,k,N ). Here we introduce a
+bugs when running our algorithm, we often set a limit for the        new parameter N to control that the maximum size of collision
+size of the collision set. When we set the maximum size of the       set is less than 2N .
+list to 2n , in the encoding procedure its size will be bounded
+by [2n−1 , 2n ]. This is because once its size is smaller than       3.4.1   Encoding (Adaptive Dynamic Sampling)
+2n−1 , it will trigger the expansion operation to double its size,
+until its size is larger than 2n−1 . This expansion operation        The encoding algorithm can be divided into two steps: de-
+ensures that the number of samples is not too small, which           termining the number of samples, sampling, and identifying
+ensures the high capacity of our scheme. At the end of the           collision samples. The pseudocode for the overall encoding
+text, we can extract the shared prefix of the collision strings.     algorithm is presented in Algorithm 1.
+The whole procedure avoids the capacity loss induced by                 In the initial step, the encoding algorithm sets the collision
+frequently extracting the shared prefix as METEOR does.              set CS as {0, 1}N , which includes the N-bit prefix of the secret
+                                                                     message. At each step, we have to construct a one-to-one map
+                                                                     F to relate the possible message to each sample. For every
+3.4    Our Steganography Scheme                                      element e in the collision set CS, the encoding algorithm in-
+                                                                     dependently queries the model API for a sample t, and let
+In this subsection, we formally describe the encoding and de-        F(e) := t. For each query, it first uses a pseudorandom gen-
+coding algorithms of our steganography scheme ΣModel =               erator with a key k to generate the seeds for the model API
+
+
+
+3148    35th USENIX Security Symposium                                                                         USENIX Association
+              a                                                                 a
+
+
+                                                a                                                                              a
+
+
+
+
+              b                                                                 b
+                             samples
+                                                                                               samples
+                                                b                                                                              b
+
+
+
+
+             Cover Distribution        Cover Distribution           Cover Distribution                           Cover Distribution
+                 at time t                at time t+1                   at time t                                   at time t+1
+
+                        (a) No Expansion                                                 (b) Expansion L times
+
+
+
+Figure 3: Illustration of dynamically determining the number of samples and expanding the secret. (a) Non-expansion case L = 0:
+at step t + 1, the number of samples |CS| is the size of the conflict set at step t. (b) General expansion case 0 < L ≤ N: at step
+t + 1, the number of samples is 2L ·|CS|.
+
+
+and then invokes the model API with the seed and history to           3.4.2     Decoding
+get the output token t. After the construction of map F, the
+encoding algorithm uses the sample si = F(m1:l ) (correspond-
+                                                                      The decoding algorithm is almost the same as the encoding
+ing to the prefix of secret message m1:l ) as the next token of
+                                                                      algorithm, as shown in Algorithm 2. As the key is shared,
+stegotext. Then the encoding algorithm filters the elements
+                                                                      the decoding algorithm can generate the same seeds and sam-
+of the collision set whose image under F is the same as si to
+                                                                      ple from the model API with them. Therefore, the decoding
+construct the updated collision set, which can be denoted as
+                                                                      algorithm can get the same samples as the encoding algo-
+{e ∈ CS | F(e) = si }. After updating the collision set, it will
+                                                                      rithm, which ensures that the one-to-one map F constructed
+be expanded if possible. If |CS| is less than 2N−1 , we expand
+                                                                      by the decoder is the same as the encoder. Then the decod-
+the collision set by appending 0 and 1 to every element in the
+                                                                      ing algorithm can identify the collision samples and update
+list, which ensures that the size of the collision set is between
+                                                                      the collision set. After that, if the size of the collision set is
+2N−1 and 2N . If |CS| > 2N−1 , then we do not expand the col-
+                                                                      smaller than 2N−1 , it will be expanded until its size is greater
+lision set, and the next step embeds no new secret bits and
+                                                                      than 2N−1 . This process continues until all tokens in the ste-
+simply draws |CS| samples to rule out more fake messages. If
+                                                                      gotext are processed, then we can extract the shared prefix of
+the current collision set size |CS| is small, we may expand the
+                                                                      the collision set, which is the encoded secret message m.
+list multiple times in the next step and thereby introduce more
+secret bits. For example, the 2-bit prefix of secret message
+102 (i.e., 2 in decimal) after 2 times of expansion will be four
+candidates: 10002 (8), 10012 (9), 10102 (10), 10112 (11).
+One of them must be the 4-bit prefix of the secret message.
+After L = ⌊2N /|CS|⌋ times of expansion, the length of the            3.5      Proof of security
+encoded secret message will increase by L bits, and the ex-
+panded collision set is carried into the next step. Figure 3          Firstly, we consider the case where only 1 bit of the secret mes-
+illustrates the dynamic expansion mechanism for the cases             sage (mi = 0 or 1) is embedded. P[mi = 0] + P[mi = 1] = 1.
+L = 0 (no expansion) and 0 < L ≤ N (expand L times).                  Then we sample twice from the model distribution can get 2
+                                                                      sample results, namely c0 and c1 . For any symbol (token) a in
+   In other words, the encoding procedure can be viewed as            the model’s vocabulary, let Pr[Model(h) −→ a] denote the prob-
+the flow control. If collision occurs frequently, the window          ability that the model Model would output the token a under
+size decreases additively; otherwise, it increases multiplica-        its standard generation process. Let Pr[EncModel,k,N (mi , h) −
+                                                                                                                                    →
+tively.                                                               a] denote the probability that the encoding algorithm outputs
+
+
+
+USENIX Association                                                                         35th USENIX Security Symposium             3149
+Algorithm 1 EncModel,k,N (m, h) −   →s                               Algorithm 2 DecModel,k,N (s, h) −
+                                                                                                     →m
+Input: Language model API Modelseed (·), history h, key k,           Input: Stegotext s, language model API Modelseed (·), his-
+    secret message m, maximum size of collision set 2N , pseu-           tory h, key k, maximum size of collision set 2N , pseudo-
+    dorandom generator PRGk (·)                                          random generator PRGk (·)
+Output: Stegotext s.                                                 Output: Secret message m.
+ 1: s ←− 0/                                                           1: i ←− 0
+ 2: i, l ←− 0, N                                                      2: CSi ←− {0, 1}N
+ 3: CSi ←− {0, 1}N // Initialize the collision set CS.                3: for i ∈ 1, · · · , |s| do
+ 4: while not the end of text do                                      4:    for element e ∈ CSi do
+ 5:     for element e ∈ CSi do                                        5:       seede ←− PRGk (·)
+ 6:        seede ←− PRGk (·)                                          6:       t ←− Modelseede (h)
+ 7:        t ←− Modelseede (h)                                        7:       Let F(e) := t // Construct the one-to-one map F.
+ 8:        Let F(e) := t // Construct the message-to-token            8:    end for
+           map F.                                                     9:    h ←− h||si
+ 9:     end for                                                      10:    CSi+1 ←− {e ∈ CSi | F(e) = si } // Update collision
+10:     si ←− F(m1:l ) // Choose the token corresponding to                 set.
+        the l-bit prefix of secret message.                          11:    while |CSi+1 | < 2N−1 do
+11:     s, h ←− s||si , h||si // Append the new token si to stego-   12:       CSi+1 ←− {e||b | e ∈ CSi+1 , b ∈ {0, 1}} // Expand
+        text s and history h for the next step.                                collision set.
+12:     CSi+1 ←− {e ∈ CSi | F(e) = si } // Update collision          13:    end while
+        set.                                                         14:    i ←− i + 1
+13:     while |CSi+1 | < 2N−1 do                                     15: end for
+14:        CSi+1 ←− {e||b | e ∈ CSi+1 , b ∈ {0, 1}} // Expand        16: return m ←− shared prefix of all elements in CSi
+           collision set.
+15:        l ←− l + 1
+16:     end while                                                    a is
+17:     i ←− i + 1
+                                                                                                 1
+18: end while                                                               Pr[G1 −
+                                                                                  → a] = ∑          · Pr[ModelPRGk (·) (h) −
+                                                                                                                           → a]
+19: return s                                                                              e∈CS |CS|
+                                                                                       = Pr[ModelPRGk (·) (h) −
+                                                                                                              → a]
+
+token a, which is given by:                                           due to the independent sampling procedure, this probability
+                                                                     is the same as Pr[G0 −  → a].
+         Pr[EncModel,k,N (mi , h) −
+                                  → a]                                  G1 ≈c G2 : G2 uses random seeds to substitute the pseudo-
+       = Pr[mi = 0] · Pr[EncModel,k,N (0, h) −
+                                             → a]                    random generator PRGk (·) in G1 . From the definition of
+         + Pr[mi = 1] · Pr[EncModel,k,N (1, h) −
+                                               → a]                  pseudo-random generator, for any probabilistic polynomial
+                                                                     time (p.p.t.) adversary A ,
+       = Pr[mi = 0] · Pr[c0 = a] + Pr[mi = 1] · Pr[c1 = a]
+                                                                           h                    i    h                i
+       = Pr[mi = 0] · Pr[Model(h) −
+                                  → a]                                   Pr A PRGk (·) (1λ ) = 1 − Pr A R(·) (1λ ) = 1 ≤ negl(λ),
+         + Pr[mi = 1] · Pr[Model(h) −
+                                    → a]                                                                                          (5)
+       = Pr[Model(h) −
+                     → a].
+                                                                      where the λ is the security parameter of PRG, 1λ denotes
+    Similarly, this conclusion also holds when embedding mul-        the internal randomness of adversary A . Assuming the ex-
+tiple bits of information because our steganography schemes          istence of a p.p.t. adversary A ′ , which can distinguish the
+only sample multiple times from the model and do not distort         output of G1 and G2 with a noticeable probability, we can use
+the original model distribution.                                     the adversary A ′ to construct another p.p.t. adversary A ′′ to
+    From a more formal standpoint, we prove the                      distinguish between the output of the random generator R(·)
+computational-indistinguishable security by a sequence of            and pseudo-random generator PRGk (·). A ′′ runs G1 and G2
+games G0 ∼ G3 , as shown in Figure 4. The security of our            with seeds generated by random generator R(·) and pseudo-
+framework relies on the pseudo-random generator and the              random generator PRGk (·), respectively. Though now A ′′ can
+i.i.d. property of samples drawn from the same distribution.         neither distinguish between R(·) and PRGk (·) nor G1 and G2 ,
+    G0 = G1 : G0 is the steganographic sampling procedure            he can query A ′ for each pair of output of G1 and G2 . Since
+controlled by the secret message m, while G1 is independent          A ′ can distinguish the output of G1 and G2 with a noticeable
+of secret message. The probability that G1 outputs the token         probability, the adversary A ′′ can distinguish the output of the
+
+
+
+3150    35th USENIX Security Symposium                                                                         USENIX Association
+random generator R(·) and pseudo-random generator PRGk (·)        4     Experiment & Discussion
+with a noticeable probability, which contradicts the definition
+of pseudo-random generator. Therefore, such adversary A ′         4.1     Experiment Settings
+does not exist, and the distributions of output of G1 and G2
+are computationally indistinguishable.                            Task Theoretically, our steganography method can be applied
+   G2 = G3 : G2 leverages the independent and identically         to a wide range of carriers, including text, audio, and images.
+distributed (i.i.d.) property of samples drawn from the same      In the following discussion, We primarily use text genera-
+distribution. Since the output of the sampling process follows    tion tasks to demonstrate out scheme’s effectiveness, as text
+the model’s distribution, randomly sampling a result from         generation with large language models is currently widely
+multiple samples is equivalent to directly sampling a result      popular.
+from the model itself.                                               Baseline We evaluated our adaptive dynamic sampling
+                                                                  steganography method using the random sampling decoding
+   Up to this point, we have demonstrated the security of our
+                                                                  approach, alongside the ideal steganography algorithm and
+steganography scheme.
+                                                                  provably secure generative steganography algorithms, includ-
+                                                                  ing METEOR [3], DISCOP [4], its capacity-boosted variant
+      G0 : Steganography-Sampler                                  DISCOP Reorder, SparSamp [18], and iMEC [19]. Each base-
+                                                                  line is evaluated using its default parameter configuration.
+     1: for e ∈ CS do
+                                                                  DISCOP and its variants were implemented in Cython, while
+     2:   seed ←− PRGk (·)
+                                                                  the remaining methods were implemented in Python.
+     3:   t ←− Modelseed (h)
+     4:   Let F(e) := t                                              Dataset We used three types of datasets to simulate cover
+     5: end for
+                                                                  text channels. The first is a uniform distribution, simulating
+     6: si ←− F(m1:l )
+                                                                  high entropy situations where each token in the language
+     7: return si
+                                                                  model’s tokenizer vocabulary has an equal probability. The
+                                                                  second is a QA dataset, using the WILD [27], a typical appli-
+                                                                  cation scenario where the language model answers questions.
+      G1 : Pseudorandom Multiple Sampling                         Finally, we used the XHS [28] dataset, which simulates social
+                                                                  media text in Chinese, characterized by an informal, frag-
+     1: for e ∈ CS do                                             mented style typical of social network communication.
+     2:   seed ←− PRGk (·)                                           Model We evaluate our steganography method on three
+     3:   t ←− Modelseed (h)                                      large language models: M ISTRAL 3 [29], Q WEN 2 [30], and
+     4:   Let F(e) := t                                           L LAMA 3 [31], using the WILD and XHS datasets, each with
+     5: end for
+                                                                  a model scale of roughly 7B parameters. We customize the
+     6: Randomly choose e∗ ∈ CS
+                                                                  vocabulary size for testing under the uniform distribution.
+     7: si ←− F(e∗ )
+                                                                  The prompts used for WILD and XHS datasets correspond to
+     8: return si
+                                                                  the questions within each dataset. These prompts are loaded
+                                                                  into the function apply_chat_template and then become
+      G2 : Random Multiple Sampling                               the input of LLMs. For each test, we let the models generate
+                                                                  1,000 samples with top-p = 1.0, base temperature = 1.0, and
+     1: for e ∈ CS do                                             the max generated length is 500. All our experiments were
+     2:   Randomly generate seed                                  conducted on 2 × NVIDIA A5000 GPUs (32GB RAM) and
+     3:   t ←− Modelseed (h)                                      24 × Intel Xeon w5-3423 CPUs.
+     4:    Let F(e) := t
+     5: end for
+     6: Randomly choose e∗ ∈ CS                                   4.2     Metrics
+     7: si ←− F(e∗ )
+                                                                  We evaluate the performance of our steganography scheme in
+     8: return si
+                                                                  terms of Security, Efficiency, Capacity, and Correctness.
+
+      G3 : Model Sampling                                         4.2.1   Security
+     1: Randomly generate seed                                    Although our steganography scheme’s computational secu-
+     2: t ←− Modelseed (h)                                        rity has been theoretically proven in the Method section, we
+                                                                  further validate its security through linguistic steganalysis in
+                                                                  adversarial scenarios and assess its intuitive imperceptibility
+Figure 4: Games used in the proof of steganography security.      based on linguistic quality.
+
+
+
+USENIX Association                                                                   35th USENIX Security Symposium         3151
+   Steganalysis. We utilized a classic steganalysis model to          original bit sequence and b̂ the decoded bit sequence, both of
+assess the imperceptibility of stegotexts: TS-CSW [14] based          length|b|. We define
+on pre-trained BERT [32]. We trained the detectors on 1,000
+samples of generated stegotext and corresponding cover texts,                                    1 |b|
+                                                                                        SR =        ∑ 1[b j = b̂ j ],            (9)
+randomly sampled from the same language model, using a                                          |b| j=1
+3:1:1 split for training, validation, and testing. With a learning
+rate of 1e-4, training was conducted for three epochs. After          where 1[·] is the indicator function. A value of 1 means per-
+repeating the process three times, the average F1 score from          fectly correct decoding, while smaller values correspond to
+the test set was used as the steganalysis F1 score.                   higher bit error rates.
+   Linguistic Quality. We evaluate linguistic quality using
+perplexity (PPL) and diversity. PPL measures the fluency of
+                                                                      4.3     Evaluation Results and Discussion
+generated text, with lower PPL values indicating smoother
+and more natural text.                                                4.3.1   On the Capacity & Entropy
+                                                    !
+                              1 W                                     As shown in Tables 2 and 3, our method achieves the highest
+           PPL = exp − ∑ log Pr[xi |x1:i−1 ] ,                  (6)
+                             W i=1                                    embedding capacity and entropy utilization, even outperform-
+                                                                      ing DISCOP Reorder and SparSamp, which have the best
+where W is the length of the generated text.                          capacity under explicit distribution. Our work was developed
+  As for text diversity, we used the distinctn metric. This           contemporaneously with SparSamp [18], a provably secure
+metric needs to find the unique pieces of tokens in the text          steganography scheme, but our ADS method differs in a fun-
+and calculate their ratio.                                            damental way. SparSamp, building on DISCOP [4], performs
+                           count(unique n-grams)                      sparse sampling for fixed-length secret blocks and only pro-
+             distinctn =                         .             (7)    ceeds to the next block once the current block can be decoded
+                              count(n-grams)
+                                                                      unambiguously. Beyond implementation details, our approach
+4.2.2   Efficiency                                                    is conceptually distinct: ADS expands the secret adaptively
+                                                                      during generation, thereby exploiting a larger fraction of the
+Time. For real-time covert communication, it’s important to           text’s entropy and achieving higher embedding capacity.
+complete stego embedding quickly. To measure this efficiency,            The results from the uniform distribution in Figure 5 show
+we measure the average time of stego generation, calculated           that as the maximum allowed sampling approaches the vocab-
+by dividing the total time taken for the entire process by the        ulary size, the embedding capacity asymptotically approaches
+length of the embedded message. The shorter, the better.              the entropy of the uniform distribution. More sampling iter-
+                                                                      ations result in higher embedding capacity. This trend holds
+4.2.3   Capacity                                                      across all models with different vocabulary sizes. For all mod-
+                                                                      els and scenarios, our method achieves high entropy utiliza-
+Entropy. This represents the theoretical upper bound of the
+                                                                      tion, even when the distribution is unknown. However, the
+embedding capacity, measured in bits per symbol. For texts, a
+                                                                      upper limit of embedding capacity still depends on the distri-
+symbol usually refers to a token generated by large language
+                                                                      bution’s entropy.
+models. Entropy is calculated as:
+
+                       1 W                                            4.3.2   Time Efficiency
+          Entropy =        Pr[xi |x<i ] log2 Pr[xi |x<i ].     (8)
+                       W∑i                                            The runtime of our method is primarily constrained by two
+Embedding Capacity. This metric measures the average                  factors: sampling time and the generation speed of the gen-
+number of bits that can be successfully embedded and ex-              erative model. Although increasing the number of samples
+tracted, expressed in bits per token.                                 does raise the time required, it does not impose a significant
+   Utilization. We quantify how efficiently the scheme ex-            burden and remains within an acceptable range. On average,
+ploits generative entropy by U = CHeff ∈ [0, 1], where Ceff           our method takes less than 100 milliseconds to process each
+is the reliably decodable embedding rate (bits/token) and H           token. On the WILD QA dataset, the Table 2 shows that our
+is the per-token Shannon entropy of the model. Larger U               method is on the same time scale as existing provably secure
+indicates better entropy utilization; U = 1 corresponds to            steganography algorithms and can be faster than the reorder-
+achieving the theoretical limit.                                      ing distribution version of DISCOP. On the social network
+                                                                      XHS dataset in Table 3, our method’s runtime is nearly iden-
+                                                                      tical to that of standard random sampling algorithms, and
+4.2.4   Correctness
+                                                                      its time performance is comparable to existing provably se-
+Success Rate Following iMEC [19], we evaluate correctness             cure algorithms such as METEOR and the non-reordering
+using the bit-level decoding Success Rate (SR). Let b be the          version of DISCOP, demonstrating the time efficiency of our
+
+
+
+3152    35th USENIX Security Symposium                                                                            USENIX Association
+                                           Capacity                  Time                  Linguistic Quality            Imperceptibility   Correctness
+   Model        Algorithm
+                               Entropy      Embed                   Time
+                                                    ↑   Utili.↑              ↓     PPL       Dist2    Dist3     Dist4     TS-CSW F1↓           SR↑
+                               bit/token   bit/token              sec./token
+             Random Sampling    0.9489         -            -       0.0295        1.9890    0.6073   0.8377     0.9208          -                -
+                METEOR          0.9870      0.5732      0 .5633     0.0298        2.0888    0.6135   0.8458     0.9275     54.23%3.95         1.0000
+               DISCOP (R.)      0.9506      0.7683      0.7930      0.0427        2.0141    0.6086   0.8389     0.9215     51.42%1.24         1.0000
+ M ISTRAL        DISCOP         0.9267      0.4242      0.4631      0.0379        1.9848    0.6044   0.8351     0.9192     51.51%1.32         1.0000
+                SparSamp        1.0144      0.8562      0.8411      0.0314        2.1201    0.6091   0.8426     0.9245     51.57%1.16         1.0000
+                  iMEC          1.0235      0.7345      0.6923      3.8231        2.2813    0.6865   0.8827     0.9442     53.25%1.70         0.8825
+                  Ours          0.9872      0.8964      0.9137      0.0295        2.0788    0.6097   0.8415     0.9246     50.18%1.62         1.0000
+             RandomSampling     2.0806         -           -        0.0296        4.7768    0.6604   0.8750     0.9382          -                -
+                METEOR          2.0963      1.3047      0.6233      0.0329        4.9355    0.6676   0.8788     0.9426     51.83%2.19         1.0000
+               DISCOP(R.)       2.1539      1.9093      0.8866      0.0822        5.1384    0.6708   0.8821     0.9431     51.48%2.19         1.0000
+   Q WEN        DISCOP          1.9569      0.8367      0.4275      0.0558        4.2501    0.6632   0.8748     0.9394     51.94%1.27         1.0000
+                SparSamp        2.0895      1.8905      0.9052      0.0299        4.9285    0.6431   0.8919     0.9426     51.87%1.36         1.0000
+                  iMEC          2.1231      1.6174      0.7466      3.5392        4.9894    0.6994   0.9023     0.9536     52.27%3.19         0.9952
+                  Ours          2.0641      1.8789      0.9103      0.0293        4.7569    0.6716   0.8811     0.9409     49.83%1.58         1.0000
+             RandomSampling     0.6934         -           -        0.0312        1.7340    0.6090   0.8399     0.9222          -                -
+                METEOR          0.7172      0.4031      0.5574      0.0317        1.7815    0.6100   0.8465     0.9284     53.86%2.39         1.0000
+               DISCOP(R.)       0.6955      0.5221      0.7425      0.0765        1.7083    0.6060   0.8408     0.9219     50.19%1.21         1.0000
+  L LAMA 3      DISCOP          0.6928      0.3297      0.4795      0.0540        1.7405    0.6078   0.8456     0.9301     49.98%1.57         1.0000
+                SparSamp        0.7085      0.5713      0.8183      0.0336        1.7657    0.6061   0.8440     0.9293     51.07%1.31         1.0000
+                  iMEC          0.8390      0.6057      0.7218      5.9045        1.8825    0.6494   0.8822     0.9416     55.17%2.27         0.8432
+                  Ours          0.7028      0.6572      0.9352      0.0313        1.7035    0.6063   0.8339     0.9260     49.73%2.79         1.0000
+
+
+Table 2: Main Results on WILD. Higher capacity and utilization are better. Lower time is better. Linguistic quality closer to
+random sampling is better. In our method, the maximum size of collision set 2N can be expanded at each time is set to 29 .
+
+
+approach. Also, we observe that iMEC takes noticeably longer                     ated by our method is indistinguishable from the cover text.
+to generate stegotext. The original iMEC implementation was                      In terms of fluency, our method achieved PPL scores sim-
+developed on GPT-2, whereas we reimplemented it for LLMs.                        ilar to those of texts generated through random sampling.
+Since the vocabularies of these models are much larger than                      Higher PPL scores can sometimes result from increased en-
+that of GPT-2 (about 50K tokens), the time cost of running                       tropy. In fact, studies have shown that blindly aiming for low
+the MEC algorithm in our setting is substantially higher. This                   PPL scores can lead to bland, redundant text or repetitive
+is consistent with the complexity of iMEC reported in Table 1,                   loops [33]. However, the texts generated by our method did
+namely O(2B |V |), where B is the block size and |V | is the                     not exhibit these undesirable patterns and maintained good
+vocabulary size.                                                                 readability.
+   In the uniform distribution scenario, when the number of
+samples does not exceed 214 , our method achieves the same                       4.3.4     Decoding Correctness
+generation speed as random sampling. This trend is consis-
+tently observed across the LLAMA3, MISTRAL, and QWEN                             We evaluate decoding correctness using the bit-level success
+models. Our implementation is in Python, so performance                          rate (SR). As shown in Table 2 and Table 3, Our method
+could be significantly optimized by replacing the sampling                       achieves an SR of 1.0000 in all settings, which indicates that
+component with C/C++. This would bring the encoding speed                        the proposed adaptive dynamic sampling scheme yields deter-
+closer to the model’s generation rate.                                           ministic, invertible decoding at the bit level in our experimen-
+                                                                                 tal range. In contrast, iMEC exhibits noticeable instability in
+                                                                                 correctness. These results are consistent with the probabilistic
+4.3.3   On the Generation Quality of Stego
+                                                                                 nature of iMEC decoding.
+In Tables 1 and 2, we present the experimental results on the
+XHS dataset and the QA dataset. (In the uniform distribution                     4.4     Examples of generated stegotexts
+scenario, there is no need to discuss the quality of the gen-
+erated text.) It is evident that, in the text generation task, the               We present demo stegotexts generated by existing provably se-
+stegotext produced by our method exhibits linguistic quality                     cure generative steganography methods and our own steganog-
+similar to that of text generated through random sampling,                       raphy constructions by Llama3 8B in Table 4. It can be seen
+both in terms of PPL and diversity metrics. This aligns with                     that the stegotext generated by our scheme is nearly indistin-
+our security proof, demonstrating that the stegotext gener-                      guishable in quality from text produced by random sampling
+
+
+
+USENIX Association                                                                                    35th USENIX Security Symposium               3153
+                                            Capacity                  Time                   Linguistic Quality            Imperceptibility   Correctness
+     Model       Algorithm
+                                Entropy      Embed                   Time
+                                                     ↑   Utili.↑              ↓     PPL        Dist2    Dist3     Dist4     TS-CSW F1↓           SR↑
+                                bit/token   bit/token              sec./token
+               RandomSampling    2.1963         -           -        0.0294        4.8066     0.5367   0.7639     0.8657          -                -
+                  METEOR         2.2195      1.5028      0.6635      0.0299        4.8673     0.5183   0.7560     0.8614     52.91%3.83         1.0000
+                 DISCOP(R.)      2.2863      2.0416      0.8825      0.0427        5.0154     0.5345   0.7723     0.8792     51.84%3.67         1.0000
+    M ISTRAL      DISCOP         2.2291      0.8450      0.3837      0.0370        4.8425     0.5219   0.7564     0.8620     50.97%3.03         1.0000
+                  SparSamp       2.3017      2.0893      0.9029      0.0313        5.0892     0.5458   0.7869     0.8824     51.83%2.17         1.0000
+                    iMEC         2.4382      2.0871      0.8579      5.1984        5.1785     0.5655   0.8139     0.8947     53.29%2.33         0.9847
+                    Ours         2.1986      2.0378      0.9308      0.0298        4.9094     0.5341   0.7675     0.8721     50.81%2.12         1.0000
+               RandomSampling    3.5673         -           -        0.0319        12.6965    0.7527   0.9198     0.9585          -                -
+                  METEOR         3.6247      2.5283      0.6892      0.0328        13.4175    0.7634   0.9309     0.9704     52.38%3.10         1.0000
+                 DISCOP(R.)      3.5478      3.2606      0.9118      0.0824        14.7447    0.7498   0.9171     0.9542     50.28%2.64         1.0000
+     Q WEN        DISCOP         3.5371      1.3595      0.3852      0.0523        12.8203    0.7365   0.9066     0.9467     50.03%2.96         1.0000
+                  SparSamp       3.6482      3.4095      0.9304      0.0334        13.5791    0.7549   0.9241     0.9771     51.29%1.87         1.0000
+                    iMEC         3.1611      2.6495      0.8416      4.2276        13.1721    0.7638   0.9088     0.9665     53.52%1.21         0.9987
+                    Ours         3.7272      3.4928      0.9393      0.0299        13.3314    0.7642   0.9209     0.9588     49.83%2.58         1.0000
+               RandomSampling    1.3315         -           -        0.0313        3.3848     0.5394   0.7649     0.8635          -                -
+                  METEOR         1.3410      0.8466      0.5760      0.0319        7.4924     0.5427   0.7720     0.8743     52.38%3.10         1.0000
+                 DISCOP(R.)      1.4737      1.2137      0.8243      0.0762        4.9633     0.5583   0.7762     0.8721     50.01%2.70         1.0000
+    LLAMA 3       DISCOP         1.3739      0.5625      0.4380      0.0519        4.3652     0.5399   0.7639     0.8678     49.98%2.09         1.0000
+                  SparSamp       1.2692      1.4206      0.9105      0.0343        4.4513     0.5582   0.7857     0.8874     50.73%2.17         1.0000
+                    iMEC         1.6817      1.3383      0.8177      4.9624        4.1399     0.5976   0.8132     0.9301     54.24%3.19         0.8631
+                    Ours         1.4267      1.2560      0.9223      0.0314        4.3966     0.5447   0.7727     0.8745     49.66%2.58         1.0000
+
+
+Table 3: Main Results on XHS. Higher capacity and utilization are better. Lower time is better. Linguistic quality closer to
+random sampling is better. In our method, the maximum size of the collision set 2N can be expanded at each time is set to 29 .
+
+
+from the language model. Also, as shown in Table 5, the                           the model API provider’s policies and support for seed con-
+ADS-generated stegotext produced with gpt-3.5-turbo-1106                          trol. In our view, the most reliable deployment scenario for
+is fluent and shows no noticeable anomalies. In this case, we                     the proposed steganography method is one in which the user
+can even regard the entire sentence as a single sampling out-                     hosts or controls their own model API (e.g., on a private or
+come, where the paragraph corresponds to the concatenation                        cloud-managed server), so that seed determinism and sam-
+of sampled steganographic sentences.                                              pling behavior can be ensured. In such settings, our approach
+                                                                                  is also fully backward-compatible with open-source white-
+                                                                                  box language models, where both the random seed and the
+5     Limitations                                                                 sampling routine can be specified precisely.
+                                                                                     Limitation of applying our method to image/video mod-
+Limitation of APIs. Our steganography method require a                            els. Although it is feasible to apply our method to image or
+model API that accepts a seed to control its randomness. This                     video models as long as they support seed-based sampling,
+requirement can be met in practice: several major LLM e.g.,                       we note that generating images or videos is significantly more
+Qwen-max, Qwen-Plus, gpt-4-1106-preview, gpt-3.5-turbo-                           computationally expensive than generating text. It may take
+1106) already expose a seed parameter, and popular image                          several minute to generate an image sample, which is not
+generation systems such as Midjourney and Stable Diffusion                        practical in real-world scenario. Our method is best suited
+also supports such APIs. However, the availability of seed                        for existing autoregressive language models, and we hope
+control are ultimately governed by each API provider’s evolv-                     to further investigate its application in real-world image and
+ing product and security policies. For example, to the best                       video settings with higher efficiency.
+of our knowledge, OpenAI, Qwen, and other existing LLM                               Limitation of sampling speed. Since this work does not
+providers currently state that it will make a best effort to sam-                 specifically target sampling acceleration, our current imple-
+ple deterministically for fixed seeds and parameters, but also                    mentation, as analyzed in the Time Efficiency subsection,
+explicitly note that determinism is not strictly guaranteed.                      requires approximately 0.02–0.04 seconds to generate each
+This implies that API-level seed control may be unstable                          stego token when the number of samples per step is set to
+over time or across deployments, which in turn may limit                          214 . As the sampling budget increases, the generation time
+the long-term robustness of our scheme when used purely                           per stego token naturally grows as well, so excessively large
+with third-party black-box services. Users of our steganog-                       choices of N can be expected to introduce noticeable com-
+raphy scheme should pay close attention to any changes in                         putational overhead. We view the design of more efficient
+
+
+
+3154     35th USENIX Security Symposium                                                                                            USENIX Association
+                                     Table 4: Examples in WILD with L LAMA 3
+ Method              Generated Texts
+ Prompt              Please provide an action plan for reducing carbon footprint on a corporate level.
+ Random Sampling     Here is a comprehensive action plan for reducing carbon footprint on a corporate level:
+                     **I. Set Goals and Track Progress**
+                     1. Set specific, measurable, achievable, relevant, and time-bound (SMART) targets for reducing
+                     carbon footprint.
+                     2. Establish a carbon footprint tracking system to monitor progress and identify areas for improve-
+                     ment.
+                     3. Report carbon footprint reduction milestones to stakeholders, including employees, customers,
+                     and investors...
+ METEOR [3]          Here’s a comprehensive action plan for reducing carbon footprint on a corporate level:
+                     **I. Assessment and Goal-Setting**
+                     1. Conduct a carbon footprint assessment to identify areas of impact:
+                     - Energy consumption (electricity, gas, water)
+                     - Transportation (company-owned vehicles, employee travel)
+                     - Supply chain emissions (procurement, logistics)
+                     - Waste management (recycling, disposal)
+                     2. Set specific, measurable, achievable, relevant, and time-bound (SMART) targets...
+ DISCOP [4]          Here is a comprehensive action plan for reducing carbon footprint on a corporate level:
+                     **I. Conduct a Carbon Footprint Assessment**
+                     1. Engage a third-party auditor or consultant to conduct a comprehensive carbon footprint assessment
+                     of your organization’s operations, including Scope 1 (direct emissions), Scope 2 (indirect emissions),
+                     and Scope 3 (value chain emissions).
+                     2. Identify key areas of energy consumption, such as:
+                     - Buildings and facilities
+                     - Transportation...
+ SparSamp [18]       Here is an action plan for reducing carbon footprint on a corporate level: **Short-term goals (0-12
+                     months)**
+                     1. **Conduct a carbon footprint assessment**: Engage a third-party consultant to conduct a thorough
+                     assessment of the company’s current carbon footprint, including energy consumption, transportation
+                     emissions, and waste management.
+                     2. **Set reduction targets**: Based on the assessment, set specific, measurable, achievable, relevant,
+                     and time-bound (SMART) targets for reducing the company’s carbon footprint...
+ iMEC [19]           Action Plan for Reducing Carbon Footprint on a Corporate Level:
+                     **Step 1: Conduct an Initial Assessment (Weeks 1-4)** 1. Identify the primary sources of carbon
+                     emissions within the organization: * Energy consumption (heating, cooling, lighting, etc.) * Trans-
+                     portation (company cars, fleet, employee commuting) * Travel (business flights, hotels, etc.) * Supply
+                     chain and operations (manufacturing, procurement, etc.)
+                     2. Gather data on current energy consumption, transportation, and travel practices...
+ Ours                Reducing a corporation’s carbon footprint is a crucial step towards sustainability and environmental
+                     responsibility. Here is a comprehensive action plan for corporate carbon footprint reduction:
+                     **I. Conduct a Carbon Footprint Assessment**
+                     1. Identify the company’s scope of activities: Determine what activities and products fall within the
+                     company’s boundary for carbon footprint calculation.
+                     2. Gather data: Collect data on energy consumption, water usage, waste production, and greenhouse
+                     gas emissions from various sources...
+
+
+
+
+USENIX Association                                                               35th USENIX Security Symposium        3155
+                                                                                                                                                                         Entropy                   Embed bits/token                      Time
+
+
+                                                       Size 512                                                                                      Size 1024                                                                                       Size 2048                                                                                          Size 4096                             11.5
+                                                                                                                                                                                                                                                                                                                                                                                                     11.8 11.9
+                   12                                                                                      0.01812                                                                                             12                                                                                             0.01412                                                                  11.1
+                                                                                                                                                                                                                                                                                                       10.9
+                                                                                                                                                                                                                                                                                           10.8 10.9
+                                                                                                                                                                                                           0.014                                                                    10.5                                                                                        10.5                             0.0200
+                                                                                                                                                                                                                                                                             10.1
+                                                                                                                                                                                           9.9 10.0
+                                                                                                                                                                                   9.8 9.9                                                                                                                                                                                9.7
+                                                                                                           0.01610                                                           9.5                                                                                       9.5                                    0.012
+                   10                                                                                                                                                  9.1
+                                                                                                                                                                                                                10                                                                                                 10                                                                                            0.0175
+                                                                              8.8 8.9
+                                                                                      8.9 9.0 9.0                                                                                                          0.012                                                                                                                                                    8.9
+                                                                                                                                                                                                                                                                 8.8
+                                                                        8.5                                                                                      8.5
+                                                                  8.1
+
+
+
+
+Embed bits/token
+                                                                                                           0.014                                           7.8                                                                                             7.9                                                0.010                                           7.9                                                0.0150
+                                                            7.5                                                                                                                                            0.010 8
+                   8                                                                                               8                                                                                                                                                                                                  8
+                                                                                                                                                     6.9                                                                                             6.9                                                                                                7.0
+                                                      6.8
+                                                                                                                                                                                                                                                                                                                                                                                                                 0.0125
+                                                                                                           0.012                                                                                                                                                                                              0.008
+
+                                                                                                                                                                                                                                                                                                                                                                                                                          Time
+                                                                                                                                               5.9                                                                                             6.0                                                                                                6.0
+                                                5.9                                                                                                                                                        0.008
+                   6                                                                                               6                                                                                               6                                                                                                  6
+                                          4.9                                                                                            5.0                                                                                             5.0                                                                                                5.0                                                                  0.0100
+                                                                                                           0.010                                                                                                                                                                                              0.006
+                                                                                                                                                                                                           0.006                   4.0                                                                                                4.0
+                                    4.0                                                                                            4.0
+                                                                                                                                                                                                                                                                                                                                                                                                                 0.0075
+                   4                                                                                               4                                                                                               4                                                                                                  4
+                              3.0                                                                                            3.0                                                                                             3.0                                                                                                3.0
+                                                                                                           0.008                                                                                           0.004                                                                                              0.004
+                                                                                                                                                                                                                                                                                                                                                                                                                 0.0050
+                        2.0                                                                                            2.0                                                                                             2.0                                                                                                2.0
+
+                   2                                                                                               2                                                                                               2                                                                                                  2
+                                                                                                           0.006                                                                                           0.002                                                                                              0.002                                                                                              0.0025
+
+
+                   0                                                                                               0                                                                                       0.000 0                                                                                            0.000 0                                                                                            0.0000
+                        2     3     4     5     6     7     8     9     10    11   12   13   14   15                   2     3     4     5     6     7     8     9     10    11    12   13   14   15                   2     3     4     5     6     7     8     9     10    11   12   13     14   15                     2     3     4     5     6     7     8     9     10    11   12   13     14     15
+                                                                                                       N                                                                                               N                                                                                                  N                                                                                                  N
+
+
+
+
+Figure 5: The relationship between the number of uniform distribution samples and embedding capacity. N represents the
+maximum number of samples as 2N , the red dashed line indicates entropy, and the green line represents the generation time per
+token.
+
+
+Prompt                                           What is Steganography?                                                                                                                                                of the explicit model distribution. We design a strategy to
+Stego text                                       Steganography is the practice of concealing a                                                                                                                         determine the number of samples at each step and embed
+                                                 message, image, or file within another message,                                                                                                                       secret messages into the sampling indices without altering
+                                                 image, or file in such a way that the existence of the                                                                                                                the model’s original generation process, ensuring theoretical
+                                                 concealed information is hidden. It is often used to                                                                                                                  indistinguishability between stego and cover. Extensive eval-
+                                                 transmit secret information or to protect sensitive data                                                                                                              uations on three popular LLMs and three benchmark datasets
+                                                 from unauthorized access. Common techniques for                                                                                                                       show that our scheme achieves high generative quality, effi-
+                                                 steganography include hiding data within digital                                                                                                                      ciency, and capacity, comparable to provably secure methods
+                                                 images, audio files, or even text documents, making it                                                                                                                that require an explicit distribution.
+                                                 difficult for others to detect the hidden information
+                                                 without the proper tools or knowledge.
+                                                                                                                                                                                                                       7                 Acknowledgments
+Prompt                                           Give me a short introduction to large language model.
+Stego text                                       A large language model is a type of artificial                                                                                                                        This work was supported by the Natural Science Foundation
+                                                 intelligence that has been trained on vast amounts of
+                                                                                                                                                                                                                       of China under Grant U2336208.
+                                                 text data in order to understand and generate
+                                                 human-like language. These models use advanced
+                                                 machine learning algorithms to analyze and predict                                                                                                                    8                 Ethical Considerations
+                                                 sequences of words, enabling them to comprehend...
+Prompt                                           1+1=?                                                                                                                                                                 We propose a provably secure steganographic scheme that
+Stego text                                       1+1 equals 2.
+                                                                                                                                                                                                                       embeds secret messages into seemingly innocuous carriers,
+                                                                                                                                                                                                                       requiring no access to the model’s explicit distribution and re-
+                                                                                                                                                                                                                       lying on controlled sampling access to the model. Consistent
+Table 5:    Examples                                                                                   of          stegotext                               generated                               by                  with prior work [3, 4, 18], we treat the secret information as a
+gpt-3.5-turbo-1106.                                                                                                                                                                                                    random binary bitstream in our research. Given the existence
+                                                                                                                                                                                                                       of provably secure steganography constructions, we do not ex-
+                                                                                                                                                                                                                       pect our contribution to materially exacerbate existing ethical
+sampling strategies or dedicated steganographic algorithms
+                                                                                                                                                                                                                       concerns. Nonetheless, we provide a stakeholder and dual-use
+aimed at improving time efficiency as an important direction
+                                                                                                                                                                                                                       risk analysis, as well as a discussion of potential mitigation
+for future research. We are also considering converting the
+                                                                                                                                                                                                                       strategies, in the hope that these reflections may be of some
+code to a C/C++ implementation.
+                                                                                                                                                                                                                       use for future work on steganography.
+
+6                       Conclusion                                                                                                                                                                                     8.1                     Stakeholder and Dual-Use Risk Analysis
+In this paper, we propose a provably secure steganography                                                                                                                                                              Steganography application context centers on two primary
+scheme built on Adaptive Dynamic Sampling, which sam-                                                                                                                                                                  stakeholder groups: steganography users and monitors. For
+ples from model API with seed without requiring knowledge                                                                                                                                                              steganography users (both sender and receiver), the goal is to
+
+
+
+3156                              35th USENIX Security Symposium                                                                                                                                                                                                                                                                                            USENIX Association
+transmit information covertly. These users fall into two broad      References
+scenarios. First are legitimate users, for example, journalists
+or ordinary citizens in environments of excessive surveillance,     [1] Rémi Cogranne, Quentin Giboulot, and Patrick Bas. Ef-
+who may rely on steganography to safeguard privacy and ex-              ficient steganography in jpeg images by minimizing
+ercise free expression. The second comprises malicious users            performance of optimal detector. IEEE Transactions
+who seek harmful coordination or the concealment of illegal             on Information Forensics and Security, 17:1328–1343,
+content. In our study, we abstract away the secret’s semantics          2022.
+and treat the payload as a random binary bitstream. In real de-
+ployments, we acknowledge the dual-use risk that adversaries        [2] Mehdi Sharifzadeh, Mohammed Aloraini, and Dan
+could embed harmful or illegal secret messages. The same                Schonfeld. Adaptive batch size image merging steganog-
+properties that protect vulnerable users can, if misappropri-           raphy and quantized gaussian image steganography.
+ated, also facilitate abuse.                                            IEEE Transactions on Information Forensics and Se-
+   For monitors, we distinguish between illegal monitors and            curity, 15:867–879, 2020.
+legitimate defenders (trust-and-safety teams and forensic an-
+                                                                    [3] Gabriel Kaptchuk, Tushar M. Jois, Matthew Green, and
+alysts). Illegal monitors conduct unauthorized inspection of
+                                                                        Aviel D. Rubin. Meteor: Cryptographically secure
+platforms and communications, raising serious privacy and
+                                                                        steganography for realistic distributions. In Proceedings
+due-process concerns. Legitimate defenders protect platform
+                                                                        of the 2021 ACM SIGSAC Conference on Computer and
+security by reviewing user content and leveraging behavior-
+                                                                        Communications Security, CCS ’21, page 1529–1548,
+aware signals (such as account history and interaction pat-
+                                                                        New York, NY, USA, 2021. Association for Computing
+terns) to assess risk and infer user intent, including for highly
+                                                                        Machinery.
+covert communications. Our steganography work is motivated
+by the goal of resisting illegal monitors.                          [4] Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao,
+                                                                        Weiming Zhang, and Nenghai Yu. Discop: Provably
+8.2    Mitigating Potential Harm                                        secure steganography in practice based on “distribution
+                                                                        copies”. In 2023 IEEE Symposium on Security and Pri-
+Our contribution is a theoretical prototype for scientific study,       vacy (SP), pages 2238–2255. IEEE Computer Society,
+not a production-ready system. To limit potential harm, all ex-         2023.
+periments are conducted offline in sandboxed environments;
+no stegotext is posted to live networks. Any released code          [5] Bin Li, Ming Wang, Xiaolong Li, Shunquan Tan, and
+is research-use only: will not provide operational keys or              Jiwu Huang. A strategy of clustering modification di-
+publish artifacts that would materially elevate adversarial use         rections in spatial image steganography. IEEE Transac-
+beyond what is already possible with existing steganography             tions on Information Forensics and Security, 10(9):1905–
+schemes [3, 4, 18]. We will also align the work with defensive          1917, 2015.
+practice. Alongside the steganography code, we will provide
+evaluation protocols and steganalysis baselines in real-world       [6] Jessica Fridrich and Miroslav Goljan. On estimation of
+scenarios, and we explicitly clarify that provable indistin-            secret message length in lsb steganography in spatial
+guishability applies to the cover distribution, not to user or          domain. In Security, steganography, and watermarking
+network behavior. Consequently, behavior-based defenses re-             of multimedia contents VI, volume 5306, pages 23–34.
+main applicable in practice. Finally, we include prominent              SPIE, 2004.
+usage warnings: the code targets theoretical research, and
+steganography is not a panacea that takes the risk of cir-          [7] Zhili Zhou, Yan Mu, and QM Jonathan Wu. Cover-
+cumvention away. It can reduce content-level detectability              less image steganography using partial-duplicate image
+but cannot eliminate operational or network risks. We strongly          retrieval. Soft Computing, 23(13):4927–4938, 2019.
+recommend that users comply with all applicable local laws
+and regulations.                                                    [8] Qiang Liu, Xuyu Xiang, Jiaohua Qin, Yun Tan, Jun-
+                                                                        shan Tan, and Yuanjing Luo. Coverless steganogra-
+                                                                        phy based on image retrieval of densenet features and
+9     Open Science                                                      dwt sequence mapping. Knowledge-Based Systems,
+                                                                        192:105375, 2020.
+Our steganography algorithms and prompts are available at
+Zenodo, https://zenodo.org/records/18152848. The                    [9] Zhong-Liang Yang, Xiao-Qing Guo, Zi-Ming Chen,
+project includes: the ADS steganography encoding and de-                Yong-Feng Huang, and Yu-Jin Zhang. Rnn-stega: Lin-
+coding algorithms, the prompts used in our experiments, and             guistic steganography based on recurrent neural net-
+the Python environment dependencies.                                    works. IEEE Transactions on Information Forensics
+                                                                        and Security, 14(5):1280–1295, 2018.
+
+
+
+USENIX Association                                                                   35th USENIX Security Symposium        3157
+[10] Tina Fang, Martin Jaggi, and Katerina Argyraki. Gener-      [21] R.J. Barron, Brian Chen, and G.W. Wornell. The duality
+     ating steganographic text with lstms. In Proceedings of          between information embedding and source coding with
+     ACL 2017, Student Research Workshop, pages 100–106,              side information and some applications. IEEE Transac-
+     2017.                                                            tions on Information Theory, 49(5):1159–1180, 2003.
+[11] Zachary Ziegler, Yuntian Deng, and Alexander M Rush.        [22] Esra Satir and Hakan Isik. A huffman compression
+     Neural linguistic steganography. In Proceedings of               based text steganography method. Multimedia tools and
+     the 2019 Conference on Empirical Methods in Natu-                applications, 70:2085–2110, 2014.
+     ral Language Processing and the 9th International Joint
+     Conference on Natural Language Processing (EMNLP-           [23] Ferdinando Cicalese, Luisa Gargano, and Ugo Vac-
+     IJCNLP), pages 1210–1215, 2019.                                  caro. Minimum-entropy couplings and their appli-
+                                                                      cations. IEEE Transactions on Information Theory,
+[12] Siyu Zhang, Zhongliang Yang, Jinshuai Yang, and                  65(6):3436–3451, 2019.
+     Yongfeng Huang. Provably secure generative linguis-
+     tic steganography. In Findings of the Association for       [24] Murat Kocaoglu, Alexandros Dimakis, Sriram Vish-
+     Computational Linguistics: ACL-IJCNLP 2021, pages                wanath, and Babak Hassibi. Entropic causal inference.
+     3046–3055, 2021.                                                 In Proceedings of the AAAI Conference on Artificial
+[13] Yiming Xue, Jiaxuan Wu, Ronghua Ji, Ping Zhong, Juan             Intelligence, volume 31, 2017.
+     Wen, and Wanli Peng. Adaptive domain-invariant fea-         [25] Murat Kocaoglu, Alexandros G. Dimakis, Sriram Vish-
+     ture extraction for cross-domain linguistic steganalysis.        wanath, and Babak Hassibi. Entropic causality and
+     IEEE Transactions on Information Forensics and Secu-             greedy minimum entropy coupling. In 2017 IEEE In-
+     rity, 2023.                                                      ternational Symposium on Information Theory (ISIT),
+[14] Zhongliang Yang, Yongfeng Huang, and Yujin Zhang.                pages 1465–1469, 2017.
+     Ts-csw: Text steganalysis and hidden capacity estima-
+                                                                 [26] Cheuk Ting Li. Efficient approximate minimum entropy
+     tion based on convolutional sliding windows. Multime-
+                                                                      coupling of multiple probability distributions. IEEE
+     dia Tools and Applications, 79:18293–18316, 2020.
+                                                                      Transactions on Information Theory, 67(8):5259–5268,
+[15] Christian Cachin. An information-theoretic model for             2021.
+     steganography. In International Workshop on Informa-
+     tion Hiding, pages 306–318. Springer, 1998.                 [27] Jinjie Ni, Fuzhao Xue, Yuntian Deng, Jason Phang,
+                                                                      Kabir Jain, Mahir Hitesh Shah, Zangwei Zheng, and
+[16] Nicholas J. Hopper. Toward a Theory of Steganography.            Yang You. Instruction in the wild: A user-based in-
+     Ph.d. thesis, Carnegie Mellon University, Pittsburgh, PA,        struction dataset. https://github.com/XueFuzhao/
+     2004.                                                            InstructionWild, 2023.
+[17] Christian Schroeder de Witt, Samuel Sokota, J Zico          [28] Yuelin Bai, Xeron Du, Yiming Liang, Leo Jin, Junt-
+     Kolter, Jakob Nicolaus Foerster, and Martin Strohmeier.          ing Zhou, Ziqiang Liu, Feiteng Fang, Mingshan Chang,
+     Perfectly secure steganography using minimum entropy             Tianyu Zheng, Xincheng Zhang, et al. Coig-cqia: Qual-
+     coupling. In The Eleventh International Conference on            ity is all you need for chinese instruction fine-tuning. In
+     Learning Representations, 2022.                                  Findings of the Association for Computational Linguis-
+[18] Yaofei Wang, Gang Pei, Kejiang Chen, Jinyang Ding,               tics: NAACL 2025, pages 8190–8205, 2025.
+     Chao Pan, Weilong Pang, Donghui Hu, and Weiming
+     Zhang. Sparsamp: Efficient provably secure steganogra-      [29] Albert Q Jiang, Alexandre Sablayrolles, Arthur Mensch,
+     phy based on sparse sampling. In 34th USENIX Security            Chris Bamford, Devendra Singh Chaplot, Diego de las
+     Symposium (USENIX Security 25), 2025.                            Casas, Florian Bressand, Gianna Lengyel, Guillaume
+                                                                      Lample, Lucile Saulnier, et al. Mistral 7b. arXiv preprint
+[19] Christian Schroeder de Witt, Samuel Sokota, J Zico               arXiv:2310.06825, 2023.
+     Kolter, Jakob Nicolaus Foerster, and Martin Strohmeier.
+     Perfectly secure steganography using minimum entropy        [30] Jinze Bai, Shuai Bai, and Yunfei Chu et. al. Qwen tech-
+     coupling. In The Eleventh International Conference on            nical report. arXiv preprint arXiv:2309.16609, 2023.
+     Learning Representations, 2022.
+                                                                 [31] Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey,
+[20] Guorui Liao, Jinshuai Yang, Weizhi Shao, and Yongfeng            Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman,
+     Huang. A framework for designing provably secure                 Akhil Mathur, Alan Schelten, Amy Yang, Angela Fan,
+     steganography. In 34th USENIX Security Symposium                 et al. The llama 3 herd of models. arXiv preprint
+     (USENIX Security 25), pages 6837–6856, 2025.                     arXiv:2407.21783, 2024.
+
+
+
+3158   35th USENIX Security Symposium                                                                     USENIX Association
+[32] Pengfei Liu, Weizhe Yuan, Jinlan Fu, Zhengbao Jiang,
+     Hiroaki Hayashi, and Graham Neubig. Pre-train, prompt,
+     and predict: A systematic survey of prompting methods
+     in natural language processing. ACM Comput. Surv.,
+     55(9), jan 2023.
+
+[33] Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and
+     Yejin Choi. The curious case of neural text degeneration.
+     In International Conference on Learning Representa-
+     tions, 2019.
+
+
+
+
+USENIX Association                                               35th USENIX Security Symposium   3159
+

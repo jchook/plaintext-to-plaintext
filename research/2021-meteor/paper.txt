@@ -1,0 +1,1217 @@
+                      Meteor: Cryptographically Secure Steganography
+                                 for Realistic Distributions
+                                 Gabriel Kaptchuk                                              Tushar M. Jois, Matthew Green, Aviel D. Rubin
+                                  Boston University                                                             Johns Hopkins University
+                                 Boston, United States                                                           Baltimore, United States
+                                  kaptchuk@bu.edu                                                           {jois,mgreen,rubin}@cs.jhu.edu
+
+ABSTRACT                                                                                       1   INTRODUCTION
+Despite a long history of research and wide-spread applications to                             The past several years have seen a proliferation of encrypted com-
+censorship resistant systems, practical steganographic systems ca-                             munication systems designed to withstand even sophisticated, nation-
+pable of embedding messages into realistic communication distribu-                             state attackers [1, 2]. While these systems maintain the con�den-
+tions, like text, do not exist. We identify two primary impediments                            tiality of plaintext messages, the data transmitted by these tools is
+to deploying universal steganography: (1) prior work leaves the                                easily identi�able as encrypted communication. This makes these
+di�cult problem of �nding samplers for non-trivial distributions                               protocols easy targets for repressive regimes that are interested
+unaddressed, and (2) prior constructions have impractical minimum                              in limiting free communication [3, 4]: for example, using network
+entropy requirements. We investigate using generative models as                                censorship techniques such as those practiced by countries like
+steganographic samplers, as they represent the best known tech-                                China [5–7]. Concrete attempts to suppress the encrypted commu-
+nique for approximating human communication. Additionally, we                                  nication technologies used to evade censors are now underway. For
+study methods to overcome the entropy requirement, including                                   example, China’s Great Firewall (GFW) not only prevents users
+evaluating existing techniques and designing a new steganographic                              from accessing content deemed subversive, but it also actively de-
+protocol, called Meteor. The resulting protocols are provably indis-                           tects and blocks encryption-based censorship circumvention tech-
+tinguishable from honest model output and represent an important                               nologies such as Tor [8–10].
+step towards practical steganographic communication for mundane                                   In regimes where cleartext communication is expected, the mere
+communication channels. We implement Meteor and evaluate it                                    use of encryption may be viewed as an indication of malicious
+on multiple computation environments with multiple generative                                  or subversive intent. To work around blocking and avoid suspi-
+models.                                                                                        cion, users must make their communications look mundane. For
+                                                                                               instance, Tor users in China have begun to leverage steganographic
+                                                                                               techniques such as ScrambleSuit/obfs4 [11], SkypeMorph [12], Ste-
+CCS CONCEPTS
+                                                                                               goTorus [13], TapDance [14, 15], and Format-Transforming Encryp-
+• Security and privacy ! Cryptography; Network security;                                       tion [16]. These techniques embed messages into tra�c that censors
+Pseudonymity, anonymity and untraceability.                                                    consider acceptable.
+                                                                                                  While the current generation of steganographic tools is su�cient
+KEYWORDS                                                                                       to evade current censorship techniques, these tools are unlikely to
+                                                                                               remain a sustainable solution in the future. While some tools pro-
+Steganography; Applied Cryptography; Generative Models; Cen-
+                                                                                               vide strong cryptographic guarantees [12, 17, 18], this is achievable
+sorship Resistance
+                                                                                               only because they encode messages into (pseudo-)random cover-
+                                                                                               text channels, i.e., replacing a random or encrypted stream with a
+ACM Reference Format:                                                                          chosen pseudorandom ciphertext. Unfortunately, there is no guar-
+Gabriel Kaptchuk and Tushar M. Jois, Matthew Green, Aviel D. Rubin.
+                                                                                               antee that such channels will continue to be available: a censor can
+2021. Meteor: Cryptographically Secure Steganography for Realistic Dis-
+                                                                                               systematically undermine such tools by preventing the delivery of
+tributions. In Proceedings of the 2021 ACM SIGSAC Conference on Com-
+puter and Communications Security (CCS ’21), November 15–19, 2021, Vir-                        encrypted tra�c for which it does not have a suitable trapdoor, (i.e.,
+tual Event, Republic of Korea. ACM, New York, NY, USA, 21 pages. https:                        an access mechanism), or by selectively degrading the quality of
+//doi.org/10.1145/3460120.3484550                                                              encrypted channels. An audacious, repressive regime could even
+                                                                                               consider all encryption to be subversive, and drop all packets not
+                                                                                               explicitly recognizable as meaningful plaintext. Rigorous studies of
+                                                                                               the capabilities of the current GFW focus on other techniques [19–
+                                                                                               22], but there is anecdotal evidence that encryption suppression
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed          has begun to occur [23], including the blocking of some TLS 1.3
+for pro�t or commercial advantage and that copies bear this notice and the full citation       connections [24].
+on the �rst page. Copyrights for components of this work owned by others than the
+author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+republish, to post on servers or to redistribute to lists, requires prior speci�c permission
+and/or a fee. Request permissions from permissions@acm.org.                                    Steganography for Realistic Communication Channels. To
+CCS ’21, November 15–19, 2021, Virtual Event, Republic of Korea                                combat extreme censorship, there is a need for steganographic pro-
+© 2021 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+ACM ISBN 978-1-4503-8454-4/21/11. . . $15.00                                                   tocols that can produce stegotext (the steganographic equivalent
+https://doi.org/10.1145/3460120.3484550                                                        of ciphertext) that closely mimics real, innocuous communication.
+With such techniques, it would be impossible for a censor to se-         channel can be measured and e�ciently computed: draw random
+lectively repress communications, as subversive messages could           coins and use them to randomly select an output from the explicit
+hide in benign communication. For instance, if dissidents could en-      probability distribution. Natural communication channels — the
+code secret messages into mundane appearing emails, web-forum            most useful targets for practical steganography — are generally
+posts, or other forms of “normal” human communication, censor-           too complex for such naïve sampling techniques. For example, it
+ship would be impractical. The ideal tool for this task is universal     is infeasible to perfectly measure the distribution of the English
+steganography: schemes which are able to securely hide sensitive         language, and the usage of English continues to evolve and change.
+information in arbitrary covertext channels (the steganographic              Without access to perfect samplers, we explore steganographic
+term for communication channels). Even if the censor suspects            samplers that approximate the target channel. While this relaxation
+something, the secret message cannot be found — nor is there any         introduces the risk that an adversary can detect a steganographic
+statistical evidence of its existence.                                   message by distinguishing between the real channel and the ap-
+   A key challenge in this setting is to identify a generator of some    proximation, this is the best we can do when perfect samplers cannot
+useful distribution where sampling will produce symbols that are         be constructed. In this work, we propose to use generative models
+identical (or at least close) to ordinary content present in a com-      as steganographic samplers, as these models are the best technique
+munications channel. Given such a generator, numerous universal          for approximating complex distributions like text-based communi-
+steganographic constructions have been proposed that can sam-            cation. While these models are still far from perfect, the quality of
+ple from this distribution to produce a stegotext [25–31]. Unfortu-      generated content is impressive [51, 52] and continues to improve,
+nately, identifying useful generators is challenging, particularly for   raising concerns about the disastrous societal impact of misuse [53].
+complex distributions such as natural language text. To our knowl-           Generative models operate by taking some context and model
+edge, the only practical attempts to achieve practical steganography     parameters and outputting an explicit probability distribution over
+such natural communication channels have come from the natural           the next token (for example, a character or a word) to follow that
+language processing (NLP) community [32–44]. While the result-           context. During typical use, the next token to add to the output is
+ing text is quite convincing, these works largely rely on insecure       randomly sampled from this explicit distribution. This process is
+steganographic constructions that fail to achieve formal de�ni-          then repeated, updating the context with the previously selected
+tions [45–50]. In this work, we focus our attention on constructing      tokens, until the output is of the desired length. Model creation,
+provably secure steganography for the kinds of distributions that        or training, processes vast amounts of data to set model param-
+would be di�cult for a censor block without su�ering signi�cant          eters and structure such that the resulting output distributions
+social repercussions. To do so, we identify and overcome the barri-      approximate the true distributions in the training data.
+ers to using steganographic techniques as practical tools to combat          The use of generative models as steganographic samplers facili-
+network censorship.                                                      tates the creation of stegotext that are provably indistinguishable
+Overcoming Shortcomings of Existing Steganographic Tech-                 from honest model output, and thus good approximations of real
+niques. Steganographic schemes that are able to encode into any          communication (although not indistinguishable from real communi-
+communication channel have been the subject of signi�cant the-           cation). We show that the nature of generative models, i.e. a shared
+oretical work, e.g., [25–31]. Generally, constructions rely on the       (public) model and explicit probability distribution, can be lever-
+existence of an e�cient sampler functionality that, on demand,           aged to signi�cantly increase concrete e�ciency of steganographic
+outputs a token (sometimes referred to as a document) that could         schemes. Our key insight is that a sender and receiver can keep
+appear in the covertext channel. These tokens are then run through       their models synchronized, and thus recover the same explicit prob-
+a hash function that maps the token to a small, �xed number of           ability distribution from which each token is selected, a departure
+bits. Using rejection sampling, an encoder can �nd a token that          from traditional steganographic models. This allows the receiver
+maps to some speci�c, desired bits, usually the �rst few bits of         to make inferences about the random coins used by the sender
+a pseudo-random ciphertext. By repeatedly using this technique,          when sampling each token. If the message is embedded into this
+a sender can encode an entire ciphertext into a series of tokens,        randomness (in an appropriately protected manner), the receiver
+and a receiver can recover the message by hashing the tokens and         can use these inferences to extract the original message.
+decrypting the resulting bits. Security of these approaches relies on
+the (pseudo-)randomness of the ciphertext and carefully controlling      (2) Steganography for Channels with High Entropy Variability. The
+the bias introduced by rejection sampling.                               second barrier is the channel entropy requirements of most existing
+   There are two signi�cant barriers to using universal stegano-         schemes. Speci�cally, most universal steganographic schemes are
+graphic systems for censorship-resistant communication: (1) the          only capable of encoding messages into covertext channels if that
+lack of appropriate samplers for real, desirable covertext channels,     channel maintains some minimum entropy, no matter the context.
+like English text, and (2) the minimum entropy bounds required to        Real communication channels often encounter moments of low (or
+use existing techniques.                                                 even zero) entropy, where the remaining contents of the message
+                                                                         are fairly proscribed based on the prior context. For instance, if
+(1) Generative Models as Steganographic Samplers. Existing work          a sentence generated by a model trained on encyclopedia entries
+leaves samplers as an implementation detail. However, �nding a           begins with “The largest carnivore of the Cretaceous period was
+suitable sampler is critical to a practical construction. Sampling       the Tyranosaurus” with overwhelming probability the next token
+is straightforward for simple covertext channels for which the           will be “Rex”, and any other token would be very unlikely. In many
+instantaneous probability distribution over the next token in the        existing steganographic proposals, if the hash of this next token
+(i.e. Hash(“Rex”)) does not match the next bits of the ciphertext, no           characterize. This means the imperceptibility of steganography
+amount of rejection sampling will help the encoder �nd an appro-                for these channels will always be bounded by the accuracy
+priate token, forcing them to restart or abort. Thus, to ensure that            of the available approximation techniques. The best approxi-
+the probability of this failure condition is small, most classical con-         mation tool available in the existing literature is generative
+structions impose impractical entropy requirements. We investigate              modeling [55], and thus we focus on integrating them into
+overcoming this problem in two ways. First, we evaluate the practi-             steganographic systems.
+cality of known techniques for public-key steganography, in which          (2) We prepare for a future in which encrypted and pseudorandom
+an arbitrary communication channel is compiled into one with                    communications are suppressed, breaking existing tools. As
+su�cient entropy. Second, we leverage the structure of generative               such, the current inadequacies of generative models should not
+models to create a new, symmetric key steganographic encoding                   be seen as a limitation of our work; the quality of generative
+scheme called Meteor. Our key observation is that the best way                  models has steadily improved [52] and is likely to continue
+to adapt to variable entropy is to �uidly change the encoding rate              improving. Once the techniques we develop are necessary in
+to be proportional to the instantaneous entropy. Together, these                practice, there is hope that generative models are su�ciently
+could be used to build hybrid steganography, where the public-key               mature to produce convincingly real output.
+scheme is used to transmit a key for a symmetric key scheme.               (3) Finally, there already exist applications in which sending model
+Contributions. In this work we explore the use of modern gen-                   output is normal. For instance, arti�cial intelligence powered
+erative models as samplers for provably secure steganographic                   by machine learning models regularly contribute to news ar-
+schemes. This provides the groundwork for steganography that                    ticles [56, 57], create art [58, 59], and create other digital con-
+convincingly imitates natural, human communication once the                     tent [60, 61]. Theses channels can be used to facilitate crypto-
+di�erences between generative models and true communication                     graphically secure steganographic communication using our
+become imperceptible. In doing so, we have the following contribu-              techniques today.
+tions:                                                                    • In Meteor, we assume that the sender and receiver (along with the
+• Evaluation of Classical Public-Key Steganography in Prac-                  censor) access the same generative model. While this requirement
+    tice. We evaluate the use of a classical public-key steganographic       might seem like a limitation, we reiterate that the security of
+    scheme from [54]. We investigate adapting this scheme to work            the scheme does not require that the model remain private. As
+   with generative models, and show that known techniques intro-             such, this model is similar to the common random string model
+    duce prohibitively high overhead.                                        common in cryptography. Additionally, it is common practice to
+• Meteor. We present Meteor, a new symmetric-key, stateful, prov-            share high quality models publicly [51, 52, 62], and these models
+    ably secure, steganographic system that naturally adapts to highly      would outperform anything an individual could train. As such,
+   variable entropy. We provide formalization for the underlying            we believe that this assumption is reasonable and show it yields
+    techniques so that they can be easily applied to new generative          signi�cant performance gains.
+    models as they are developed.                                         Deployment Scenario. Our work focuses on the following sce-
+• Implementation and Benchmarking. Additionally, we imple-                nario: Imagine a sender (e.g. news website, compatriot) attempting
+    ment Meteor and evaluate its performance in multiple computing        to communicate with a receiver (e.g. political dissident) in the pres-
+    environments, including on GPU, CPU, and mobile. We focus             ence of a censor (e.g. state actor) with control over the communica-
+    primarily on English text as our target distribution, but also in-    tions network. We assume that the sender and receiver agree on any
+   vestigate protocol generation. To the best of our knowledge, our       necessary key information out of band and select an appropriate
+   work is the �rst to evaluate the feasibility of a provably secure,     (public) generative model. Although we focus on English text in this
+    universal steganographic using text-like covertext channels by        work, the generative model could be for any natural communica-
+    giving concrete timing measurements.                                  tion channel. The sender and receiver then initiate communication
+• Comparison with Informal Steganographic Work. In addi-                  over an existing communication channel, using a steganographic
+    tion to the constructive contributions above, we survey the inse-     encoder parameterized by the generative model to select the tokens
+    cure steganographic techniques present in recent work from the        they send over the channel. The censor attempts to determine if
+    NLP community [32–44]. We discuss modeling di�erences and             the output of the generative model being exchanged between the
+    give intuition for why these protocols are not provably secure.       sender and receiver is subversive or mundane. We note that practi-
+Limitations. We want to be clear about the limitations of our work.       cal deployments of these techniques would likely incorporate best
+• Our work does not address how well a machine learning model             practices to achieve forward secrecy, post compromise security, and
+   can approximate an existing, “real” communication channel. An-         asynchronicity, possibly by using parts of the Signal protocol [1].
+   swering this question will be crucial for deployment and is the        Organization. In Section 2, we give background and assess re-
+   focus of signi�cant, machine learning research e�ort [51, 52].         lated work on classical steganographic techniques from the cryp-
+   Regardless of the current state of generative models and how           tographic community, how steganography is currently used in
+  well they imitate real communication, our work is valuable for          practice, and generative models. In Section 3, we give formal def-
+   the following reasons:                                                 initions for steganography. In Section 4, we explore using exist-
+ (1) The ever-changing and poorly de�ned nature of real communi-          ing techniques and steganographic schemes to build public-key
+     cation channels makes sampling an inherently hard problem;           steganography for English text distributions. In Section 5, we give
+     channels of interest are impossible to perfectly measure and         a construction of a new, symmetric key steganographic system,
+    Algorithm 1: Public-Key Encoding Scheme from [54]                       Security for such schemes is simple to see: each bit of the en-
+     Input: Plaintext Message <, Distribution D, Sampling               crypted message is random, by the pseudorandomness of the ci-
+               Bound :, public-key pk                                   pher, and each token in the stegotext is randomly sampled from
+     Output: Stegotext Message 2                                        the true distribution, with no bias introduced by the hash function
+     G     PseudorandomPKEncrypt(pk, <)                                 (by de�nition). As such, the distribution of the stegotext matches
+     Let G 0 ||G 1 || . . . ||G |G | G                                  the covertext exactly. However, if no unbiased hash function exists,
+     2     Y                                                            as none do for in�nitely many distributions [54], a universal hash
+     for 8 < |G | do                                                    function can be used instead, and the bias it introduces must be
+         28       Sample(D)                                             carefully controlled.
+         9       0                                                          These rejection sampling algorithms fail when the distribution
+         while 5 (28 ) < G8 and 9 < : do                                has very low entropy. In such cases, it is unlikely an unbiased hash
+               28        Sample(D)                                      function will exist, so a universal hash function must be used. One
+               9        9 +1                                            of two possible problems is likely to occur. (1) During sampling,
+         2       2 k28                                                  it is possible that the sampling bound : may be exceeded without
+     Output 2                                                           �nding an acceptable token, after which the encoder simply ap-
+                                                                        pends a randomly sampled token. Importantly, the receiver can not
+                                                                        detect that this error has occurred, or indeed how many such errors
+Figure 1: The public-key steganography scheme from [54].
+                                                                        are contained in the message, and will just get a decryption error
+PseudorandomPKEncrypt is the encryption routine for a pseu-
+                                                                        during decoding. (2) If : is set very high, it may be possible to �nd
+dorandom, public-key encryption scheme. Sample randomly
+                                                                        a token that hashes to the correct value, at the cost of introducing
+selects an token from the covertext space according to the
+                                                                        noticeable bias in the output distribution. As such, it is critical that
+distribution D.
+                                                                        the distribution maintain some minimum amount of entropy. To
+                                                                        our knowledge, only two prior works [31, 54] build stateful stegano-
+                                                                        graphic techniques that avoid the minimum entropy requirement.
+                                                                        Focusing on asymptotic performance, both rely on error correcting
+Meteor, and analyze its e�ciency and security. In Section 6, we         codes and have poor practical performance.
+give implementation details for Meteor and evaluate the e�ciency            In the closest related work, the authors of [75] theoretically
+of using Meteor on di�erent systems. Finally, in Section 7 we dis-      analyze the limitations of using Markov Models as steganographic
+cuss existing work from the NLP community and show why it is            samplers. The prove that any sampler with limited history cannot
+insecure.                                                               perfectly imitate the true covertext channel. Our work overcomes
+                                                                        this limitations by considering the output of the model the target
+2     BACKGROUND AND RELATED WORK                                       covertext distribution.
+                                                                            In our work we consider more powerful machine learning models
+Classical Steganography. Since Simmons’ �rst formalization of           and allow the sender and receiver to share access to the same public
+steganographic communication [25], signi�cant e�ort has been de-        model. This is a departure from prior steganographic work, moti-
+voted to theoretical steganography. Early work focused on achiev-       vated by the public availability of high quality models [51, 52, 62]
+ing information-theoretic security [26, 27, 63, 64] before moving on    and because this relaxation introduces signi�cant e�ciency gains.
+to cryptographic [28–30] and statistical [65–67] notions of steganog-   As there has been, to our knowledge, no work testing the practi-
+raphy. The are many symmetric-key constructions [27, 28, 68],           cal e�ciency of secure steganographic constructions for complex
+public-key constructions [29, 30, 69, 70], and even identity based      channels, no other work considers this model.
+constructions [71]. Relatively little on formal steganography has
+been in the last 15 years, although there are recent works consider-    Current Steganography in Practice. The main contemporary
+ing the boundaries of steganography [72], the related problem of        use for steganography is to connect to Tor ([8–10]) without being
+backdoor resistance [73] and keyless steganography [74].                �agged by the plethora of surveillance mechanisms used by cen-
+   In general, the steganographic schemes presented in the litera-      sors [19]. Steganographic techniques include protocol obfuscation,
+ture rely on rejection sampling to �nd randomly selected elements       e.g., obfs4/ScrambleSuit [11], domain fronting [76], or mimicry,
+of the covertext distribution that hash to desired bits. Given space    e.g., SkypeMorph [12], FTEProxy [16], StegoTorus [13], Censor-
+constrains, we cannot describe and compare to all prior work. For       Proofer [17], and FreeWave [18]. Although these tools allow users
+a representative example, consider the public-key steganographic        to circumvent censors today, they are quite brittle. For example, pro-
+scheme from [29, 54] presented in Algorithm 1. First, the encoder       tocol obfuscation techniques are not cryptographically secure and
+uses a pseudorandom, public-key encryption scheme to encrypt            rely on censors defaulting open, i.e., a message should be considered
+the message. Then, one bit G8 at a time, the encoder uses rejection     innocuous when its protocol cannot be identi�ed. Protocol mimicry
+sampling to �nd a token 28 in the covertext distribution D such         techniques, encoding one protocol into another, are not always
+that 5 (28 ) = G8 , where 5 is a perfectly unbiased function over D.    cryptographic and often fail when protocols are under-speci�ed or
+We omit the formal description of the simple decoding algorithm,        change without warning [77].
+in which the receiver simply computes 5 (28 ) for all 8, concatenates      Modern steganographic techniques that are cryptographically
+the bits, and decrypts the result.                                      secure include tools like SkypeMorph [12], CensorProofer [17],
+and FreeWave [18], that tunnel information through Voice-Over-IP            We note there is work focusing on di�erentiating machine-
+(VoIP) tra�c, which is usually encrypted with a pseudorandom             generated text from human-generated text [93–95]. It has yet to be
+cipher. Once encrypted communication has started, a sender can re-       seen if these techniques will remain e�ective as machine learning
+place the normal, VoIP encrypted stream with a di�erent encrypted        algorithms continue to improve, setting the stage for an “arms race”
+stream carrying the secret message. By the security of the cipher,       between generative models and distinguishers [96].
+a censor cannot detect that the contents of the encrypted chan-
+nel have been replaced and the communication looks like normal,          3 DEFINITIONS
+encrypted VoIP tra�c. If access to encrypted or pseudorandom
+communication channels were suppressed, these tools would no             3.1 Symmetric Steganography
+longer work.                                                             The new construction in this work is symmetric-key stenography,
+   There have been small-scale tests [78] at deploying cryptography      so for completeness we include symmetric-key de�nitions. The
+secure steganographic tagging via ISP level infrastructure changes,      de�nitions for public-key steganography are a straightforward
+as suggested in Telex [14] and TapDance [15]. These tags indicate        adaptation of the de�nitions provided here and can be found in [54].
+that a message should be redirected to another server, but stop             A symmetric steganographic scheme ⌃ D is a triple of possibly
+short of hiding full messages. These tags also critically rely on the    probabilistic algorithms, ⌃ D = (KeyGen D , Encode D , Decode D )
+presence of (pseudo-)random �elds in innocuous protocol tra�c.           parameterized by a covertext channel distribution D.
+   Practical work has been done in the �eld of format-transforming       • KeyGen D (1_ ) takes arbitrary input with length _ and generates
+encryption (FTE), such as [79–82]. These approaches require senders        :, the key material used for the other two functionalities.
+to explicitly describe the desired covertext channel distribution, an    • Encode D (:, <, H ) is a (possibly probabilistic) algorithm that
+error-prone process requiring signi�cant manual e�ort and is in-           takes a key : and a plaintext message <. Additionally, the al-
+feasible for natural communication. None of these applications,            gorithm can optionally take in a message history H , which is
+however, provide any kind of formal steganographic guarantee.              an ordered set of covertext messages H = {⌘ 0, ⌘ 1, . . . , ⌘ | H | 1 },
+Recently, there has also been work attempting to leverage machine          presumably that have been sent over the channel. Encode returns
+learning techniques to generate steganographic images, i.e. [83–88],       a stegotext message composed of 28 2 D.
+but none of these systems provide provable security.                     • Decode D (:, 2, H ) is a (possibly probabilistic) algorithm that
+                                                                           takes as input a key : and a stegotext message 2 and an op-
+Generative Neural Networks. Generative modeling aims to cre-               tional ordered set of covertext messages H . Decode returns a
+ate new data according to some distribution using a model trained          plaintext message < on success or the empty string Y on failure.
+on input data from that distribution. High quality language mod-
+els [51, 52], are generative neural networks, which use neural net-      We use the history notation that is used in a number of previous
+work primitives. The model itself contains a large number of “neu-       works [28, 29], but not universally adopted. The history input to
+rons” connected together in a weighted graph of “layers”, which          the encode and decode functions capture the notion that covertext
+“activate” as the input is propagated through the network. Unlike tra-   channels may be stateful. For instance, members of the ordered
+ditional feed-forward neural networks used in classi�cation tasks,       set H could be text messages previously exchanged between two
+generative networks maintain internal state over several inputs to       parties or the opening messages of a TCP handshake.
+generate new text. Training these models typically ingests data in       Correctness. A steganographic protocol must be correct, i.e. except
+an e�ort to set weights to neurons, such that the model’s output         with negligible probability an encoded message can be recovered
+matches the input data distribution; in other words, the network         using the decode algorithm. Formally, for any :  KeyGen D (1_ ),
+“learns” the relationships between neurons based on the input. The
+�rst practical development in this �eld was the creation of long           Pr [ Decode D (:, Encode D (:, <, H ), H ) = < ]       1   negl(_).
+short-term memory (LSTM) networks [89]. LSTM networks are
+found in machine translation [90, 91], speech recognition, and lan-      Security. We adopt a symmetric-key analog of the security de�ni-
+guage modeling [55]. The transformer architecture [92], exempli�ed       tions for a steganographic system secure against a chosen hidden-
+by the GPT series of models [51, 52], is also becoming popular, with     text attacks in [29], similar to the real-or-random games used in
+results that are increasingly convincing [53].                           other cryptographic notions. Intuitively, a steganographic protocol
+   After training, the model can be put to work. Each iteration of       ⌃ D is secure if all ppt. adversaries are unable to distinguish with
+the model proceeds as follows: the model takes as input its previous     non-negligible advantage if they have access to encoding oracle
+state, or “context”. As the context propagates through the network,      Encode D (:, ·, ·) or a random sampling oracle $ D (·, ·) that returns
+a subset of neurons activate in each layer (based on previously          a sample of the appropriate length. This ensures that an adver-
+trained weights), up until the “output layer”. The output layer has      sary wishing to block encoded messages will be forced to block
+one neuron for output token, and uses the activated neurons to           innocuous messages as well. We allow the adversary to not only
+assign each token a weight between 0 and 1. The model uses its           have a sampling oracle to the distribution (as in [28]), but also have
+trained weights and the context input to generate a distribution of      the same distribution description given to the encoding algorithm.
+possible tokens, each with a probability assigned. The model uses        More formally, we write,
+random weighted sampling to select a token from this distribution,
+returning the chosen token as output. Finally, the returned token is     De�nition 1. We say that a steganographic scheme ⌃ D is secure
+appended to the context and the next iteration begins.                   against chosen hiddentext attacks if for all ppt. adversaries A D ,
+:      KeyGen D (1_ ),                                                    4     ADAPTING CLASSICAL
+                                                                                STEGANOGRAPHIC SCHEMES
+        h                      i     h             i                      Characterizing Real Distributions. In this section, we focus on
+           EncodeD (:,·,·))            $ ( ·,·)
+      Pr A D                =1     Pr A DD      = 1 < negl(_)             adapting classical steganographic techniques to English language
+                                                                          distributions using generative models, speci�cally the GPT-2 [51]
+                                                                          language model. As noted in Section 2, existing steganographic
+where $ D (·, ·) is an oracle that randomly samples from the distri-      schemes require a certain, minimum amount of entropy for each
+bution.                                                                   sampling event. Any positive value, no matter how small, is suf-
+                                                                          �cient for a channel to be “always informative,” i.e., theoretically
+                                                                          permit the generation of stegotext. In practice, as we will see, an
+3.2     Ranged Randomness Recoverable Sampling                            always informative channel with trivial entropy will yield extraor-
+        Scheme                                                            dinarily long stegotext, a problem in practice.
+                                                                             Practical covertext channels, on the other hand, may not be
+To construct Meteor, we will need a very speci�c property that            always-informative, let alone have non-trivial entropy. Figure 2a
+many machine learning algorithms, like generative neural networks,        depicts several representative runs of the entropy over time for a
+possess: namely, that the random coins used to sample from the            sample of tokens from the GPT-2 model. Each data point re�ects the
+distribution can be recovered with access to a description of the         amount of entropy in the model after sampling G characters from
+distribution. If it is possible to uniquely recover these random coins,   the model. The entropy varies wildly between sampling events,
+steganography is trivial: sample covertext elements using a pseu-         and there is no clear consistency state of entropy over several
+dorandom ciphertext as sampling randomness and recover this               tokens. Moreover, the entropy occasionally drops close to zero. As
+ciphertext during decoding. However, generative machine learning          such, existing steganographic techniques will fail; in our testing,
+models do not achieve unique randomness recovery.                         Algorithm 1 from [54] has a 100% failure rate when encoding a
+   Meteor requires a sampling algorithm with a randomness recov-          16-byte message using GPT-2.
+ery algorithm that extracts the set of all random values that would
+yield the sample. Because this set could possibly be exponentially        Adaptation 1: Entropy Bounding. A natural adaptation to peri-
+large, we requiring that the set be made up of polynomial number1         ods of low entropy would be to not attempt to encode information
+of continuous intervals, i.e. it has a polynomial space representa-       while the entropy in the channel is too low. Both the sender and
+tion that can be e�ciently tested for membership. We call schemes         receiver have access to the distribution, meaning they can both
+that have this property Ranged Randomness Recoverable Sampling            detect periods of low entropy and skip them. This means that only
+Schemes, or RRRSS. The formal interface for RRRSS schemes is              “high-entropy” events are utilized for sampling, �xing a minimum
+parameterized by an underlying distribution D, from which sam-            entropy that is used in the steganographic protocol. In e�ect, this
+ples are to be drawn and has two ppt. algorithms. Additionaly, we         entropy bounding creates a sort of channel-within-a-channel that
+make the size of length of the randomness explicit by requiring all       meets the always entropy requirement.
+random values to be selected from {0, 1} V . The two algorithms are          While this does increase the success rate (this method achieved
+de�ned below:                                                             0–10% failure rate in our tests), it also introduces a new problem:
+                                                                          signi�cant bias in the sampled tokens. Figure 2b is a histogram
+           V
+• Sample D (H, A ) ! B. On history H and randomness A 2 {0, 1} V ,        showing the probability that the selected token from the distribu-
+  sample an output B from its underlying distribution D                   tion would be sampled (i.e. the probability weight of the selected
+          V
+• Recover D (H, B) ! R. On history H and sample B, output the             tokens). In the �gure, entropy bounding for di�erent numbers of
+                                                                          tries are shown (:), along with a baseline sample. The baseline is
+  set R = {A 2 {0, 1} V |Sample D (H, A ) = B}.
+                                                                          also “bounded” here: it represents the probabilities of normally-
+                                                                          sampled tokens when the distribution entropy was above = 4.5.
+Note that our sampling scheme takes in a history, making it some-            As the �gure depicts, the entropy bounding method introduces
+what stateful. This allows for conditioning sampling on priors, a         signi�cant bias by including a disproportionate number of tokens
+key property we require to ensure that Meteor is su�ciently �exi-         in certain bins. This is because the hash function used is not un-
+ble to adapt to new covertext distributions. For example, consider        biased, so repeated rejection sampling from the same distribution
+character-by-character text generation: the probability of the next       exacerbates the bias of the hash function. In short, there is still not
+character being “x” is signi�cantly altered if the prior character was    enough entropy to hide the bias introduced by the hash function.
+a “e” or a “t.”                                                           Thus, an adversary can distinguish between an encoded message
+   The notion of randomness recovery has been widely studied in           and an innocuous one by seeing if the selection probabilities of the
+cryptography, primarily when building IND CCA2 secure public-             messages are di�erent.
+key cryptography, e.g. [97, 98]. These works de�ne notions like
+                                                                          Adaptation 2: Variable Length Samples. An alternative method
+unique randomness recovery and randomness recovery, in which the
+                                                                          to handle low-entropy periods, as proposed by [54], is to compile
+recover algorithm run on some B returns a single value A such that
+                                                                          the channel into one with su�cient entropy. If a channel is always
+5 (:, A ) = B for an appropriate function 5 and key :. Unlike the
+de�nitions in prior work, we require a sample scheme over a some          1 In practice, we will be working with schemes for which there is a single set, continuous
+distribution and the extraction of intervals.                             set of random values that result in the same output.
+                         Entropy over time for 4 samples
+            10                                                                                               Selection Probabilities, 16-byte message: Entropy Bound           = 4.5                                          Selection Probabilities, 16-byte message: Resampling
+                                                                                                        80
+                                                                                                                                                                   Baseline (bounded)                                                                                          Baseline
+                                                                                                        70                                                         : = 16                                                                                                       ? = : = 16
+             8                                                                                                                                                                                                     50
+                                                                                                                                                                   : = 32                                                                                                       ? = : = 32
+                                                                                                        60                                                         : = 64                                                                                                       ? = : = 64
+                                                                                                                                                                   : = 128
+
+
+
+
+                                                                               Relative Frequency (%)                                                                                     Relative Frequency (%)
+             6                                                                                                                                                                                                     40                                                           ? = : = 128
+                                                                                                        50
+  Entropy
+                                                                                                        40                                                                                                         30
+             4
+
+                                                                                                        30
+                                                                                                                                                                                                                   20
+             2
+                                                                                                        20
+                                                                                                                                                                                                                   10
+             0                                                                                          10
+
+                 0   5            10             15        20    25                                      0                                                                                                          0
+                                  Token Position                                                             0.0       0.1        0.2           0.3          0.4            0.5                                         0.0         0.2         0.4              0.6     0.8             1.0
+                                                                                                                                  Probability of Selection                                                                                    Probability of Selection
+
+
+(a) Entropy of GPT-2 output distributions.
+                                                                             (b) Binned probability of selecting the tokens                                                             (c) Binned probability of selecting the tokens
+Each datapoint computed as Shannon en-
+                                                                             included in the �nal stegotext using entropy                                                               included in the �nal stegotext variable length
+tropy of the output distribution after sam-
+                                                                             bounding with a value of 4.5 and the GPT-                                                                  sampling. Although there is slight variation
+pling a certain number of tokens. Then, a ran-
+                                                                             2 model. The stegotext tokens clearly come                                                                 in the distributions, there is no clear dif-
+dom token is sampled from that distribution
+                                                                             from a di�erent distribution. Note that base-                                                              ference between the stegotext and the base-
+and appended to the context. Di�erent col-
+                                                                             line tokens were only sampled from events                                                                  line. Moreover, this method is proved secure
+ors represent di�erent runs starting with the
+                                                                             above the entropy bound.                                                                                   in [54].
+same context and di�erent randomness.
+
+                                                      Figure 2: Investigations into adapting classical steganographic techniques.
+
+Table 1: Performance results for model load encoding using                                                                                          to the number of tries to encode. There are di�erences between the
+the method of [54] and resampling, averaged over 30 runs.                                                                                           probabilities, but here is no clear pattern – this variation can be
+The message being encoded is the �rst 16 bytes of Lorem                                                                                             attributed to sampling error. [54] proved that for this approach to
+Ipsum.                                                                                                                                              be secure, ? must be strictly larger than log(:); to achieve useful
+                                                                                                                                                    security parameters, we need ? = : ⇡ 2⇥_, where _ is the security
+                               Samples                 Time     Stegotext Len.                                 Overhead                             parameter.
+  Parameters                   (Tokens)                (Sec)        (KiB)                                      (Length)                                While provably secure, variable length sampling results in un-
+                                                                                                                                                    reasonably large stegotext and long encoding times. Table 1 shows
+            ? = : = 16            502.8                42.69           2.3                                         149.4x
+                                                                                                                                                    the length of stegotext and encoding times when encoding a 16
+            ? = : = 32            880.4               128.41           4.1                                         261.8x
+                                                                                                                                                    byte plaintext message using adaptation 2 on our Desktop/GPU
+            ? = : = 64           1645.0               361.28           7.5                                         482.1x
+                                                                                                                                                    test environment using the GPT-2 model (refer to Section 6 for
+            ? = : = 128          2994.6               765.40          13.6                                         870.7x
+                                                                                                                                                    hardware details). Each row corresponds to 30 runs of the model for
+                                                                                                                                                    that set of parameters. As ? (and thereby :) increase, the length
+                                                                                                                                                    of the stegotext also increases: the higher resampling entropy re-
+                                                                                                                                                    quirement means that more tokens must be sampled, which takes
+informative, meaning it always has some n > 0 entropy, this can                                                                                     more time. We note that these results include GPU acceleration, so
+be done by sampling some �xed number ✓ elements together, such                                                                                      there is little room for performance boosts from hardware.
+that the resulting channel has at least ✓ ⇥ n entropy. By setting ✓
+appropriately, the entropy in the compiled channel is guaranteed
+to be high enough. However, in real communications channels, the                                                                                    5         METEOR: A MORE EFFICIENT
+entropy in the channel may not always be non-zero. As such, a
+naïve application of this approach will fall short.
+                                                                                                                                                              SYMMETRIC-KEY STEGANOGRAPHIC
+    We overcome this by sampling a variable number of tokens                                                                                                  SCHEME
+in each sampling event, such that the cumulative entropy of the                                                                                     We now design a symmetric-key steganographic scheme that is
+distributions from which the tokens come surpasses the minimum                                                                                      more practical than the techniques above. A more e�cient symmetric-
+requirement. More speci�cally, instead of sampling one token at a                                                                                   key approach would allow for hybrid steganography, in which a
+time in the while loop of Algorithm 1, this method samples ? tokens                                                                                 sender encodes a symmetric key using the public-key steganog-
+until the sum of the entropy of the distributions from which those                                                                                  raphy and then switches to a faster and more e�cient encoding
+tokens were sampled meets a minimum threshold ? . Intuitively,                                                                                      scheme using this symmetric key. We note that while symmetric-
+this approach “collects” entropy before attempting to encode into                                                                                   key approaches have been considered in the past, e.g. [28, 68], they
+it, boosting success rate while avoiding the issues of low entropy.                                                                                 also rely on the entropy gathering techniques highlighted above.
+    Figure 2c shows a selection probabilities graph, with di�erent                                                                                  Our approach’s intuition to accommodate high entropy variability is
+values of ? compared against a baseline measurement of normal                                                                                       to �uidly change the encoding rate with the instantaneous entropy
+sampling from the GPT-2 (note this baseline includes all sampled                                                                                    in the channel. As will become clear, Meteor does this implicitly,
+tokens, unlike in Figure 2b). In the �gure, each set of runs of the                                                                                 by having the expected number of bits encoded be proportional to
+model sets _ = :, i.e., the entropy required to encode is equivalent                                                                                the entropy.
+5.1    Intuition                                                              possible and then unmasks them with the corresponding XOR mask
+Suppose we have, for example, a generative model M trained to                 to recover bits of the message. Conceptually, this can be seen as
+output English text word-by-word. Each iteration takes as input               repeatedly encrypting the message with a stream cipher, facilitating
+all previously generated words H and outputs a probability dis-               bit-by-bit decryption. This novel encoding technique means the
+tribution P for the next word, de�ned over all known words T .                number of bits that can be transmitted in each sampling event is not
+This is done by partitioning the probability space between 0 and              �xed. In practice, this is a huge advantage, as the expected number
+1 (represented at some �xed precision) into continuous intervals              of bits transmitted is proportional to the entropy in the channel
+A 0, A 1, . . . , A< corresponding to each valid word. For instance, if the   without requiring any explicit signaling (see Section 5.2). Finally, it
+precision is 5 bits, A 0 might be interval [00000, 00101), A 1 might          is intuitively clear why this approach yields a secure scheme: (1)
+be [00101, 10000), and so on. The algorithm then generates a uni-             each sampling event is performed with a value of A that appears
+form random value A 2 [00000, 11111], �nds the interval A8 into               independent and random and (2) all bits that can be recovered are
+which A falls, and outputs the corresponding word. In the example,            obscured with a one-time pad.
+if A = 01110, then the word corresponding to A 1 would be chosen. In
+practice, these values all have much higher precision, for example            5.2    Meteor
+A 2 {0, 1}32, A8 2 {0, 1}32 ⇥ {0, 1}32 .                                      For notation, let _ be a security parameter, n be the empty string,
+     Meteor embeds messages into the random number A used to                  and k represent concatenation or appending to an ordered set,
+sample from the model, as illustrated in Figure 3. Consider the               as appropriate. We adopt Python-like array indexing, in which
+information that a potential receiver with access to the model might          G [0 : 1] includes the elements of G starting with 0 and ending with
+learn from a single output of the generative model. Because the
+                                                                              1, exclusive. Finally, we use two subroutines LenPrefixV (·) and
+receiver has access to M, they can recover the interval A8 into which
+                                                                              PrefixV (·), presented in Algorithm 2 and Algorithm 3, respectively.
+A must have fallen. Note that a A8 might contain a huge — possibly
+                                                                              The �rst gives the length of the longest shared bit pre�x of elements
+exponential — number of possible values that would all yield the
+                                                                              in the set, and the second returns this bit pre�x explicitly.
+same sample, meaning the receiver cannot uniquely recover the
+true value of A . However, because the intervals are continuous, all          Pseudorandom Generators. Our construction leverages a pseu-
+such values may share a pre�x, e�ectively �xing the �rst few bits             dorandom generator PRG [99]. For a more formal treatment of the
+of A in the view of the receiver. In this example above, all values           security notions of PRGs, see [100] and the citations contained
+in A 1 are contained in the �rst half of the distribution space, so           therein. We adopt the notation used in stateful PRGs. Speci�cally,
+the receiver can conclude the �rst bit of A must have been a 0.               let the PRG have the functionalities PRG.Setup and PRG.Next. The
+Similarly, if the word corresponding to A 0 had been chosen, the              setup algorithm generates the secret state material, which we will
+�rst bits of A must have been 00. Another example can be seen in              denote :?A6 for simplicity, and the next algorithm generates V pseu-
+Figure 3, in which the interval corresponding to the word “The”               dorandom bits. We require that the PRG satisfy at least the real-or-
+shares the pre�x 01, so a receiver can recover these bits. In this way,       random security games.
+if A is a function of the hidden message, the receiver can potentially
+recover bits of information about the message with each output of             Construction. Meteor consists of three algorithms, parameterized
+the model. Because the sender and receiver share the description              by a bit precision V and a model M that supports a RRRSS. We use
+of the distribution, the sender can determine how many bits will              a generative model M as our instantiation of the distribution D
+be recoverable, and then discard those bits before repeating the              for an RRRSS as de�ned in Section 3. The key generation algorithm
+                                                                                       V
+process.                                                                      KeyGen M is presented in Algorithm 4, the encoding algorithm
+     The key challenge in this setting is keeping the message hidden                  V
+                                                                              Encode M is presented in Algorithm 5, and the decoding algorithm
+from the adversarial censor with access to the same distribution.                     V
+Clearly, using the bits of the message as the randomness is inse-             Decode M is presented in Algorithm 6.
+cure, as a censor with the same model could extract the message.                 The precision V 2 Z, V > 0 controls the maximum number of bits
+Encrypting the message with a pseudorandom cipher, as in the                  that can be encoded in each iteration. V should be the accuracy of the
+public-key solution above, is also insu�cient because it is possible          underlying sampling scheme. Most models in our implementation
+that the encoder will be forced to reuse randomness. For example,             give probability distributions accurate to 32 bits, so we set V = 32.
+consider a probability distribution in which the values of the inter-         In our tests, it is incredibly unlikely that 32 bits will successfully be
+val containing A have no shared pre�x, but 90% of the values in that          encoded at once, meaning using a lower V is likely acceptable.
+interval begin with a 0. Because no bits are transmitted and the                 Because the model used in sampling is a generative one, the
+next iteration will use the same value of A . The censor now knows            model maintains state on its previous inputs. Each distribution
+that with 90% likelihood, A in the second sampling event begins               generated by the model is dependent on the values sampled from
+with zero. Over enough trials, a censor could detect this bias and            previous distributions. Additionally, the model requires an initial
+distinguish between honestly sampled output and stegotext.                    state to begin the generative process. This state is abstracted by the
+     To avoid the reuse of randomness, Meteor generates a fresh               history parameter H passed to instances of Encode and Decode.
+mask for A each time the sender samples an output. This is done               This allows the distributions generated by each successful sampling
+using a PRG, keyed with state shared by the sender and receiver,              of a covertext token 28 to remain synchronized between the two
+and applied using XOR. The receiver recovers as many bits of A as             parties. We assume that the entire history H is maintained between
+                                                                              the parties, including the initial state that primes the model.
+        Plaintext                       Encoder                                                      Stegotext
+        Attack@Dawn                          Message Bits: 0100 0001 0111 0100                       The first importance of the Yucatan
+                                                                                                     Peninsula is demonstrated with the
+                                              PRG Mask: 0001 0110 1011 1101
+                                                                                                     following conclusion: the Pliocene
+        Context                                             0101 0111 1100 1001                      Earth has lost about seven times as
+        Evidence indicates that                                                                      much vegetation as the Jurassic in
+                                                                                                     regular parts of the globe, from
+        the asteroid fell in the
+                                            Generative                                               northern India to Siberia…
+        Yucatan Peninsula, at                Model             An       The   A   However   Since
+        Chicxulub, Mexico.
+
+
+
+Figure 3: An overview of the encoding strategy for Meteor. In each iteration of Meteor, a new token (shown in green) is selected
+from the probability distribution created by the generative model. Depending on the token selected, a few bits (shown in red)
+can be recovered by the receiver. The stegotext above is real output from the GPT-2 model.
+
+
+    The encoding algorithm loops through three stages until the               query, and responds only if it is an entry in the table. Note that if
+entire message has been successfully encoded: (1) generating and              '(·) implements a true random function, the encoding algorithm
+applying the mask, (2) sampling a next output to append to the                simply samples a random message from the distribution. When A
+covertext, and (3) updating the state of the algorithm based on the           terminates, outputting a bit 1, Â outputs 1 as well.
+output of the sampling event. In the �rst stage, the mask is computed            As the message is masked by the queries Â sends to '(·), A
+as the output of a pseudorandom generator and is applied with the             must be able to distinguish between a true-random output and the
+XOR operation. The resulting value, A is distributed uniformly in             xor of a message with a one-time pad. Because XOR preserves the
+[0, 2V+1 ), as each bit of A is distributed uniformly in {0, 1}. This         uniformly-random distribution of the pad, this is not possible with
+random value is then used in step (2) to sample the next output of            non-negligible probability.
+the sampling scheme. To determine the number of bits this sampling
+event has successfully encoded, the encoding algorithm uses the               E�ciency. The asymptotic, expected throughout of Meteor is pro-
+RecoverV functionality of the RRRSS and calls LenPrefix on the                portional to the entropy in the communication channel. To see this,
+                                                                              note that the expected throughput for each sampling event can
+resulting (multi-)set. Finally, the algorithm then updates the V bits                           Õ
+that will be used in the next iteration, and updates its other state          be computed as 8 2 | P | ?8 Exp(?8 ), where P is the distribution in
+as appropriate.                                                               the channel for the sampling event, ?8 is the probability of each
+    The decoding algorithm performs these same three stages, but              individual outcome, and Exp(·) is the expected number of shared
+with the order of the �rst two reversed. With knowledge of the                pre�x bits for some continuous interval of size ?8 . Thus, if Exp(?8 ) is
+                                                                              proportional to log2 (?8 ), Meteor is asymptotically optimal (recall
+output of each sampling stage 28 , the �rst algorithm calls RecoverV
+                                                                              that entropy, the information-theoretic boundary for information
+and Prefix to recompute some (possibly zero) leading bits of the A .                                           Õ
+                                                                              transmission, is computed as       8 2 | P | ?8 log(?8 )). We show in Ap-
+Then, it calculates the mask that was used by the encoder for those
+bits and removes the mask. The bits recovered in this way make up             pendix A that Exp(?8 ) 12 ( log2 (?8 ) 1) for ?8  12 by carefully
+the message.                                                                  observing the behavior of the LenPrefix function when evaluated
+    Note that we do not discuss reseeding the PRG. Most PRGs have             on a �xed sized interval with a random starting point between
+a maximum number of bits that can be extracted before they are                [0, 2V+1 ).
+no longer considered secure. Because the PRG secret information
+is shared by the sender and receiver, they can perform a rekeying             6     EVALUATION OF METEOR
+or key ratcheting function as necessary.                                      In this section we discuss our implementation of Meteor and eval-
+                                                                              uate its e�ciency using multiple models. We focus on evaluating
+Proof of Security. We sketch the proof of security, as the formali-           Meteor, not a hybrid steganography system using the public key
+ties of this simple reduction are clear from the sketch. Consider an          stegosystem in Section 4, because it is signi�cantly more e�cient.
+adversary A which has non-negligible advantage in the security                Moreover, the e�ciency of a hybrid stegoanography system is de-
+game considered in De�nition 1. We construct an adversary Â                  termined by the e�ciency of its constituent parts; the cost of such a
+with non-negligible advantage in the PRG real-or-random game,                 scheme is simply the cost of transmitting a key with the public key
+with oracle denoted '(·). To properly answer queries from A, Â               scheme (see Section 4) plus the cost of transmitting the message
+runs the encoding algorithm in Algorithm 2 with an arbitrary in-              with Meteor. An interactive online demonstration of our system is
+put message, but queries the '(·) to obtain the mask required for             available at https://meteorfrom.space.
+sampling. Additionally, Â keeps a table of all queries sent by A             Implementation details. We implemented Meteor using the Py-
+and the responses. When A queries the decoding algorithm, Â                  Torch deep learning framework [101]. We realize the PRG function-
+checks its table to see if the query matches a previous encoding              ality with HMAC_DRBG, a deterministic random bit generator de�ned
+ Algorithm 2: LenPrefixV                                                                           V
+                                                                           Algorithm 7: Sample M for the GPT-2 model.
+  Input: Set of Bit Strings R = {A 1, A 2, . . . A= }
+                                                                             Input: Randomness A 2 {0, 1} V , History H
+  Output: Length ✓
+                                                                             Output: Token =4GC
+  ✓    1
+                                                                             T, P     Next M (H )
+  while ✓ < V do
+                                                                             2D<;     0
+     if 9 8, 9 2 {1, . . . , =} such that A8 [0 : ✓] < A 9 [0 : ✓] then
+         Output ✓ 1                                                          for 8 2 {0, 1, . . . , |T | 1} do
+                                                                                2D<;      2D<; + P [8]
+     ✓     ✓ +1
+  Output ✓                                                                      if 2D<; > A then
+                                                                                    Output =4GC          T [8]
+ Algorithm 3: PrefixV                                                        Output =4GC      T [|T |   1]
+  Input: Set of Bit Strings R = {A 1, A 2, . . . A= }
+                                                                                                   V
+  Output: Bit String B                                                     Algorithm 8: Recover M for the GPT-2 model.
+  Output A 1 [0 : LenPrefixV (R)]                                            Input: History H , Sample B
+                           V
+                                                                             Output: Randomness set R
+ Algorithm 4: KeyGen M                                                       T, P     Next M (H )
+   Input: 1_                                                                 2D<;     0
+   Output: Key :?A6                                                          for 8 2 {0, 1, . . . , |T | 1} do
+                                                                                if T [8] = B then
+   Output :?A6   PRG.Setup(1_ )                                                     Output
+                           V                                                          R       {A 2 {0, 1} V | 2D<;  A < 2D<; + P [8]}
+ Algorithm 5: Encode M                                                          2D<;      2D<; + P [8]
+   Input: Key :?A6 , Plaintext Message <, History H                          Output R       ;
+   Output: Stegotext Message 2
+   2    Y, =   0                                                          Figure 5: RRRSS algorithms for GPT-2 model. T is an array
+   while = < |<| do                                                       of possible next tokens and P is the probability associated
+      <0B:      PRG.Next(:?A6 )
+                                                                          with each of these tokens.
+      A      <[= : = + V] <0B:
+                     V
+      28     Sample M (H, A )
+                       V                                                     To illustrate Meteor’s support for di�erent model types, we im-
+       R     Recover M (H, 28 )
+                                                                          plemented the algorithm with the weakened version of the GPT-2
+      =8     LenPrefixV (R)                                               language model released by OpenAI and two character-level recur-
+      2    2 k28 , = = + =8 , H         H k28                             rent neural networks (RNN) that we train. The GPT-2 model [51]
+   Output 2                                                               is a generative model of the English language. It parses language
+                           V
+                                                                          into a vocabulary of words and generates words when given previ-
+ Algorithm 6: Decode M                                                    ous context. Meteor encodes stegotext into these generated words.
+   Input: Key :?A6 , Stegotext Message 2, History H                       The character-level models generate ASCII characters in each it-
+   Output: Plaintext Message <                                            eration. These models output lower-quality English text, but are
+   G    Y                                                                 more generalizable. Character-level models work with any data that
+   Parse 2 as {2 0, 2 1, . . . , 2 |2 | 1 }                               can be represented as text, including other languages and non-text
+   for 8 2 {0, 1, . . . , |2 | 1} do                                      protocols, whereas word-level models are speci�c to the English
+                          V                                               language models.
+      R      Recover M (H, 28 )
+                                                                             Our GPT-2 codebase builds upon that of [44]. We note that the
+      G8     PrefixV (R)                                                  next-generation GPT language model, GPT-3, has been published
+      <0B:      PRG.Next(:?A6 )                                           by OpenAI [52]; however, at the time of this writing, the codebase
+      G     G k(G8 <0B: [0 : |G8 |])                                      for the GPT-3 has not been released. The GPT-3 interface is the same
+      H      H k28                                                        as the GPT-2, meaning integration will be automatic, increasing
+   Output G                                                               stegotext quality while maintaining security guarantees. Example
+                                                                          stegotext generated with the GPT-2 model can be found in Appendix
+                Figure 4: Algorithms for Meteor                           C.
+                                                                                                                            V               V
+                                                                             Figure 5 shows how to instantiate the Sample M and Recover M
+                                                                          algorithms from Section 3 with the distribution represented as a gen-
+                                                                          erative model M (in discussion of classical steganography, we used
+in NIST SP 800-90 A Rev. 1 [102]. The implementation supports any         D). Both algorithms use Next M (H ), which generates an array of
+type of binary data, such as UTF-8-encoded strings or image �les,         possible next tokens T and an array of probabilities associated with
+                                                                                                                                            V
+as input.                                                                 each token P using the model’s internal structure. The Sample M
+Table 2: Performance measurements for Meteor on the GPT-
+                                                                                                                 GPT-2
+2 by device for a shorter context. Times are provided in sec-                                          100
+                                                                                                                 Wikipedia
+onds.                                                                                                            HTML Headers
+
+                                                                                                       80
+
+
+
+
+                                                                           Time to Encode and Decode
+        Device   Load    Encode   Decode    Overhead (time)
+                                                                                                       60
+        GPU      5.867    6.899    6.095         1⇥
+        CPU      5.234   41.221   40.334        4.6⇥
+        Mobile   1.830   473.58   457.57        49.5⇥                                                  40
+
+
+
+
+                                                                                                       20
+
+
+for generative networks accumulates the probabilities and selects
+the �rst token for which the cumulative probability exceeds the                                         0
+
+randomness supplied. This is equivalent to multinomial sampling,                                             0        50        100         150
+                                                                                                                                      Plaintext Length
+                                                                                                                                                         200   250   300
+
+
+and is the unmodi�ed method of sampling normally from the GPT-2
+model. In the unmodi�ed (i.e., non-Meteor) case, the GPT-2 chooses
+                                                                 V     Figure 6: Comparison of plaintext length versus time to run
+a true random value A instead of a PRG as in Meteor. Recover M         encoding and decoding for di�erent Meteor models. ' =
+inverts the process, returning the entire set of random values that    0.9745 (GPT-2), 0.9709 (Wikipedia), 0.9502 (HTTP Headers)
+would yield the target sample B.
+   In addition to the GPT-2 variant, we trained two character-level
+RNN models to test with Meteor, using the code of [103] with lo-       distribution, whereas the character-level models have, at most, 100
+cally trained models. Each model uses long short term memory           printable ASCII characters from which to sample; this pushes the
+(LSTM) cells to store state [89]. The �rst model, named “Wikipedia”,   capacity of a single token to be much higher as a result. The stark
+was trained on the Hutter Prize dataset [104], which consists of       di�erence in capacity between the capacities of Wikipedia and
+a subset of English Wikipedia articles. The data from this model       HTTP Headers can be attributed to the di�erence in structure of
+contains English text structured with Wiki markup. The output          the training data. The Wikipedia dataset, although structured, is
+of this model is good, but its character-level nature makes its out-   mostly English text. On the other hand, the HTTP Headers dataset is
+puts less convincing human text than GPT-2 output. The second          based on the HTTP protocol, which is rigid in structure — variation
+model, named “HTTP Headers”, consist of the headers for 530,128        only exists in �elds that can change, such as dates and URLs.
+HTTP GET requests from a 2014 ZMap scan of the internet IPv4           Encoding statistics. Our next suite of benchmarks measures the
+space [105, 106]. This highly structured dataset would facilitate      relationship between the length of message and the time it takes
+hiding messages amongst other HTTP requests. We note that the          to produce a stegotext. We generated plaintexts randomly and
+�exibility of character-level models allows us to generalize both      encoded them, incrementing the length of the message by one in
+text-like channels and protocol-esque channels [55]. Both mod-         each run. The results are plotted in Figure 6, which shows a clear
+els have three hidden layers. The Wikipedia model has a hidden         linear relationship between the two variables. It is also apparent
+layer size 795 and was trained for 25,000 epochs. The HTTP head-       from the plot that the variance in encoding time increases as the
+ers model has size 512 and was for 5,000 epochs, due to its more       length increases. This is because as tokens are selected, the model
+structured nature. The two models were trained at a batch size of      state can diverge; in some of these branches, the entropy may be
+100 characters and learning rate 0.001. Example output from the        very low, causing longer encoding times. This is ampli�ed in the
+Wikipedia character-level model can be found in Appendix C.            HTTP Headers model, as the baseline entropy is already very low.
+Evaluation hardware. To measure performance across di�erent            Heuristic optimizations. In addition to implementing Meteor, we
+hardware types, we evaluate Meteor on 3 systems: (1) Desktop/GPU,      also evaluated two heuristic optimizations that could yield shorter
+a Linux workstation with an Intel Core i7-6700 CPU, NVIDIA TI-         stegotext. The �rst optimization is deterministically reordering
+TAN X GPU, and 8 GiB of RAM, (2) Laptop/CPU, a Linux laptop            the model’s output distribution intervals to maximize expected
+with an Intel Core i7-4700MQ CPU, no discrete GPU, and 8 GiB of        throughput. Because this deterministic process does not change the
+RAM, and (3) Mobile, an iPhone X running iOS 13. The Desktop           relative sizes of the interval, it does not impact the distribution of
+ran benchmarks on the GPU, while the Laptop machine ran on the         the stegotext. However, because the placement of the intervals is
+CPU; as such, the Laptop is more representative of consumer hard-      usually arbitrary, it is possible to move large intervals that would
+ware. We evaluate Meteor on both the Desktop and Laptop using          normally have no shared pre�x to a starting location where there is
+each of the three models discussed above. Additionally, we evaluate    a shared pre�x, potentially increasing throughput. A more thorough
+reordering and native compression optimizations (see below). The       discussion of this technique can be found in Appendix B.
+results are summarized in Table 3. We discuss mobile benchmarks           We evaluate this optimization for all three of our models (see
+separately at the end of this section.                                 Table 3). For the GPT-2 model, we see a marked (24.8%) increase in
+Model performance. The capacity, or number of bits encoded             capacity as well as a proportional reduction in stegotext length as a
+per token, is much higher for the GPT-2 model examples than for        result of reordering the model outputs. The reordering does induce
+the Wikipedia and HTTP Headers models. Intuitively, the word-          computational overhead, as the distribution over which the heuris-
+level nature of GPT-2 means there is usually more entropy in each      tic is performed is large (max 50,256 tokens). Reordering induces
+a 0.5% overhead in the Laptop/CPU, where updating the model is          secure under the de�nitions common in the cryptographic liter-
+slow, and 69.0% overhead in the Desktop/GPU, where updating the         ature. Highlighting this weakness, there is a concurrent line of
+model is fast. For the lower entropy models, the reordering algo-       work in the same conferences showing concrete attacks on these
+rithm we use is signi�cantly faster, but yields mixed results. We       schemes, e.g., [45–50].
+believe these mixed results are an artifact of our choice of greedy        The �rst wave of steganographic techniques in the NLP com-
+reordering algorithms, which may perform poorly with heavily            munity leverages synonyms and grammatical reorganization for
+biased distributions.                                                   encoding, e.g., [32–36, 42]. The key observation in this work is
+   The second optimization is to use the model itself as a compres-     that natural variation in linguistic patterns can be used to hide
+sion function when encoding with an English language model, as          information. For instance, if one of two synonyms can be used in
+in [44]. This technique leverages the fact that all known words in      a sentence, each with probability .5, then the selection conveys
+the model’s vocabulary are internally represented by a unique num-      a bit of information. Similarly, comma usage or word order can
+ber, taking fewer bits than its normal ASCII representation. Before     be used to encode small amounts of information. Because not all
+encoding, the secret message can be tokenized and each token can        possible linguistic variations occur with equal likelihood, some of
+be replaced by its unique identi�er. These identi�ers are then parsed   these works adapt a Hu�man encoding scheme to facilitate variable
+as bits and encoded as normal. When implemented with GPT-2,             length encoding, e.g., [32, 36]. These approaches rely on linguistic
+we see a 47.77% decrease in time spent on CPU, and an associated        idiosyncrasies and are therefore not generalizable.
+52.5% decrease in stegotext size. While powerful, this technique           More recently, researchers found ways to use the structure of
+can only be used to encode English language messages into Eng-          these models to steganographically encode information, including
+lish language models. Compressing the plaintext message using           LSTMs [37], Generative Adversarial Networks [38], Markov Mod-
+traditional compression (e.g., GZip) would yield similar results.       els [39], and other forms of Deep Neural Networks [40, 41, 43, 44].
+Mobile benchmarks. Because Meteor is intended for censorship            Rather than give an exhaustive description of the encoding tech-
+resistance, it is natural to benchmark it on mobile devices, where      niques used in these works, we give a brief description of the most
+most sensitive communication happens. We implement Meteor on            important techniques.
+iOS using the CoreML framework, utilizing an existing GPT-2 iOS            Early constructions directly modi�ed the distributions. One such
+implementation as a base [107]. To our knowledge, our work repre-       construction [37] organized the distribution into “bins,” each rep-
+sents the �rst evaluation of a neural network-based steganographic      resenting a short bitstring, and randomly selected an output from
+system on a mobile device. Our implementation, in Swift, employs        the bins corresponding to the message.2 Building on this intuition,
+an even smaller version of the GPT-2 model which �ts on mobile          other research [41, 43] uses Hu�man coding to encode variable
+devices as it uses smaller size context. An example of the output       numbers of bit in each iteration. More recent work has attempted
+from this experiment can be found in Appendix C.                        to use the message itself as the sampling method, a method known
+   Our results are summarized in Table 2. The Mobile benchmark in       as “arithmetic coding” [44]. This method attempts to convert a
+the table was performed on the iPhone X Simulator, as we wished to      plaintext message into a deterministic stegotext based on its con-
+instrument and pro�le our tests. We separately con�rmed that sim-       tents, iteratively using bits from the message to sample into the
+ulator runtimes were similar to those of actual iPhone X hardware.      distribution. The �rst two constructions heavily modify the output
+While Laptop/CPU is 4.6⇥ slower than Desktop/GPU, the Mobile            distribution, rendering stegotext easily detectable. The arithmetic
+runtime is a massive 49.5⇥ slower than the baseline case. While         construction is also insecure, since it reuses randomness in multi-
+deep learning is supported on mobile platforms like iOS, the inten-     ple sampling events, a problem similar to the one that Meteor is
+sive, iterative computations required by Meteor and other neural        designed to overcome.
+stegosystems are not performant on mobile systems. Nonetheless,            The relaxed adversarial models considered in the NLP commu-
+our proof-of-concept demonstrates that Meteor could be used in          nity lead to signi�cantly less robust constructions. For instance,
+a mobile context, and hardware improvements [108] would allow           the adversaries in the NLP literature do not have access to the
+for secure communication between users even when available com-         model [37, 41, 43, 44], signi�cantly limiting the attacks they can
+munication platforms do not o�er end-to-end encryption, such as         mount. Without this assumption, an adversary can clearly di�eren-
+WeChat.                                                                 tiate between a stegotext and covertext by identifying biases in the
+                                                                        output distribution. The adversary compares the candidate output
+                                                                        to random samples from the model, easily distinguishing when a
+7   COMPARISON TO NLP-BASED                                             stegosystem is being run and defeating the purpose entirely.
+    STEGANOGRAPHY                                                          The NLP threat model folds in the face of an advanced, persis-
+Noting the appeal of hiding sensitive messages in natural text, re-     tent adversary who can always ex�ltrate the model through other
+searchers in the �eld of natural language processing (NLP) have         means. Moreover, recent advanced in adversarial machine learning
+recently initiated an independent study of steganography. Unfor-        have demonstrated how even the “secret” parameters of a black-
+tunately, this work does not carefully address the security impli-      box model can be extracted by seeing enough output [109–111],
+cations of developing steganographic systems from NLP models.           unlike that of encryption keys or pseudorandom functions. This
+Instead, the results employ a variety of ad-hoc techniques for em-      pervasive requirement that the model remains private informa-
+bedding secret messages into the output of sophisticated models.        tion is therefore unreasonable. Unable to achieve cryptographic
+The resulting papers, often published in top NLP conferences, lack
+rigorous security analyses; indeed, existing work cannot be proven      2 A similar, but secure, partition based approach is investigated in [27]
+Table 3: Model statistics for encoding a 160-byte plaintext. Timing results re�ect model load, encoding, and decoding combined.
+
+                                                    Desktop/GPU          Laptop/CPU        Stegotext Length     Overhead      Capacity
+                   Mode                                 (sec)               (sec)               (bytes)          (length)    (bits/token)
+                   GPT-2                                   18.089             82.214              1976           12.36⇥          3.09
+                   GPT-2 (Reorder)                         30.570             82.638              1391            8.69⇥          4.11
+                   GPT-2 (Compress)                        11.070             42.942               938            3.39⇥          3.39
+                   Wikipedia                               19.791             46.583              2002           12.51⇥          0.64
+                   Wikipedia (Reorder)                     15.515             39.450              1547            9.67⇥          0.83
+                   HTTP Headers                            49.380            103.280              6144            38.4⇥          0.21
+                   HTTP Headers (Reorder)                  57.864            127.759              7237           45.23⇥          0.18
+
+
+Table 4: Comparative distribution statistics for samples                                  We also note that the security properties of Meteor do not ham-
+from neural steganography algorithms in prior NLP work,                                per the capacity metric signi�cantly. Arithmetic output has a higher
+with random sampling as a baseline. “N/A” indicates that a                             capacity, but we note that the insecurity of this system makes this
+metric is not relevant for an algorithm.                                               additional capacity moot; modifying the parameters to Hu�man
+                                                                                       or bins could have yielded the same capacity with the same secu-
+ Algorithm         Perplexity   KL-Divergence   Capacity    Entropy   Secure?          rity vulnerabilities. Table 4 also includes perplexity and entropy
+ Meteor (this)       21.60          0.045         3.09       6.30       3              statistics, that show Meteor is competitive in performance with the
+ Arithmetic [44]     29.22          0.082         4.82       6.66       7              insecure primitives proposed previously.
+ Hu�man [41, 43]     8.85           0.851         2.31       N/A        7
+ Bins [37]           50.82          2.594         3.00       N/A        7
+ Random Sample       13.82          0.040         N/A        5.36      N/A             8   CONCLUSION
+                                                                                       In this work we present an analysis of the practical limitations of
+                                                                                       using cryptographically secure steganography on real, useful distri-
+security, these constructions evaluate their work by measuring                         butions, identifying the need for samplers and impractical entropy
+the statistical di�erence between the output produced by the en-                       requirements as key impediments. We show that adapting existing
+coding scheme and real text. Highlighting the weaknesses of these                      public key techniques is possible, but produces stegotext that are
+schemes, numerous attack papers have been published, e.g., [45–50].                    extremely ine�cient. We then present Meteor, a novel symmetric
+These attacks use machine learning techniques to detect the pres-                      key steganographic system that dramatically outperforms public
+ence of encoded messages generated with some of the works listed                       key techniques by �uidly adapting to changes in entropy. We eval-
+previously. Ad-hoc and non-cryptographic security is insu�cient                        uate Meteor, implementing it on GPU, CPU, and mobile, showing
+to provide security against powerful and determined adversaries,                       that it is an important �rst step for universal, censorship-resistant
+especially nation-state adversaries.                                                   steganography. Finally, we compare Meteor to existing insecure
+Comparative Analysis. We assess Meteor against the following                           steganographic techniques from the NLP literature, showing it has
+previous solutions: (1) bins [37], (2) Hu�man coding [41], and (3)                     comparable performance while actually achieving cryptographic
+arithmetic coding [44]. We compare standard NLP language statis-                       security.
+tics for these with a regular, random sample from the model, and
+provide our results in Table 4. Note that we mark entropy as “N/A”                     ACKNOWLEDGEMENTS
+for Hu�man and bins because these methods use a binning algo-                          The �rst author is supported by the National Science Founda-
+rithm which prevents us from calculating entropy meaningfully.                         tion under Grant #2030859 to the Computing Research Associ-
+The random sample is a control distribution, and is not encoding                       ation for the CIFellows Project and DARPA under Agreement No.
+anything thereby having “N/A” capacity.                                                HR00112020021. Part of this work was completed while the �rst
+   Of particular note in our results is the Kullback-Leibler (KL)                      author was at Johns Hopkins University. The second and fourth
+divergence across algorithms, which in this case compares the                          authors are funded by the NSF under awards CNS-1329737 and CNS-
+distribution of the model to the output distribution of the algo-                      1955172. The third author is supported by NSF under awards CNS-
+rithm. The KL-divergence for Meteor is very close to that of the                       1653110 and CNS-1801479, the O�ce of Naval Research under con-
+random sample, as Meteor merely changes the randomness to                              tract N00014-19-1-2292, DARPA under Contract No. HR001120C0084,
+steganographically-encoded randomness. As discussed previously,                        and a Security and Privacy research award from Google. Signi�-
+algorithms that modify distributions from the model have high                          cant elements of this work were conducted while the �rst, second,
+biases, and this is re�ected in the KL-divergence of Hu�man and                        and fourth authors were supported by NSF award CNS-1330491.
+bins being much higher than the rest. The arithmetic algorithm has                     The �rst author would like to thank Adam Poliak for his early
+a lower KL-divergence than the rest of the NLP algorithms, as it                       help shaping this project. Additionally, the �rst author would like
+does not modify the distribution; however, it has a higher value                       to thank Eric Wustrow for his insight into censorship resistance
+than Meteor because it reuses randomness, while Meteor uses fresh                      techniques. Any opinions, �ndings and conclusions or recommen-
+randomness like the baseline random sample does.                                       dations expressed in this material are those of the author(s) and do
+not necessarily re�ect the views of the United States Government                           [25] G. J. Simmons, “The prisoners’ problem and the subliminal channel,” in
+or DARPA.                                                                                       CRYPTO’83 (D. Chaum, ed.), pp. 51–67, Plenum Press, New York, USA, 1983.
+                                                                                           [26] R. J. Anderson and F. A. Petitcolas, “On the limits of steganography,” IEEE Journal
+                                                                                                on selected areas in communications, vol. 16, no. 4, pp. 474–481, 1998.
+                                                                                           [27] C. Cachin, “An information-theoretic model for steganography.” Cryptology
+                                                                                                ePrint Archive, Report 2000/028, 2000. http://eprint.iacr.org/2000/028.
+REFERENCES                                                                                 [28] N. J. Hopper, J. Langford, and L. von Ahn, “Provably secure steganography,” in
+ [1] T. Perrin and M. Marlinspike, “he double ratchet algorithm.” Available at https:           CRYPTO 2002 (M. Yung, ed.), vol. 2442 of LNCS, pp. 77–92, Springer, Heidelberg,
+     //whispersystems.org/docs/speci�cations/doubleratchet/.                                    Aug. 2002.
+ [2] WhatsApp, “WhatsApp Encryption Overview.” Available at https://scontent.              [29] L. von Ahn and N. J. Hopper, “Public-key steganography,” in EUROCRYPT 2004
+     whatsapp.net/v/t61/68135620_760356657751682_6212997528851833559_n.pdf/                     (C. Cachin and J. Camenisch, eds.), vol. 3027 of LNCS, pp. 323–341, Springer,
+     WhatsApp-Security-Whitepaper.pdf, December 2017.                                           Heidelberg, May 2004.
+ [3] K.       Conger,        “Whatsapp        blocked        in      brazil      again.”   [30] M. Backes and C. Cachin, “Public-key steganography with active attacks,” in
+     https://techcrunch.com/2016/07/19/whatsapp-blocked-in-brazil-again/,                       TCC 2005 (J. Kilian, ed.), vol. 3378 of LNCS, pp. 210–226, Springer, Heidelberg,
+     Jul 2016.                                                                                  Feb. 2005.
+ [4] T. Fish, “Whatsapp banned: Countries where whatsapp is blocked mapped.”               [31] N. Dedic, G. Itkis, L. Reyzin, and S. Russell, “Upper and lower bounds on black-
+     https://www.express.co.uk/life-style/science-technology/1166191/whatsapp-                  box steganography,” in TCC 2005 (J. Kilian, ed.), vol. 3378 of LNCS, pp. 227–244,
+     ban-map-which-countries-where-whatsapp-blocked-censorship-china-                           Springer, Heidelberg, Feb. 2005.
+     banned, Aug 2019.                                                                     [32] C. Grotho�, K. Grotho�, L. Alkhutova, R. Stutsman, and M. Atallah, “Translation-
+ [5] A. Shahbaz, “Freedom on the net 2018.” Available at https://freedomhouse.org/              based steganography,” in International Workshop on Information Hiding, pp. 219–
+     report/freedom-net/freedom-net-2018/rise-digital-authoritarianism, 2018.                   233, Springer, 2005.
+ [6] Freedom        House,       “Freedom       on     the      net      2018     map.”    [33] M. Shirali-Shahreza and M. H. Shirali-Shahreza, “Text steganography in sms,”
+     https://freedomhouse.org/report/freedom-net/freedom-net-2018/map, 2018.                    2007 International Conference on Convergence Information Technology (ICCIT
+ [7] R. S. Raman, A. Stoll, J. Dalek, R. Ramesh, W. Scott, and R. Ensa�, “Measuring             2007), pp. 2260–2265, 2007.
+     the deployment of network censorship �lters at global scale,” in Network and          [34] Z. Yu, L. Huang, Z. Chen, L. Li, X. Zhao, and Y. Zhu, “Steganalysis of synonym-
+     Distributed Systems Security (NDSS) Symposium 2020, 2020.                                  substitution based natural language watermarking,” 2009.
+ [8] Tor Project, “The tor project: Privacy and freedom online.”                           [35] C.-Y. Chang and S. Clark, “Linguistic steganography using automatically gener-
+     https://www.torproject.org/.                                                               ated paraphrases,” in Human Language Technologies: The 2010 Annual Conference
+ [9] R. Dingledine, N. Mathewson, and P. Syverson, “Tor: The second-generation                  of the North American Chapter of the Association for Computational Linguistics,
+     onion router,” in Proceedings of the 13th Conference on USENIX Security Sympo-             HLT ’10, (Stroudsburg, PA, USA), pp. 591–599, Association for Computational
+     sium - Volume 13, SSYM’04, (Berkeley, CA, USA), pp. 21–21, USENIX Association,             Linguistics, 2010.
+     2004.                                                                                 [36] C.-Y. Chang and S. Clark, “Practical linguistic steganography using contex-
+[10] M. G. Reed, P. F. Syverson, and D. M. Goldschlag, “Anonymous connections                   tual synonym substitution and a novel vertex coding method,” Computational
+     and onion routing,” IEEE Journal on Selected Areas in Communications, vol. 16,             Linguistics, vol. 40, p. 403–448, Jun 2014.
+     pp. 482–494, May 1998.                                                                [37] T. Fang, M. Jaggi, and K. Argyraki, “Generating steganographic text with lstms,”
+[11] P. Winter, T. Pulls, and J. Fuß, “Scramblesuit: A polymorph network protocol to            Proceedings of ACL 2017, Student Research Workshop, 2017.
+     circumvent censorship,” CoRR, vol. abs/1305.3199, 2013.                               [38] D. Volkhonskiy, I. Nazarov, B. Borisenko, and E. Burnaev, “Steganographic
+[12] H. M. Moghaddam, B. Li, M. Derakhshani, and I. Goldberg, “SkypeMorph: pro-                 generative adversarial networks,” 2017.
+     tocol obfuscation for Tor bridges,” in ACM CCS 2012 (T. Yu, G. Danezis, and V. D.     [39] Z. Yang, S. Jin, Y. Huang, Y. Zhang, and H. Li, “Automatically generate stegano-
+     Gligor, eds.), pp. 97–108, ACM Press, Oct. 2012.                                           graphic text based on markov model and hu�man coding,” 2018.
+[13] Z. Weinberg, J. Wang, V. Yegneswaran, L. Briesemeister, S. Cheung, F. Wang,           [40] L. Xiang, “Reversible natural language watermarking using synonym substitu-
+     and D. Boneh, “StegoTorus: a camou�age proxy for the Tor anonymity system,”                tion and arithmetic coding,” 2018.
+     in ACM CCS 2012 (T. Yu, G. Danezis, and V. D. Gligor, eds.), pp. 109–120, ACM         [41] Z. Yang, X. Guo, Z. Chen, Y. Huang, and Y. Zhang, “Rnn-stega: Linguistic
+     Press, Oct. 2012.                                                                          steganography based on recurrent neural networks,” IEEE Transactions on Infor-
+[14] E. Wustrow, S. Wolchok, I. Goldberg, and J. A. Halderman, “Telex: Anticensor-              mation Forensics and Security, vol. 14, pp. 1280–1295, May 2019.
+     ship in the network infrastructure,” in Proceedings of the 20th USENIX Security       [42] S.-Y. HUANG and P.-S. Huang, “A homophone-based chinese text steganography
+     Symposium, Aug. 2011.                                                                      scheme for chatting applications.,” Journal of Information Science & Engineering,
+[15] E. Wustrow, C. M. Swanson, and J. A. Halderman, “Tapdance: End-to-middle                   vol. 35, no. 4, 2019.
+     anticensorship without �ow blocking,” in 23rd {USENIX } Security Symposium            [43] F. Dai and Z. Cai, “Towards near-imperceptible steganographic text,” Proceedings
+     ( {USENIX } Security 14), pp. 159–174, 2014.                                               of the 57th Annual Meeting of the Association for Computational Linguistics, 2019.
+[16] K. P. Dyer, S. E. Coull, T. Ristenpart, and T. Shrimpton, “Protocol misidenti�-       [44] Z. M. Ziegler, Y. Deng, and A. M. Rush, “Neural linguistic steganography,” 2019.
+     cation made easy with format-transforming encryption,” in Proceedings of the          [45] Z. Yang, Y. Huang, and Y.-J. Zhang, “A fast and e�cient text steganalysis method,”
+     2013 ACM SIGSAC conference on Computer & communications security, pp. 61–72,               IEEE Signal Processing Letters, vol. 26, pp. 627–631, 2019.
+     ACM, 2013.                                                                            [46] Z. Yang, K. Wang, J. Li, Y. Huang, and Y. Zhang, “Ts-rnn: Text steganalysis based
+[17] Q. Wang, X. Gong, G. T. K. Nguyen, A. Houmansadr, and N. Borisov, “Censor-                 on recurrent neural networks,” IEEE Signal Processing Letters, p. 1–1, 2019.
+     Spoofer: asymmetric communication using IP spoo�ng for censorship-resistant           [47] Z. Yang, N. Wei, J. Sheng, Y. Huang, and Y.-J. Zhang, “Ts-cnn: Text steganalysis
+     web browsing,” in ACM CCS 2012 (T. Yu, G. Danezis, and V. D. Gligor, eds.),                from semantic space based on convolutional neural network,” 2018.
+     pp. 121–132, ACM Press, Oct. 2012.                                                    [48] A. Wilson, P. Blunsom, and A. Ker, “Detection of steganographic techniques
+[18] A. Houmansadr, T. J. Riedl, N. Borisov, and A. C. Singer, “I want my voice to              on twitter,” Proceedings of the 2015 Conference on Empirical Methods in Natural
+     be heard: IP over voice-over-IP for unobservable censorship circumvention,” in             Language Processing, 2015.
+     NDSS 2013, The Internet Society, Feb. 2013.                                           [49] J. Kodovsky, J. Fridrich, and V. Holub, “Ensemble classi�ers for steganalysis of
+[19] M. C. Tschantz, S. Afroz, Anonymous, and V. Paxson, “Sok: Towards grounding                digital media,” IEEE Transactions on Information Forensics and Security, vol. 7,
+     censorship circumvention in empiricism,” in 2016 IEEE Symposium on Security                pp. 432–444, April 2012.
+     and Privacy (SP), pp. 914–933, May 2016.                                              [50] P. Meng, L. Huang, Z. Chen, W. Yang, and D. Li, “Linguistic steganography
+[20] R. Ensa�, P. Winter, A. Mueen, and J. R. Crandall, “Analyzing the great �rewall            detection based on perplexity,” in 2008 International Conference on MultiMedia
+     of china over space and time,” PoPETs, vol. 2015, pp. 61–76, Jan. 2015.                    and Information Technology, pp. 217–220, Dec 2008.
+[21] B. Marczak, N. Weaver, J. Dalek, R. Ensa�, D. Fi�eld, S. McKune, A. Rey, J. Scott-    [51] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, and I. Sutskever, “Language
+     Railton, R. Deibert, and V. Paxson, “An analysis of china’s “great cannon”,” in 5th        models are unsupervised multitask learners,” OpenAI Blog, vol. 1, no. 8, 2019.
+     {USENIX } Workshop on Free and Open Communications on the Internet ( {FOCI }          [52] T. B. Brown, B. Mann, N. Ryder, M. Subbiah, J. Kaplan, P. Dhariwal, A. Neelakan-
+     15), 2015.                                                                                 tan, P. Shyam, G. Sastry, A. Askell, S. Agarwal, A. Herbert-Voss, G. Krueger,
+[22] R. Ensa�, D. Fi�eld, P. Winter, N. Feamster, N. Weaver, and V. Paxson, “Examining          T. Henighan, R. Child, A. Ramesh, D. M. Ziegler, J. Wu, C. Winter, C. Hesse,
+     how the great �rewall discovers hidden circumvention servers,” in Proceedings              M. Chen, E. Sigler, M. Litwin, S. Gray, B. Chess, J. Clark, C. Berner, S. McCan-
+     of the 2015 Internet Measurement Conference, pp. 445–458, 2015.                            dlish, A. Radford, I. Sutskever, and D. Amodei, “Language models are few-shot
+[23] M. Bevand, “My experience with the great �rewall of china.”                                learners,” 2020.
+     http://blog.zorinaq.com/my-experience-with-the-great-�rewall-of-china/, Jan           [53] O. Blog, “Better language models and their implications.” Available at https:
+     2016.                                                                                      //openai.com/blog/better-language-models/, February 2019.
+[24] K. Bock, iyouport, Anonymous, L.-H. Merino, D. Fi�eld, A. Houmansadr, and             [54] N. J. Hopper, “Toward a theory of steganography,” tech. rep., CARNEGIE-
+     D. Levin, “Exposing and circumventing china’s censorship of esni,” 8 2020.                 MELLON UNIV PITTSBURGH PA SCHOOL OF COMPUTER SCIENCE, 2004.
+[55] A. Karpathy, “The unreasonable e�ectiveness of recurrent neural networks.”             [86] A. Sen, S. Alfeld, X. Zhang, A. Vartanian, Y. Ma, and X. Zhu, “Training set
+     https://karpathy.github.io/2015/05/21/rnn-e�ectiveness/, May 2015.                          camou�age,” Decision and Game Theory for Security, p. 59–79, 2018.
+[56] A. van Dalen, “The algorithms behind the headlines,” Journalism Practice, vol. 6,      [87] M. Chaumont, “Deep learning in steganography and steganalysis from 2015 to
+     no. 5-6, pp. 648–658, 2012.                                                                 2018,” 2019.
+[57] A. Graefe, “Guide to automated journalism,” 2016.                                      [88] P. Wu, Y. Yang, and X. Li, “Stegnet: Mega image steganography capacity with
+[58] D. Rockmore, “What happens when machines learn to write poetry,” Jan 2020.                  deep convolutional network,” Future Internet, vol. 10, p. 54, Jun 2018.
+[59] A. Mayne, “Ai|writer.” https://www.aiwriter.app/.                                      [89] S. Hochreiter and J. Schmidhuber, “Long short-term memory,” Neural computa-
+[60] A. Kind, “Talk to transformer.” https://app.inferkit.com/demo.                              tion, vol. 9, pp. 1735–80, 12 1997.
+[61] “Ai writer.” http://ai-writer.com/.                                                    [90] M. Costa-Jussa and J. Fonollosa, “Character-based neural machine translation,”
+[62] J. Y. Koh. https://modelzoo.co/.                                                            in Proceedings of the 54th Annual Meeting of the Association for Computational
+[63] J. Zöllner, H. Federrath, H. Klimant, A. P�tzmann, R. Piotraschke, A. Westfeld,             Linguistics, pp. 357–361, 03 2016.
+     G. Wicke, and G. Wolf, “Modeling the security of steganographic systems,” in           [91] Y. Kim, Y. Jernite, D. Sontag, and A. M. Rush, “Character-aware neural language
+     International Workshop on Information Hiding, pp. 344–354, Springer, 1998.                  models,” in Proceedings of the Thirtieth AAAI Conference on Arti�cial Intelligence,
+[64] T. Mittelholzer, “An information-theoretic approach to steganography and wa-                AAAI’16, pp. 2741–2749, AAAI Press, 2016.
+     termarking,” in International Workshop on Information Hiding, pp. 1–16, Springer,      [92] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, u. Kaiser,
+     1999.                                                                                       and I. Polosukhin, “Attention is all you need,” in Proceedings of the 31st Interna-
+[65] K. Solanki, K. Sullivan, U. Madhow, B. S. Manjunath, and S. Chandrasekaran,                 tional Conference on Neural Information Processing Systems, NIPS’17, (Red Hook,
+     “Provably secure steganography: Achieving zero k-l divergence using statistical             NY, USA), p. 6000–6010, Curran Associates Inc., 2017.
+     restoration,” in 2006 International Conference on Image Processing, pp. 125–128,       [93] R. Aharoni, M. Koppel, and Y. Goldberg, “Automatic detection of machine
+     Oct 2006.                                                                                   translated text and translation quality estimation,” in Proceedings of the 52nd
+[66] A. Sarkar, K. Solanki, and B. S. Manjunath, “Secure steganography: Statistical              Annual Meeting of the Association for Computational Linguistics (Volume 2: Short
+     restoration in the transform domain with best integer perturbations to pixel                Papers), vol. 2, pp. 289–295, 2014.
+     values,” in IEEE International Conference on Image Processing (ICIP), Sep 2007.        [94] A. Bakhtin, S. Gross, M. Ott, Y. Deng, M. Ranzato, and A. Szlam, “Real or fake?
+[67] K. Sullivan, K. Solanki, B. S. Manjunath, U. Madhow, and S. Chandrasekaran,                 learning to discriminate machine from human generated text,” 2019.
+     “Determining achievable rates for secure, zero divergence, steganography,” in          [95] S. Gehrmann, H. Strobelt, and A. M. Rush, “Gltr: Statistical detection and visual-
+     ICIP, pp. 121–124, IEEE, 2006.                                                              ization of generated text,” 2019.
+[68] L. Reyzin and S. Russell, “Simple stateless steganography.” Cryptology ePrint          [96] Y. Zhu, S. Lu, L. Zheng, J. Guo, W. Zhang, J. Wang, and Y. Yu, “Texygen: A
+     Archive, Report 2003/093, 2003. http://eprint.iacr.org/2003/093.                            benchmarking platform for text generation models,” in The 41st International
+[69] T. V. Le, “E�cient provably secure public key steganography.” Cryptology ePrint             ACM SIGIR Conference on Research & Development in Information Retrieval,
+     Archive, Report 2003/156, 2003. http://eprint.iacr.org/2003/156.                            pp. 1097–1100, ACM, 2018.
+[70] T. V. Le and K. Kurosawa, “E�cient public key steganography secure against             [97] D. Dachman-Soled, G. Fuchsbauer, P. Mohassel, and A. O’Neill, “Enhanced
+     adaptively chosen stegotext attacks.” Cryptology ePrint Archive, Report                     chosen-ciphertext security and applications,” in PKC 2014 (H. Krawczyk, ed.),
+     2003/244, 2003. http://eprint.iacr.org/2003/244.                                            vol. 8383 of LNCS, pp. 329–344, Springer, Heidelberg, Mar. 2014.
+[71] T. Ru�ng, J. Schneider, and A. Kate, “Identity-based steganography and its             [98] C. Peikert and B. Waters, “Lossy trapdoor functions and their applications,” in
+     applications to censorship resistance,” in ACM CCS 2013 (A.-R. Sadeghi, V. D.               40th ACM STOC (R. E. Ladner and C. Dwork, eds.), pp. 187–196, ACM Press,
+     Gligor, and M. Yung, eds.), pp. 1461–1464, ACM Press, Nov. 2013.                            May 2008.
+[72] S. Berndt and M. Liskiewicz, “On the gold standard for security of universal           [99] M. Blum and S. Micali, “How to generate cryptographically strong sequences of
+     steganography,” in EUROCRYPT 2018, Part I (J. B. Nielsen and V. Rijmen, eds.),              pseudo random bits,” in 23rd FOCS, pp. 112–117, IEEE Computer Society Press,
+     vol. 10820 of LNCS, pp. 29–60, Springer, Heidelberg, Apr. / May 2018.                       Nov. 1982.
+[73] T. Horel, S. Park, S. Richelson, and V. Vaikuntanathan, “How to subvert back-         [100] S. Ruhault, “SoK: Security models for pseudo-random number generators,” IACR
+     doored encryption: Security against adversaries that decrypt all ciphertexts,” in           Trans. Symm. Cryptol., vol. 2017, no. 1, pp. 506–544, 2017.
+     ITCS 2019 (A. Blum, ed.), vol. 124, pp. 42:1–42:20, LIPIcs, Jan. 2019.                [101] A. Paszke, S. Gross, S. Chintala, G. Chanan, E. Yang, Z. DeVito, Z. Lin, A. Desmai-
+[74] T. Agrikola, G. Couteau, Y. Ishai, S. Jarecki, and A. Sahai, “On pseudorandom               son, L. Antiga, and A. Lerer, “Automatic di�erentiation in pytorch,” in NIPS-W,
+     encodings,” in TCC 2020, Part III (R. Pass and K. Pietrzak, eds.), vol. 12552 of            2017.
+     LNCS, pp. 639–669, Springer, Heidelberg, Nov. 2020.                                   [102] E. Barker and J. Kelsey, “Nist special publication 800-90a revision 1 recommenda-
+[75] A. Lysyanskaya and M. Meyerovich, “Provably secure steganography with                       tion for random number generation using deterministic random bit generators,”
+     imperfect sampling,” in PKC 2006 (M. Yung, Y. Dodis, A. Kiayias, and T. Malkin,             2015.
+     eds.), vol. 3958 of LNCS, pp. 123–139, Springer, Heidelberg, Apr. 2006.               [103] S. Robertson, “spro/char-rnn.pytorch.” https://github.com/spro/char-
+[76] D. Fi�eld, C. Lan, R. Hynes, P. Wegmann, and V. Paxson, “Blocking-resistant                 rnn.pytorch, Dec 2017.
+     communication through domain fronting,” Proceedings on Privacy Enhancing              [104] M.     Hutter,      “The     human       knowledge       compression       contest.”
+     Technologies, vol. 2015, no. 2, pp. 46–64, 2015.                                            http://prize.hutter1.net/, 2006.
+[77] S. Frolov and E. Wustrow, “The use of tls in censorship circumvention.,” in NDSS,     [105] Z. Durumeric, E. Wustrow, and J. A. Halderman, “Zmap: Fast internet-wide
+     2019.                                                                                       scanning and its security applications,” in Presented as part of the 22nd USENIX
+[78] S. Frolov, F. Douglas, W. Scott, A. McDonald, B. VanderSloot, R. Hynes, A. Kruger,          Security Symposium USENIX Security 13), pp. 605–620, 2013.
+     M. Kallitsis, D. G. Robinson, S. Schultze, et al., “An isp-scale deployment of        [106] S. Cutler, “Project 25499 ipv4 http scans.” https://scans.io/study/mi.
+     tapdance,” in 7th {USENIX } Workshop on Free and Open Communications on the           [107] HuggingFace,                           “huggingface/swift-coreml-transformers.”
+     Internet ( {FOCI } 17), 2017.                                                               https://github.com/huggingface/swift-coreml-transformers, Oct 2019.
+[79] D. Luchaup, K. P. Dyer, S. Jha, T. Ristenpart, and T. Shrimpton, “Libfte: A toolkit   [108] T. Simonite, “Apple’s latest iphones are packed with ai smarts.” https://www.
+     for constructing practical, format-abiding encryption schemes,” in 23rd USENIX              wired.com/story/apples-latest-iphones-packed-with-ai-smarts/.
+     Security Symposium (USENIX Security 14), (San Diego, CA), pp. 877–891, USENIX         [109] S. J. Oh, B. Schiele, and M. Fritz, “Towards reverse-engineering black-box neu-
+     Association, 2014.                                                                          ral networks,” in Explainable AI: Interpreting, Explaining and Visualizing Deep
+[80] K. P. Dyer, S. E. Coull, T. Ristenpart, and T. Shrimpton, “Protocol misidenti�ca-           Learning, pp. 121–144, Springer, 2019.
+     tion made easy with format-transforming encryption,” in ACM CCS 2013 (A.-R.           [110] A. Salem, Y. Zhang, M. Humbert, P. Berrang, M. Fritz, and M. Backes, “Ml-leaks:
+     Sadeghi, V. D. Gligor, and M. Yung, eds.), pp. 61–72, ACM Press, Nov. 2013.                 Model and data independent membership inference attacks and defenses on
+[81] K. P. Dyer, S. E. Coull, and T. Shrimpton, “Marionette: A programmable network              machine learning models,” arXiv preprint arXiv:1806.01246, 2018.
+     tra�c obfuscation system,” in 24th USENIX Security Symposium (USENIX Security         [111] M. Juuti, S. Szyller, S. Marchal, and N. Asokan, “Prada: protecting against dnn
+     15), (Washington, D.C.), pp. 367–382, USENIX Association, 2015.                             model stealing attacks,” in 2019 IEEE European Symposium on Security and
+[82] J. Oakley, L. Yu, X. Zhong, G. K. Venayagamoorthy, and R. Brooks, “Protocol                 Privacy (EuroS&P), pp. 512–527, IEEE, 2019.
+     proxy: An fte-based covert channel,” Computers & Security, vol. 92, p. 101777,
+     May 2020.
+[83] S. Baluja, “Hiding images in plain sight: Deep steganography,” in Neural Infor-
+     mation Processing Systems, 2017.                                                      A      EFFICIENCY OF METEOR
+[84] D. Hu, L. Wang, W. Jiang, S. Zheng, and B. Li, “A novel image steganography
+     method via deep convolutional generative adversarial networks,” IEEE Access,          We now show that the asymptotic expected throughput of Me-
+     vol. 6, pp. 38303–38314, 2018.                                                        teor is proportional to the entropy in the communication chan-
+[85] Harveyslash,                                  “harveyslash/deep-steganography.”
+                                                                                           nel. Recall that the entropy in a distribution P is computed as
+     https://github.com/harveyslash/Deep-Steganography, Apr 2018.                            Õ                                                              th
+                                                                                               8 2 | P | ?8 log2 (?8 ), where ?8 is the probability of the 8 possible
+outcome of P. Similarly, the expected throughput of Meteor can                           2
+                    Õ
+be computed as 8 2 | P | ?8 Exp(?8 ), where Exp(·) is the expected
+number of shared pre�x bits for some continuous interval of size                  Bits   1
+?8 . Thus, the remaining task is to compute a concrete bound on
+Exp(·).                                                                                  0
+                                                                                                            1                 1                 3
+                                                                                             n              4                 2                 4             1
+    We will make the simplifying assumption that the start of an                                                1                 1                 3
+                                                                                                                4 +n              2 +n              4 +n
+interval ?8 is placed randomly between [0, 2V+1 ). Note that interval
+                                                                                                                Starting Location of Interval
+8 will never start after 2V+1 ?8 in practice, so we the number of
+pre�x bits in this case to be 0, so this simpli�cation will lead to
+an expected throughput strictly less than the true value. Addition-               Figure 7: Bits of throughput by starting location for an in-
+ally, the starting locations for each interval are not independent in             terval 8 with size ?8 = 14 n, for some small n. The expected
+practice, as they each depend on ? 9<8 . However, this independence               throughput can be computed as the average of this function,
+assumption also leads to equal or lower expected throughput, as                   i.e. Exp(?8 ) (2)( 14 n)(0) + (2)( 14 n)(1) + (22 )(n) (2) = 12 6n
+the starting point for larger intervals will actually be more biased
+towards the middle of the distribution, where Exp(·) will be lower,
+                                                                                  B      HEURISTIC OPTIMIZATIONS
+and smaller distributions will be biased to start near the edges of
+the distribution, where Exp(·) will be higher.                                    In evaluating Meteor, we also implement two heuristic optimiza-
+    By way of example, consider an interval 8 such that ?8 = 14 n,                tions that could lead to better performance without compromising
+for some small n (see Figure 7). If 8 starts between [0, n), then it is           security. Note that while they increases the expected throughput
+contained completely before the pre�x 01 begins, and thus would                   of scheme, it is not guaranteed to do so. Making any change to the
+transmit 2 bits. The following ?8 starting points all transmit only 1             output selected in a given sampling event might unintentionally
+bit, as the only shared pre�x for the interval would be 0. If 8 starts            push the model down a lower entropy branch of the covertext space,
+between [ 14 2V+1, ( 14 + n)2V+1 ), the entire interval shares the pre�x          yielding more sampling iterations overall. The �rst optimization
+                                                                                  is performing a deterministic reordering operation of the model
+01, so 2 bits can be transmitted. In [( 14 + n)2V+1, 12 2V+1 ), there is
+                                                                                  distribution, reduces the number of calls to the generative model
+no shared pre�x, as some of the samples that would land in that
+                                                                                  by 20%-25%, and in some cases results in more e�cient encoding
+interval start with a 0 and others start with 1. The analysis continues
+                                                                                  and decoding times. The second optimization is an adaptation from
+in this way for the remainder of the starting points.
+                                                                                  the NLP literature that uses the generative model’s internal word
+    More generally, the expected throughput of an interval with
+                                                                                  representation to compress English language messages.
+size ? is the average of these di�erent sets of starting points with
+                                                                                      Before proceeding to the optimizations themselves, recall the
+di�erent length
+            ⌅      shared⇧ pre�xed, weighted by size. More explicitly,            intuition provided for Meteor in Section 5. In each iteration of
+let 6(?) =      log2 (?) , then
+                                                                                  the encoding algorithm, the sender extracts a probability distribu-
+             (                                                                    tion P from the generative model. P is subdivided into a series of
+                 0                                                    , ? > 1/2   continuous intervals A 0, A 1, . . . A< , the size of which determines the
+ Exp(?)                                         Õ6 (?) 1                          probability that the model would select the corresponding token is
+              6(?) (2 6 (?)      ?)26 (?) + ?     9=1      ( 92 9 )   , ?  1/2
+                                                                                  the next output. Meteor then generates a random sampling value
+                                                                                  A = <0B: < and determines the interval A8 into which A falls. The
+The �rst part of the expression corresponds to the starting points
+                                                                                  number of bits encoded is computed as LenPrefix(A8 ).
+where the interval has the most shared bits, e.g. the points in Figure 7
+where the throughput is 2. There are 26 (?) of these sets, each of                Optimization 1: Reordering the Distribution. We note that
+                                                                                  while we cannot manipulate |A8 | without compromising the se-
+which has size (2 6 (?) ?), the di�erence between ? and the nearest
+                                                                                  curity of scheme, we are able to impact LenPrefix(A8 ) by permuting
+power of two less than 2. The sum corresponds to the when the
+                                                                                  the order of A 0, A 1, . . . , A< . It is clear there exists some such permu-
+interval transmits fewer bits, e.g. the points in Figure 7 where the
+                                                                                  tation that maximizes the expected throughput of Meteor, although
+throughput is 1 or 0. Each of these terms counts the ?2 9 starting
+                                                                                  �nding this permutation proves to be di�cult.
+points where the number of bits transmitted is 9.
+                                                                                      The distribution P is generally output by the model in some
+   Note that Exp(?) 12 ( log2 (?) 1) for small enough ?. To see
+                                                                                  sorted or lexicographic order. This might yield to some orderings
+this, note that 6(?)     log2 (?) 1, because of the rounding. Then,
+                                                                                  of A8 that are incredibly unfavorable to LenPrefix(·). Consider an
+just consider the �rst term
+                                                                                  illustrative example in Figure 8a. If an interval A8 contains values on
+                                                                                  either side of the middle of the distribution, then LenPrefix(A8 ) = 0.
+    6(?) (2 6 (?)    ?)26 (?)    ( log2 (?) 1)(1            ?2 log2 (?) 1 )       When a large interval does so, as in cases (1) and (3), this severely
+                                 1                                                decreases the expected number of bits that the distribution can
+                                = ( log2 (?) 1).
+                                 2                                                encode. While this example is clearly contrived, it illustrates the
+                                                                                  impact correctly ordering P can have on the expected throughput
+While this bound is not tight, it illustrates that Exp(?) asymptot-               – in this example an increase of over 50%. Importantly, we can use
+                                   Õ
+ically acts like log2 (?), meaning 8 2 | P | ?8 Exp(?8 ), grows propor-           any reorganization procedure on the distribution provided (1) the
+                                  Õ
+tionally to the entropy in P,        8 2 | P | ?8 log2 (?8 ). Thus, the ex-       same resulting permutation can be computed by both the sender
+pected throughput of Meteor is asymptotically optimal.                            and the receiver and (2) the size of A8 remains the same for all A8 .
+   r0             r1                              r2
+                                                            (0)                                               (1)
+                                                                                                                    r1
+              1) E(d) = .03*5 + .49*0 + .48*1 = .63
+                                                              Bucket 0   Bucket 1       Bucket 2   Bucket 3     Bucket 0   Bucket 1        Bucket 2   Bucket 3
+             r1               r0                  r2
+
+              2) E(d)=.49*1 + .03*0 + .48*1 = .97           (2)                                               (3)
+                                                                  r1                      r2                        r1                r0      r2
+             r1                              r2        r0
+                                                              Bucket 0   Bucket 1       Bucket 2   Bucket 3     Bucket 0   Bucket 1        Bucket 2   Bucket 3
+              3) E(d) = .49*1 + .48*0 + .03*5 = .64
+
+  (a) The impact of reorganizing a distribution.                              (b) An overview of our reorganization algorithm.
+
+Figure 8: (a) A 0 has 3% of the total probability density, while A 1 and A 2 have 48% and 49% respectively. Because 2 6 < .03 < 2 5 , A 0 can encode
+5 bits of information when located at the beginning or end of the distribution. In orderings (1) and (2), one of the larger intervals crosses
+the 50% line, meaning LenPrefix( ·) = 0. When the smallest interval is placed in the middle, the total expected throughput of the distribution
+rises. (b) To reorder this distribution we create 22 = 4 buckets, because the entropy is 1.16. In (1), we place the largest interval A 1 into bucket 0,
+over�owing its value through most of bucket 1. Note that A 1 could have been placed in bucket 2; in general, we break ties by taking the earlier
+bucket. In (2), A 2 can be placed either in bucket 1, over�owing into the following buckets, or placed in bucket 2, over�owing into bucket 3. To
+maximize LenPrefix(A 2 ), we place it in bucket 2. Finally, in (3), we note that A 0 will not �t in bucket 3, so it must be placed in bucket 1, pushing
+A 2 to make space.
+
+
+   Finding the optimal permutation of P proves to be a di�cult                         The runtime of this algorithm is $ (2 d ( P) e <), where < is the
+task. Intuitively, each interval A8 , must be placed as a continuous                number of intervals; in our experiments, d (P)e is typically less
+block somewhere between 0 and 1 such that it does not overlap with                  than 7, so this is close to $ (<), which is unsurprising given its
+other intervals. We take inspiration from approximation algorithms                  similarities to bin-sorting. When = is very large, however, this
+and design a greedy algorithm with pretty good performance, and                     algorithm is prohibitively expensive. In those cases, we use this
+we leave formal analysis and bounds proving of this algorithm                       algorithm to place the “big” intervals, and then simply place the
+for future work. A simple algorithm would be to �nd a “starting                     smaller intervals into the �rst bucket with space. As we discuss in
+point” to place each interval, starting with the largest, that maxi-                §6, reordering the distributions increases capacity by 20%-25%.
+mizes LenPrefix(A8 ). However, there are 2V possible starting points,
+meaning a linear search will be prohibitively  Õ expensive. Instead
+                                                                                    C      MODEL OUTPUTS
+                                                   (A )
+we generate 2 d ( P) e buckets with capacity 2 d 8 (P)8 e , where (P) is            This appendix contains stegotext outputs as generated by Meteor
+the entropy in the distribution. These buckets represent potential                  using several di�erent model types. The plaintext associated with
+“starting points” that each A8 can be placed. Note that the entropy                 all of these outputs is the �rst 160 bytes of Lorem Ipsum. Figure
+represents an upper bound on the possible value of the expected                     10 shows a truncated output for a stegotext generated using the
+throuhput ⇢ (P) and if each interval A8 could perfectly �t into one                 Wikipedia model, which seems to have generated some kind of
+of these bins, ⇢ (P) = (P).                                                         Wiki-markup contents page. Figures 11 and 12 are GPT-2 outputs
+   Starting with the largest A8 , we �nd the bin that will maximize                 for di�erent contexts provided as input. Each output reads like a
+LenPrefix(A8 ) when A8 is appended to that bucket. As buckets be-                   news article or book chapter. Representative output for the HTML
+come full, they are no longer options for placement. Note that A8                   headers model has been omitted due to space constraints. Finally,
+may exceed the remaining capacity of a bucket, or even the total                    Figure 9 is a screenshot of Meteor running on the iPhone Simula-
+capacity of a bucket. When this is the case, we “over�ow” the re-                   tor, generating stream-of-consciousness news text. Note that the
+mainder into the following buckets. Occasionally, this over�owing                   context is shorter on the iPhone, as it can hold less state.
+remainder may cause a chain reaction, requiring other, already
+placed intervals be “pushed” to make space. We give a simple ex-
+ample of our reorganization algorithm in Figure 8b, using the same
+distribution given in Figure 8a. Step (3) gives an example of over-
+�ow that causes one of these chain reactions. Once each interval
+has been placed into a bin, the �nal ordering can be recovered by
+appending the contents of the bins.
+Figure 9: iPhone X screenshot of Meteor encoding of the �rst 160 bytes of Lorem Ipsum as generated by the GPT-2 model.
+Generated text is highlighted, and context is unhighlighted.
+Haired the latter expand of the legal instance of the Imperial State of the American foal bridge, it is
+õ!  suspective that he was also notable to ensure that they produced a consolidate [[electricity]], the actual
+õ!  psychological cabinet [[Greece]] was the same time. It was born in many in the second [[tuak]] and [[timber]]
+õ!  at the idea of [[computer account|computer science]], which provides sales might therefore be in popular
+õ!  writings such as the European Investigation.
+
+==Video games==
+* [[Brown Town]]
+* [[Sagan in the United States|Commonwealth of Western Technology]]
+* [[Template International Society of Europe]]
+* [[Commonwealth of Russia]]
+* [[Commerce coverage in Sweden]]
+* [[List of Constitution by Westman of the United Kingdom|British Politics]]
+* [[List of California Court in 1981]]
+* [[International Party of Diabetos Integrated Policy]]
+* [[United Kingdom]]
+
+===Overseas Roman Empire===
+* [[Communist Council of Ireland]]
+* [[Confucian States of the South Edition]]
+* [[Conservative Party of the United Kingdom]]
+
+[[Category:American states]]
+[[Category:Conferences of India]]
+
+Figure 10: Snippet of Meteor encoding of the �rst 160 bytes of Lorem Ipsum as generated by the Wikipedia model. The output
+was truncated to �t.
+
+ Context:
+ The Alvarez hypothesis posits that the mass extinction of the dinosaurs and many other living things during the Cretaceous-Paleogene extinction event
+ was caused by the impact of a large asteroid on the Earth. Prior to 2013, it was commonly cited as having happened about 65 million years ago, but Renne
+ and colleagues (2013) gave an updated value of 66 million years. Evidence indicates that the asteroid fell in the Yucatan Peninsula, at Chicxulub, Mexico.
+ The hypothesis is named after the father-and-son team of scientists Luis and Walter Alvarez, who �rst suggested it in 1980. Shortly afterwards, and
+ independently, the same was suggested by Dutch paleontologist Jan Smit.
+ Stegotext:
+ The picture in The Pale I HCR scientists’ discussion now spans three dimensions. The �rst importance of the Yucatan Peninsula is demonstrated with the
+ following conclusion: the Pliocene Earth has lost about seven times as much vegetation as the Jurassic in regular parts of the globe, from northern India to
+ Siberia. Even since 1976, the continent has received or is already experiencing the worst mass extinction in recorded history since there were a million
+ years last left from the extinction of Antarctic ice and the rapid spread of hydrocarbon-rich water as the Earth entered the Cretaceous Period. In turn, the
+ world’s oceans have been breathtakingly transformed and as a result the surrounding environments are especially vulnerable. The reason is obvious: there
+ was no geological record of the presence of the Yucatan Peninsula in the Late Miocene epoch, which is the line that runs from the southern edge of South
+ America to Siberia. The commander-in-chief of the Yucatan Peninsula, Frederick Nystrom, has determined that the area is to stay as barren as possible. As
+ a result, individuals living on lake beds and on coastal areas have witnessed the loss of about 90 percent of their habitat. The Yucatan Peninsula consists of
+ four zones, with two di�erent habitats separated, each of which has experienced inseam damage. In one zone, along the northern shore of Lake Shemal, the
+ retreating Tarahumara Ocean has been melted into a deep, sea�oor called Nova Ravine, which south-east of the Yucatan Peninsula �ows into Lake Isthmus,
+ where there is an abundance of turtle life. A second beach, which lies at the far end of the peninsula, has been spewed down by a sea wall supporting
+ Madagascar’s Great Ocean Earthquake, 9,000 feet in magnitude and caused large numbers of deaths. The third zone, along the coast of Cancun and in
+ Asuncion, is less severely a�ected. An estimated 16 percent of the continent is protected from the destruction of oceanic winds and �oods. All three zones
+ are in a state of catastrophic destruction. According to the de�nition provided by the National Commission on the extinction of the dinosaurs (Infection
+ and Immunization in the Ind
+
+
+Figure 11: The “Dinosaur” context and associated Meteor encoding of the �rst 160 bytes of Lorem Ipsum as generated by GPT-2.
+This is the context used in Figure 3.
+ Context:
+ Washington received his initial military training and command with the Virginia Regiment during the French and Indian War. He was later elected to
+ the Virginia House of Burgesses and was named a delegate to the Continental Congress, where he was appointed Commanding General of the nation’s
+ Continental Army. Washington led American forces, allied with France, in the defeat of the British at Yorktown. Once victory for the United States was in
+ hand in 1783, Washington resigned his commission.
+ Stegotext:
+ Washington was martyred in the battle of Cullman in 1788. Although down 19 men, yet his mission accomplished. He ended his life in 1896. When he died
+ of disease, three of the men responsible said that Washington had been moved and was seen at the funeral placing him in his father’s arms. Another said
+ that Washington treated his wounds with "a study of a personal sense of injustice." (A 16th century German historian calls Washington a liar because of
+ this website.) He was also a friend of Dr. Henry H. Jackson, who was notable as George Washington’s physician and a collaborator, and recognizes him
+ by name in the any books about him. The last surviving manuscript is from 1888 and contains a frank and truthful account of the Quakers’ plight. One
+ story states that while �ghting in Whitesburg, Washington succumbed to pneumonia. He was 38 years old and according to a manuscript he got out the
+ following year reports he grew old and fell in love. He also mentions a meeting with a woman who broke into his home and �rst went with him into a bath
+ and gave him food and sleep. Three days later the woman left the room expecting him to eat her lunch and on that day he left home at 9:30 am in despair.
+ He had not been to his bedside. On seeing this, he said a voice in him called out, "Your name is Jack. What is the girl?" Hamilton said the superior told him,
+ "She was a layover in a bed and seven[Pg 209] feet below the bed where the general slept in very feminine attire. Nobody had time to look into her face.
+ What was she to tell you about the general?"
+ A
+ Washington’s O�cial Address to Congress with Americans May 17th, 1781
+ "I am the one to announce completely that I am a true Christian and an eloquent philosopher. I am not constrained
+
+
+Figure 12: The “Washington” context and associated Meteor encoding of the �rst 160 bytes of Lorem Ipsum as generated by
+GPT-2. This is the encoding used throughout the benchmarks in Section 6.
+

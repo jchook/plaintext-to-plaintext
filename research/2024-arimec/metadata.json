@@ -1,0 +1,69 @@
+{
+  "id": "2024-arimec",
+  "title": "Computing Low-Entropy Couplings for Large-Support Distributions (ARIMEC)",
+  "status": "UAI 2024",
+  "kind": "paper",
+  "source": "https://proceedings.mlr.press/v244/sokota24a.html",
+  "pdf": "https://raw.githubusercontent.com/mlresearch/v244/main/assets/sokota24a/sokota24a.pdf",
+  "why": "Extends practical minimum-entropy coupling to large, autoregressive distributions. Relevant when investigating structured message priors and information-efficient encoding.",
+  "caveat": "A research alternative with different computation and message-distribution assumptions. It is not a replacement for authenticated encryption.",
+  "repo": "ssokota/mec",
+  "priority": "supporting",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2024-arimec/paper.pdf",
+      "requested_url": "https://raw.githubusercontent.com/mlresearch/v244/main/assets/sokota24a/sokota24a.pdf",
+      "resolved_url": "https://raw.githubusercontent.com/mlresearch/v244/main/assets/sokota24a/sokota24a.pdf",
+      "content_type": "application/octet-stream",
+      "retrieved_at": "2026-10-18T09:47:53.629661+00:00",
+      "bytes": 1776761,
+      "sha256": "b7987383b9d32625619f8bab3682cde39025e97f17656d39af8a08644aa9a9d2"
+    },
+    {
+      "path": "2024-arimec/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 92601,
+      "sha256": "adabc04eb14497c4b505e896b5f25b7b27f38cbc9b816eb1b91043878d62c7db"
+    },
+    {
+      "path": "2024-arimec/source.html",
+      "requested_url": "https://proceedings.mlr.press/v244/sokota24a.html",
+      "resolved_url": "https://proceedings.mlr.press/v244/sokota24a.html",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:54.334463+00:00",
+      "bytes": 15255,
+      "sha256": "e33a2893ada595c40d3fd132b109be7a4c77c0cc32979294379ae3f966e7763f"
+    },
+    {
+      "path": "2024-arimec/repository.html",
+      "requested_url": "https://github.com/ssokota/mec",
+      "resolved_url": "https://github.com/ssokota/mec",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:55.095854+00:00",
+      "bytes": 306504,
+      "sha256": "1cda960ce68336e87494c50843dd6335261fd8a05a53b2ad5ad3b583e32fb555"
+    },
+    {
+      "path": "2024-arimec/readme-source.json",
+      "requested_url": "https://api.github.com/repos/ssokota/mec/readme",
+      "resolved_url": "https://api.github.com/repos/ssokota/mec/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:55.338573+00:00",
+      "bytes": 11629,
+      "sha256": "e869904c8e0ae8b6e52a9bcf1a73c7d1de10c8790616957c4db65e358e9f07cc"
+    },
+    {
+      "path": "2024-arimec/upstream-readme.md",
+      "source_url": "https://github.com/ssokota/mec/blob/master/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "cd4e125769ed5e9e88c0787bcf0e77d6efd9f5cb",
+      "derived_from": "readme-source.json",
+      "bytes": 7911,
+      "sha256": "680a96289ee5b25e4daa8e7d42355201480dae6d6bbb3ebcc9718075af8cf81d"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 20
+}

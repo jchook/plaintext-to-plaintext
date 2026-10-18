@@ -1,0 +1,42 @@
+{
+  "id": "2021-adg",
+  "title": "Provably Secure Generative Linguistic Steganography (ADG)",
+  "status": "Findings of ACL-IJCNLP 2021; arXiv author copy",
+  "kind": "paper",
+  "source": "https://arxiv.org/abs/2106.02011",
+  "pdf": "https://arxiv.org/pdf/2106.02011",
+  "why": "An influential method that recursively groups candidate tokens to carry message bits. Useful for understanding why grouping methods can sacrifice capacity.",
+  "caveat": "Later work qualifies exact distribution-preservation claims: arbitrary discrete probabilities cannot generally be partitioned into perfectly equal-probability groups.",
+  "repo": null,
+  "priority": "supporting",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2021-adg/paper.pdf",
+      "requested_url": "https://arxiv.org/pdf/2106.02011",
+      "resolved_url": "https://arxiv.org/pdf/2106.02011",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:53.040651+00:00",
+      "bytes": 323381,
+      "sha256": "91e63557ad31741393b568facce6b41128428894dfac170d11aded783a74e087"
+    },
+    {
+      "path": "2021-adg/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 57382,
+      "sha256": "24cf591d5aa221704a2b6a5369096310861d657d3446f1207cad6405c42f385d"
+    },
+    {
+      "path": "2021-adg/source.html",
+      "requested_url": "https://arxiv.org/abs/2106.02011",
+      "resolved_url": "https://arxiv.org/abs/2106.02011",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:53.241565+00:00",
+      "bytes": 40983,
+      "sha256": "6353707821b511760c38d371e846f0cde3580c60c32fb4c9253ec83c5138ace4"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 10
+}

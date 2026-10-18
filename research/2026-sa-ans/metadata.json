@@ -1,0 +1,42 @@
+{
+  "id": "2026-sa-ans",
+  "title": "Linguistic Steganography via Self-Adjusting Asymmetric Number System",
+  "status": "Computational Linguistics 2026",
+  "kind": "paper",
+  "source": "https://aclanthology.org/2026.cl-1.4/",
+  "pdf": "https://aclanthology.org/2026.cl-1.4.pdf",
+  "why": "Another modern ANS-based approach, with adaptive candidate selection and user-selected embedding rates. Useful for comparing capacity, generation quality, and coding overhead.",
+  "caveat": "Keep its rate and distortion definitions separate from claims of exact preservation of an unmodified model distribution. It is a distinct method from ANStega.",
+  "repo": null,
+  "priority": "supporting",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2026-sa-ans/paper.pdf",
+      "requested_url": "https://aclanthology.org/2026.cl-1.4.pdf",
+      "resolved_url": "https://aclanthology.org/2026.cl-1.4.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:58.247609+00:00",
+      "bytes": 2267732,
+      "sha256": "0b54d54c84d91b5ed5da6bd73fa81b24faafbcf50873cbbea3bcb512a63c5025"
+    },
+    {
+      "path": "2026-sa-ans/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 113114,
+      "sha256": "4ac8623c96668c61cf133bdb298050ac11a5ebb5eed4892a97d0d3214ff810ab"
+    },
+    {
+      "path": "2026-sa-ans/source.html",
+      "requested_url": "https://aclanthology.org/2026.cl-1.4/",
+      "resolved_url": "https://aclanthology.org/2026.cl-1.4/",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:58.690223+00:00",
+      "bytes": 39717,
+      "sha256": "fcd76e140684b6887b5cbb2bab16752858dadc49a73841370316ebac11b9cdab"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 37
+}

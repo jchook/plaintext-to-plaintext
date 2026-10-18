@@ -1,0 +1,69 @@
+{
+  "id": "2025-stepwise-token-verification",
+  "title": "Addressing Tokenization Inconsistency in Steganography and Watermarking Based on Large Language Models",
+  "status": "EMNLP 2025",
+  "kind": "paper",
+  "source": "https://aclanthology.org/2025.emnlp-main.361/",
+  "pdf": "https://aclanthology.org/2025.emnlp-main.361.pdf",
+  "why": "A direct implementation candidate: filters token choices whose detokenization and retokenization would diverge. Could retain more useful choices than our broad prefix-free filtering. The official Consistency repository includes roundtrip experiments.",
+  "caveat": "Filtering changes the reference distribution. Its correctness argument does not remove numerical discrepancies between sender and receiver runtimes.",
+  "repo": "ryehr/Consistency",
+  "priority": "read first",
+  "review_date": "2026-10-18",
+  "artifacts": [
+    {
+      "path": "2025-stepwise-token-verification/paper.pdf",
+      "requested_url": "https://aclanthology.org/2025.emnlp-main.361.pdf",
+      "resolved_url": "https://aclanthology.org/2025.emnlp-main.361.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-10-18T09:47:55.621909+00:00",
+      "bytes": 3448732,
+      "sha256": "348453ce485abdc88e011c02073ba21e28c82f8a351c957ddfcc4d2fb62a645f"
+    },
+    {
+      "path": "2025-stepwise-token-verification/paper.txt",
+      "derived_from": "paper.pdf",
+      "method": "pdftotext -layout",
+      "bytes": 138215,
+      "sha256": "e344b5d8c427315ce7fd34bd2f2aff30dced8f79a4f2e69c942928fba99a2943"
+    },
+    {
+      "path": "2025-stepwise-token-verification/source.html",
+      "requested_url": "https://aclanthology.org/2025.emnlp-main.361/",
+      "resolved_url": "https://aclanthology.org/2025.emnlp-main.361/",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:55.956930+00:00",
+      "bytes": 42291,
+      "sha256": "fd84c4362ffdc11821b7cb25abeabca82084f9385a9b395a3c04b833f697c14f"
+    },
+    {
+      "path": "2025-stepwise-token-verification/repository.html",
+      "requested_url": "https://github.com/ryehr/Consistency",
+      "resolved_url": "https://github.com/ryehr/Consistency",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:56.723829+00:00",
+      "bytes": 329756,
+      "sha256": "bdfe5e297702c2af333f296dc2e61f8f46d52437740a858ede93a2dc1626382a"
+    },
+    {
+      "path": "2025-stepwise-token-verification/readme-source.json",
+      "requested_url": "https://api.github.com/repos/ryehr/Consistency/readme",
+      "resolved_url": "https://api.github.com/repos/ryehr/Consistency/readme",
+      "content_type": "application/json; charset=utf-8",
+      "retrieved_at": "2026-10-18T09:47:56.974145+00:00",
+      "bytes": 15994,
+      "sha256": "6b1527f9294b2c36277f46860b26f0cedf3c715f626b02e3d1470eb926f3a07e"
+    },
+    {
+      "path": "2025-stepwise-token-verification/upstream-readme.md",
+      "source_url": "https://github.com/ryehr/Consistency/blob/main/README.md",
+      "upstream_path": "README.md",
+      "git_blob_sha": "f4cfe14fa8b80797e67d61c2f34abfae22336cc6",
+      "derived_from": "readme-source.json",
+      "bytes": 11053,
+      "sha256": "4d896f45b28f433593a4475639b80fde48041981d0fa2cb0eb241d7ee54b1ee8"
+    }
+  ],
+  "errors": [],
+  "pdf_pages": 23
+}

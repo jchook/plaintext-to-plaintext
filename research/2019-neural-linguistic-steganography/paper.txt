@@ -1,0 +1,412 @@
+                                  Neural Linguistic Steganography
+
+
+                  Zachary M. Ziegler∗ Yuntian Deng∗ Alexander M. Rush
+                          School of Engineering and Applied Sciences
+                             Harvard University, Cambridge, MA
+              {zziegler@g, dengyuntian@g, srush@seas}.harvard.edu
+
+
+
+
+                          Abstract                              and innocuous in everyday life. Furthermore, un-
+                                                                like images or audio in which encoded information
+    Whereas traditional cryptography encrypts a                 depends on exact pixel values, linguistic steganog-
+    secret message into an unintelligible form,
+    steganography conceals that communication
+                                                                raphy (hiding information in choices of words) is
+    is taking place by encoding a secret message                untethered from any one medium. For example,
+    into a cover signal. Language is a particu-                 the sender could encode a message on a computer,
+    larly pragmatic cover signal due to its benign              read off the cover text in person, and then the re-
+    occurrence and independence from any one                    ceiver could separately enter the cover text into her
+    medium. Traditionally, linguistic steganogra-               decoder and retrieve the message.
+    phy systems encode secret messages in exist-                   Linguistic steganography methods can be clas-
+    ing text via synonym substitution or word or-
+                                                                sified as either edit-based or generation-based
+    der rearrangements. Advances in neural lan-
+    guage models enable previously impractical                  (Bennett, 2004). In edit-based methods, such as
+    generation-based techniques. We propose a                   synonym substitution, the content of the cover
+    steganography technique based on arithmetic                 text is selected by a human and slightly modified
+    coding with large-scale neural language mod-                to encode information (Xiang et al., 2017; Hefei,
+    els. We find that our approach can generate                 2009; Xiang et al., 2018). In generative methods
+    realistic looking cover sentences as evaluated              an entire block of text is generated while encod-
+    by humans, while at the same time preserving
+                                                                ing the message reversibly in the choice of to-
+    security by matching the cover message distri-
+    bution with the language model distribution.
+                                                                kens. Traditionally, most practical stenography
+                                                                systems are edit-based. These methods only en-
+1   Introduction                                                code a small amount of information (for example,
+                                                                2 bits per tweet (Wilson and Ker, 2016)), whereas
+Cryptography is central to modern communica-                    generation-based systems can encode an order of
+tion, but while it effectively conceals the content             magnitude more information (Fang et al., 2017).
+of a message it reveals that meaningful communi-                   Generation-based steganography has a well-
+cation is taking place. Steganography answers an                established foundation in information theory (Cox
+alternative question: how to conceal a message in               et al., 2005) with the aim of provably fooling any
+some cover signal (an image, text etc.) such that               machine steganalysis. Due to weak language mod-
+an eavesdropper is not even aware any meaningful                els practical performance at the scale of modern
+communication has taken place (Amin et al., 2003;               neural network-based models has not been con-
+Shirali-Shahreza and Shirali-Shahreza, 2007; Ku-                sidered or developed. One recent exception is
+mar and Pooja, 2010)? Different from cryptogra-                 a neural network-based approach using heuristic-
+phy, in steganography security is derived from the              based methods with the goal of fooling human
+inability to detect that a message exists within the            eavesdroppers. These methods are theoretically
+cover signal, rather than the inability of an eaves-            sub-optimal, however, and while they demonstrate
+dropper to determine the content of the message                 some fluency in generations the underlying lan-
+(Westfeld and Pfitzmann, 1999).                                 guage models are much worse than current state-
+   Natural language is an especially useful cover               of-the-art large models (Fang et al., 2017).
+signal for steganography because it is prevalent                   In this paper we aim to get the best of both
+    ∗
+        Equal contribution.                                     approaches with a linguistic steganography
+
+                                                          1210
+                 Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing
+                and the 9th International Joint Conference on Natural Language Processing, pages 1210–1215,
+                 Hong Kong, China, November 3–7, 2019. c 2019 Association for Computational Linguistics
+                                                                       m = 00111001...
+ m ~ Unif({0,1}L)                                                                                            0.0
+                            pLM(y)
+                                                                                                         ...
+
+                                                                                           ...                                    ...
+                                                                                   ...
+        Alice                                    Bob                                              deadline John
+                                                                                                                                         ...         0.00111000
+                              y                   -1
+    y = f(m; pLM)                         m = f (y; pLM)                                    cat                           there
+                                                                                                                 Hello                  humans        0.00111010
+                          y ~ q(y)                                         ...                         The                  fellow         ...
+                                                                   0.11                fellow                                                         0.01
+                                                                                                                  Once                         ...
+                                                                           ...                               I              upon
+Figure 1: Problem setup. m ∼ Unif({0, 1}L ) is the secret                                study
+
+message, y is the cover text, p(y) is the language model and                     ...                    think        I                  ...
+f is a deterministic invertible function. f and the distribution
+of m implicitly defines q.                                                                       ...
+                                                                                                                            ...
+                                                                                                                    ...
+
+
+
+method based on arithmetic coding and modern                                                                 0.10
+language models. Our contribution is two-fold:                        y = f(m) = “Hello fellow humans…”
+1) we show that a linguistic steganography                         Figure 2: Diagram of arithmetic coding for steganography.
+approach combining arithmetic coding with                          See Section 3 for details.
+state-of-the-art language models can achieve
+near-optimal statistical security; 2) human                        because an eavesdropper could not distinguish the
+evaluations show that the cover text from our                      encoded messages from normal language. From
+approach is able to fool humans even in the                        an information theoretic perspective the security
+presence of context. Our code is available at                      objective of steganography is therefore to ensure a
+https://github.com/harvardnlp/                                     small DKL . At the same time, because f is invert-
+NeuralSteganography. A demo is available                           ible the average number of bits that can be encoded
+at http://steganography.live/                                      is given by the entropy H(q). Thus, the compres-
+                                                                   sion objective is to maximize H(q).
+2    Background & Related work
+                                                                   Generative coding techniques Recent work
+Linguistic steganography We briefly give an                        studying generative approaches for linguistic
+overview of steganography as outlined in (Cox                      steganography have considered heuristic ap-
+et al., 2005) and diagrammed in Figure 1: Alice                    proaches to map uniform messages into similar
+wants to communicate a hidden message m ∼                          distributions as natural language. Fang et al.
+Unif({0, 1}L ) with Bob by encoding it into a                      (2017) considers a block-based approach (Block),
+choice of natural language cover text y. The uni-                  where the vocabulary is randomly split into 2|B|
+form distribution is chosen for m without loss of                  bins and each bin is indexed by a |B|-bit string.
+generality: if m has additional structure it can be                Encoding is performed by splitting the message
+further compressed to a uniformly distributed ran-                 up into chunks Bt and taking the maximum likeli-
+dom variable (Han, 2005). Alice and Bob have                       hood token as determined by the language model
+both agreed on an invertible mapping f which per-                  p(yt |y<t ) that falls in bin Bt . Yang et al. (2019)
+forms the steganography. Alice and Bob also both                   proposes a related method based on constructing
+have access to the exact same language model,                      a Huffman coding (Huffman) at each step t based
+pLM (y), which f can use during encoding and                       on p(yt |y<t ) and encoding the message in variable
+decoding. The steganography mapping f and the                      length chunks via the Huffman tree. Both objec-
+language model pLM (y) form the key.                               tives provide a “quality” parameter that trades off
+   The combination of the distribution of m and                    quality at the expense of encoding fewer bits.
+deterministic function y = f (m) implicitly de-                       These approaches target a different security ob-
+fines a distribution for y which we denote q. This                 jective than the information-theoretic view in Cox
+is the cover distribution of natural language that                 et al. (2005). Instead of aiming to minimize the
+an eavesdropper would observe. As described in                     KL at maximal compression they aim to maxi-
+(Cox et al., 2005), the security of the system is                  mize generated quality at maximal compression
+determined by DKL (q||Ptrue ) where Ptrue is the                   (Yang et al., 2019; Fang et al., 2017). The issue
+true distribution of natural language. For example,                with these approaches is that they aim to fool hu-
+if DKL = 0 then the system is perfectly secure                     man eavesdroppers for whom generation quality
+
+                                                               1211
+    Context        kim jong il was the enigmatic leader of the most enigmatic country on earth. much about kim’s life was, and
+                   is, shrouded in mystery. even the year of his birth – 1942 – has been contested by knowledgeable sources
+                   in south korea and russia, who claim kim was born a few years earlier but that his official birth date was
+                   pushed back to make him exactly 30 years younger than his father, north korea’s founding leader, kim il
+                   sung.
+
+    Message 1      Bob, I have something very important to tell you. Eve is not who she says she is. I know that you think
+                   she’s your friend, but really she’s a creepy stalker who wants to read all of your messages for some unknown
+                   reason.
+    Cover text 1   That kim’s birthdate was not even known to the people of south korea is even more baffling. however, there
+                   is another contradiction. bak tae-jung, the ruler of north korea at the time, claimed to have inherited kim’s
+                   kim ju-ha-teh, his so-called golden heritage, from his father, the last kim Yun-jong. and he also
+    Message 2      The secret code is X3SJ83F. Once you open the door you will see a staircase on your left and a hallway to
+                   your right. Go down the hallway and enter the code in the safe at the end of the hallway.
+    Cover text 2   kim il sang, by the way, was not the first leader of north korea, but the first for nearly a thousand years. his
+                   leader was kim jong il, the same person the people voted in to power to start with, without their knowledge
+                   or consent. though it’s been claimed by others that kim il sang fled north korea in 1940 to escape the
+                   reprisals, even that is disputed by k
+
+Table 1: Steganography example. Two different encoded messages are produced given the same introductory context. The mes-
+sages are first converted into bit strings and then mapped to cover text using the arithmetic steganography approach described
+in Section 4.4.
+
+
+is most important; but are susceptible to machine-                  that y1 = “Once”, p(y2 |y1 ) has “upon” and “I”
+based eavesdroppers which can in principle iden-                    as the only possible tokens with equal probability.
+tify statistical patterns in generations.                           The circle diagram spans [0,1) from 0 at the top,
+   Concurrent with this work, Dai and Cai (2019)                    clockwise around to 1.
+conduct a related analysis in terms of KL with a                       To encode the message into text, the secret mes-
+modified Huffman algorithm. Experiments con-                        sage m is viewed as a binary representation of a
+sider the distribution of KL values, although no                    fraction in the range [0, 1). This fraction uniquely
+human evaluation is performed.                                      marks a point on the edge of the circle, as well as
+                                                                    a line from the origin to the point. Encoding is
+3      Arithmetic coding                                            performed by simply reading off the tokens corre-
+Arithmetic coding is a data compression method                      sponding to the bins. Encoding stops when the list
+designed specifically to code strings of elements                   of tokens unambiguously defines the message.
+with a known probability distribution (Rissanen                        Decoding is performed via the reverse opera-
+and Langdon, 1979; Zoph et al., 2015). For                          tion: the sequence of natural language tokens pro-
+long strings the coding is optimal; it compresses                   gressively narrows the range of possible messages.
+information to its entropy (Rissanen and Lang-                      Assuming that the original message is encoded
+don, 1979). In practice, it is often more efficient                 with a predetermined end token, decoding termi-
+than Huffman coding because it does not require                     nates once both sides of the range of possible mes-
+blocking. Arithmetic coding traditionally maps a                    sages includes the end token.
+string of elements to a uniformly distributed bi-                      Sallee (2004) show that just as arithmetic cod-
+nary string. To use such a coding for steganogra-                   ing is optimal for data compression, it is also op-
+phy we reverse the order: first a (uniformly sam-                   timal for steganography. Specifically, given any
+pled) message is selected, then the message is                      goal distribution ps (y) that one wants to sample
+mapped to a sequence (words).                                       from, starting with a uniform m and applying the
+   The coding scheme is demonstrated in Figure                      deterministic steganography procedures yields a
+2. In this work the probability distribution comes                  distribution q = ps or equivalently DKL (q||ps ) =
+from the conditional distributions of a pretrained                  0 for long sequences. This further ensures that
+language model, but for illustration purposes a                     H(q) = H(ps ) and therefore the number of bits
+hand-crafted example distribution is used in the di-                encoded on average is equal to the entropy of ps .
+agram. Concentric circles represent timesteps; the                  Intuitively, this works because higher probability
+innermost represents t = 1, the middle t = 2, and                   sequences map to larger “chunks” of the pie and
+the outer t = 3. Each circle represents the condi-                  therefore require fewer bits to uniquely determine.
+tional distribution p(yt |y<t ). For example, given                    In this work we apply arithmetic coding to lin-
+
+                                                               1212
+                                                                   implemented to allow for a fair comparison using
+        3.0
+                                                                   the strong GPT-2 language model. Each method
+        2.5                                                        has a parameter that controls the various tradeoffs:
+                                         Arithmetic
+
+KL (bits)
+        2.0                              Huffman
+                                                                   for arithmetic encoding we vary the temperature
+        1.5                              Block                     from 0.4 to 1.2 with k = 300, for Huffman encod-
+                                         Arithmetic k = 50256      ing we vary the truncation length from 21 to 28 ,
+        1.0
+                                                                   for block encoding we vary the block size from 21
+        0.5                                                        to 25 . For the KL analysis we also evaluate arith-
+        0.0    1      2       3          4          5
+                                                                   metic coding with τ = 1 and k = 50256, i.e. the
+                            Bits/word                              unmodulated language model.
+Figure 3:      Information theoretic evaluation. KL and            4.2   Metrics
+bits/word are evaluated for each algorithm at different values
+of the tuning parameter; each datapoint gives the mean and         We consider several different metrics to assess per-
+standard error for repeated samples with a fixed value of the      formance. In all cases, it is important that the algo-
+tuning parameter. We show the standard error bars for both
+bits/word and KL.
+                                                                   rithms encode information efficiently. The metric
+                                                                   Bits/word is the ratio of message bits encoded to
+                                                                   sentence length.
+guistic steganography. Given a pretrained lan-
+                                                                      Another key aspect of the system is being able
+guage model, this approach can be directly ap-
+                                                                   to fool a statistical adversary in a distributional
+plied to produce cover texts given some prelimi-
+                                                                   sense, i.e. when the adversary gets multiple sam-
+nary context. To ensure that these texts seem more
+                                                                   ples from q. This can be quantified by the KL
+natural to human eavesdroppers we introduce two
+                                                                   divergence between q and Ptrue . Since we do not
+parameters to trade off quality for compression:
+                                                                   have access to Ptrue we resort to DKL (q||pLM ).
+we modulate the LM distribution by a temperature
+                                                                   pLM might not match the distribution of natural
+τ , and we truncate the distribution to a top-k to-
+                                                                   language, but it allows for relative comparisons of
+kens at each position to ensure generations do not
+                                                                   steganography algorithms. The remaining gap is a
+include tokens from the long tail.
+                                                                   function of language model performance, which is
+    In practice, a naive implementation of arith-
+                                                                   not the focus of this work. For each model the KL
+metic coding quickly runs into precision limita-
+                                                                   is estimated via MC sampling on the news data.
+tions. We use a common equivalent variant based
+                                                                      Finally it is important to be able to convince a
+on fixed precision binary fractions (Rubin, 1979).
+                                                                   human adversary that the text is natural. This
+4           Experiments and results                                differs from statistical considerations because a
+                                                                   human will only see a single sample from q at
+4.1          Experimental Setup                                    a time. To this end, we conduct a human study
+We use the 345M parameter GPT-2 model as our                       aligned with the information theoretic evaluation
+language model pLM (Radford et al., 2019). We                      above, using Amazon Mechanical Turk. For
+run our experiments on the CNN/Dailymail (CN-                      each of the three methods we generate sentences
+NDM) dataset (Hermann et al., 2015; Nallapati                      with randomly sampled messages conditioned on
+et al., 2016), which is used to provide context for                a news article context, and ask participants to in-
+generation1 . We take the first three sentences of                 dicate if the sentence is a likely next sentence in
+each news article as the context on which to con-                  context. We repeat this experiment with the true
+dition our language model, and use the indicated                   next sentence as well. See the Supplementary Ma-
+steganography algorithm to generate an entire sen-                 terials for more details.
+tence for estimation or evaluation given a uni-                    4.3   Quantitative results
+form random message. We compare the proposed
+arithmetic coding-based algorithm with the Block                   Figure 3 shows the information theoretic evalu-
+(Fang et al., 2017) and Huffman (Yang et al.,                      ation. For any bits/word in the range of (1, 5),
+2019) methods as baselines. The baselines are re-                  arithmetic coding achieves the lowest KL, i.e. the
+                                                                   distribution of the encoded texts is the most sim-
+    1
+      Conditional generation makes it more challenging to fool     ilar to the language model distribution, providing
+humans and is thus better for comparisons. CNNDM presents
+an additional challenge as poor generations may have clear         the best defensive against algorithmic detections.
+factual errors.                                                    Most striking, arithmetic coding with the unmodu-
+
+                                                                1213
+                                                                 UTF-8), though this is highly inefficient. Instead,
+
+
+
+
+Human judgment score
+                   0.7                                           we can use the same arithmetic coding algorithm
+                   0.6                                           in reverse, with an empty context, to compress the
+                   0.5                                           message text into near-uniformly distributed bits
+                                                                 (Han, 2005). The full procedure is as follows:
+                   0.4       True data
+                   0.3       Arithmetic                              1. Alice decodes message text into bits via arith-
+                             Huffman                                    metic coding with an empty context.
+                   0.2       Block
+                             1      2         3       4   5          2. Alice encodes bits into cover text via arith-
+                                          Bits/word                     metic coding with a predetermined context.
+ Figure 4: Human evaluation. Y axis shows the percentage of
+ humans considering the generation to be a proper continua-          3. Alice sends cover text over public channel.
+ tion of the context. Huffman coding achieves the best gener-
+ ation quality as judged by humans, while arithmetic coding is       4. Bob decodes cover text into bits via arith-
+ comparable (the difference is not statistically significant).          metic coding with the predetermined context.
+
+ lated language model induces a q distribution with                  5. Bob encodes bits into message text via arith-
+ a KL of 4e-8 nats. This indicates that, consistent                     metic coding with empty context.
+ with theory (Sallee, 2004), arithmetic coding en-
+                                                                 Because the same strong LM is used with differ-
+ ables generative steganography matching the ex-
+                                                                 ent contexts for the two applications of arithmetic
+ act distribution of the language model used. The
+                                                                 coding, the message text length and cover text
+ small but positive KL value for arithmetic coding
+                                                                 length will be comparable (modulo a small over-
+ with k = 300 comes from the slight distributional
+                                                                 head) but the content of the text can be completely
+ difference when the long tail is truncated.
+                                                                 different. This is demonstrated in Table 1, which
+    Figure 4 shows the human evaluation results.
+                                                                 shows two examples of natural language messages
+ Within 3 bits/word both Huffman and arithmetic
+                                                                 (Step 1) encoded in unrelated and innocuous cover
+ coding give plausible next sentences over 50%
+                                                                 text (Step 3). In both cases the message is encoded
+ of the time, and at 1 bit/word both methods lead
+                                                                 efficiently into cover text which is largely fluent
+ to cover texts statistically indistinguishable from
+                                                                 and coherent, and follows from the given context.
+ human-written sentences. Although Huffman cod-
+ ing reaches slightly better performance than arith-             5     Conclusion
+ metic coding, the transferred cover text distribu-
+ tion is statistically different from natural text (see          We demonstrate how the combination of large
+ Figure 3), which can be potentially discovered by               pretrained language models and an arithmetic
+ automatic systems. Compared to the KL analy-                    coding-based steganography algorithm allows for
+ sis which focuses on the relative performance of                a steganography system that can fool both sta-
+ the algorithms, the human evaluation highlights                 tistical adversaries who analyze the full genera-
+ the realizable generation quality enabled specifi-              tive distribution, and human adversaries who an-
+ cally by large pretrained language models. Still,               alyze a single sample. While our work shows the
+ there is room for improvement in terms of lan-                  potential for high-quality efficient steganography
+ guage modeling capabilities: whereas the arith-                 and the realizable optimality of arithmetic cod-
+ metic approach reaches minimum KL around 4                      ing, future advancements in language modeling
+ bits/word with τ = 1.0, only at 1 bit/word with                 can push steganographic performance even fur-
+ τ = 0.4 do the generations fool humans.                         ther. With current state-of-the-art language mod-
+                                                                 els the steganography algorithms studied generate
+ 4.4                   Qualitative results                       most convincing cover texts at low compression,
+                                                                 where the KL is moderate. As language models
+ Steganography fundamentally deals with hiding
+                                                                 continue to improve, they can be directly plugged
+ uniformly random message bits in cover text. In
+                                                                 into our arithmetic approach to maximize stegano-
+ many cases, however, the message may itself be
+                                                                 graphic performance.
+ natural language. In these cases we have an addi-
+ tional choice of how the text is converted to bits.
+ One option is simply the unicode encoding (i.e.
+
+                                                              1214
+Acknowledgments                                           Frank Rubin. 1979. Arithmetic stream coding using
+                                                            fixed precision registers. IEEE Transactions on In-
+This work was supported by NSF 1845664. YD                  formation Theory, 25(6):672–675.
+was supported by a Baidu AI Fellowship.
+                                                          P. Sallee. 2004. Model based steganography.       Int.
+                                                             Workshop on Digital Watermarking.
+References                                                Mohammad Shirali-Shahreza and M Hassan Shirali-
+Muhalim Mohamed Amin, Mazleena Salleh, Subariah            Shahreza. 2007. Text steganography in sms. In
+ Ibrahim, Mohd Rozi Katmin, and MZI Shamsud-               2007 International Conference on Convergence In-
+ din. 2003. Information hiding using steganography.        formation Technology (ICCIT 2007), pages 2260–
+ In 4th National Conference of Telecommunication           2265. IEEE.
+ Technology, 2003. NCTT 2003 Proceedings., pages
+                                                          Andreas Westfeld and Andreas Pfitzmann. 1999. At-
+ 21–25. IEEE.
+                                                            tacks on steganographic systems.     In Interna-
+Krista Bennett. 2004. Linguistic steganography: Sur-        tional workshop on information hiding, pages 61–
+  vey, analysis, and robustness concerns for hiding in-     76. Springer.
+  formation in text.
+                                                          Alex Wilson and Andrew D Ker. 2016. Avoiding detec-
+Ingemar J Cox, Ton Kalker, Georg Pakura, and Math-          tion on twitter: embedding strategies for linguistic
+   ias Scheel. 2005. Information transmission and           steganography. Electronic Imaging, 2016(8):1–9.
+   steganography. In International Workshop on Dig-
+   ital Watermarking, pages 15–29. Springer.              Lingyun Xiang, Yan Li, Wei Hao, Peng Yang,
+                                                            and Xiaobo Shen. 2018. Reversible natural lan-
+Falcon Dai and Zheng Cai. 2019. Towards near-               guage watermarking using synonym substitution
+  imperceptible steganographic text. In Proceedings         and arithmetic coding. Comput., Mater. Continua,
+  of the 57th Annual Meeting of the Association for         55(3):541–559.
+  Computational Linguistics, pages 4303–4308, Flo-
+  rence, Italy. Association for Computational Linguis-    Lingyun Xiang, Xinhui Wang, Chunfang Yang, and
+  tics.                                                     Peng Liu. 2017. A novel linguistic steganogra-
+                                                            phy based on synonym run-length encoding. IE-
+Tina Fang, Martin Jaggi, and Katerina Argyraki. 2017.       ICE transactions on Information and Systems,
+  Generating steganographic text with lstms. arXiv          100(2):313–322.
+  preprint arXiv:1705.10742.
+                                                          Zhong-Liang Yang, Xiao-Qing Guo, Zi-Ming Chen,
+Te Sun Han. 2005.       Folklore in source coding:          Yong-Feng Huang, and Yu-Jin Zhang. 2019. Rnn-
+  Information-spectrum approach. IEEE Trans. Inf.           stega: Linguistic steganography based on recurrent
+  Theor., 51(2):747–753.                                    neural networks. IEEE Transactions on Information
+                                                            Forensics and Security, 14(5):1280–1295.
+PR Hefei. 2009. Steganalysis of synonym-substitution
+  based natural language watermarking. International      Barret Zoph, Marjan Ghazvininejad, and Kevin Knight.
+  Journal of Multimedia and Ubiquitous Engineering,         2015. How much information does a human transla-
+  4(2).                                                     tor add to the original? In Proceedings of the 2015
+                                                            Conference on Empirical Methods in Natural Lan-
+Karl Moritz Hermann, Tomas Kocisky, Edward
+                                                            guage Processing, pages 889–898.
+  Grefenstette, Lasse Espeholt, Will Kay, Mustafa Su-
+  leyman, and Phil Blunsom. 2015. Teaching ma-
+  chines to read and comprehend. In Advances in Neu-
+  ral Information Processing Systems, pages 1693–
+  1701.
+Arvind Kumar and Km Pooja. 2010. Steganography-
+  a data hiding technique. International Journal of
+  Computer Applications, 9(7):19–23.
+Ramesh Nallapati, Bowen Zhou, Caglar Gulcehre,
+  Bing Xiang, et al. 2016. Abstractive text summa-
+  rization using sequence-to-sequence rnns and be-
+  yond. arXiv preprint arXiv:1602.06023.
+Alec Radford, Jeff Wu, Rewon Child, David Luan,
+  Dario Amodei, and Ilya Sutskever. 2019. Language
+  models are unsupervised multitask learners.
+Jorma Rissanen and Glen G Langdon. 1979. Arith-
+   metic coding. IBM Journal of research and devel-
+   opment, 23(2):149–162.
+
+                                                      1215
+

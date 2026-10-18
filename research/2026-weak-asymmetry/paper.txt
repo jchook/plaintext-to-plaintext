@@ -1,0 +1,1258 @@
+From Symmetry toward Weak Asymmetry:
+Secure Steganography under the Receiver’s
+        Partial Channel Knowledge
+   Guorui Liao, Shuyu Gan, Jinshuai Yang, Yongfeng Huang,
+           and Zhongyi Huang, Tsinghua University
+  https://www.usenix.org/conference/usenixsecurity26/presentation/liao
+
+
+
+
+ This paper is included in the Proceedings of the
+        35th USENIX Security Symposium.
+            August 12–14, 2026 • Baltimore, MD, USA
+                        ISBN 978-1-939133-58-8
+
+
+                 Open access to the Proceedings of the
+                   35th USENIX Security Symposium
+                           is sponsored by
+    From Symmetry toward Weak Asymmetry: Secure Steganography under the
+                    Receiver’s Partial Channel Knowledge
+
+              Guorui Liao        Shuyu Gan         Jinshuai Yang Yongfeng Huang                  Zhongyi Huang
+                                                     Tsinghua University
+
+
+
+                         Abstract                                  (i.e., stegotext) is designed to make it difficult for third-party
+Provably secure steganography enables covert communica-            observers to distinguish it from truly normal content (i.e.,
+tion by disguising secret messages as normal communication         covertext). Through stegotext-based communication, the com-
+content while guaranteeing computational indistinguishabil-        municating parties can exchange hiddentext while external
+ity. Recent work typically assumes that the sender can con-        observers (censors or service providers), even with full access
+struct stegotext based on explicit conditional distributions,      to all communication content, remain unable to determine
+while the receiver either has access to the same distributions     whether any secret communication is taking place.
+for decoding or has no such access at all. In many realistic          To make the above communication truly secure, researchers
+communication settings, however, the receiver’s access lies        formally defined the security of steganography schemes as
+between these two extremes, a regime that is not captured by       the computational indistinguishability between stegotext and
+either assumption. We therefore introduce and study a new          covertext under the chosen hiddentext attack model (the
+setting, called weakly asymmetric steganography, in which          steganographic version of the chosen plaintext attack model
+the sender has access to the full conditional distributions used   in cryptography). Schemes that satisfy this security definition
+for stegotext construction, while the receiver only has partial    and the correctness requirement (i.e., the ability to correctly
+knowledge derived from them. We design provably secure             recover the hiddentext) are referred to as provably secure
+steganography schemes under several representative forms of        steganography [15, 16]. Intuitively, this means that for any
+receiver-side knowledge. Specifically, we consider binary al-      observer with practical computational capabilities, even if
+phabets in which the receiver only knows whether a symbol’s        they know what the covertexts are expected to look like and
+probability exceeds a given threshold, as well as general alpha-   even know or can choose the hiddentext to be embedded, they
+bets where the receiver only observes a possibly partial rank-     still cannot distinguish the stegotext constructed by the sender
+ing of symbols by probability. We evaluate our rank-based          from genuine covertext.
+constructions in language-model-based text steganography              For the construction of indistinguishable stegotext, re-
+under both limited receiver-side knowledge and precision-          cent mainstream steganography models, such as symmetric
+induced distribution mismatch. The results show that weakly        steganography [17], typically assume that the sender has
+asymmetric steganography can achieve non-trivial embedding         access to an oracle which, given the current communication
+capacity, and further suggest the potential of this setting in     history, provides the explicit conditional distribution over the
+distribution-mismatch scenarios.                                   next covertext symbol. Based on this access, the sender can
+                                                                   construct stegotext via a secret-driven sampling algorithm that
+1   Introduction                                                   iteratively selects symbols from the conditional distribution
+                                                                   as a function of the hiddentext and updates the communica-
+As surveillance and content censorship become increasingly         tion history until natural termination. The rapid development
+prevalent, the right to free and private communication in cy-      of AIGC (Artificial Intelligence Generated Content) further
+berspace faces serious threats [12, 22]. In response, a wide       supports the practicality of this oracle assumption. In partic-
+range of privacy-enhancing technologies for communication          ular, autoregressive generative models [7, 13, 21, 25], such
+have been studied and deployed. Among them, steganography          as large language models, explicitly output the conditional
+circumvents censorship by concealing the very existence of         distribution over the next token given the current context. As
+secret communication.                                              a result, such models naturally instantiate the assumed oracle.
+   Steganography disguises a secret message (i.e., hiddentext)        Under this common sender-side assumption, existing mod-
+as seemingly normal content. The resulting disguised content       els of provably secure steganography can be classified by the
+
+
+
+USENIX Association                                                                    35th USENIX Security Symposium           3161
+                                                                                                                                          Receiver’s Channel Knowledge
+receiver-side access they assume. In symmetric steganogra-                                       Full                                                          Partial                                         None
+
+phy, the receiver is assumed to have the same oracle access                      Distribution
+                                                                                 A                     0.4
+                                                                                                             Distribution
+                                                                                                             A                      0.4     A
+                                                                                                                                             Distribution
+                                                                                                                                                                   0.4                        A
+                                                                                                                                                                                               Distribution
+                                                                                                                                                                                                                     0.4
+                                                                                           0.2               B          0.2                            0.2                                               0.2
+
+as the sender, enabling decoding based on the explicit condi-                   D
+                                                                                 B
+                                                                                 C
+
+                                                                                         0.1
+                                                                                                 0.3         C
+
+                                                                                                             D       0.1
+                                                                                                                              0.3
+                                                                                                                                            B
+                                                                                                                                            C
+
+                                                                                                                                            D        0.1
+                                                                                                                                                             0.3
+                                                                                                                                                                         𝒑𝑨 > 𝒑𝑪 > 𝒑𝑩 > 𝒑𝑫
+                                                                                                                                                                                              B
+                                                                                                                                                                                              C
+
+                                                                                                                                                                                              D        0.1
+                                                                                                                                                                                                               0.3
+
+
+
+
+tional distributions. In practice, this assumption is typically
+realized by having both parties deploy the same generative
+                                                                                 Sender                      Receiver                        Sender                         Receiver           Sender                      Receiver
+model. In contrast, undetectable steganography [26], also                       Symmetric Steganography                                   Weakly Asymmetric Steganography                    Asymmetric Steganography
+
+referred to as asymmetric steganography [2], assumes that
+the receiver has no access to such an oracle and performs                Figure 1: Comparison of symmetric, asymmetric, and weakly
+decoding solely based on the received stegotext.1                        asymmetric steganography scenarios.
+   However, the two receiver-side assumptions above and
+their corresponding steganography schemes fail to capture
+many intermediate practical scenarios. In such scenarios, the            mental questions that have not been studied before. One of
+receiver may not have access to the oracle described above               the most basic questions is whether, given a fixed form of par-
+and therefore cannot obtain the complete conditional distribu-           tial channel knowledge, there exist steganography schemes
+tions, yet may still possess some useful information related             that decode using only this knowledge and effectively exploit
+to these distributions. For instance, in language-model-based            it. To the best of our knowledge, existing work provides no
+text steganography, such intermediate scenarios can arise from           clear evidence that such schemes exist for any concrete form
+two common sources. First, the receiver may be unable to                 of partial channel knowledge, beyond the trivial approach of
+obtain the full conditional distribution due to limited device           ignoring such knowledge and falling back to fully asymmetric
+capability or restricted model access. Instead, it may only              steganography schemes.
+interact with the model through limited APIs, which expose                   In this work, we take a first step toward answering this
+partial observations of the distribution, such as top-k tokens           question by studying and constructing weakly asymmetric
+or sampled outputs. Second, even if the receiver has access              steganography schemes under two natural forms of receiver’s
+to the same generative model as the sender, it may still fail to         partial channel knowledge: threshold-based knowledge in
+reproduce the sender’s exact distributions. This can happen              binary alphabets and rank-based knowledge in general al-
+because of numerical precision, hardware differences, or in-             phabets. The former tells the receiver whether a symbol’s
+ference nondeterminism [14]. As a result, the receiver may               probability exceeds a threshold, while the latter gives a full or
+obtain a perturbed version of the sender’s distribution rather           partial ranking of symbols by probability. We further evaluate
+than the exact distribution itself.                                      the proposed rank-based schemes in language-model-based
+   In these scenarios, symmetric steganography, which relies             text steganography under both limited receiver-side knowl-
+on precise distribution access at the receiver, may fail to de-          edge and precision-induced distribution mismatch.
+code. Asymmetric steganography avoids this requirement,                      Our main contributions are as follows:
+but typically provides only very limited embedding capacity
+and ignores the partial information already available to the               1. We introduce a new formal setting, weakly asymmet-
+receiver.                                                                     ric steganography, which captures scenarios where the
+   To address this gap, we introduce the notion of weakly                     sender has access to the full conditional distributions
+asymmetric steganography, which studies this intermediate                     of the channel, while the receiver possesses only partial
+regime through a clean and tractable abstraction: the receiver                knowledge about these distributions.
+obtains only the information specified by a deterministic func-
+                                                                           2. We initiate the study of weakly asymmetric steganogra-
+tion of the sender’s conditional distribution, for example, the
+                                                                              phy by designing provably secure schemes under two
+relative ordering of symbols under that distribution. We refer
+                                                                              representative forms of partial channel knowledge. In
+to such information as the receiver’s partial channel knowl-
+                                                                              particular, we present schemes under threshold-based
+edge. Figure 1 illustrates how our setting compares to existing
+                                                                              knowledge in binary alphabets and rank-based knowl-
+steganography models. This abstraction captures a tractable
+                                                                              edge in general alphabets, demonstrating that partial
+core of the broader intermediate regime, while also provid-
+                                                                              channel knowledge can be explicitly exploited to achieve
+ing a starting point for studying more approximate or noisy
+                                                                              meaningful embedding capacity.
+forms of receiver-side information. For example, information
+inferred from repeated samples, or statistical properties that             3. We empirically evaluate the proposed rank-based weakly
+may be preserved under distributional perturbations, can be                   asymmetric schemes in language-model-based text
+viewed as natural extensions of this abstraction.                             steganography. Our experiments show that weakly asym-
+   Weakly asymmetric steganography raises several funda-                      metric steganography achieves non-trivial embedding
+    1 The terms symmetric steganography and asymmetric steganography          capacity under limited receiver-side knowledge, and fur-
+here are distinct from symmetric-key steganography [16] and public-key        ther suggest that this paradigm has potential in precision-
+steganography [23].                                                           induced distribution-mismatch scenarios.
+
+
+
+3162    35th USENIX Security Symposium                                                                                                                                                       USENIX Association
+Organization                                                        the generated stegotext is computationally indistinguishable
+                                                                    from normal language-model outputs. The receiver, equipped
+The rest of this paper is organized as follows. Section 2 re-       with the same language model, can reliably decode the embed-
+views the necessary background and related work on provably         ded message, while this shared-model setting also supports
+secure steganography. Section 3 introduces the formal model         high embedding capacity. Recent symmetric steganography
+of weakly asymmetric steganography. Section 4 presents              schemes [11,24] achieve embedding rates close to the channel
+concrete constructions of weakly asymmetric steganography           entropy, which is the theoretical upper bound.
+schemes under threshold and rank-based channel knowledge.
+                                                                       However, the correctness of symmetric steganography
+Section 5 reports experimental evaluations of the proposed
+                                                                    schemes relies on a fragile consistency requirement: at each
+schemes in language-model-based text steganography, includ-
+                                                                    step, the receiver must reconstruct the same conditional dis-
+ing studies under partial channel knowledge and distribution
+                                                                    tribution used by the sender, even though the receiver itself
+mismatch.
+                                                                    does not generate stegotext. In language-model-based instan-
+                                                                    tiations, this requires not only that both parties can run the
+2   Background and Related Work                                     same model (typically an open-source model), but also that
+                                                                    their inference pipelines match closely, since even small dif-
+Provably Secure Steganography In 2002, Hopper et                    ferences in implementation details or numerical precision can
+al. [16] introduced provably secure steganography, formal-          change the induced conditional distribution.
+izing two fundamental requirements: correctness and secu-
+rity. Correctness requires that the receiver’s decoding error       Asymmetric Steganography (Undetectable Steganogra-
+be negligible, while security requires that no probabilistic        phy) Undetectable watermarking, proposed by Christ et
+polynomial-time (ppt.) adversary can distinguish stegotexts         al. [9], was originally designed for watermarking the outputs
+from covertexts with non-negligible advantage under chosen          of large language models. Its core assumption is that the
+hiddentext attacks. This paradigm was initially studied in          sender (i.e., the model owner) controls the generation process,
+the universal steganography setting, where the sender has           while the receiver (i.e., the detector), lacking access to the
+access to an oracle that samples from the channel distribution,     language model and the prompt, has no access to the condi-
+whereas the receiver has no access to that distribution. Several    tional distributions underlying the generated text. The goal
+schemes based on rejection sampling have been proposed in           is to embed a detectable watermark while ensuring that wa-
+this setting [1, 3, 4, 10, 20, 23]. This setting minimizes oracle   termarked outputs remain computationally indistinguishable
+requirements, while existing schemes typically depend on            from normal text, thereby preserving both linguistic quality
+strong and often unrealistic assumptions. For instance, they        and the statistical characteristics of model outputs. Building
+require the channel to exhibit a positive lower bound on the        on this line of work, subsequent research generalized the em-
+entropy of its conditional distributions, or assume the exis-       bedded signal from a single watermark bit to richer informa-
+tence of suitable unbiased hash functions. Such conditions          tion, leading to the notion of undetectable steganography [26],
+are rarely satisfied in practice [17]. In addition, these schemes   which is also referred to as asymmetric steganography in later
+generally provide only limited embedding capacity, which            work [2].
+further restricts their practical applicability.                       Existing schemes [2, 8, 26] typically encode information
+                                                                    by biasing the sender’s symbol choice at each generation step
+Symmetric Steganography with Generative Models Sym-                 based on the secret message. Although the receiver does not
+metric steganography, formalized by Kaptchuk et al. [17],           know the underlying channel distribution, given the secret
+assumes that both the sender and the receiver have ac-              key, each symbol has a small amount of mutual information
+cess to an oracle that provides the channel distribution.           with the secret message, allowing the receiver to recover the
+This setting has become one of the most widely adopted              message by aggregating many observed symbols and perform-
+paradigms [11, 17, 19, 24] in the study of provably secure          ing hypothesis testing. This design is attractive because the
+steganography, partly because it naturally aligns with modern       receiver can decode solely from the observed symbols, with-
+generative models [13, 21, 25] and enables practical and effi-      out requiring access to the channel distribution or maintain-
+cient stegosystems. Indeed, a generative model can be viewed        ing a synchronized channel history. Compared to symmetric
+as a function that maps a history (or prefix) to a conditional      steganography, the receiver does not need to run an identical
+distribution over the next symbol, thereby instantiating the        and computationally expensive model as the sender, nor does
+oracle assumed in symmetric steganography.                          it need to keep track of past context. Moreover, it is often
+   In practice, the most common application scenario of sym-        robust to certain modifications of the generated stegotext.
+metric steganography is text steganography based on language           However, these advantages come at a cost. In particular, the
+models. Here, the sender transforms a secret message into           achievable embedding capacity is significantly constrained,
+fluent text by leveraging the shared language model and a           making these schemes less suitable for covert communication
+symmetric steganography scheme. With provable security,             scenarios that demand higher throughput. Moreover, these
+
+
+
+USENIX Association                                                                    35th USENIX Security Symposium         3163
+schemes still require careful balancing between the embed-          3.3    Knowledge Function & Knowledge
+ding rate and decoding correctness, as decoding is based on
+                                                                    We first formalize the notion of a knowledge function, which
+hypothesis testing.
+                                                                    specifies what information about a distribution is available to
+                                                                    a communication entity. Formally, a knowledge function is a
+3     Definitions                                                   mapping
+                                                                                             f :X →Y,
+3.1    Motivation                                                   where X denotes the set of probability distributions over the
+Symmetric and asymmetric steganography correspond to two            alphabet Σ, and Y is the corresponding feature space. For
+extreme receiver-side assumptions. Many practical scenar-           a distribution D ∈ X , we refer to the value f (D) ∈ Y itself
+ios, however, lie between them: the receiver may be unable          as the knowledge. Typical examples of knowledge functions
+to obtain or exactly reproduce the conditional distributions,       include, for instance, the rank function rank(·), which maps
+while still having useful information about them. This sug-         a distribution D over Σ to the ordering of symbols by proba-
+gests an intermediate regime that is practically meaningful         bility.
+and theoretically worth studying.                                      We say that a communication entity has knowledge f about
+   Modeling such intermediate cases in full generality is dif-      the channel distribution D if, for every history H , it has access
+ficult, since the receiver’s information is often approximate,      to the value f (DH ). For brevity, we refer to this access as
+noisy, and hard to characterize uniformly in practice. We           having knowledge f (D ).
+therefore adopt a clean and tractable abstraction: the receiver        The identity knowledge function fid (D) = D corresponds
+obtains only the information specified by a deterministic func-     to full channel knowledge. A constant knowledge function
+tion f (D), where D is the sender’s conditional distribution.       corresponds to no channel knowledge, since it reveals no
+We call f the knowledge function, and refer to steganography        nontrivial information about the conditional distribution. In
+under this abstraction as weakly asymmetric steganography.          this work, we focus on non-degenerate knowledge functions
+This abstraction directly captures settings where the receiver      that lie strictly between these two extremes, and we refer to
+is given partial channel knowledge, while also providing a          this regime as having partial channel knowledge.
+basis for studying broader settings. For example, such knowl-
+edge may be inferred from repeated samples. Moreover, when          3.4    Weakly Asymmetric Steganography
+the receiver only has an approximate version of the sender’s
+                                                                    We follow the formal definition of symmetric steganography
+distribution, coarse knowledge such as ordering may be more
+                                                                    given by Kaptchuk et al. [17] and adapt it to define weakly
+stable than exact probabilities, and may help make decoding
+                                                                    asymmetric steganography, where the receiver has only partial
+more reliable in such cases.
+                                                                    channel knowledge. We state the definition as follows:
+   In this section, we introduce the notation used throughout
+this work and formalize weakly asymmetric steganography             Definition 1 (Weakly Asymmetric Steganography). A weakly
+in the symmetric-key setting.                                       asymmetric steganography scheme ΠD , f , defined under a
+                                                                    covertext channel distribution D and a knowledge function f ,
+                                                                    is a triple of possibly probabilistic algorithms,
+3.2    Notations
+                                                                                                           f
+                                                                            ΠD , f = (KeyGenD , EncodeD , Decode f (D ) ).
+Following the formulation of provably secure steganogra-
+phy [15, 17], we use the term covertext channel to refer to the     • KeyGenD (1λ ): generates the secret key sk.
+normal communication channel in the steganographic setting.
+                                                                              f
+We write Σ for the alphabet of symbols that may appear in the       • EncodeD (sk, m, H ): takes as input a secret key sk, a secret
+communication, and denote Σ = {σ0 , . . . , σ|Σ|−1 }.                 bit string m (also called the hiddentext), and the channel
+   We describe the behavior of a covertext channel by a prob-         history H . It outputs a stegotext c ∈ Σ∗ .
+ability distribution, referred to as the covertext channel dis-
+                                                                    • Decode f(D) (sk, c, H ): takes as input a secret key sk, a ste-
+tribution (or simply the channel distribution). Intuitively, the
+                                                                      gotext c, and the channel history H . It outputs a bit string
+covertext channel distribution describes how normal commu-
+                                                                      m on success, or the empty string ε on failure.
+nication typically continues after any given history. Formally,
+the covertext channel distribution D is a probability distribu-     Here, the subscript D indicates that the algorithm has full
+tion over Σ∗ , where Σ∗ denotes the set of all finite sequences     channel knowledge, meaning that for any history H , it has
+over Σ. For any history H = (h0 , . . . , hn−1 ) ∈ Σ∗ , D induces   access to the exact value of DH . The superscript f indicates
+the conditional distribution over Σ of the next symbol in nor-      that the encoding algorithm also knows the public knowledge
+mal communication given H , which we denote by DH . When            function f . In contrast, the subscript f (D ) indicates that the
+unambiguous, we will simply refer to DH as the conditional          algorithm has access only to the knowledge specified by f (D ),
+distribution, and we will often use D to denote it.                 that is, for any history H , it knows only the value f (DH ).
+
+
+
+3164    35th USENIX Security Symposium                                                                         USENIX Association
+Correctness. A scheme must ensure correctness, i.e., the           Throughout this section, all schemes are stateful [6]: the en-
+Decode f(D) algorithm can recover the embedded message             coding and decoding algorithms maintain internal states that
+from the stegotext except with negligible probability. For-        evolve with each invocation, following standard practice in
+mally, for any secret key sk ← KeyGenD (1λ ):                      symmetric steganography [11, 17, 19, 24].2 They are also in-
+                                                                   stantaneously decodable: each received symbol can be de-
+                           f
+Pr[Decode f(D) (sk, EncodeD (sk, m, H ), H ) = m] ≥ 1−negl(λ).     coded immediately, without relying on future symbols, which
+                                                                   helps limit error propagation in noisy cases.
+Security. Security requires that no ppt. adversary, given the         Before introducing the constructions, we recall a standard
+full channel distribution D , can distinguish oracle access to     technical component used in many symmetric steganography
+        f
+EncodeD (sk, ·, ·) from oracle access to a random sampling         schemes [17, 19], namely a stateful pseudorandom generator.
+oracle OD (·, ·) that returns a sample generated according to
+D with the appropriate length. Formally, a scheme is secure        4.1     Stateful Pseudorandom Generators
+against chosen hiddentext attacks if, for all ppt. adversaries
+AD , with sk ← KeyGenD (1λ ), the following inequality holds:      Following most classical constructions in symmetric steganog-
+                                                                 raphy, particularly Meteor [17], our schemes utilize a stateful
+                f
+          EncodeD (sk,·,·)                                         pseudorandom generator (PRG) [5]. We follow Meteor’s no-
+                                   h            i
+                                     O (·,·)
+   Pr AD                   = 1 − Pr AD D     = 1 ≤ negl(λ).
+                                                                   tation for stateful PRGs here. The stateful PRG consists of
+                                                                   two algorithms:
+    Informally, symmetric and asymmetric steganography can
+be viewed as two boundary cases of our formulation. In the                                PRG.Setup, PRG.Next.
+symmetric setting, both the sender and the receiver have full
+channel knowledge. In contrast, the fully asymmetric setting       The setup algorithm generates the initial state material for the
+can be roughly modeled by taking f to be a constant function       PRG and each invocation of PRG.Next outputs fresh pseudo-
+(e.g., f ≡ 0), meaning that the receiver has no meaningful         random bits of sufficiently long fixed length. We interpret this
+channel knowledge. Weakly asymmetric steganography, as             output as a real value in [0, 1) by normalizing the bit string in
+studied in this work, captures the intermediate regime where       the natural way. We assume standard security: no ppt. adver-
+ f reveals some structured information about the channel dis-      sary can distinguish oracle access to PRG.Next from oracle
+tribution, while still falling short of full channel knowledge.    access to a truly uniform bit source with non-negligible ad-
+                                                                   vantage. Informally, sharing the same initial PRG state allows
+    For any knowledge function f , every asymmetric steganog-
+                                                                   the sender and receiver to generate shared pseudorandomness.
+raphy scheme is a valid weakly asymmetric steganography
+scheme, where the receiver can simply ignore f (D ). There-
+fore, the central question is not existence, but non-triviality:   4.2 Binary Alphabet under Threshold Knowl-
+whether there exist schemes that meaningfully exploit the              edge
+receiver’s knowledge f (D ) to gain a strict advantage over
+simply ignoring it. We call such schemes non-trivial weakly        For a binary alphabet Σ = {σ0 , σ1 }, a distribution D is com-
+asymmetric steganography schemes under knowledge f . In            pletely determined by the value D(σ0 ). Thus, a natural form
+this work, we focus on such non-trivial schemes.                   of partial knowledge is threshold information about this value.
+                                                                      We define a threshold knowledge function 1θ (·), which indi-
+                                                                   cates whether the probability of symbol σ0 in the distribution
+4   Schemes under Threshold and Rank Knowl-                        D is below a given threshold θ. Specifically, it outputs:
+    edge                                                                                              (
+                                                                                                        0, if D(σ0 ) ≥ θ,
+                                                                          1θ (D) := 1[D(σ0 ) < θ] =
+A natural question regarding weakly asymmetric steganog-                                                1, if D(σ0 ) < θ.
+raphy is whether this setting has practical significance, or
+whether it amounts to a purely definitional generalization of      This knowledge function reveals the comparison between
+symmetric and asymmetric steganography. More concretely,           D(σ0 ) and θ, and equivalently the comparison between D(σ1 )
+to the best of our knowledge, existing work has not established    and 1 − θ. In this section, we consider weakly asymmetric
+the existence of non-trivial weakly asymmetric steganography       steganography under the threshold knowledge function 1θ (·).
+schemes under any form of partial channel knowledge.                  A natural first attempt is to follow the randomness-recovery
+   This section provides an initial answer to this question by     view of Meteor [17]: the (masked) hiddentext is interpreted
+presenting constructions under two specific forms of partial       as the randomness in [0, 1) used for sampling, and each out-
+channel knowledge. We consider threshold-based knowledge           put symbol corresponds to a sampling interval. Thus, ob-
+over binary alphabets, as well as rank-based knowledge over        serving a symbol tells the receiver that the hiddentext lies in
+general alphabets, demonstrating the existence of non-trivial         2 Alternatively, statefulness can be avoided by sampling a short cover
+
+weakly asymmetric steganography schemes in both cases.             prefix before encoding and treating it as a nonce [9, 18].
+
+
+
+
+USENIX Association                                                                        35th USENIX Security Symposium             3165
+the corresponding interval, thereby reducing the uncertainty        Accordingly, the sender outputs σ1−k if r′ < D(σ1−k ), and σk
+about the hiddentext and hence revealing information in the         otherwise.
+information-theoretic sense. This idea can also be applied             In particular, when b = 0, we have r′ = r, and the above
+here. For example, if the receiver observes σ0 and knows that       procedure reduces to sampling within the partition (Iσ1−k , Iσk )
+D(σ0 ) < θ, then it can localize the hiddentext to a known          using r. When b = 1, we have r′ = 1 − r, which is equivalent
+interval of length θ, and thus obtains some information about       to sampling with r within the swapped partition (Iσ′ k , Iσ′ 1−k ),
+the hiddentext. However, Meteor recovers bits by extracting         where:
+the common binary prefix of the inferred interval. Therefore,
+when θ > 1/2, the inferred interval may have no nonempty                       Iσ′ k = [0, D(σk )],             Iσ′ 1−k = (D(σk ), 1).
+common binary prefix, and this prefix-based recovery decodes
+no bit.                                                             An illustrative overview is provided in Fig. 2.
+   This observation suggests that threshold knowledge should          If the sampled symbol is σ1−k , the current secret bit b is
+be exploitable. The key is to focus on the symbol for which         considered successfully embedded, and the Encode algorithm
+the receiver can certify a probability upper bound strictly         proceeds to the next bit in the subsequent sampling step. Oth-
+smaller than 1. This intuition leads to our scheme below. We        erwise, the same secret bit is reused in the next sampling step.
+first present the special case θ = 0.5, and then extend it to       The formal description of the Sample algorithm is given in
+handle an arbitrary threshold θ ∈ (0, 1).                           Algorithm 1. This procedure is feasible because the sender
+                                                                    has full channel knowledge, in particular the exact values of
+                                                                    D(σk ) and D(σ1−k ).
+4.2.1   The Special Case θ = 0.5
+                                                                                         r ∈ [0,1)
+We begin with the case θ = 0.5, which captures the core ideas                                                      𝟎. 𝟓
+                                                                                               ⇒ 𝒄𝒊 =
+of our construction and provides a convenient starting point                                    D(𝜎!"# )
+
+before extending to arbitrary thresholds. In this setting, the           𝒃 = ‘0’       𝜎"#$                               𝜎!
+
+receiver only has access to the value 10.5 (D), rather than the          𝒃 = ‘1’                           σ$                            𝜎"#$
+                                                                                                                                D(𝜎# )
+full conditional distribution D.                                                              ⇒ 𝒄𝒊 =
+                                                                                         r ∈ [0,1)
+   Equivalently, this means that the receiver’s knowledge in-
+dicates which symbol is more likely under the binary distri-
+bution. Specifically, let k = 10.5 (D). By definition, we have      Figure 2: Illustration of the Sample algorithm under different
+                                                                    bit b for a given pseudorandom value r. Here, ci denotes the
+                   D(σk ) ≥ 0.5 ≥ D(σ1−k ),                         sampled symbol.
+so σk is more likely, while σ1−k is less likely.
+   Next, we describe the sender’s Sample algorithm and the re-
+                                                                                                 Σ={σ ,σ1 }
+ceiver’s Recovery algorithm. The Sample algorithm specifies          Algorithm 1: Sample10.5 0                  (m′ , PRGsk , D)
+how the symbol is sampled based on the secret message for
+each conditional distribution DH . The Recovery algorithm             Input: Bits m′ , Pseudorandom Generator PRGsk ,
+specifies how the receiver, given access to f (DH ), recovers                Distribution D
+the embedded bits from the received symbol. The full Encode           Output: Sampled Symbol ci , Number of Embedded
+and Decode algorithms are obtained by iterating these steps,                    Bits ni
+as shown in Algorithm 4 and Algorithm 5.                              k ← 1(
+                                                                           0.5 (D), r ← PRGsk .Next(), b = m′ [0];
+                                                                              r,       if b = 0
+                                                                      r′ ←
+(1) Sample algorithm. Given the current conditional distri-                   1 − r, if b = 1
+bution D = DH , the sender first computes k = 10.5 (D), so that       if r′ < D(σ1−k ) then
+σk is the more likely symbol and σ1−k is the less likely one.              ci ← σ1−k , ni ← 1;
+The sender then draws a fresh pseudorandom value r ∈ [0, 1)
+                                                                      else
+from the shared stateful PRG and lets b denote the first bit of
+                                                                          ci ← σk , ni ← 0;
+the remaining secret message to be embedded. It then derives
+                        (                                             return ci , ni
+                          r,       if b = 0
+                   r′ =
+                          1 − r, if b = 1
+
+  The value r′ is used to sample a symbol. Specifically, the        (2) Recovery algorithm. Upon receiving the symbol and
+unit interval [0, 1) is partitioned according to the distribution   the knowledge k = 10.5 (D), the receiver first checks whether
+D as follows:                                                       the received symbol is σ1−k . If not, then no bit has been
+                                                                    embedded in the corresponding sampling step, and hence no
+        Iσ1−k = [0, D(σ1−k )),      Iσk = [D(σ1−k ), 1),            further decoding is required at this step.
+
+
+
+3166    35th USENIX Security Symposium                                                                                    USENIX Association
+   Once the symbol σ1−k is observed, the decoded bit is de-                                       f
+                                                                      Algorithm 4: EncodeD (sk, m, H )
+termined by
+                       1[r ≥ 0.5],                                     Input: Secret key sk, Hiddentext m, history H
+                                                                       Output: Stegotext c
+where r is the shared pseudorandom value generated by the              n ← 0, c ← ε;
+stateful PRG. Specifically, if r < 0.5, then the decoded bit is 0;     while n < |m| and c has not ended do
+otherwise, if r ≥ 0.5, the decoded bit is 1. A formal description          m′ = m[n :] ;
+of the Recovery algorithm is given in Algorithm 2.                         D ← DH ;
+   Notably, the receiver only needs to know the value of k                 ci , ni ← SampleΣf (m′ , PRGsk , D);
+(and hence the identity of σ1−k ) and the comparison between               c ← c∥ci , n ← n + ni ;
+the shared randomness r and 0.5 to perform decoding, and                   H ← H ∥ci ;
+does not require access to the exact value of D(σ1−k ).                return c
+
+                           Σ={σ ,σ1 }
+ Algorithm 2: Recovery10.5 0            (ci , PRGsk , k)              Algorithm 5: Decode f(D) (sk, c, H )
+  Input: Symbol ci , Pseudorandom Generator PRGsk ,                    Input: Secret key sk, stegotext c, history H
+            Knowledge k                                                Output: Bit string m
+  Output: Bit x ∈ {0, 1, ε}                                            m←ε;
+  r ← PRGsk .Next();                                                   Let c = (c0 , c1 , . . . , c|c|−1 );
+  if ci = σk then                                                      for i ← 0 to |c| − 1 do
+       x ← ε;                                                              k ← f (DH );
+  else
+                                                                           x ← RecoveryΣf (ci , PRGsk , k) ;
+       if r < 0.5 then
+                                                                           m ← m∥x, H ← H ∥ci
+            x ← 0;
+       else                                                            return m
+            x ← 1;
+  return x                                                           Proof sketch of Security. We first provide an informal intu-
+                                                                     itive proof, where we simplify by treating the random values
+                                                                     r generated by the stateful PRG as independent and uniformly
+   By iterating the Sample and Recovery algorithms in Algo-
+                                                                     random.
+rithm 1 and Algorithm 2, we obtain the corresponding encod-
+                                      f                                 For any given history H and fixed secret bit b, the
+ing and decoding algorithms EncodeD and Decode f (D ) , as                   Σ={σ ,σ }
+formalized in Algorithm 4 and Algorithm 5. Together with             Sample10.5 0 1 algorithm samples according to the distri-
+the key generation algorithm KeyGenD in Algorithm 3, this            bution DH using the value r′ . Since r′ is uniformly random
+yields the following theorem.                                        regardless of whether b = 0 or b = 1, the probability of sam-
+                                                                     pling σ as the stego symbol ci is
+Theorem 1. For any covertext channel distribution D over                                                   
+                                                                                      Pr      ci = σ | H , b = DH (σ).
+the binary alphabet Σ = {σ0 , σ1 }, the scheme                                   r←Unif ([0,1))
+
+                                          f
+         ΠD , f = (KeyGenD , EncodeD , Decode f (D ) )               Thus, conditioned on the current history H , each execution
+                                                                                Σ={σ ,σ }
+                                                                     of Sample10.5 0 1 has exactly the same output distribution
+defined by Algorithm 3, Algorithm 4, and Algorithm 5, and            as sampling directly from DH .
+induced by the Sample and Recovery in Algorithm 1 and                   Furthermore, consider any two executions of
+Algorithm 2, is a weakly asymmetric steganography scheme                     Σ={σ ,σ }
+                                                                     Sample10.5 0 1 . Even if the corresponding secret bits
+under the knowledge function f = 10.5 (·).                           are correlated, or even identical because the same bit is
+                                                                     reused, the values r0′ and r1′ remain independent, since
+                                                                     the underlying random values r0 and r1 are independent.
+ Algorithm 3: KeyGenD (1λ )                                          Therefore, under this assumption (i.e., treating the values r
+                                                                     as independent and uniformly random), for any fixed secret
+  Input: Security Parameter 1λ
+                                                                     message m and secret key sk, the output of a single query to
+  Output: Secret Key sk                                                                             f
+                                                                     the encoding oracle EncodeD has the same distribution as
+  sk ← PRG.Setup(1λ );
+                                                                     the output of a single query to the oracle OD .
+  return sk
+                                                                        Finally, using the security of the underlying stateful PRG
+                                                                     and the statefulness of the scheme, a standard hybrid argument
+
+
+
+USENIX Association                                                                       35th USENIX Security Symposium      3167
+yields a formal proof of security.                                                                    Capacity. We note that the Recovery algorithm can recover
+                                                                                                      exactly 1 bit if and only if the sampled symbol is σ1−k , which
+Proof of Correctness. We show that the Recovery algo-                                                 occurs with probability Dmin = D(σ1−k ) ≤ 0.5. Therefore, the
+rithm correctly recovers the bit embedded by the correspond-                                          capacity (expectation) for this symbol is
+ing Sample algorithm.                                                                                          C10.5 = 1 × Dmin + 0 × (1 − Dmin ) = Dmin .
+   First, consider the case where the sampled symbol is σk ,
+the more likely symbol. In this case, no bit is successfully
+                                                                                                      4.2.2   General Case θ ∈ (0, 1)
+embedded by the Sample algorithm, and hence no decoding
+is required. Accordingly, the Recovery algorithm outputs ε,                                           To generalize the threshold from θ = 0.5 to an arbitrary θ ∈
+which is correct.                                                                                     (0, 1), we first reinterpret the Sample and Recovery for the
+   We now consider the case where the sampled symbol is                                               case θ = 0.5.
+σ1−k , in which exactly one bit is embedded. Fig. 3 depicts                                              The sender first applies a bit-controlled transformation to
+the sender’s sampling process from the receiver’s view and                                            the shared random value r according to the current secret bit
+makes the correctness of the recovery rule intuitive. In the                                          b (i.e., choosing to use either r or 1 − r), and then samples
+left half of the diagram, where 0 ≤ r < 0.5, the symbol σ1−k                                          according to the distribution D. Moreover, a secret bit is con-
+may be sampled when b = 0, but it cannot be sampled when                                              sidered successfully embedded and the sender proceeds to the
+b = 1. Therefore, if the shared pseudorandom value r < 0.5,                                           next bit, if and only if the receiver is able to uniquely decode
+then sampling σ1−k implies that the embedded bit must be 0.                                           this bit. On the receiver side, decoding is attempted only upon
+Equivalently,                                                                                         receiving a symbol whose probability admits a known upper
+                                                                                                      bound (i.e. σ1−k ). Furthermore, decoding is performed only
+          r < 0.5 ∧ ci = σ1−k =⇒ embedded bit = 0.                                                    when the value r lies in a region that allows the secret bit to be
+                                                                                                      uniquely determined. In the case θ = 0.5, as discussed above,
+Indeed, if the embedded bit were 1, the Sample algorithm                                              this upper bound equals 0.5, and the corresponding decodable
+would output σk when r < 0.5, since D(σk ) ≥ 0.5, contradict-                                         region covers the entire interval [0, 1). From this perspective,
+ing the sampling of σ1−k . Similarly, when r ≥ 0.5, sampling                                          extending the construction to a general threshold θ reduces to
+σ1−k implies that the embedded bit must be 1. That is,                                                identifying the range of random values for which the receiver
+                                                                                                      can uniquely decode.
+          r ≥ 0.5 ∧ ci = σ1−k =⇒ embedded bit = 1.                                                       On the sender side, the sampling procedure remains un-
+                                                                                                      changed: given the current secret bit b, the sender applies
+Therefore, in this case the embedded bit can be expressed as                                          the same bit-controlled transformation to the shared random
+                                                                                                      value, namely using r′ = r if b = 0 and r′ = 1 − r if b = 1,
+                                       1[ r ≥ 0.5 ],
+                                                                                                      and then samples a symbol according to the distribution D.
+                                                                                                      Consequently, for a general θ, the range of random values for
+which coincides exactly with the decoding rule used by the
+                                                                                                      which the receiver can uniquely decode is
+Recovery algorithm.
+   Therefore, in all cases, the Recovery algorithm correctly                                                      [0, min(θ, 1 − θ)] ∪ (max(θ, 1 − θ), 1)
+recovers the embedded bit. Since the Encode and Decode al-
+gorithms are obtained by iterating the corresponding Sample                                           This is because, under the receiver’s knowledge k = 1θ (D),
+and Recovery procedures, the correctness of the scheme fol-                                           we have
+lows. If the stegotext naturally terminates before the entire
+hiddentext is embedded, correctness is understood with re-                                             D(σk ) ≥ min(θ, 1 − θ) and        D(σ1−k ) ≤ max(θ, 1 − θ).
+spect to the embedded prefix of the hiddentext.                                                       Therefore, when r ≤ min(θ, 1 − θ), observing the symbol
+                                                                                                      σ1−k necessarily implies that it was sampled using r′ = r,
+                                                          𝟎. 𝟓
+                                 𝟎 ≤ r < 𝟎. 𝟓                           𝟎. 𝟓 ≤ r < 𝟏                  and hence the embedded bit can be uniquely determined to be
+                       0 ≤ r < **        ** ≤ r < 0.5        0.5 ≤ r<1- **         1-**≤ r < 1        0. Similarly, when r > max(θ, 1 − θ), the embedded bit can
+     𝒃 = ‘0’              𝜎"#$                                     𝜎!
+                                                                                                      only be 1.
+      𝒃 = ‘1’                                   𝜎!                                      𝜎"#$
+                                                                                                         A corresponding intuitive illustration is given in Figure 4.
+                                 Recovery’s view of Sampling process
+
+  From the view above, the Recovery knows:
+                                                                                                      In the left region 0 ≤ r ≤ min(θ, 1 − θ), the symbol σ1−k may
+  When 0 ≤ r < 0.5, and 𝒄𝒊 =            , 𝒃 must be ‘0’     Recovery doesn’t even need to know ** !   be sampled when b = 0, but cannot be sampled when b = 1;
+  When 0.5 ≤ r < 1, and 𝒄𝒊 =            , 𝒃 must be ‘1’
+                                                                                                      hence observing σ1−k uniquely determines the embedded bit
+                                                                                                      as 0. Symmetrically, in the right region max(θ, 1 − θ) < r < 1,
+Figure 3: Illustration of the recovery procedure. The marker                                          the symbol σ1−k may be sampled when b = 1, but cannot be
+“**” indicates that the exact value of D(σ1−k ) is unknown to                                         sampled when b = 0; hence observing σ1−k uniquely deter-
+the receiver.                                                                                         mines the embedded bit as 1. The middle region remains
+
+
+
+3168      35th USENIX Security Symposium                                                                                                         USENIX Association
+ambiguous from the receiver’s viewpoint and is therefore           where Dmin := min{D(σ0 ), D(σ1 )}.
+treated as non-decodable.
+                                                                                                            min(𝜃, 1 − 𝜃)           max(𝜃, 1 − 𝜃)
+
+                       Σ={σ ,σ }
+ Algorithm 6: Sample1θ 0 1 (m′ , PRGsk , D)                                               0 ≤ r < min(𝜃, 1 − 𝜃)                             max(𝜃, 1 − 𝜃)≤ r <1
+                                                                         𝒃 = ‘0’            𝜎"#$            ?                                        𝜎!
+  Input: Bits m′ , Pseudorandom Generator PRG             sk ,             𝒃 = ‘1’                  𝜎!                         ?                ?         𝜎"#$
+
+         Distribution D                                                                  D(𝜎! ) ≥ min(𝜃, 1 − 𝜃)                          1 − D(𝜎! ) ≤ max(𝜃, 1 − 𝜃)
+
+  Output: Symbol ci , Number of Embedded Bits ni                     From the view above, the Recovery knows:
+                                      ′                              When 0 ≤ r < min(𝜃, 1 − 𝜃), and 𝒄𝒊 =         , 𝒃 must be ‘0’
+  k ← 1(
+       θ (D), r ← PRGsk .Next(), b = m [0];                          When max(𝜃, 1 − 𝜃) ≤ r < 1, and 𝒄𝒊 =         , 𝒃 must be ‘1’
+
+           r,      if b = 0
+  r′ ←
+           1 − r, if b = 1                                                  Figure 4: Illustration of the recovery procedure.
+  if r′ < D(σ1−k ) then
+       ci ← σ1−k ;
+       if min (1 − θ, θ) < r ≤ max (1 − θ, θ) then                 4.3       Scheme Design under Rank Knowledge
+            ni ← 0;
+       else                                                        In this section, we study scheme design under rank-based
+            ni ← 1;                                                knowledge over general alphabets Σ = {σ0 , . . . , σ|Σ|−1 }.
+                                                                      In this setting, the receiver’s knowledge consists of an or-
+  else                                                             dering of symbols induced by the conditional distribution.
+      ci ← σk , ni ← 0;                                            We begin with the case of full rank knowledge, where the
+  return ci , ni                                                   receiver has knowledge of the complete ordering over the al-
+                                                                   phabet. Formally, this is represented by a knowledge function
+                                                                    f = rank(·) which maps a distribution D over the alphabet Σ
+                                                                   to a permutation
+                          Σ={σ ,σ1 }
+ Algorithm 7: Recovery1 (D)0           (ci , PRGsk , k)                                      π = rank(D),
+                           θ
+
+  Input: Symbol ci , Pseudorandom Generator PRGsk ,                such that
+            Knowledge k
+  Output: Bit x ∈ {0, 1, ε}                                                      D(σπ(0) ) ≥ D(σπ(1) ) ≥ · · · ≥ D(σπ(|Σ|−1) ).
+  r ← PRGsk .Next();
+  if ci = σk then                                                  We write Σ′ = π(Σ) to denote the list Σ ordered according to
+       x ← ε;                                                      π, where Σ′ [i] = σπ(i) .
+  else                                                                We then extend the construction to partial rank knowledge,
+       if r ≤ min (1 − θ, θ) then                                  where the receiver only observes a restricted ordering over a
+            x ← 0;                                                 subset of symbols. In this setting, the receiver’s knowledge is
+       else                                                        represented by
+            if r > max (1 − θ, θ) then                                                  PRank(D) = (π̂, Σ̂),
+                 x ← 1;
+            else                                                   where Σ̂ ⊆ Σ denotes the subset of symbols whose relative
+                 x ← ε;                                            order is known, and π̂ specifies the ordering over Σ̂.
+
+  return x                                                         4.3.1       Full Rank Knowledge
+                                                                   Our basic idea is to recursively partition the alphabet Σ into
+   We now directly present the corresponding Sample and            two subsets whose total probability masses admit a relative
+Recovery algorithms in Algorithms 6 and 7. Consistent with         ordering that can be inferred solely from rank knowledge,
+the above analysis, it is straightforward to verify that the re-   ensuring that at each recursive step the receiver can identify
+sulting scheme is both secure and correct, and thus constitutes    the higher-probability subset without accessing exact prob-
+a weakly asymmetric steganography scheme under knowl-              ability values. Consequently, we can recursively apply the
+edge function f = 1θ (·). The capacity of this scheme is given     sampling and recovery procedures for threshold knowledge
+by                                                                with θ = 0.5, namely Sample10.5 and Recovery10.5 , to perform
+              C1θ = min D(σ1−k ), θ, 1 − θ .                       encoding and decoding over the two subsets. The recursion
+Since D(σk ) ≥ min(θ, 1 − θ), we have                              continues until a single symbol is selected on the sender side,
+                                                                 or until all embedded bits have been recovered on the receiver
+C1θ = min D(σ1−k ), D(σk ), θ, 1−θ = min Dmin , θ, 1−θ ,           side.
+
+
+
+USENIX Association                                                                                 35th USENIX Security Symposium                                3169
+  The partitioning rule is simple. For any list Σ′ sorted in        where pmax = maxσ∈Σ D(σ) and H(D) denotes the entropy of
+descending order of probability, we always have                     D. The lower bound follows from the fact that every index
+                                                                    i ≥ 1 contains at least one one-bit. The upper bound holds
+               i<|Σ′ |                   i<|Σ′ |
+                                                                    since for all i,
+                 ∑        D(Σ′ [i]) ≥     ∑         D(Σ′ [i]).
+             i mod 2=0                  i mod 2=1                                                                               1
+                                                                             count1 (bin(i)) ≤ log2 (i + 1) ≤ log2                   ,
+Therefore, splitting Σ′ by parity, as specified in Algorithm 8,                                                                pπ(i)
+induces two subsets whose total probability masses have a
+known ordering determined purely by rank information.               implying that the number of embedded bits per symbol does
+                                                                    not exceed its information content.
+ Algorithm 8: ParitySplit(Σ′ )
+                                                                     Algorithm 9: SampleΣrank (m′ , PRGsk , D)
+  Input: A sorted list Σ′
+  Output: Two sublists (σ′0 , σ′1 )                                   Input: Bits m′ , Pseudorandom Generator PRGsk ,
+  σ′0 ← Σ′ [0::2]     // even-indexed elements;                                Distribution D
+  σ′1 ← Σ′ [1::2]      // odd-indexed elements;                       Output: Symbol ci , Number of Embedded Bits ni
+  return (σ′0 , σ′1 )                                                 ni ← 0, π ← rank(D), Σ′ ← π(Σ) // descending;
+                                                                      while |Σ′ | > 1 do
+                                                                          (σ′0 , σ′1 ) ← ParitySplit(Σ′ );
+   The correctness of the scheme follows from the correct-                              ∑x∈σ′0 D(x)
+ness of the weakly asymmetric scheme under the knowledge                  D′ (σ′0 ) ←               ;
+function f = 10.5 , which ensures correct bit recovery at each                          ∑x∈Σ′ D(x)
+recursive step, while rank knowledge and the deterministic                              ∑x∈σ′1 D(x)
+                                                                          D′ (σ′1 ) ←               ;
+partitioning rule guarantee that the decoder’s recursion is fully                       ∑x∈Σ′ D(x)
+                                                                                             Σ={σ′ ,σ′1 }
+synchronized with the sender’s. For security, an intuitive ex-              Σ′ , b ← Sample10.5 0           (m′ [ni :], PRGsk , D′ );
+planation is as follows. At each recursive step, the probability            ni ← ni + b;
+that the Sample10.5 selects a given subset is exactly equal to
+the total probability mass of that subset under the original          ci ← Σ′ [0] ;
+distribution. As a result, the recursive procedure preserves          return ci , ni
+the original distribution over symbols, and for any history H ,
+secret bits m′ and any symbol σ ∈ Σ, we still have
+
+                           ci = σ | H , m′ = DH (σ).
+                                         
+                 Pr                                                  Algorithm 10: RecoveryΣrank (ci , PRGsk , π)
+          r0 ,r1 ,...←Unif [0,1)
+                                                                      Input: Symbol ci , Pseudorandom Generator PRGsk ,
+  The corresponding SampleΣrank and RecoveryΣrank are for-                    Rank Knowledge π
+malized in Algorithm 9 and Algorithm 10.                              Output: Bits x
+                                                                      x ← ε, Σ′ ← π(Σ)             // descending;
+Capacity. At each recursive step, one bit is embedded if and          while |Σ′ | > 1 do
+only if the procedure descends into the lower-probability sub-           (σ′0 ,σ′1 ) ← ParitySplit(Σ′ );
+set, as dictated by the behavior of the Sample10.5 algorithm.            k = 0;(                         // Pr(σ′0 ) ≥ Pr(σ′1 )
+Consequently, for any symbol σπ(i) , the total number of em-                        σ′0 , if ci ∈ σ′0
+                                                                            c′i ←                     ;
+bedded bits equals the number of times the lower-probability                        σ′1 , if ci ∈ σ′1
+subset is selected along the recursion, which is exactly the                                  Σ={σ′ ,σ′1 }
+                                                                            x ← x∥Recovery10.5 0             (c′i , PRGsk , k),Σ′ ← c′i ;
+number of ones in the binary representation of i.
+   Let pπ(i) = D(σπ(i) ) denote the probability of the i-th sym-      return x
+bol in descending order. The expected embedding capacity is
+therefore
+                            |Σ|−1                                  4.3.2    Partial Rank Knowledge
+              Crank =        ∑ pπ(i) · count1 bin(i) ,
+                             i=0                                    We next consider partial rank knowledge PRank(·), where the
+where count1 (bin(i)) denotes the number of ones in the bi-         receiver only observes an ordering π̂ over a subset of symbols
+nary representation of i.                                           Σ̂ ⊆ Σ.
+  This capacity admits the following bounds:                           Our key idea is simple: information is embedded only when
+                                                                    the sampled symbol lies in Σ̂. Otherwise, the sender samples a
+                   1 − pmax ≤ Crank ≤ H(D),                         symbol outside Σ̂ without embedding any bit. Concretely, the
+
+
+
+3170    35th USENIX Security Symposium                                                                                USENIX Association
+sender first draws a fresh random value r ← Unif[0, 1) (which          We conduct two sets of experiments. First, we consider the
+is not shared with the receiver) and compares it with the total     setting directly captured by our model, where the receiver is
+probability mass                                                    given only rank-based knowledge. In particular, we evaluate
+                        pΣ̂ := ∑ D(σ).                              both full-rank knowledge and partial-rank knowledge, where
+                              σ∈Σ̂                                  the receiver only observes the ordering of the top-k tokens.
+If r > pΣ̂ , the sender outputs a symbol from Σ \ Σ̂ accord-           Second, we study a distribution-mismatch setting in which
+ing to the distribution D restricted to and renormalized on         the sender and the receiver run the same language model
+Σ \ Σ̂, and no bit is embedded. Otherwise, the sender renor-        under different numerical precisions. This setting is outside
+malizes D onto Σ̂ to obtain DΣ̂ , and applies the full-rank         the formal model, but is motivated by the approximate and
+                                                                    noisy forms of receiver-side information discussed earlier,
+scheme SampleΣ̂rank on the restricted alphabet Σ̂ to embed bits
+                                                                    where decoding based on coarse knowledge such as ordering
+and sample a symbol.
+                                                                    may be less sensitive to perturbations than decoding based on
+   If the received symbol ci ∈ / Σ̂, the Recovery outputs ε; oth-
+                                                                    exact probability values.
+erwise, it decodes using the full rank recovery Recoveryrank
+under knowledge π̂. The corresponding sampling and recov-
+ery procedures are given in SamplePRank (Algorithm 11) and          5.1 Receiver with Partial Channel Knowledge
+RecoveryPRank (Algorithm 12). Correctness and security of
+                                                                    Setup For the channel distribution, we use two open-source
+the resulting scheme follow directly from those of the full-
+                                                                    language models: Meta-Llama-3-8B-Instruct3 and Qwen2.5-
+rank construction. Top-k knowledge arises as a special case
+                                                                    7B-Instruct4 . The sender accesses the conditional distribution
+by restricting Σ̂ to the top-k symbols.
+                                                                    by running the language model directly. To simulate the re-
+                                                                    ceiver’s limited channel knowledge in the weakly asymmetric
+ Algorithm 11: SampleΣPRank (m′ , PRGsk , D)                        setting, we compute the full conditional distribution using
+  Input: Bits m′ , Pseudorandom Generator PRGsk ,                   the same language model, but provide the receiver only with
+             Distribution D                                         the corresponding rank-based knowledge for decoding. We
+  Output: Symbol ci , Number of Embedded Bits ni                    fix the prompt “Tell me something about steganography” as
+  (π̂, Σ̂) ← PRank(D);                                              the history. Each stegotext is generated as a response to this
+  r ← Unif[0, 1), pΣ̂ ← ∑σ∈Σ̂ D(σ);                                 prompt, and generation terminates when the language model
+  if r > pΣ̂ then                                                   produces an end-of-sequence token.
+        Sample ci ∼ Normalize(D, Σ \ Σ̂);                              As baselines, we include asymmetric steganography and
+        ni ← 0                                                      random sampling. Symmetric steganography schemes are
+  else                                                              not included as baselines, since they require full distribution
+        DΣ̂ ← Normalize(D, Σ̂)                                      access at the receiver and thus fall outside the weakly asym-
+                                                                    metric setting. For asymmetric steganography, we use the
+         ci , ni ← SampleΣ̂rank (m′ , PRGsk , DΣ̂ )
+                                                                    Undetectable Steganography scheme [26], based on the of-
+  return ci , ni                                                    ficial implementation5 , with the default threshold parameter
+                                                                    t = 2. To avoid penalizing this baseline due to implementa-
+                                                                    tion inefficiencies, we apply minor implementation-level opti-
+ Algorithm 12: RecoveryΣPRank (ci , PRGsk , (π̂, Σ̂))               mizations while preserving the original algorithmic behavior.
+                                                                    These optimizations affect only runtime efficiency and do not
+  Input: Symbol ci , Pseudorandom Generator PRGsk ,
+                                                                    change the reported non-runtime evaluation metrics. Random
+            Partial Rank Knowledge (π̂, Σ̂)
+                                                                    sampling is implemented using torch.multinomial.
+  Output: Bits x
+                                                                       We evaluate both the full-rank scheme and partial-rank
+  if ci ̸∈ Σ̂ then
+       return ε                                                     schemes. For partial-rank knowledge, the receiver is restricted
+                                                                    to the relative ordering of only the top-2, top-5, or top-10
+  else
+                                                                    tokens. The stateful PRG used in all rank-based weakly asym-
+       x = RecoveryΣ̂rank (ci , PRGsk , π̂)                         metric schemes follows the same construction as in the clas-
+  return x                                                          sical Meteor scheme [17] and is implemented via HMAC-
+                                                                    DRBG, with a precision of 52 bits.
+                                                                       All experiments are conducted on a single RTX 5880 Ada
+5   Experiments                                                     GPU with 48GB VRAM. For each experimental configura-
+                                                                    tion, we generate 1,000 responses. The hiddentext and key are
+In this section, we evaluate our rank-based weakly asym-              3 https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct
+metric steganography schemes in language-model-based text             4 https://huggingface.co/Qwen/Qwen2.5-7B-Instruct
+
+steganography.                                                        5 https://github.com/OrZamir/steg
+
+
+
+
+USENIX Association                                                                      35th USENIX Security Symposium               3171
+independently re-sampled for each response. The decoding                    distributions used by the sender at each generation step. Nu-
+is performed directly at the token level, without converting                merical discrepancies between the sender-side and receiver-
+tokens back to text, in order to avoid ambiguities introduced               side distributions may therefore lead to decoding errors. In
+by text-level representations.                                              contrast, weakly asymmetric steganography decodes from
+                                                                            coarse knowledge such as ordering, rather than exact proba-
+                                                                            bility values. As a result, as long as this knowledge remains
+Metrics. Capacity. We report the average number of em-                      consistent, decoding can remain reliable even when the un-
+bedded bits per response (Capacity), the average empirical                  derlying distribution changes. From this perspective, weakly
+entropy per response (Emp. Entropy), computed as the sum                    asymmetric steganography can be viewed as a steganography
+of token-wise entropies along the Encode process, and the                   model with improved numerical robustness.
+utilization ratio (Util.), defined as Capacity divided by Emp.
+                                                                               Thus, we consider a language-model-based text steganog-
+Entropy [11]. Time. We measure the average encoding and de-
+                                                                            raphy setting in which the sender and receiver run the same
+coding time per response (Enc. Time and Dec. Time), which
+                                                                            language model under different numerical precisions. Specif-
+include both language model inference and steganographic
+                                                                            ically, the sender uses float32 precision, while the receiver
+operations. Other metrics. We also report the average length
+                                                                            performs inference and decoding under float16 precision, in-
+of the generated stegotext in number of tokens (Length) and
+                                                                            ducing a perturbation to the channel distribution. This setting
+the decoding correctness (Correct.), measured as the fraction
+                                                                            is practically motivated, as float16 inference significantly re-
+of responses that are decoded correctly.
+                                                                            duces memory consumption and is commonly adopted under
+                                                                            resource constraints.
+Results and Analysis. Table 1 summarizes the experimen-
+tal results. A concrete example of generated stegotext under                Setup The experimental setup largely follows that of the pre-
+full-rank knowledge is provided in Appendix A. Rank-based                   vious subsection. We use the same language models, prompt,
+weakly asymmetric steganography incurs only modest addi-                    number of trials, and experimental hardware as before. Here,
+tional computational overhead compared to random sampling                   we focus only on the differences.
+in our experiments. Across both language models, the gener-                    Unlike the standard setting where the sender and the re-
+ated text length and empirical entropy remain similar to those              ceiver access identical channel distributions, we introduce a
+of random sampling, which is consistent with the proposed                   numerical asymmetry between the two parties. Specifically,
+schemes preserving the natural generation behavior of the                   the sender obtains the channel distribution by running the
+underlying language models.                                                 language model under float32 precision, while the receiver
+   The results also highlight a clear capacity gap between                  performs inference and decoding using the same model under
+rank-based weakly asymmetric steganography and the fully                    float16 precision. For the asymmetric baseline, we reuse the
+asymmetric baseline. Undetectable steganography embeds                      results reported in Table 1, as its decoding does not depend on
+only a few bits per response, whereas our rank-based schemes                receiver-side channel distributions. In addition to asymmetric
+embed tens to hundreds of bits per response. In particular,                 and random-sampling baselines, we include several symmet-
+even top-2 ordering information already brings a meaningful                 ric steganography schemes for comparison, including Meteor
+capacity gain, suggesting that intermediate receiver-side chan-             (16-bit precision) [17], Discop (Huffman) [11], and SparSamp
+nel knowledge can be useful.6 Overall, these results support                (32-bit) [24]. For fairness, all schemes use pseudorandomness
+the study of weakly asymmetric steganography as a meaning-                  generated via the same HMAC-DRBG construction.
+ful setting between symmetric and fully asymmetric steganog-                   To make token-level accuracy and edit distance more in-
+raphy.                                                                      formative in the distribution-mismatch experiments, we use
+                                                                            a simple fixed-budget PRG synchronization rule for our pro-
+                                                                            posed schemes. In our rank-based schemes, different tokens
+5.2        Receiver under Distribution Mismatch                             may consume different numbers of PRG outputs. Under dis-
+The previous subsection evaluates the setting where the re-                 tribution mismatch, a local token-level error can therefore
+ceiver is explicitly given limited rank-based channel knowl-                desynchronize the PRG states and cause cascading errors in
+edge. We now consider a related but different scenario moti-                later tokens.
+vated by precision-induced distribution mismatch, where the                    To isolate such local errors, we fix the number of PRG
+receiver may obtain a perturbed version of the sender’s condi-              outputs consumed per generated token: both sampling and re-
+tional distribution rather than the exact distribution itself.              covery consume the same budget, discarding unused outputs
+                                                                            when necessary. The budget is set to the maximum number of
+   In symmetric steganography, decoding correctness typi-
+                                                                            PRG outputs required to process one token in the correspond-
+cally requires the receiver to reconstruct the same conditional
+                                                                            ing implementation. This rule does not change the sampling
+   6 For the embedding capacities of symmetric steganography schemes, see   or recovery decisions; it only fixes the PRG advancement
+Table 2.                                                                    schedule, so that token accuracy and edit distance better re-
+
+
+
+3172       35th USENIX Security Symposium                                                                            USENIX Association
+                                                          Capacity Metrics                       Time Metrics
+         Model              Scheme                                                                                          Length        Correct.↑
+                                                Capacity       Emp. Entropy                 Enc. Time       Dec. Time
+                                                                                Util.↑
+                                               (bit/resp.)↑     (bit/resp.)                 (s/resp.)↓      (s/resp.)↓
+
+                      Random Sampling               –             392.681         –           18.798          18.385        497.273           –
+                      Undet. (t = 2) [26]         2.530           388.932      0.65%          21.507           0.143        494.819         61.8%
+       L LAMA 3
+                         Rank (Full)            111.223           391.070     28.44%          20.662          19.115        497.441        100.0%
+      |Σ| ≈ 128k
+                        Rank (Top10)            95.067            386.317     24.61%          19.115          18.699        492.808        100.0%
+                        Rank (Top5)             83.374            392.303     21.25%          19.215          18.884        498.172        100.0%
+                        Rank (Top2)             49.855            390.106     12.78%          18.915          18.753        495.921        100.0%
+                      Random Sampling               –             589.486         –           18.610          18.137        520.575           –
+                        Undet. (t = 2)            2.305           590.922      0.39%          25.384           0.171        519.993         61.6%
+      Q WEN 2.5
+                         Rank (Full)            170.589           588.066     29.01%          20.486          18.815        518.845        100.0%
+      |Σ| ≈ 152k
+                        Rank (Top10)            142.931           594.132     24.06%          19.132          18.702        522.571        100.0%
+                        Rank (Top5)             118.122           597.423     19.77%          19.147          18.808        525.972        100.0%
+                        Rank (Top2)              63.302           590.385     10.72%          18.748          18.580        521.248        100.0%
+
+Table 1: Experimental results for rank-based weakly asymmetric steganography under partial channel knowledge in language-
+model-based text steganography.
+
+
+flect local decoding errors. Response-level accuracy is largely                  While symmetric schemes typically achieve high embed-
+unaffected, since exact response recovery already fails once                  ding capacity and entropy utilization, their correctness de-
+any embedded-token error occurs.7                                             grades substantially when precise numerical distributions
+                                                                              are unavailable. In particular, several symmetric schemes ex-
+                                                                              hibit lower token-level accuracy, larger edit distance, and near-
+Metrics. Unless otherwise specified, we use the same eval-
+                                                                              zero response-level decoding success, indicating a strong de-
+uation metrics as in the previous subsection. Here, we addi-
+                                                                              pendence on accurate probability values. Non-instantaneous
+tionally report the following correctness metrics.
+                                                                              schemes, such as SparSamp, are especially sensitive to such
+   Correctness Metrics. Token Acc. measures the fraction
+                                                                              distributional deviations, since decoding errors may accumu-
+of tokens for which the decoded bits match the embedded
+                                                                              late across sampling steps.8
+bits. Resp. Acc. measures the fraction of responses for
+                                                                                 In contrast, rank-based weakly asymmetric steganography
+which token-level decoding is correct at every generated to-
+                                                                              sacrifices part of the embedding capacity in exchange for sig-
+ken. ED reports the average edit distance between the de-
+                                                                              nificantly improved robustness. Weakly asymmetric schemes
+coded bitstring and the embedded bitstring, i.e., the mini-
+                                                                              maintain token-level accuracy above 99% across all rank set-
+mum number of single-bit insertions, deletions, and substi-
+                                                                              tings, together with substantially lower edit distance. More-
+tutions required to transform the decoded bitstring into the
+                                                                              over, in our experiments, these schemes embed substantially
+embedded bitstring. For each response, we compute ED us-
+                                                                              more bits per response than the fully asymmetric baseline
+ing Levenshtein.distance from the Python Levenshtein
+                                                                              while retaining meaningful response-level decoding accu-
+package.
+                                                                              racy.9 This robustness stems from the fact that decoding
+                                                                              depends only on rank-based channel knowledge, which is
+Results and Analysis. Table 2 reports the experimental                        generally more stable than exact probability values under nu-
+results. This setting is designed to evaluate how different                   merical perturbations. The combination of high token-level
+steganography schemes trade off embedding capacity and de-                    accuracy and low edit distance further suggests that rank-
+coding robustness when the receiver cannot accurately recover                 based weakly asymmetric steganography has the potential to
+the conditional distributions, and is particularly challenging                achieve stronger response-level reliability with lightweight
+for schemes that rely on precise numerical agreement at the
+                                                                                 8 The only response-level success for SparSamp corresponds to a short-
+receiver.
+                                                                              output case, where generation terminates before any bit is embedded; hence
+   7 Discop may also suffer from error propagation once synchronization       both the embedded and decoded bitstrings are empty.
+is lost. We do not apply the same fixed-budget rule to Discop because its         9 Response-level correctness should be interpreted with care, since it aver-
+
+Huffman-tree procedure may use many PRG outputs for some tokens, so           ages over responses with different lengths and different numbers of embedded
+padding every token to the worst case would introduce substantial overhead    bits; exact recovery is generally harder for longer responses or responses
+in our implementation.                                                        carrying more bits.
+
+
+
+
+USENIX Association                                                                                   35th USENIX Security Symposium                   3173
+                                                  Capacity Metrics                  Time Metrics                         Correct. Metrics
+     Model       Type     Scheme                                                                        Length
+                                           Embed.      Entropy                 Enc. Time Dec. Time                Token       Resp.
+                                                                     Util.↑                                                            ED↓
+                                         (bit/resp.)↑ (bit/resp.)              (s/resp.)↓ (s/resp.)↓              Acc.↑       Acc.↑
+
+                  R.      Random.             –         391.773        –          19.007     9.979     499.007       –          –       –
+                  S.       Meteor          207.9        385.581      53.9%        19.210     10.566    496.397 99.10%         1.8%     7.439
+                  S.    Discop(Huff.)      304.6        387.701      78.6%        40.117     31.297    495.700 88.54%         0.9%     40.848
+     L LAMA 3     S.     Sparsamp          353.6        387.782      91.2%        18.942     10.361    496.045    –           0.1%    218.029
+    |Σ| ≈ 128k
+                  A.    Undet. (t = 2)       2.5        388.932      0.65%        21.507     0.143     494.819       –       61.8%      –
+                 W-A. Rank (Full)          111.6        391.291      28.5%        20.576     10.518    498.091   99.69%      21.9%     1.888
+                 W-A. Rank (Top10)          96.0        389.432      24.7%        19.321     10.390    497.888   99.81%      39.3%     0.984
+                 W-A. Rank (Top5)           82.5        386.481      21.3%        19.191     10.348    496.653   99.85%      48.3%     0.775
+                 W-A. Rank (Top2)           49.6        389.758      12.7%        19.068     10.366    497.812   99.86%      50.6%     0.668
+                  R.      Random.             –         589.813        –          18.739     9.708     519.851       –          –       –
+                  S.       Meteor          311.8        577.263      54.0%        18.683     10.206    512.867 98.72%         0.3%     10.535
+                  S.    Discop(Huff.)      481.3        587.834      81.9%        46.471     36.788    518.430 79.04%         0.0%     83.220
+    Q WEN 2.5     S.     Sparsamp          550.1        598.026      92.0%        18.939     10.284    525.455    –           0.0%    399.092
+    |Σ| ≈ 152k
+                  A.    Undet. (t = 2)       2.3        590.922      0.39%        25.384     0.171     519.993       –       61.6%      –
+                 W-A. Rank (Full)          171.7        588.504      29.2%        20.377     10.356    517.914   99.48% 9.2%           3.367
+                 W-A. Rank (Top10)         142.4        590.094      24.1%        18.980     10.216    519.504   99.68% 18.8%          1.826
+                 W-A. Rank (Top5)          117.2        593.762      19.7%        18.965     10.256    522.688   99.76% 28.8%          1.316
+                 W-A. Rank (Top2)           62.8        587.200      10.7%        18.652     10.158    518.992   99.83% 40.2%          0.875
+
+Table 2: Experimental results under distribution mismatch (float32 sender vs. float16 receiver) for symmetric, asymmetric, and
+rank-based weakly asymmetric steganography in language-model-based text steganography.
+
+
+error-correction mechanisms.                                                  requiring exact probability agreement, while still exploiting
+   Overall, these results further support the potential of weakly             more information than fully asymmetric schemes. It may also
+asymmetric steganography in settings where the receiver can-                  serve as a starting point for more practical designs that further
+not reliably recover the exact conditional distributions.                     improve reliability under such imperfect conditions.
+
+
+6    Discussion                                                               7    Conclusion
+
+Real-world applicability. Weakly asymmetric steganogra-                       We introduced weakly asymmetric steganography, a new
+phy targets the intermediate regime between symmetric and                     model that captures settings where the receiver possesses par-
+fully asymmetric steganography. Its most direct application is                tial channel knowledge. We showed that such partial knowl-
+when the receiver’s capability is explicitly restricted to a given            edge can be explicitly exploited by constructing provably se-
+form of knowledge, for example when an interface exposes                      cure steganography schemes under representative knowledge,
+only limited features of the underlying distribution, such as                 including threshold-based knowledge in binary alphabets and
+top-k candidates together with their relative ordering. It may                rank-based knowledge in general alphabets. Our experimental
+also apply when such knowledge is not directly provided but                   results in language-model-based text steganography further
+can be inferred from indirect access, such as by using repeated               suggest the potential of this approach under restricted receiver
+samples and statistical testing to recover coarse distributional              access and distribution mismatch.
+properties with high probability. Finally, weakly asymmet-
+ric steganography provides a useful basis for settings where                  Acknowledgments
+exact symmetry between the sender’s and receiver’s distribu-
+tions is difficult to maintain, for example due to numerical                  This work was supported by the National Natural Science
+precision, hardware, or implementation differences. In these                  Foundation of China under Grant Nos. U2336208 and
+cases, relying on partial knowledge can be more robust than                   12025104.
+
+
+
+3174    35th USENIX Security Symposium                                                                                     USENIX Association
+Ethical Considerations                                              Justification for Research We believe conducting and pub-
+                                                                    lishing this work is justified because a precise understanding
+This section outlines the ethical considerations of our research,   of the capabilities and limits of partial-knowledge steganog-
+following a stakeholder-based analysis.                             raphy is necessary for both future defensive research and in-
+                                                                    formed policy discussion. Any real-world deployment should
+                                                                    undergo additional context-specific risk assessment and safe-
+Stakeholder Analysis and Process Impact Our stakehold-              guards.
+ers include the research team, future researchers, potential
+users of steganographic systems, security professionals, and
+the public. The research team benefits from a clearer formal-       Open Science
+ization of weakly asymmetric steganography, but also bears
+                                                                    The artifact accompanying this paper is publicly available at:
+responsibility for communicating its assumptions, limita-
+                                                                      https://doi.org/10.5281/zenodo.20428322
+tions, and dual-use implications accurately. Future researchers
+                                                                      The repository provides implementations of our rank-
+may benefit from a more precise model for studying partial-
+                                                                    based weakly asymmetric steganography schemes, together
+knowledge steganography, but this model could also inform
+                                                                    with scripts for running the Section 5 experiments for these
+the design of stronger covert channels. Potential users of
+                                                                    schemes.
+steganographic systems, including benign users who rely on
+private communication, may benefit from better-understood
+security guarantees, but could be harmed if they overestimate
+the practical protection provided by theoretical schemes. Se-
+curity professionals may benefit from a more accurate charac-
+terization of steganographic capabilities under partial knowl-
+edge, which can support defensive analysis and policy discus-
+sion, but may face increased challenges if such techniques are
+adapted faster than corresponding defenses. The public may
+benefit from improved scientific understanding and better-
+informed security governance, but could be harmed if the
+resulting ideas are used for illicit, illegal, or harmful activi-
+ties.
+   The research process itself posed limited direct risk. The
+work is primarily theoretical: we formalize a model, prove
+security/correctness properties, and evaluate controlled in-
+stantiations using public models and synthetic generations.
+We did not collect personal data, involve human subjects,
+or interact with real users, production systems, or sensitive
+infrastructure.
+
+
+Impact of the Publication The publication has both posi-
+tive and negative implications. On the positive side, it gives
+the community a more realistic framework for reasoning about
+covert communication when receivers have partial, rather than
+full or zero, channel knowledge. This can improve both sci-
+entific understanding and defensive analysis by clarifying
+what kinds of partial access may already be enough to en-
+able nontrivial steganography. On the negative side, like most
+steganography research, it could inform the design of more
+practical covert channels.
+
+
+Mitigation To mitigate this risk, we frame the contribution
+as foundational analysis rather than a deployment recipe; we
+explicitly state the assumptions and limitations of the weakly
+asymmetric model so its practical utility is not overstated; and
+we evaluate only controlled, public-resource instantiations.
+
+
+
+USENIX Association                                                                    35th USENIX Security Symposium        3175
+References                                                      [9] Miranda Christ, Sam Gunn, and Or Zamir. Undetectable
+                                                                    watermarks for language models. In The Thirty Seventh
+[1] Michael Backes and Christian Cachin. Public-key                 Annual Conference on Learning Theory, June 30 - July
+    steganography with active attacks. In Theory of Cryp-           3, 2024, Edmonton, Canada, Proceedings of Machine
+    tography, Second Theory of Cryptography Conference,             Learning Research, pages 1125–1139. PMLR, 2024.
+    TCC 2005, Cambridge, MA, USA, February 10-12, 2005,
+    Proceedings, Lecture Notes in Computer Science, pages      [10] Nenad Dedic, Gene Itkis, Leonid Reyzin, and Scott Rus-
+    210–226. Springer, 2005.                                        sell. Upper and lower bounds on black-box steganogra-
+                                                                    phy. J. Cryptol., 22(3):365–394, 2009.
+[2] Minhao Bai, Jinshuai Yang, Kaiyi Pang, Xin Xu, Zhen
+    Yang, and Yongfeng Huang. Provably robust and se-          [11] Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao,
+    cure steganography in asymmetric resource scenario.             Weiming Zhang, and Nenghai Yu. Discop: Provably
+    In IEEE Symposium on Security and Privacy, SP 2025,             secure steganography in practice based on "distribution
+    San Francisco, CA, USA, May 12-15, 2025, pages 1438–            copies". In 44th IEEE Symposium on Security and
+    1456. IEEE, 2025.                                               Privacy, SP 2023, San Francisco, CA, USA, May 21-25,
+[3] Sebastian Berndt and Maciej Liskiewicz. Provable                2023, pages 2238–2255. IEEE, 2023.
+    secure universal steganography of optimal rate: Prov-
+    ably secure steganography does not necessarily imply       [12] Phillipa Gill, Masashi Crete-Nishihata, Jakub Dalek,
+    one-way functions. In Proceedings of the 4th ACM                Sharon Goldberg, Adam Senft, and Greg Wiseman.
+    Workshop on Information Hiding and Multimedia Secu-             Characterizing web censorship worldwide: Another look
+    rity, IH&MMSec 2016, Vigo, Galicia, Spain, June 20-22,          at the opennet initiative data. ACM Trans. Web, 9(1):4:1–
+    2016, pages 81–92. ACM, 2016.                                   4:29, 2015.
+
+[4] Sebastian Berndt and Maciej Liskiewicz. On the gold        [13] Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri,
+    standard for security of universal steganography. In            Abhinav Pandey, et al. The llama 3 herd of models.
+    Advances in Cryptology - EUROCRYPT 2018 - 37th                  CoRR, abs/2407.21783, 2024. arXiv:2407.21783.
+    Annual International Conference on the Theory and
+    Applications of Cryptographic Techniques, Tel Aviv, Is-    [14] Horace He and Thinking Machines Lab.        De-
+    rael, April 29 - May 3, 2018 Proceedings, Part I, Lec-          feating nondeterminism in llm inference. Think-
+    ture Notes in Computer Science, pages 29–60. Springer,          ing    Machines    Lab:     Connectionism, 2025.
+    2018.                                                           URL:        https://thinkingmachines.ai/blog/
+                                                                    defeating-nondeterminism-in-llm-inference/.
+[5] Manuel Blum and Silvio Micali. How to generate crypto-
+    graphically strong sequences of pseudo random bits. In     [15] Nicholas J. Hopper. Toward a Theory of Steganography.
+    23rd Annual Symposium on Foundations of Computer                Ph.D. dissertation, technical report CMU-CS-04-157,
+    Science, Chicago, Illinois, USA, 3-5 November 1982,             Carnegie Mellon University, Pittsburgh, PA, USA, July
+    pages 112–117. IEEE Computer Society, 1982.                     2004.
+[6] Dan Boneh and Victor Shoup. A Graduate Course in
+                                                               [16] Nicholas J. Hopper, John Langford, and Luis von Ahn.
+    Applied Cryptography. 2023. Version 0.6, January 2023.
+                                                                    Provably secure steganography. In Advances in Cryptol-
+    URL: https://toc.cryptobook.us/.
+                                                                    ogy - CRYPTO 2002, 22nd Annual International Cryp-
+[7] Mark Chen, Alec Radford, Rewon Child, Jeffrey Wu,               tology Conference, Santa Barbara, California, USA, Au-
+    Heewoo Jun, David Luan, and Ilya Sutskever. Genera-             gust 18-22, 2002, Proceedings, Lecture Notes in Com-
+    tive pretraining from pixels. In Proceedings of the 37th        puter Science, pages 77–92. Springer, 2002.
+    International Conference on Machine Learning, ICML
+    2020, 13-18 July 2020, Virtual Event, Proceedings of       [17] Gabriel Kaptchuk, Tushar M. Jois, Matthew Green, and
+    Machine Learning Research, pages 1691–1703. PMLR,               Aviel D. Rubin. Meteor: Cryptographically secure
+    2020.                                                           steganography for realistic distributions. In CCS ’21:
+                                                                    2021 ACM SIGSAC Conference on Computer and Com-
+[8] Miranda Christ and Sam Gunn. Pseudorandom error-                munications Security, Virtual Event, Republic of Korea,
+    correcting codes. In Advances in Cryptology - CRYPTO            November 15 - 19, 2021, pages 1529–1548. ACM, 2021.
+    2024 - 44th Annual International Cryptology Confer-
+    ence, Santa Barbara, CA, USA, August 18-22, 2024, Pro-     [18] Tri Van Le. Efficient provably secure public key
+    ceedings, Part VI, Lecture Notes in Computer Science,           steganography. IACR Cryptol. ePrint Arch., 2003:156,
+    pages 325–347. Springer, 2024.                                  2003.
+
+
+
+3176   35th USENIX Security Symposium                                                                  USENIX Association
+[19] Guorui Liao, Jinshuai Yang, Weizhi Shao, and Yongfeng     A    Examples of Generated Stegotexts
+     Huang. A framework for designing provably secure
+     steganography. In 34th USENIX Security Symposium,         This appendix provides examples of stegotexts generated us-
+     USENIX Security 2025, Seattle, WA, USA, August 13-15,     ing Rank(Full). The original outputs were in Markdown for-
+     2025, pages 6837–6856. USENIX Association, 2025.          mat; for readability, we converted the Markdown syntax into
+                                                               standard LaTeX formatting without changing the textual con-
+[20] Anna Lysyanskaya and Mira Meyerovich. Provably            tent.
+     secure steganography with imperfect sampling. In Pub-
+     lic Key Cryptography - PKC 2006, 9th International            Prompt
+     Conference on Theory and Practice of Public-Key Cryp-
+     tography, New York, NY, USA, April 24-26, 2006, Pro-          Tell me something about steganography
+     ceedings, Lecture Notes in Computer Science, pages
+     123–139. Springer, 2006.                                      Llama 3
+
+[21] OpenAI.      GPT-4 technical report.            CoRR,         Steganography! It’s an intriguing field that’s both
+     abs/2303.08774, 2023. arXiv:2303.08774.                       fascinating and potentially mischievous.
+                                                                   Steganography is the art and science of hiding se-
+[22] Ram Sundara Raman, Prerana Shenoy, Katharina Kohls,           cret messages, images, audio, or video within plain
+     and Roya Ensafi. Censored planet: An internet-wide,           sight, where the hidden content is not immediately
+     longitudinal censorship observatory. In CCS ’20: 2020         detectable. The goal is to conceal the existence of the
+     ACM SIGSAC Conference on Computer and Commu-                  hidden message, making it impossible for unautho-
+     nications Security, Virtual Event, USA, November 9-13,        rized parties to detect or intercept it.
+     2020, pages 49–66. ACM, 2020.                                 Steganography has a long history, dating back to an-
+                                                                   cient civilizations, where it was used to conceal secret
+[23] Luis von Ahn and Nicholas J. Hopper. Public-key               messages and military communications. In modern
+     steganography. In Advances in Cryptology - EURO-              times, steganography has become popular in various
+     CRYPT 2004, International Conference on the Theory            domains, including:
+     and Applications of Cryptographic Techniques, Inter-
+                                                                    1. Digital watermarking: Watermarks are embed-
+     laken, Switzerland, May 2-6, 2004, Proceedings, Lecture
+                                                                       ded in digital images, audio, or video to prove
+     Notes in Computer Science, pages 323–341. Springer,
+                                                                       ownership, track usage, or detect tampering.
+     2004.
+                                                                    2. Data hiding: Files, documents, or messages are
+                                                                       encoded within seemingly innocuous data, such
+[24] Yaofei Wang, Gang Pei, Kejiang Chen, Jinyang Ding,
+                                                                       as images, emails, or text files.
+     Chao Pan, Weilong Pang, Donghui Hu, and Weiming
+                                                                    3. Image steganography: Hidden information is
+     Zhang. Sparsamp: Efficient provably secure steganogra-
+                                                                       embedded within digital images, often using
+     phy based on sparse sampling. In 34th USENIX Security
+                                                                       techniques like frequency domain analysis or
+     Symposium, USENIX Security 2025, Seattle, WA, USA,
+                                                                       spatial domain encoding.
+     August 13-15, 2025, pages 6817–6835. USENIX Asso-
+                                                                    4. Audio steganography: Secret messages are
+     ciation, 2025.
+                                                                       concealed within audio files, using techniques
+                                                                       like echo hiding, frequency masking, or spread-
+[25] An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui,                spectrum coding.
+     Bo Zheng, Bowen Yu, Chengyuan Li, Dayiheng Liu,
+     Fei Huang, Haoran Wei, Huan Lin, Jian Yang, Jianhong          Steganography can be used for various purposes, in-
+     Tu, Jianwei Zhang, Jianxin Yang, Jiaxi Yang, Jingren          cluding:
+     Zhou, Junyang Lin, Kai Dang, Keming Lu, Keqin Bao,
+     Kexin Yang, Le Yu, Mei Li, Mingfeng Xue, Pei Zhang,            1. Secure communication: Steganography can
+     Qin Zhu, Rui Men, Runji Lin, Tianhao Li, Tingyu Xia,              provide an additional layer of security for sensi-
+     Xingzhang Ren, Xuancheng Ren, Yang Fan, Yang Su,                  tive information.
+     Yichang Zhang, Yu Wan, Yuqiong Liu, Zeyu Cui, Zhenru           2. Copyright protection: Watermarks can be used
+     Zhang, and Zihan Qiu. Qwen2.5 technical report. CoRR,             to prove ownership and track unauthorized use.
+     abs/2412.15115, 2024. arXiv:2412.15115.                        3. Forensic analysis: Steganographic techniques
+                                                                       can help investigators detect and reconstruct hid-
+[26] Or Zamir. Undetectable steganography for language                 den evidence in digital forensic cases.
+     models. Trans. Mach. Learn. Res., 2024.
+
+
+
+USENIX Association                                                                35th USENIX Security Symposium         3177
+       4. Art and entertainment: Steganography can be                 • Least Significant Bit (LSB) Replace-
+          used to create interactive and engaging multime-              ment: This is a common technique in digi-
+          dia experiences.                                              tal steganography. It involves replacing the
+                                                                        least significant bits of a pixel’s color value
+   However, steganography also has its limitations and                  with the bits of the secret message, without
+   potential drawbacks:                                                 noticeably altering the appearance of the
+                                                                        image to the naked eye.
+       1. Detectability: Steganographic methods can be                • Insertion in Metadata: Steganographic
+          detectable using advanced analysis techniques,                data can also be embedded in the metadata
+          such as machine learning-based tools.                         of a file, such as EXIF data in images or
+       2. Capacity limitations: The amount of informa-                  MP3 tags in audio files.
+          tion that can be embedded within a host media               • Splicing Techniques: This involves split-
+          (e.g., image or audio) is limited.                            ting the cover material into parts and redis-
+       3. Error correction: Since steganographic data is                tributing them to hide data. For example,
+          hidden, errors during transmission or storage can             a secret message can be embedded by al-
+          be difficult to correct.                                      tering the last bit of specific bytes or even
+       4. Legal implications: The use of steganography                  entire blocks of data.
+          for unauthorized purposes, such as hiding illegal
+          content, can lead to legal consequences.             4. Masking and Watermarking:
+   In conclusion, steganography is an exciting and                    • Masking: This technique involves obscur-
+   rapidly evolving field that offers new possibilities for             ing the embedded data using another type
+   secure communication, creative expression, and data                  of cover data to make the hidden informa-
+   protection. However, it’s essential to recognize the                 tion less detectable.
+   ethical and legal implications of using steganographic             • Watermarking: Similar to steganography,
+   techniques and to ensure that they are used responsi-                watermarking involves embedding a signal
+   bly.                                                                 into a cover medium, but the purpose of
+                                                                        watermarking is usually to detect or iden-
+   Qwen 2.5                                                             tify the presence of the signal rather than
+                                                                        keeping it a secret.
+   Steganography is the practice of hiding secret data
+   within an ordinary, non-secret file or message to avoid     5. Detection and Analysis: There are tools and
+   detection. The term “steganography” comes from the             methods to detect steganography, such as statis-
+   Greek words “stegano-” (meaning covered or con-                tical analysis and machine learning techniques.
+   cealed) and “-graphy” (meaning writing). Unlike cryp-          However, more advanced forms of steganogra-
+   tography, which encrypts data to make it unreadable            phy can be difficult to detect without specialized
+   to unauthorized parties, steganography aims to keep            knowledge.
+   the secret information hidden in plain sight on the
+                                                               6. Legal and Ethical Considerations: The use of
+   surface of a digital file, image, or message.
+                                                                  steganography can have legal and ethical impli-
+   Here are some key aspects of steganography:
+                                                                  cations. It is often used for benign purposes like
+       1. Types of Data Hidden: Steganography can hide            data transfer, but it can also be used for malicious
+          various types of data, including text, images,          activities such as spreading malware or hiding
+          video, audio, and network packets. Common ex-           illegal content.
+          amples include hidden text inside an image or a
+                                                              Steganography plays a significant role in cybersecu-
+          video frame, where the human eye can’t imme-
+                                                              rity and digital forensics. As technology advances, so
+          diately spot the alteration.
+                                                              do the methods and techniques used in both steganog-
+       2. Media Used: While the most common media             raphy and its detection.
+          used for steganography are images, other media
+          such as audio files, video files, and even exe-
+          cutable files can also be used to hide data.
+       3. Common Techniques:
+
+
+
+
+3178    35th USENIX Security Symposium                                                              USENIX Association
+
