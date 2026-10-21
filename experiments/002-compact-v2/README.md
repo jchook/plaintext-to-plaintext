@@ -6,6 +6,37 @@ trial. A 238-byte English paragraph became 1,104–1,164 bytes of cover, or abou
 original bytes. This remains an experiment: tiny messages still expand heavily,
 and the warmer cover distribution sometimes produces conspicuously odd prose.
 
+Status: completed local trial. Preserved in source commit `6e80812` before
+reorganization on 2026-10-21. Filenames and run artifacts identify the compact v2
+work; an exact command-by-command chronology was not archived.
+
+## Question and decision
+
+Could smaller framing, lossless source compression, and higher cover entropy
+reduce expansion while preserving exact bytes? The measured local answer is yes,
+with uneven readability. Keep v2 as the size baseline; test
+[opening-paragraph steering](../003-opening-paragraph/README.md) next before
+pursuing a higher-temperature default.
+
+## Attempts and archive map
+
+| Folder | Purpose and outcome |
+| --- | --- |
+| [runs/main](runs/main/results.json) | Six completed English-text trials, plus an interrupted Unicode attempt |
+| [runs/edge-cases](runs/edge-cases/results.json) | Six completed Unicode, binary, and empty-input trials after adding fallback |
+| [runs/ablation](runs/ablation/results.json) | Eight completed trials comparing v1, framing, prompt, and temperature |
+| [runs/paragraph-baseline](runs/paragraph-baseline/results.json) | One completed warm/raw paragraph control |
+| [runs/rejections](runs/rejections/results.json) | Five negative checks; no plaintext written |
+| [runs/restart](runs/restart/results.json) | Two saved covers decoded after server restart |
+
+The failed Unicode attempt retains its
+[input](runs/main/unicode.warm-auto.1.input) and
+[error log](runs/main/unicode.warm-auto.1.encode.log). It produced no cover and
+is excluded from the 21 completed trials. The later fallback is covered by
+`test_specific_server_parser_failure_allows_fallback` and two saved Unicode
+round trips. Logs and JSON retain their original paths; see the
+[migration map](../migration.json) for current locations.
+
 ## Setup
 
 The model was the existing Llama 3.2 3B Instruct Q4_K_M GGUF, SHA-256
@@ -15,7 +46,7 @@ encoder and decoder ran in a separate process. The decoder received the cover
 file, Alice key file, and shared codec/profile; it did not receive encoder traces
 or statistics. Each row below contains two independently randomized encryptions.
 
-The [implementation notes](COMPACT.md) give the commands and format details.
+The [implementation notes](PROTOCOL.md) give the commands and format details.
 The original v1 codec remains available through `p2p.py`.
 
 ## End-to-end sizes
@@ -36,11 +67,11 @@ The saved original key-message cover was 1,608 bytes. The new runs were 49–52%
 smaller, but still about 48–52 times the source size. This comparison uses the
 single saved v1 example, rather than a new pair of v1 key-message trials.
 
-Inspect an actual [paragraph cover](runs/compact-v2-main/paragraph.warm-auto.1.cover.txt)
-and its [original input](runs/compact-v2-main/paragraph.warm-auto.1.input).
+Inspect an actual [paragraph cover](runs/main/paragraph.warm-auto.1.cover.txt)
+and its [original input](runs/main/paragraph.warm-auto.1.input).
 Full measurements and hashes are in
-[the text runs](runs/compact-v2-main/results.json) and
-[the Unicode, binary, and empty-input runs](runs/compact-v2-edge-cases/results.json).
+[the text runs](runs/main/results.json) and
+[the Unicode, binary, and empty-input runs](runs/edge-cases/results.json).
 
 ## What the separate changes contributed
 
@@ -67,10 +98,10 @@ stable benefit for each change; the compressed frame reduction is exact, while
 the realized prose-length reduction is variable. These results should not be
 presented as a monotonic improvement across every row.
 
-[All ablation inputs, covers, timings, and hashes](runs/compact-v2-ablation/results.json)
+[All ablation inputs, covers, timings, and hashes](runs/ablation/results.json)
 are retained.
 
-A further [paragraph comparison](runs/compact-v2-paragraph-baseline/results.json)
+A further [paragraph comparison](runs/paragraph-baseline/results.json)
 used the same warm cover profile with raw source. Its 269-byte frame produced
 2,947 bytes of cover and recovered exactly. Source compression reduced the frame
 to 79 bytes and the observed covers to 1,104 and 1,164 bytes: 60.5–62.5% less cover
@@ -116,15 +147,15 @@ records that specific limitation and chooses raw or DEFLATE; both subsequent
 Unicode round trips preserved the original bytes exactly. Forced LLM compression
 still reports an error for that source. Other server errors remain fatal.
 
-Five [real-model rejection checks](runs/compact-v2-rejections/results.json) passed:
+Five [real-model rejection checks](runs/rejections/results.json) passed:
 wrong key, wrong profile, modified cover, truncated cover, and appended text. None
 wrote recovered plaintext.
 
 There were 21 completed end-to-end round trips: twelve default compact runs,
 eight ablation runs, and one additional paragraph baseline. After restarting the
 dedicated server, a saved LLM-compressed paragraph and the original v1 key-message
-cover also [decoded exactly](runs/compact-v2-restart/results.json). The
-[verification record](compact-verification.json) includes artifact hashes.
+cover also [decoded exactly](runs/restart/results.json). The
+[verification record](verification.json) includes artifact hashes.
 
 Readability is not uniform. One short warm cover contains “skatedown sun” and
 “scalded knee.” The existing punctuation-based completion rule can also stop at an
@@ -134,3 +165,19 @@ no human-rated naturalness study or statistical detectability evaluation was run
 
 This was a small, hand-selected local test set, not a broad compression benchmark.
 Phone performance and cross-runtime interoperability remain untested.
+
+## Reproduce or continue
+
+From the repository root, use the server instructions in
+[PROTOCOL.md](PROTOCOL.md), then choose a new output directory:
+
+```sh
+python3 poc/compact_demo.py --directory experiments/002-compact-v2/runs/<unique-run-id> --repetitions 2
+python3 poc/compact_demo.py --directory experiments/002-compact-v2/runs/<another-unique-run-id> --cases belfry --variants legacy journal-raw varied-raw warm-raw --repetitions 2
+```
+
+These are reproduction recipes, not recovered shell history. Retain the shared
+code at `6e80812` for the recorded implementation; current runner defaults now
+point to the experiment folders. Historical code and artifact hashes are in
+[verification.json](verification.json). Check them without model inference using
+`python3 experiments/verify.py`.

@@ -1,6 +1,6 @@
 # Compact codec experiment
 
-See [the measured results and saved cover texts](COMPACT_RESULTS.md) for the local
+See [the measured results and saved cover texts](README.md) for the local
 comparison, including the observed prose-quality tradeoffs.
 
 `compact.py` is a separate v2 protocol. The original `p2p.py` and its saved covers

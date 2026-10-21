@@ -31,9 +31,12 @@ VARIANTS = {
 
 
 def main():
+    code_root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--directory', default=f'poc/runs/compact-{time.strftime("%Y%m%d-%H%M%S")}')
-    parser.add_argument('--key', default='poc/keys/alice.txt')
+    parser.add_argument('--directory', type=Path,
+                        default=code_root.parent / 'experiments' / '002-compact-v2' / 'runs' /
+                        time.strftime('%Y%m%d-%H%M%S'))
+    parser.add_argument('--key', type=Path, default=code_root / 'keys/alice.txt')
     parser.add_argument('--url', default=p2p.DEFAULT_URL)
     parser.add_argument('--variants', choices=VARIANTS, nargs='+', default=['warm-auto'])
     parser.add_argument('--cases', choices=CASES, nargs='+', default=list(CASES))
@@ -57,8 +60,8 @@ def main():
                 recovered = root / f'{name}.recovered'
                 profile = VARIANTS[variant]
                 script = 'p2p.py' if profile is None else 'compact.py'
-                base = [sys.executable, str(Path(__file__).with_name(script))]
-                common = ['--key', args.key, '--url', args.url, '--max-tokens', str(args.max_tokens)]
+                base = [sys.executable, str(code_root / script)]
+                common = ['--key', str(args.key), '--url', args.url, '--max-tokens', str(args.max_tokens)]
                 if profile:
                     common += ['--profile', profile[0], '--compression', profile[1]]
                 stats = {}

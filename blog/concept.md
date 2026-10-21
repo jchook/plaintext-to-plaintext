@@ -51,7 +51,7 @@ became a journal entry beginning:
 > before the sun was fully up, and crept into the bathroom to start the water for
 > my shower.
 
-The [complete cover text](../poc/runs/verified/belfry.cover.txt) contains 2,635 bytes.
+The [complete cover text](../experiments/001-baseline-v1/runs/verified/belfry.cover.txt) contains 2,635 bytes.
 A separate decoding process recovered the original 53 bytes, including the
 punctuation and capitalization. It needed the cover, the shared key, and the same
 model and protocol. It had no record of the encoder's decisions.
@@ -204,7 +204,7 @@ $$
 That distribution includes our filtering and renormalization. Vocabulary size
 alone does not determine capacity; the probabilities matter.
 
-The [recorded runs](../poc/verification.json) show both the framing overhead and
+The [recorded runs](../experiments/001-baseline-v1/verification.json) show both the framing overhead and
 the cost of expressing those bits as prose:
 
 | Message | Original bytes | Frame bytes | Cover bytes | Expansion |

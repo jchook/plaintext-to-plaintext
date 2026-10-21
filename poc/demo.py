@@ -13,7 +13,8 @@ def main():
     root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path,
-                        default=root / 'runs' / time.strftime('%Y%m%d-%H%M%S'))
+                        default=root.parent / 'experiments' / '001-baseline-v1' / 'runs' /
+                        time.strftime('%Y%m%d-%H%M%S'))
     parser.add_argument('--url', default='http://127.0.0.1:11535')
     parser.add_argument('--key', type=Path, default=root / 'keys/alice.txt')
     parser.add_argument('--cases', nargs='+',
@@ -38,7 +39,8 @@ def main():
                        '--url', args.url, '--key', str(args.key),
                        '--input', str(source), '--output', str(target),
                        '--stats', str(args.directory / f'{name}.{operation}.json')]
-            subprocess.run(command, check=True)
+            with (args.directory / f'{name}.{operation}.log').open('w') as log:
+                subprocess.run(command, stdout=log, stderr=log, check=True)
         actual = recovered.read_bytes()
         if actual != samples[name]:
             raise RuntimeError(f'Byte mismatch: {name}')

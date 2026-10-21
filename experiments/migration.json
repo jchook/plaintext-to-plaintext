@@ -1,0 +1,1013 @@
+{
+  "schema_version": 1,
+  "source_commit": "6e80812",
+  "description": "Repository paths before the 2026-10-21 organization. Historical JSON and logs retain original paths and bytes. Code hashes refer to source_commit. Markdown documentation has updated links; other moved files are hashed below.",
+  "path_aliases": {
+    "initial": "experiments/000-embedding-sketches/artifacts",
+    "poc/examples": "experiments/001-baseline-v1/examples",
+    "poc/runs/verified": "experiments/001-baseline-v1/runs/verified",
+    "poc/verification.json": "experiments/001-baseline-v1/verification.json",
+    "poc/README.md": "experiments/001-baseline-v1/PROTOCOL.md",
+    "poc/COMPACT.md": "experiments/002-compact-v2/PROTOCOL.md",
+    "poc/COMPACT_RESULTS.md": "experiments/002-compact-v2/README.md",
+    "poc/compact-verification.json": "experiments/002-compact-v2/verification.json",
+    "poc/runs/compact-v2-main": "experiments/002-compact-v2/runs/main",
+    "poc/runs/compact-v2-edge-cases": "experiments/002-compact-v2/runs/edge-cases",
+    "poc/runs/compact-v2-ablation": "experiments/002-compact-v2/runs/ablation",
+    "poc/runs/compact-v2-paragraph-baseline": "experiments/002-compact-v2/runs/paragraph-baseline",
+    "poc/runs/compact-v2-rejections": "experiments/002-compact-v2/runs/rejections",
+    "poc/runs/compact-v2-restart": "experiments/002-compact-v2/runs/restart"
+  },
+  "moved_artifacts": [
+    {
+      "original": "initial/.ipynb_checkpoints/Untitled-checkpoint.ipynb",
+      "path": "experiments/000-embedding-sketches/artifacts/.ipynb_checkpoints/Untitled-checkpoint.ipynb",
+      "sha256": "05143268460c23a08014b0906723052dbb8df405e1bc9261860ed1037164ed6d"
+    },
+    {
+      "original": "initial/Untitled.ipynb",
+      "path": "experiments/000-embedding-sketches/artifacts/Untitled.ipynb",
+      "sha256": "6e9cf53227ccf7144b54148a3beb26392c3862c3b6d8aed34d5d7e2b48cb1886"
+    },
+    {
+      "original": "initial/sketch-np.py",
+      "path": "experiments/000-embedding-sketches/artifacts/sketch-np.py",
+      "sha256": "f4c92a0284003b36d53ce675540ae576112774bc3ef585e6140dedf0b9026df4"
+    },
+    {
+      "original": "initial/sketch-spacy.py",
+      "path": "experiments/000-embedding-sketches/artifacts/sketch-spacy.py",
+      "sha256": "d55d2ef541f6604213fe4bdd5319fbc610fb2bb357cc1dbfd60012817a9ae789"
+    },
+    {
+      "original": "initial/untitled",
+      "path": "experiments/000-embedding-sketches/artifacts/untitled",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/examples/belfry.txt",
+      "path": "experiments/001-baseline-v1/examples/belfry.txt",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/examples/key-message.after-restart.json",
+      "path": "experiments/001-baseline-v1/examples/key-message.after-restart.json",
+      "sha256": "a15d169fd1c76e8c3647d2d09c25cd1176b22734213c12f3532d654b67465387"
+    },
+    {
+      "original": "poc/examples/key-message.after-restart.txt",
+      "path": "experiments/001-baseline-v1/examples/key-message.after-restart.txt",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/examples/key-message.cover.txt",
+      "path": "experiments/001-baseline-v1/examples/key-message.cover.txt",
+      "sha256": "7c0b3117da923d27a517d3640e87b70e8cf66fc94fc64dd6635d7f799f40d5c5"
+    },
+    {
+      "original": "poc/examples/key-message.decode.json",
+      "path": "experiments/001-baseline-v1/examples/key-message.decode.json",
+      "sha256": "66b8fa0dda62f75fdd29ec8ec233ea13da9919094fc79e5cb3127b3f5b390990"
+    },
+    {
+      "original": "poc/examples/key-message.encode.json",
+      "path": "experiments/001-baseline-v1/examples/key-message.encode.json",
+      "sha256": "72ab29c526e0620125e604ec8468872183daaa90b2a4ae3e4b642e8e0fde8b38"
+    },
+    {
+      "original": "poc/examples/key-message.recovered.txt",
+      "path": "experiments/001-baseline-v1/examples/key-message.recovered.txt",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/examples/key-message.txt",
+      "path": "experiments/001-baseline-v1/examples/key-message.txt",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/examples/rejection-results.json",
+      "path": "experiments/001-baseline-v1/examples/rejection-results.json",
+      "sha256": "30f7f621dd86535b70ed322c1c3849de4a33533e10d60baace13e6703439236d"
+    },
+    {
+      "original": "poc/examples/unicode.txt",
+      "path": "experiments/001-baseline-v1/examples/unicode.txt",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/verified/belfry.cover.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/belfry.cover.txt",
+      "sha256": "f3582469a5c5c6dece3f5de59d870400786877352ad9aeedc10d65fef43df8c9"
+    },
+    {
+      "original": "poc/runs/verified/belfry.decode.json",
+      "path": "experiments/001-baseline-v1/runs/verified/belfry.decode.json",
+      "sha256": "00ba55df6e0e2e04c8fae68779da5e1c1b2450d9dd9f75a80f8e0921e6fc94dc"
+    },
+    {
+      "original": "poc/runs/verified/belfry.encode.json",
+      "path": "experiments/001-baseline-v1/runs/verified/belfry.encode.json",
+      "sha256": "2f8c83af988e460133b2d0a048c9252ca3c76c4c22ad05148c95cc3194823f53"
+    },
+    {
+      "original": "poc/runs/verified/belfry.recovered.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/belfry.recovered.txt",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/verified/belfry.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/belfry.txt",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/verified/empty.cover.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/empty.cover.txt",
+      "sha256": "88793cc6951b2cd5dd9476f3a97c276972ecb295da4031e0bf8231c00aed65b3"
+    },
+    {
+      "original": "poc/runs/verified/empty.decode.json",
+      "path": "experiments/001-baseline-v1/runs/verified/empty.decode.json",
+      "sha256": "b9bd31539b701d101da5569b54bc41be7e1cfd5fed9a00b3577b834604e92c67"
+    },
+    {
+      "original": "poc/runs/verified/empty.encode.json",
+      "path": "experiments/001-baseline-v1/runs/verified/empty.encode.json",
+      "sha256": "9f581ad06ab3a8e367a5e3102125c741c26f53801dc154e64c8d1443fe4581c2"
+    },
+    {
+      "original": "poc/runs/verified/empty.recovered.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/empty.recovered.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/runs/verified/empty.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/empty.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/runs/verified/results.json",
+      "path": "experiments/001-baseline-v1/runs/verified/results.json",
+      "sha256": "5762e7988aa921152d1d547df5d219b530717f4c06122303234b2fcb4aa1e46f"
+    },
+    {
+      "original": "poc/runs/verified/unicode.cover.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/unicode.cover.txt",
+      "sha256": "fabba86a69e1f1f0a0c7d2ee0f0523e409ada3bacaf0e291f9fa0b823249f1c2"
+    },
+    {
+      "original": "poc/runs/verified/unicode.decode.json",
+      "path": "experiments/001-baseline-v1/runs/verified/unicode.decode.json",
+      "sha256": "a0011c222a88465edf7bbfbf1743fd208c662260b70c800078c33c70969222b1"
+    },
+    {
+      "original": "poc/runs/verified/unicode.encode.json",
+      "path": "experiments/001-baseline-v1/runs/verified/unicode.encode.json",
+      "sha256": "34c555ed56f0db576bd1640f5b535af75d765687d5f7848256f0bf0f62354ef0"
+    },
+    {
+      "original": "poc/runs/verified/unicode.recovered.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/unicode.recovered.txt",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/verified/unicode.txt",
+      "path": "experiments/001-baseline-v1/runs/verified/unicode.txt",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/verification.json",
+      "path": "experiments/001-baseline-v1/verification.json",
+      "sha256": "290536e91a39f16de6f3cf7b9fa86c09e3cb68455e9f9c5426b8ff243687ba5d"
+    },
+    {
+      "original": "poc/compact-verification.json",
+      "path": "experiments/002-compact-v2/verification.json",
+      "sha256": "caa7c664666129ccabb5a459e4a3738674166c3fe02a5764bc99b861695e40d1"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.cover.txt",
+      "sha256": "9462332b77d8fc08c3d2c0613d0c2fd1b3d0f86f20dcd916d5f98cd6420b9ab7"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.decode.json",
+      "sha256": "6a67f4e3770a437206a5516d95150e3e3f9dc06132bba004a18d2cf574236481"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.decode.log",
+      "sha256": "09e253d4813cbcbe7056a3de18fd367fdaea248ecff1324173a819540e2b7bca"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.encode.json",
+      "sha256": "ce1db01268e5f78655261e71e4f18eb2f875be704e902fb4a2e0cf4fdd30521a"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.encode.log",
+      "sha256": "cedea69c2572d3bff13400fd1848dbb1bc2a41ef131fe889adddfc1b61c759ea"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.1.recovered",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.1.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.cover.txt",
+      "sha256": "0f81465636f248b8fc242594074ce00ff1fdb408cbb161fbfa344312a52a2d14"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.decode.json",
+      "sha256": "78c33852c0ff511dfa9a8f589e97dac60d56de7fde8ded35365c6c4ce72d10cc"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.decode.log",
+      "sha256": "1559bc196257349a55cd577978e02b4e4571caa4d2dad74fa8c670a652f26b27"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.encode.json",
+      "sha256": "6c49fccc23eea513d6701011328a65ab468763e6c11557b2318711c0e48d4d87"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.encode.log",
+      "sha256": "5416a388187787a7e5aca81aa460478358cfbae723f1ddac3c15ab4d550367b9"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.input",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/belfry.warm-auto.2.recovered",
+      "path": "experiments/002-compact-v2/runs/main/belfry.warm-auto.2.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.cover.txt",
+      "sha256": "a54780f923c8796c2969cb937f62935eef36bfcd9a4ea8809a092e142496ea39"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.decode.json",
+      "sha256": "a7b1dda49b4aa0e67a210247511676e0c03577aed17f6ad97ca9a3662e02a67a"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.decode.log",
+      "sha256": "ad9f2e8407ec685b25f3f1b1e012da3b9e9b9e7f66be42c611b6c3e3904a9445"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.encode.json",
+      "sha256": "67071cf065f3ba954452b1c45643bfb49575c8f99b22cc3da26b8e308a5f8a60"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.encode.log",
+      "sha256": "9ef606b7efc935ed55a061c3f26da5288bcd71ec29fb66c2f55c88f2495b0171"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.input",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.1.recovered",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.1.recovered",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.cover.txt",
+      "sha256": "36fded756e17dd1275d09767e3c32677c12c1f30e4206dd0e83df2a848b334c1"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.decode.json",
+      "sha256": "2b5cbba016f6c029ed71916218668f28b4dbe877b7f703205bc0998b76348197"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.decode.log",
+      "sha256": "7e3bc4226a91200e807d77a78222b487b30781acf6621fde67465f0310e41f99"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.encode.json",
+      "sha256": "e2cc69d7dac67f17953e5fcc0d0b08675eeffc881971d0abd6e7301dd3e7e635"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.encode.log",
+      "sha256": "37568129c23ff7006665db85cd545a987b3fc76beb82fd9d115c0641f6354740"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.input",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.input",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/key-message.warm-auto.2.recovered",
+      "path": "experiments/002-compact-v2/runs/main/key-message.warm-auto.2.recovered",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.cover.txt",
+      "sha256": "1d623c1403bc8d1aa6869fcf8a14ede770411fdc4a454938e41de85ea225f1db"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.decode.json",
+      "sha256": "528419dfba505f8816f519f36812e1f6e80b02bf929579e046b08bb5e595fa5b"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.decode.log",
+      "sha256": "5ac3b72d2c93fc3bed788328b8c6f22caef68bef8dca5bcca147de95e2aafafc"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.encode.json",
+      "sha256": "4aa128395569873426965ead8bc3ff5b0cdb61348dbd0d8be6a9a2efc3eb14aa"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.encode.log",
+      "sha256": "1d3af5d55852e3c8bf94af1f19624f606709f47283e4dd059162d5024be7170a"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.input",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.recovered",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.1.recovered",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.cover.txt",
+      "sha256": "447e3122d2c0b355699d452b930ec22bfe7202ba6bf6d56ab7a715e581ea6503"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.decode.json",
+      "sha256": "a91d6fec67dfc0e506997aec2ebb192b4a93ec096db6bb50a4ede2325b12d483"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.decode.log",
+      "sha256": "c1279f73733ff718b346f770098638f61a58ccb93895d18a1dec1e02df7b3095"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.encode.json",
+      "sha256": "10017b4b1b38f6b6443d20e6dfa849a15aea094f17e9d3fedc064463d6e3cff7"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.encode.log",
+      "sha256": "32407425ec3a15728cec5ca1c84eaeeeebfbbd1e40328d9ed656fa565d3356ec"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.input",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.input",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/paragraph.warm-auto.2.recovered",
+      "path": "experiments/002-compact-v2/runs/main/paragraph.warm-auto.2.recovered",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/results.json",
+      "path": "experiments/002-compact-v2/runs/main/results.json",
+      "sha256": "3df8316b5954ec001d5a0860ba97d47800813bedadbd4aad6f4eac2fcccfc73b"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/unicode.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/main/unicode.warm-auto.1.encode.log",
+      "sha256": "08f1b82d614d6c5dd99eb2c2ca6108c090665f401870761905443e2f7badb971"
+    },
+    {
+      "original": "poc/runs/compact-v2-main/unicode.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/main/unicode.warm-auto.1.input",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.cover.txt",
+      "sha256": "d7eee8f0a7efd4c6dc1cd9c40a1a131f6e9423f73c2e9755e056dff1f39e1e15"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.decode.json",
+      "sha256": "f077845c2e09244e5a853f5dfa40ec6eb4095a53df50b286ae62cd7cdbecf678"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.decode.log",
+      "sha256": "5e5a8085a8b58ad01cc24b39473246afdc63059d767345d2c5a759a0dc6188fc"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.encode.json",
+      "sha256": "cf1f9a0bbb617f762d8b575cb58afa9c8d5c6838cb06cf1040e62fc4b843d44d"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.encode.log",
+      "sha256": "3883aac14dfaacb695f6ccf9b344c1736b549eecd5c98473b73c065c8711f96f"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.input",
+      "sha256": "6aec027cba430aa45913b3c1e8097fcc9b26179f2d313f21bc47ed616b005be4"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.1.recovered",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.1.recovered",
+      "sha256": "6aec027cba430aa45913b3c1e8097fcc9b26179f2d313f21bc47ed616b005be4"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.cover.txt",
+      "sha256": "3936bbfa3ad340641fcd9d10d7081d97785235f04190c5175d0b77a952b79465"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.decode.json",
+      "sha256": "d7c8129d8e75f0dcf879f1e02f1d2453020d2b02cd610647be5cef8b8a240aa2"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.decode.log",
+      "sha256": "9f0715f609dcdfe57741187df8fab2924202f136dd3b16c8b2db2d11f1aabd98"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.encode.json",
+      "sha256": "7782669af9dd6f33bf04aa1e8cbaa3bd0ea01cd022986898292bc1b6e71d543a"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.encode.log",
+      "sha256": "06e21a370852dd9fed0cfb9871b341e3ad0a0f1fabd025c75e6699068352b05b"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.input",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.input",
+      "sha256": "6aec027cba430aa45913b3c1e8097fcc9b26179f2d313f21bc47ed616b005be4"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/binary.warm-auto.2.recovered",
+      "path": "experiments/002-compact-v2/runs/edge-cases/binary.warm-auto.2.recovered",
+      "sha256": "6aec027cba430aa45913b3c1e8097fcc9b26179f2d313f21bc47ed616b005be4"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.cover.txt",
+      "sha256": "0681865d31a9c5240eba8101d09b35c738e61c66a7a1e0f3d82c448ff33f6dfd"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.decode.json",
+      "sha256": "a2e48d8851151bc04db5769390c33327811b4ffcd1089e0936c477e027d79ab7"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.decode.log",
+      "sha256": "3bde000c4276996d4798c725eb698e776b2f26d7bea4996732d9d85ce2ef1ee7"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.encode.json",
+      "sha256": "30128c1c305e4da5bd81576bc577a197946751ea4f62c505efc4e2b9d65a30a0"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.encode.log",
+      "sha256": "eeee7e211c19c6784c1e0942ff5f817dac9236119b4293a4fe11c55fce9b6178"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.input",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.1.recovered",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.1.recovered",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.cover.txt",
+      "sha256": "bb9fdb87ab2f1a170372947c7a68e2cd69a46572d35c5adf524d26550450cbce"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.decode.json",
+      "sha256": "fb1ea74ae0fd4c2a29b3f84551160c841e4e980070c9a88654f97e24eb62ac6a"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.decode.log",
+      "sha256": "22e5c408c98da1fe1487b152b5308b19f17d19da1d2409a4c65b990cc1dbf281"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.encode.json",
+      "sha256": "7866f7cb101036cf56b404fae8f2f88fb94c74757fc19f07a6716713c2ea3871"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.encode.log",
+      "sha256": "1359c591a9945fa10b05429177a2404d308f1c2eb9f33c4d5138fd5511822eaa"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.input",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.input",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/empty.warm-auto.2.recovered",
+      "path": "experiments/002-compact-v2/runs/edge-cases/empty.warm-auto.2.recovered",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/results.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/results.json",
+      "sha256": "c13fc47b05e0339dc5b5232fe127382705130626f1c12ebfe6b0489d40db1762"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.cover.txt",
+      "sha256": "8362dcf96479cf7d3ea6e65a94cc955b7edd645235877ddfed9e962a8936bc91"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.decode.json",
+      "sha256": "b252e36851110e629575da61c28b347c37fdec51e1d009eaac505cddea7786e9"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.decode.log",
+      "sha256": "7c1c846de4bf8ca48449a0eabbd06a3a5fbb68c4f2efe37e9cb447d6b4490873"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.encode.json",
+      "sha256": "72ac24e4f254fb1ac45b12125b5473f4fa00e1ec2c5f1e42386a598c704eef92"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.encode.log",
+      "sha256": "2c7ad290f7c33ac7e5f0a0fe46a030cf0e5ee5cc65a062b12e7bdf0f2c15a797"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.input",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.input",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.1.recovered",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.1.recovered",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.cover.txt",
+      "sha256": "8de709f2d4e122e07bdf9f2316ad2738ad8eefb4344f8ba5a4467e660abe133c"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.decode.json",
+      "sha256": "0a82648eedeb58fdbf7cd1730b571165b67721d52020a050f81418cf22e9118b"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.decode.log",
+      "sha256": "5149edf48c5fa7ed326815877f3a38533d5805f05347ba06234890d064d589fe"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.encode.json",
+      "sha256": "768e61222a07893ed822c1e3eb804f9cab9987d698afc324f553df8aea298c1d"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.encode.log",
+      "sha256": "045b54c3db4d209bcdff3d5bd7e417047fa3b760dedd66b9f9110ccf2c41a29f"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.input",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.input",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/compact-v2-edge-cases/unicode.warm-auto.2.recovered",
+      "path": "experiments/002-compact-v2/runs/edge-cases/unicode.warm-auto.2.recovered",
+      "sha256": "8bb3ce875064b1c8d3581613ec526722d86b14af5403284f8f20b74d1de792c5"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.cover.txt",
+      "sha256": "0f30ea196842eaab686f5fde1e6a09d89b7989d0fc3a82063fa2f021f63ff79b"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.decode.json",
+      "sha256": "cabdd1d44d4c97d7fb1c16c6d75d376e00c532ff014104e79319f153ef0530b9"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.decode.log",
+      "sha256": "578e46a9e6e96ae3619f69259021bbc9b158f79f96b1058aba385e7b7765ddbd"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.encode.json",
+      "sha256": "991de16142a02ac20f63a237a70967c3d6818d5b037cef765845cdfc67e6263b"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.encode.log",
+      "sha256": "236ac5a3429fed6af8fc9fe5386d1aa29f5946e8110cf2b909a3490be82313a8"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.1.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.1.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.cover.txt",
+      "sha256": "251005642611dd25d15cb8a299824886f075c528985200a8bd574a3b246b4398"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.decode.json",
+      "sha256": "fc549ce524289e07e7a8961b3fe3bd3b488e20d5928a55f15f60780dc4aa9dd1"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.decode.log",
+      "sha256": "3c4bc6c155d0ef91398bd192ed330c652918376e58a7c1f2f4e018e89041017b"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.encode.json",
+      "sha256": "c02efdb62224f49922676ee55ca3078b4ad3547053546731442a268ebca5cdb6"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.encode.log",
+      "sha256": "4ff4f5fdc8c77d35a555be841c47b692bca3fb532e57ad750f33d8dd1089d2ac"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.journal-raw.2.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.journal-raw.2.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.cover.txt",
+      "sha256": "63c8ea6b614803cc0f666253b46431d57d7701b905638fa2a2e9d928e0f8d6a9"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.decode.json",
+      "sha256": "a677a942a4f741130b7eb63c363be77d5ac5bce76a3db48a62e33004293f25b2"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.decode.log",
+      "sha256": "a01e91df88679674344385d50540e7bbdd32fcc17ad6bab37927f75fde9bb4c7"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.encode.json",
+      "sha256": "d93b03e129a9bdb32baa01f3f814386e6b31457f20845de1ce0af871afefd745"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.encode.log",
+      "sha256": "ca05d96971d0c92a031fae1c7c0fc02eb487d1e3c44e54de359c4ca2bd35d079"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.1.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.1.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.cover.txt",
+      "sha256": "12cdff8b3243f306a29025be22007ed2946ad1c1513f6393aedd32e6f46d63eb"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.decode.json",
+      "sha256": "b3af867718d9d54573a1ef7ccb774bd54741f1854a2728e7d94a5310aaa8ac18"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.decode.log",
+      "sha256": "08dfe99f5ac9ac36e18b3286885eacce3bd88863f811dffc64c57ebc383405dc"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.encode.json",
+      "sha256": "c6c05e9af476889572e6092b186d4d7d376da73f08231a5ca8139713886acfc8"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.encode.log",
+      "sha256": "380d155c626c96394080faf51a684e463dbc5064bc7deb9f665a218689111736"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.legacy.2.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.legacy.2.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.cover.txt",
+      "sha256": "38b9de87c68a4bf1e0c8c566a08cc498fda33ff321b48ce8956dd0db12786124"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.decode.json",
+      "sha256": "adbc6f0170636128fe43845db0bd62045dd0d56354d0c919fcc3543946e8da0b"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.decode.log",
+      "sha256": "772ba6124aff2e399458019aa362be922f10995b6abc13791dedcdddc9ef707d"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.encode.json",
+      "sha256": "971f73da1a1c002d236ca0d9b1c356973b77d7c4c166222db68ea4159a61d073"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.encode.log",
+      "sha256": "f816b2dddbfc27900965b0dbca58c4a9f1426ee3aceaae2038888fbe58e0d5a9"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.1.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.1.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.cover.txt",
+      "sha256": "81fcde4da39324424aa0ecfe65b045555c8e499286424332a3fdcab7fd9852e1"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.decode.json",
+      "sha256": "5738dfc0b0ab5849a78248876c1cd851e5bbc83299a4071e4f656c623d5e50a3"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.decode.log",
+      "sha256": "d31b1db1776c7cf8ccd6d14d30b5c776e74fa8d32ade205bd4a72b1b07fe50c3"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.encode.json",
+      "sha256": "c94a53521a732996d5c44d319cf6487a51c003227d9b998af162ebc70b62b71a"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.encode.log",
+      "sha256": "cab3d2067f4b5312a9986fa3e2bd3aeb33bbdcf77cd6cfdb12c45b7d4d166114"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.varied-raw.2.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.varied-raw.2.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.cover.txt",
+      "sha256": "149641a6bdf5f9e580b0e721f9e3c33cffca60fa44713844835fe3aab3ba426a"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.decode.json",
+      "sha256": "1d1bede8c9dd9ec7d834505d1577b127d9458422c3d6f241c165eb01de19e0ca"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.decode.log",
+      "sha256": "376cc869846d70b0d012f185720d293b8fd61b5a1fb99296ce8d9be9420e71d4"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.encode.json",
+      "sha256": "f9d31d9a09cad21090bbc575901c79cc9efc0c3821a89837c112cb6359781344"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.encode.log",
+      "sha256": "9c29da00ee770c0d47ca802f6bb1b6021af80d7aa5528c9f595dec22869afa96"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.1.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.1.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.cover.txt",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.cover.txt",
+      "sha256": "a1a67d11d4d81ee2a5b1b6e7feae224531845ec9ba4c14d314d79f2912fa070c"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.decode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.decode.json",
+      "sha256": "1d105b6c1e6041e54aedbd703ce673fc7ea7738b1074191fd05ca3d9c1e1a0e5"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.decode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.decode.log",
+      "sha256": "5e7bd0e573d3cd2c55bb6a98642cc771157848f6433f7402edef1ec07326ff3c"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.encode.json",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.encode.json",
+      "sha256": "385869b6de057e53fceb568e5286b0aea05e247cd164a88801cb757fbec1bf3d"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.encode.log",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.encode.log",
+      "sha256": "4f62c2ffd75515ba8e7f754bc34bd04261f4ad71048f3999415056fbe607ce1b"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.input",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.input",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/belfry.warm-raw.2.recovered",
+      "path": "experiments/002-compact-v2/runs/ablation/belfry.warm-raw.2.recovered",
+      "sha256": "b6be9d5f585fe34d4ca67d9dc630c24632e530f5c1d8db3dffa56985f9343495"
+    },
+    {
+      "original": "poc/runs/compact-v2-ablation/results.json",
+      "path": "experiments/002-compact-v2/runs/ablation/results.json",
+      "sha256": "e84200b51b11f40ed054262e0f5331ea9223cb8e661904612cb17f7f791f7365"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.cover.txt",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.cover.txt",
+      "sha256": "f3d1feee4e40e1e5acf57a986a8354b7e5a5a86d12ae78db062180f5c14dc26b"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.decode.json",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.decode.json",
+      "sha256": "87d660a0628c3f1bc1557464641575567e4bd435bfae5d0dbf4a86855b732821"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.decode.log",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.decode.log",
+      "sha256": "8641e14705030a1fbc3ef56b30a414024a96a279de32f8da51bf926cd62d3a19"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.encode.json",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.encode.json",
+      "sha256": "0f48c3119456a8bd1ebc5085bb24e09ac710b229832af6c2efe7f5f00ec5d6a3"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.encode.log",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.encode.log",
+      "sha256": "0257914ccc9f732ad1f5b144988d852ce3eca62d8fd4532c5533a8a6259b0000"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.input",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.input",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/paragraph.warm-raw.1.recovered",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/paragraph.warm-raw.1.recovered",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-paragraph-baseline/results.json",
+      "path": "experiments/002-compact-v2/runs/paragraph-baseline/results.json",
+      "sha256": "72069406f93010074d48651963b1383da2a50bf2f67d4c34f770f29207755a2a"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/extra.cover.txt",
+      "path": "experiments/002-compact-v2/runs/rejections/extra.cover.txt",
+      "sha256": "60179c47455fb8fe286ad17dc757edf31ca7f54e458d215c83d7381b459c6a6b"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/modified.cover.txt",
+      "path": "experiments/002-compact-v2/runs/rejections/modified.cover.txt",
+      "sha256": "03ca1addf1368d490a3557305cb28e20a4308859645dc4515330a2c2f2a2bfff"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/results.json",
+      "path": "experiments/002-compact-v2/runs/rejections/results.json",
+      "sha256": "44206e816671419d7861527b6ee1367d2d85e400c82be58dbec86cbdc3d6b1fb"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/truncated.cover.txt",
+      "path": "experiments/002-compact-v2/runs/rejections/truncated.cover.txt",
+      "sha256": "98f2fdbec9c75c8ccfa8a321aa3fd198027e6129d065fa0e00df7c05a774ae40"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/wrong-key.cover.txt",
+      "path": "experiments/002-compact-v2/runs/rejections/wrong-key.cover.txt",
+      "sha256": "9462332b77d8fc08c3d2c0613d0c2fd1b3d0f86f20dcd916d5f98cd6420b9ab7"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/wrong-profile.cover.txt",
+      "path": "experiments/002-compact-v2/runs/rejections/wrong-profile.cover.txt",
+      "sha256": "9462332b77d8fc08c3d2c0613d0c2fd1b3d0f86f20dcd916d5f98cd6420b9ab7"
+    },
+    {
+      "original": "poc/runs/compact-v2-rejections/wrong.key",
+      "path": "experiments/002-compact-v2/runs/rejections/wrong.key",
+      "sha256": "100107a2124b17160590d7677b868e37337de9ea135520bcf9b4993f0e0b8da2"
+    },
+    {
+      "original": "poc/runs/compact-v2-restart/compact-paragraph.decode.json",
+      "path": "experiments/002-compact-v2/runs/restart/compact-paragraph.decode.json",
+      "sha256": "f9ffd08fa38c8d2eda1c652adfaee30af04a7b543f562b895d56cf230e571dd7"
+    },
+    {
+      "original": "poc/runs/compact-v2-restart/compact-paragraph.recovered",
+      "path": "experiments/002-compact-v2/runs/restart/compact-paragraph.recovered",
+      "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+    },
+    {
+      "original": "poc/runs/compact-v2-restart/legacy-key.decode.json",
+      "path": "experiments/002-compact-v2/runs/restart/legacy-key.decode.json",
+      "sha256": "3f785a1b297406f98b6cdf752f63de183d5e462a2c9c5377a843775d61808ec2"
+    },
+    {
+      "original": "poc/runs/compact-v2-restart/legacy-key.recovered",
+      "path": "experiments/002-compact-v2/runs/restart/legacy-key.recovered",
+      "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+    },
+    {
+      "original": "poc/runs/compact-v2-restart/results.json",
+      "path": "experiments/002-compact-v2/runs/restart/results.json",
+      "sha256": "de6ed43e8654a147007d9c60a7dd443690ccb9670235207927cc50f993eb79cd"
+    }
+  ]
+}
