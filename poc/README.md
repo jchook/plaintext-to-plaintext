@@ -1,5 +1,9 @@
 # Plaintext-to-plaintext proof of concept
 
+For the source-compression and shorter-frame experiment, see
+[the compact v2 codec](COMPACT.md). The commands below retain the original v1
+protocol and remain compatible with its saved examples.
+
 This standalone prototype encrypts arbitrary input bytes and turns the encrypted
 frame into natural-language cover text using the downloaded Llama 3.2 3B model.
 Decoding reconstructs the frame and authenticates it before writing the recovered

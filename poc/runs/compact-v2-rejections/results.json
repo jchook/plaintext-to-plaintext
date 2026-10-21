@@ -1,0 +1,32 @@
+[
+  {
+    "case": "wrong-key",
+    "returncode": 1,
+    "plaintext_written": false,
+    "error": "error: No authenticated message recovered within the available cover and token limit."
+  },
+  {
+    "case": "modified",
+    "returncode": 1,
+    "plaintext_written": false,
+    "error": "error: Cover differs from the shared model at byte 0."
+  },
+  {
+    "case": "truncated",
+    "returncode": 1,
+    "plaintext_written": false,
+    "error": "error: Cover differs from the shared model at byte 669."
+  },
+  {
+    "case": "extra",
+    "returncode": 1,
+    "plaintext_written": false,
+    "error": "error: Cover has an altered, missing, or extra sentence-completion suffix."
+  },
+  {
+    "case": "wrong-profile",
+    "returncode": 1,
+    "plaintext_written": false,
+    "error": "error: Cover differs from the shared model at byte 123."
+  }
+]

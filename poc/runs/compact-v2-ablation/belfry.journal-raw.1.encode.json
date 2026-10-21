@@ -1,0 +1,33 @@
+{
+  "average_top_probability_mass": 0.9856267079612219,
+  "average_retained_probability_mass": 0.9663111095531177,
+  "average_top_entropy_bits": 1.4889159467732762,
+  "average_selected_entropy_bits": 1.4149238205334227,
+  "frame_bytes": 84,
+  "cover_bytes": 2397,
+  "payload_cover_bytes": 2374,
+  "suffix_bytes": 23,
+  "payload_tokens": 496,
+  "total_tokens": 500,
+  "cover_model_calls": 500,
+  "average_table_entropy_bits": 1.4241842089930619,
+  "realized_frame_bits_per_token": 1.3548387096774193,
+  "realized_frame_bits_per_cover_byte": 0.28035043804755944,
+  "expected_entropy_bits_per_byte": 0.298002641418744,
+  "interval_information_bits": 674.2074469410209,
+  "compression": "raw",
+  "source_candidate_bytes": {
+    "raw": 54
+  },
+  "packed_source_bytes": 54,
+  "plaintext_bytes": 53,
+  "profile": "journal",
+  "protocol": "compact-v2",
+  "compression_seconds": 0.0,
+  "elapsed_seconds": 26.477,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

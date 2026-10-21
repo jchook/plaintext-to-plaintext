@@ -1,0 +1,63 @@
+[
+  {
+    "name": "paragraph.warm-raw.1",
+    "case": "paragraph",
+    "variant": "warm-raw",
+    "repetition": 1,
+    "exact_bytes": true,
+    "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa",
+    "recovered_sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa",
+    "encode": {
+      "average_top_probability_mass": 0.8024620768783336,
+      "average_retained_probability_mass": 0.7581523309209007,
+      "average_top_entropy_bits": 3.739747604705052,
+      "average_selected_entropy_bits": 3.544805914462282,
+      "frame_bytes": 269,
+      "cover_bytes": 2947,
+      "payload_cover_bytes": 2838,
+      "suffix_bytes": 109,
+      "payload_tokens": 608,
+      "total_tokens": 636,
+      "cover_model_calls": 636,
+      "average_table_entropy_bits": 3.54862258388451,
+      "realized_frame_bits_per_token": 3.539473684210526,
+      "realized_frame_bits_per_cover_byte": 0.7302341364099084,
+      "expected_entropy_bits_per_byte": 0.755417261971591,
+      "interval_information_bits": 2157.3275635499667,
+      "compression": "raw",
+      "source_candidate_bytes": {
+        "raw": 239
+      },
+      "packed_source_bytes": 239,
+      "plaintext_bytes": 238,
+      "profile": "warm",
+      "protocol": "compact-v2",
+      "compression_seconds": 0.0,
+      "elapsed_seconds": 37.001,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    },
+    "decode": {
+      "frame_bytes": 269,
+      "cover_bytes": 2947,
+      "payload_tokens": 608,
+      "total_tokens": 636,
+      "cover_model_calls": 636,
+      "authenticated": true,
+      "plaintext_bytes": 238,
+      "profile": "warm",
+      "protocol": "compact-v2",
+      "compression": "raw",
+      "decompression_seconds": 0.0,
+      "elapsed_seconds": 36.689,
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+      "server_build": "b1-0f3a71be1",
+      "cold": false,
+      "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+    }
+  }
+]

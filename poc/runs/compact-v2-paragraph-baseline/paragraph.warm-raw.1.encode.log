@@ -1,0 +1,58 @@
+{"tokens": 1, "bits": 0.9, "target_bits": 2152}
+{"tokens": 25, "bits": 35.2, "target_bits": 2152}
+{"tokens": 50, "bits": 75.8, "target_bits": 2152}
+{"tokens": 75, "bits": 118.8, "target_bits": 2152}
+{"tokens": 100, "bits": 184.9, "target_bits": 2152}
+{"tokens": 125, "bits": 241.7, "target_bits": 2152}
+{"tokens": 150, "bits": 312.7, "target_bits": 2152}
+{"tokens": 175, "bits": 393.0, "target_bits": 2152}
+{"tokens": 200, "bits": 450.6, "target_bits": 2152}
+{"tokens": 225, "bits": 516.7, "target_bits": 2152}
+{"tokens": 250, "bits": 589.0, "target_bits": 2152}
+{"tokens": 275, "bits": 685.4, "target_bits": 2152}
+{"tokens": 300, "bits": 771.0, "target_bits": 2152}
+{"tokens": 325, "bits": 853.5, "target_bits": 2152}
+{"tokens": 350, "bits": 935.7, "target_bits": 2152}
+{"tokens": 375, "bits": 1010.5, "target_bits": 2152}
+{"tokens": 400, "bits": 1133.3, "target_bits": 2152}
+{"tokens": 425, "bits": 1250.1, "target_bits": 2152}
+{"tokens": 450, "bits": 1368.1, "target_bits": 2152}
+{"tokens": 475, "bits": 1499.9, "target_bits": 2152}
+{"tokens": 500, "bits": 1631.9, "target_bits": 2152}
+{"tokens": 525, "bits": 1749.8, "target_bits": 2152}
+{"tokens": 550, "bits": 1877.6, "target_bits": 2152}
+{"tokens": 575, "bits": 1996.6, "target_bits": 2152}
+{"tokens": 600, "bits": 2120.6, "target_bits": 2152}
+{
+  "average_top_probability_mass": 0.8024620768783336,
+  "average_retained_probability_mass": 0.7581523309209007,
+  "average_top_entropy_bits": 3.739747604705052,
+  "average_selected_entropy_bits": 3.544805914462282,
+  "frame_bytes": 269,
+  "cover_bytes": 2947,
+  "payload_cover_bytes": 2838,
+  "suffix_bytes": 109,
+  "payload_tokens": 608,
+  "total_tokens": 636,
+  "cover_model_calls": 636,
+  "average_table_entropy_bits": 3.54862258388451,
+  "realized_frame_bits_per_token": 3.539473684210526,
+  "realized_frame_bits_per_cover_byte": 0.7302341364099084,
+  "expected_entropy_bits_per_byte": 0.755417261971591,
+  "interval_information_bits": 2157.3275635499667,
+  "compression": "raw",
+  "source_candidate_bytes": {
+    "raw": 239
+  },
+  "packed_source_bytes": 239,
+  "plaintext_bytes": 238,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression_seconds": 0.0,
+  "elapsed_seconds": 37.001,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

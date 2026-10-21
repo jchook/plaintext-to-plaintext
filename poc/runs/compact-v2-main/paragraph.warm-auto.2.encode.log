@@ -1,0 +1,51 @@
+{"phase": "compress", "source_tokens": 1, "total_source_tokens": 51}
+{"tokens": 1, "bits": 0.9, "target_bits": 632}
+{"tokens": 25, "bits": 44.9, "target_bits": 632}
+{"tokens": 50, "bits": 90.6, "target_bits": 632}
+{"tokens": 75, "bits": 138.0, "target_bits": 632}
+{"tokens": 100, "bits": 203.5, "target_bits": 632}
+{"tokens": 125, "bits": 240.9, "target_bits": 632}
+{"tokens": 150, "bits": 318.6, "target_bits": 632}
+{"tokens": 175, "bits": 387.2, "target_bits": 632}
+{"tokens": 200, "bits": 451.0, "target_bits": 632}
+{"tokens": 225, "bits": 516.7, "target_bits": 632}
+{"tokens": 250, "bits": 595.3, "target_bits": 632}
+{
+  "average_top_probability_mass": 0.9264057592287651,
+  "average_retained_probability_mass": 0.8928173202351822,
+  "average_top_entropy_bits": 2.64044333014801,
+  "average_selected_entropy_bits": 2.4570010435459713,
+  "frame_bytes": 79,
+  "cover_bytes": 1164,
+  "payload_cover_bytes": 1148,
+  "suffix_bytes": 16,
+  "payload_tokens": 259,
+  "total_tokens": 263,
+  "cover_model_calls": 263,
+  "average_table_entropy_bits": 2.462837973232509,
+  "realized_frame_bits_per_token": 2.44015444015444,
+  "realized_frame_bits_per_cover_byte": 0.5429553264604811,
+  "expected_entropy_bits_per_byte": 0.541469124479849,
+  "interval_information_bits": 632.1941451709549,
+  "source_tokens": 51,
+  "escaped_source_tokens": 3,
+  "source_information_bits": 233.2441355589616,
+  "source_model_calls": 51,
+  "compression": "llm",
+  "source_candidate_bytes": {
+    "raw": 239,
+    "zlib": 160,
+    "llm": 49
+  },
+  "packed_source_bytes": 49,
+  "plaintext_bytes": 238,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression_seconds": 2.39,
+  "elapsed_seconds": 17.554,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

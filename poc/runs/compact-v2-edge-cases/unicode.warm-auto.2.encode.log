@@ -1,0 +1,50 @@
+{"phase": "compress", "source_tokens": 1, "total_source_tokens": 15}
+{"tokens": 1, "bits": 0.9, "target_bits": 584}
+{"tokens": 25, "bits": 40.6, "target_bits": 584}
+{"tokens": 50, "bits": 66.9, "target_bits": 584}
+{"tokens": 75, "bits": 120.7, "target_bits": 584}
+{"tokens": 100, "bits": 187.6, "target_bits": 584}
+{"tokens": 125, "bits": 241.4, "target_bits": 584}
+{"tokens": 150, "bits": 284.1, "target_bits": 584}
+{"tokens": 175, "bits": 339.1, "target_bits": 584}
+{"tokens": 200, "bits": 398.8, "target_bits": 584}
+{"tokens": 225, "bits": 438.9, "target_bits": 584}
+{"tokens": 250, "bits": 462.4, "target_bits": 584}
+{"tokens": 275, "bits": 494.6, "target_bits": 584}
+{"tokens": 300, "bits": 568.8, "target_bits": 584}
+{
+  "average_top_probability_mass": 0.974251437403841,
+  "average_retained_probability_mass": 0.9399503922081699,
+  "average_top_entropy_bits": 2.1680032844297434,
+  "average_selected_entropy_bits": 2.0039386125891947,
+  "frame_bytes": 73,
+  "cover_bytes": 1401,
+  "payload_cover_bytes": 1400,
+  "suffix_bytes": 1,
+  "payload_tokens": 309,
+  "total_tokens": 310,
+  "cover_model_calls": 310,
+  "average_table_entropy_bits": 2.010886645638196,
+  "realized_frame_bits_per_token": 1.889967637540453,
+  "realized_frame_bits_per_cover_byte": 0.41684511063526053,
+  "expected_entropy_bits_per_byte": 0.4458734720859212,
+  "interval_information_bits": 595.25206298993,
+  "llm_skipped": "The local server could not score this source prefix; raw or DEFLATE is available.",
+  "source_model_calls": 4,
+  "compression": "raw",
+  "source_candidate_bytes": {
+    "raw": 43,
+    "zlib": 54
+  },
+  "packed_source_bytes": 43,
+  "plaintext_bytes": 42,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression_seconds": 0.188,
+  "elapsed_seconds": 18.008,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

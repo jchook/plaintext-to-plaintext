@@ -1,0 +1,28 @@
+{"tokens": 1, "bits": 4.8, "target_bits": null}
+{"tokens": 25, "bits": 58.4, "target_bits": null}
+{"tokens": 50, "bits": 98.4, "target_bits": null}
+{"tokens": 75, "bits": 167.6, "target_bits": null}
+{"tokens": 100, "bits": 249.7, "target_bits": null}
+{"tokens": 125, "bits": 331.3, "target_bits": null}
+{"tokens": 150, "bits": 413.0, "target_bits": null}
+{"tokens": 175, "bits": 522.5, "target_bits": null}
+{"tokens": 200, "bits": 646.7, "target_bits": null}
+{
+  "frame_bytes": 84,
+  "cover_bytes": 1066,
+  "payload_tokens": 206,
+  "total_tokens": 232,
+  "cover_model_calls": 232,
+  "authenticated": true,
+  "plaintext_bytes": 53,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression": "raw",
+  "decompression_seconds": 0.0,
+  "elapsed_seconds": 13.535,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

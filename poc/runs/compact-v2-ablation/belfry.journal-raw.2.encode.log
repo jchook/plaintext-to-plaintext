@@ -1,0 +1,50 @@
+{"tokens": 1, "bits": 1.1, "target_bits": 672}
+{"tokens": 25, "bits": 53.0, "target_bits": 672}
+{"tokens": 50, "bits": 98.1, "target_bits": 672}
+{"tokens": 75, "bits": 134.3, "target_bits": 672}
+{"tokens": 100, "bits": 157.9, "target_bits": 672}
+{"tokens": 125, "bits": 197.4, "target_bits": 672}
+{"tokens": 150, "bits": 231.9, "target_bits": 672}
+{"tokens": 175, "bits": 258.7, "target_bits": 672}
+{"tokens": 200, "bits": 295.3, "target_bits": 672}
+{"tokens": 225, "bits": 337.9, "target_bits": 672}
+{"tokens": 250, "bits": 367.0, "target_bits": 672}
+{"tokens": 275, "bits": 390.3, "target_bits": 672}
+{"tokens": 300, "bits": 422.4, "target_bits": 672}
+{"tokens": 325, "bits": 477.0, "target_bits": 672}
+{"tokens": 350, "bits": 537.8, "target_bits": 672}
+{"tokens": 375, "bits": 582.4, "target_bits": 672}
+{"tokens": 400, "bits": 639.2, "target_bits": 672}
+{
+  "average_top_probability_mass": 0.9898614874754205,
+  "average_retained_probability_mass": 0.9707367867314717,
+  "average_top_entropy_bits": 1.6202644364601453,
+  "average_selected_entropy_bits": 1.542265959628874,
+  "frame_bytes": 84,
+  "cover_bytes": 1980,
+  "payload_cover_bytes": 1884,
+  "suffix_bytes": 96,
+  "payload_tokens": 421,
+  "total_tokens": 441,
+  "cover_model_calls": 441,
+  "average_table_entropy_bits": 1.5511675599931545,
+  "realized_frame_bits_per_token": 1.5961995249406176,
+  "realized_frame_bits_per_cover_byte": 0.3393939393939394,
+  "expected_entropy_bits_per_byte": 0.3447451245994319,
+  "interval_information_bits": 672.6261435464621,
+  "compression": "raw",
+  "source_candidate_bytes": {
+    "raw": 54
+  },
+  "packed_source_bytes": 54,
+  "plaintext_bytes": 53,
+  "profile": "journal",
+  "protocol": "compact-v2",
+  "compression_seconds": 0.0,
+  "elapsed_seconds": 23.247,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

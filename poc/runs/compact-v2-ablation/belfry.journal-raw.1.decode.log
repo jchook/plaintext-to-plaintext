@@ -1,0 +1,39 @@
+{"tokens": 1, "bits": 1.1, "target_bits": null}
+{"tokens": 25, "bits": 16.1, "target_bits": null}
+{"tokens": 50, "bits": 45.8, "target_bits": null}
+{"tokens": 75, "bits": 74.2, "target_bits": null}
+{"tokens": 100, "bits": 89.7, "target_bits": null}
+{"tokens": 125, "bits": 128.4, "target_bits": null}
+{"tokens": 150, "bits": 171.8, "target_bits": null}
+{"tokens": 175, "bits": 217.8, "target_bits": null}
+{"tokens": 200, "bits": 254.6, "target_bits": null}
+{"tokens": 225, "bits": 290.5, "target_bits": null}
+{"tokens": 250, "bits": 305.1, "target_bits": null}
+{"tokens": 275, "bits": 323.5, "target_bits": null}
+{"tokens": 300, "bits": 362.2, "target_bits": null}
+{"tokens": 325, "bits": 385.2, "target_bits": null}
+{"tokens": 350, "bits": 438.9, "target_bits": null}
+{"tokens": 375, "bits": 489.2, "target_bits": null}
+{"tokens": 400, "bits": 520.3, "target_bits": null}
+{"tokens": 425, "bits": 566.2, "target_bits": null}
+{"tokens": 450, "bits": 613.7, "target_bits": null}
+{"tokens": 475, "bits": 650.3, "target_bits": null}
+{
+  "frame_bytes": 84,
+  "cover_bytes": 2397,
+  "payload_tokens": 496,
+  "total_tokens": 500,
+  "cover_model_calls": 500,
+  "authenticated": true,
+  "plaintext_bytes": 53,
+  "profile": "journal",
+  "protocol": "compact-v2",
+  "compression": "raw",
+  "decompression_seconds": 0.0,
+  "elapsed_seconds": 26.419,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

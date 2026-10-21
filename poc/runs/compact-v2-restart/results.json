@@ -1,0 +1,16 @@
+[
+  {
+    "case": "compact-paragraph",
+    "cover": "poc/runs/compact-v2-main/paragraph.warm-auto.1.cover.txt",
+    "original": "poc/runs/compact-v2-main/paragraph.warm-auto.1.input",
+    "exact_bytes": true,
+    "sha256": "5e111ca347188253045241950730475b8e46a3737b66aa746079cfaf71866baa"
+  },
+  {
+    "case": "legacy-key",
+    "cover": "poc/examples/key-message.cover.txt",
+    "original": "poc/examples/key-message.txt",
+    "exact_bytes": true,
+    "sha256": "20d9a6fcae5163c232be0e0fd5d06b55e1f6b22413f75681020d7914525f76ca"
+  }
+]

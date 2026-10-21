@@ -1,0 +1,19 @@
+{
+  "frame_bytes": 47,
+  "cover_bytes": 775,
+  "payload_tokens": 173,
+  "total_tokens": 179,
+  "cover_model_calls": 179,
+  "authenticated": true,
+  "plaintext_bytes": 16,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression": "raw",
+  "decompression_seconds": 0.0,
+  "elapsed_seconds": 10.725,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

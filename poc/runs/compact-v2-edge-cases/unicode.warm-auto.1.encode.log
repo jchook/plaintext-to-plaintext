@@ -1,0 +1,48 @@
+{"phase": "compress", "source_tokens": 1, "total_source_tokens": 15}
+{"tokens": 1, "bits": 0.9, "target_bits": 584}
+{"tokens": 25, "bits": 39.9, "target_bits": 584}
+{"tokens": 50, "bits": 63.6, "target_bits": 584}
+{"tokens": 75, "bits": 119.6, "target_bits": 584}
+{"tokens": 100, "bits": 191.4, "target_bits": 584}
+{"tokens": 125, "bits": 272.0, "target_bits": 584}
+{"tokens": 150, "bits": 340.4, "target_bits": 584}
+{"tokens": 175, "bits": 401.0, "target_bits": 584}
+{"tokens": 200, "bits": 450.6, "target_bits": 584}
+{"tokens": 225, "bits": 519.7, "target_bits": 584}
+{"tokens": 250, "bits": 584.5, "target_bits": 584}
+{
+  "average_top_probability_mass": 0.9380856466144817,
+  "average_retained_probability_mass": 0.9073105636107933,
+  "average_top_entropy_bits": 2.6195601305918714,
+  "average_selected_entropy_bits": 2.462705519307535,
+  "frame_bytes": 73,
+  "cover_bytes": 1252,
+  "payload_cover_bytes": 1176,
+  "suffix_bytes": 76,
+  "payload_tokens": 250,
+  "total_tokens": 268,
+  "cover_model_calls": 268,
+  "average_table_entropy_bits": 2.468721991549939,
+  "realized_frame_bits_per_token": 2.336,
+  "realized_frame_bits_per_cover_byte": 0.46645367412140576,
+  "expected_entropy_bits_per_byte": 0.5220714253849295,
+  "interval_information_bits": 584.5062025819511,
+  "llm_skipped": "The local server could not score this source prefix; raw or DEFLATE is available.",
+  "source_model_calls": 3,
+  "compression": "raw",
+  "source_candidate_bytes": {
+    "raw": 43,
+    "zlib": 54
+  },
+  "packed_source_bytes": 43,
+  "plaintext_bytes": 42,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression_seconds": 0.195,
+  "elapsed_seconds": 16.116,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}
