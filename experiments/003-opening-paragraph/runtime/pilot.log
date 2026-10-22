@@ -1,0 +1,65 @@
+Starting 1/32 key-message.warm-auto.1
+{"name": "key-message.warm-auto.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 896, "encode_seconds": 11.577}
+Starting 2/32 key-message.opening-history-revision-t1.0.1
+{"name": "key-message.opening-history-revision-t1.0.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 2232, "encode_seconds": 21.986}
+Starting 3/32 key-message.opening-history-revision-t1.2.1
+{"name": "key-message.opening-history-revision-t1.2.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1166, "encode_seconds": 12.317}
+Starting 4/32 key-message.opening-conference-followup-t1.2.1
+{"name": "key-message.opening-conference-followup-t1.2.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1422, "encode_seconds": 14.031}
+Starting 5/32 key-message.opening-stem-revision-t1.0.1
+{"name": "key-message.opening-stem-revision-t1.0.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1639, "encode_seconds": 15.282}
+Starting 6/32 key-message.varied-auto.1
+{"name": "key-message.varied-auto.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 946, "encode_seconds": 11.317}
+Starting 7/32 key-message.opening-stem-revision-t1.2.1
+{"name": "key-message.opening-stem-revision-t1.2.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1345, "encode_seconds": 13.827}
+Starting 8/32 key-message.opening-conference-followup-t1.0.1
+{"name": "key-message.opening-conference-followup-t1.0.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1880, "encode_seconds": 17.379}
+Starting 9/32 paragraph.opening-history-revision-t1.2.1
+{"name": "paragraph.opening-history-revision-t1.2.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1508, "encode_seconds": 17.083}
+Starting 10/32 paragraph.opening-stem-revision-t1.2.1
+{"name": "paragraph.opening-stem-revision-t1.2.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1784, "encode_seconds": 19.879}
+Starting 11/32 paragraph.opening-stem-revision-t1.0.1
+{"name": "paragraph.opening-stem-revision-t1.0.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1933, "encode_seconds": 18.967}
+Starting 12/32 paragraph.opening-history-revision-t1.0.1
+{"name": "paragraph.opening-history-revision-t1.0.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2317, "encode_seconds": 23.052}
+Starting 13/32 paragraph.warm-auto.1
+{"name": "paragraph.warm-auto.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1509, "encode_seconds": 20.655}
+Starting 14/32 paragraph.opening-conference-followup-t1.2.1
+{"name": "paragraph.opening-conference-followup-t1.2.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1811, "encode_seconds": 21.139}
+Starting 15/32 paragraph.opening-conference-followup-t1.0.1
+{"name": "paragraph.opening-conference-followup-t1.0.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2794, "encode_seconds": 27.868}
+Starting 16/32 paragraph.varied-auto.1
+{"name": "paragraph.varied-auto.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1530, "encode_seconds": 19.764}
+Starting 17/32 paragraph.opening-history-revision-t1.0.2
+{"name": "paragraph.opening-history-revision-t1.0.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2407, "encode_seconds": 25.268}
+Starting 18/32 paragraph.opening-conference-followup-t1.2.2
+{"name": "paragraph.opening-conference-followup-t1.2.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1940, "encode_seconds": 21.353}
+Starting 19/32 paragraph.varied-auto.2
+{"name": "paragraph.varied-auto.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2103, "encode_seconds": 26.054}
+Starting 20/32 paragraph.opening-stem-revision-t1.0.2
+{"name": "paragraph.opening-stem-revision-t1.0.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2222, "encode_seconds": 24.05}
+Starting 21/32 paragraph.opening-history-revision-t1.2.2
+{"name": "paragraph.opening-history-revision-t1.2.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1913, "encode_seconds": 21.422}
+Starting 22/32 paragraph.opening-conference-followup-t1.0.2
+{"name": "paragraph.opening-conference-followup-t1.0.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2973, "encode_seconds": 30.798}
+Starting 23/32 paragraph.opening-stem-revision-t1.2.2
+{"name": "paragraph.opening-stem-revision-t1.2.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1991, "encode_seconds": 22.178}
+Starting 24/32 paragraph.warm-auto.2
+{"name": "paragraph.warm-auto.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1425, "encode_seconds": 19.205}
+Starting 25/32 key-message.opening-history-revision-t1.2.2
+{"name": "key-message.opening-history-revision-t1.2.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1259, "encode_seconds": 13.131}
+Starting 26/32 key-message.warm-auto.2
+{"name": "key-message.warm-auto.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 974, "encode_seconds": 11.92}
+Starting 27/32 key-message.opening-stem-revision-t1.2.2
+{"name": "key-message.opening-stem-revision-t1.2.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1039, "encode_seconds": 9.741}
+Starting 28/32 key-message.opening-history-revision-t1.0.2
+{"name": "key-message.opening-history-revision-t1.0.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1406, "encode_seconds": 13.984}
+Starting 29/32 key-message.opening-conference-followup-t1.0.2
+{"name": "key-message.opening-conference-followup-t1.0.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1563, "encode_seconds": 14.566}
+Starting 30/32 key-message.varied-auto.2
+{"name": "key-message.varied-auto.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 916, "encode_seconds": 11.144}
+Starting 31/32 key-message.opening-conference-followup-t1.2.2
+{"name": "key-message.opening-conference-followup-t1.2.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1552, "encode_seconds": 15.329}
+Starting 32/32 key-message.opening-stem-revision-t1.0.2
+{"name": "key-message.opening-stem-revision-t1.0.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1526, "encode_seconds": 13.815}
+Completed 32/32 authenticated round trips: /home/jchook/projects/plaintext-to-plaintext/experiments/003-opening-paragraph/runs/pilot-20261021

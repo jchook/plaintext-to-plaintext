@@ -1,0 +1,9 @@
+{
+  "exact_replay": true,
+  "steps": 12,
+  "repetitions": 2,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "build": "b1-0f3a71be1",
+  "cold": false
+}

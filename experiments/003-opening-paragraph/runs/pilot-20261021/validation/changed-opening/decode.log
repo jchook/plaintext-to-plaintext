@@ -1,0 +1,20 @@
+{"tokens": 1, "bits": 4.6, "target_bits": null}
+{"tokens": 25, "bits": 43.5, "target_bits": null}
+{"tokens": 50, "bits": 75.2, "target_bits": null}
+{"tokens": 75, "bits": 114.4, "target_bits": null}
+{"tokens": 100, "bits": 143.2, "target_bits": null}
+{"tokens": 125, "bits": 159.2, "target_bits": null}
+{"tokens": 150, "bits": 175.0, "target_bits": null}
+{"tokens": 175, "bits": 213.7, "target_bits": null}
+{"tokens": 200, "bits": 238.6, "target_bits": null}
+{"tokens": 225, "bits": 266.2, "target_bits": null}
+{"tokens": 250, "bits": 295.9, "target_bits": null}
+{"tokens": 275, "bits": 327.6, "target_bits": null}
+{"tokens": 300, "bits": 391.0, "target_bits": null}
+{"tokens": 325, "bits": 421.6, "target_bits": null}
+{"tokens": 350, "bits": 460.7, "target_bits": null}
+{"tokens": 375, "bits": 514.1, "target_bits": null}
+{"tokens": 400, "bits": 555.2, "target_bits": null}
+{"tokens": 425, "bits": 592.9, "target_bits": null}
+{"tokens": 450, "bits": 625.7, "target_bits": null}
+error: No authenticated message recovered within the available cover and token limit.

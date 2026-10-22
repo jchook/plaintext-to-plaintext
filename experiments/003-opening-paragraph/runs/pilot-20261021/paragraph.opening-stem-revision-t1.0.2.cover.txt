@@ -1,0 +1,13 @@
+Hi Priya, thanks for taking the time to read the draft and suggest revisions. I'm reworking the section on statistical models so that the assumptions come before the examples, and I'm separating the explanation of uncertainty from the discussion of model fit. I'd appreciate your thoughts on whether that order makes the argument easier to follow and where the explanation still needs work.
+
+As I read through the revised draft, I'm starting to see how the changes you suggested can help clarify the explanation of uncertainty. One thing that stands out to me is the line where you say the probability of underfitting is greater than one under the null model. Are you sure that's the correct comparison? The explanation of why it's greater seems a bit unclear to me - can you spell it out a bit more in the next section?
+
+Additionally, I think the separate section on model fit is a good idea, but I'm not sure it's necessary to have a separate box under "Assumptions" for this section. The explanation of model fit could easily fit within the section on statistical models, don't you think? It feels like you're duplicating effort here.
+
+Lastly, I'm still having trouble grasping the intuition behind the relationship between underfitting and model fit. You've already explained why underfitting is a problem, but the explanation of model fit is still somewhat unclear to me. Can you take a moment to review the section again and make sure it's not leaving people confused? 
+
+One more thing - I think we should revisit how you're explaining the concept of underfitting. Sometimes it feels like you're focusing too much on why underfitting is bad, rather than explaining why underfitting happens in the first place. Do you think we should rephrase it to make it more proactive, rather than just reactive? 
+
+I'd love to discuss this further and hear your thoughts on these specific points. Thanks again for taking the time to help me improve the draft! 
+
+This change makes me wonder if the earlier section on statistical models still needs to be changed. Is the revised structure you're proposing going to make the rest of the material more coherent? I'm not sure yet - can we give it another pass and see how it works out?

@@ -1,0 +1,9 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+I wanted to drill down a bit on what you said about the target audience for this product launch. You mentioned that your team is trying to get a clear definition of the problem you're trying to solve, since that has such a big impact on the launch's overall strategy. That really resonates with me, because we've found that same difficulty when launching new products. We tend to get caught up in the technical features and forget to think about how they'll be perceived by our customers. Can you tell me more about how your team is approaching that problem, and what strategies are working for you? 
+
+I also wanted to follow up on the discussion you had with our lead researcher, who seemed particularly engaged and interested in the market dynamics. How did you think she responded to your questions, and did she offer any insights that you found particularly helpful? 
+
+I have some thoughts of my own on the topic of segmentation - do you think there are any limitations or potential pitfalls we should be aware of when segmenting our market? 
+
+Do you think there's a particular way that we could use data to validate our assumptions about the target audience, or to identify any potential blind spots?

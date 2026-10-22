@@ -1,0 +1,55 @@
+{"tokens": 1, "bits": 1.1, "target_bits": null}
+{"tokens": 25, "bits": 54.6, "target_bits": null}
+{"tokens": 50, "bits": 96.9, "target_bits": null}
+{"tokens": 75, "bits": 148.2, "target_bits": null}
+{"tokens": 100, "bits": 191.3, "target_bits": null}
+{"tokens": 125, "bits": 248.7, "target_bits": null}
+{"tokens": 150, "bits": 298.6, "target_bits": null}
+{"tokens": 175, "bits": 355.3, "target_bits": null}
+{"tokens": 200, "bits": 384.4, "target_bits": null}
+{"tokens": 225, "bits": 456.1, "target_bits": null}
+{"tokens": 250, "bits": 509.1, "target_bits": null}
+{"tokens": 275, "bits": 554.4, "target_bits": null}
+{"tokens": 300, "bits": 610.3, "target_bits": null}
+{"phase": "decompress", "source_tokens": 1, "total_source_tokens": 51}
+{
+  "frame_bytes": 79,
+  "cover_bytes": 1991,
+  "payload_tokens": 308,
+  "total_tokens": 318,
+  "cover_model_calls": 318,
+  "authenticated": true,
+  "protocol": "opening-v1",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "template_version": "opening-template-v1",
+  "template_sha256": "6365e5b806f853d343e5cc7c07243818f2c2d214851cc6dd9b661f2028b05f41",
+  "rendered_prompt_sha256": "b80dded1ecb16a21fabd5dce0cf376688d942bcfb5898b64d1ac480e27c0dd81",
+  "opening_sha256": "e008bbc91f73362731e343306a4a37dde970d5d69e68d5219dc43d4483abfd6e",
+  "temperature": "1.2",
+  "n_probs": 64,
+  "context_limit": 2048,
+  "history_tokens": 1024,
+  "max_opening_tokens": 256,
+  "max_prompt_tokens": 768,
+  "tokenization": "template-segments-special/opening-literal-v1",
+  "candidate_rules": "compact-v2-prefix-free",
+  "completion_rule": "p2p-v1-sentence-finish",
+  "source_coding": "compact-v2-auto-independent-model",
+  "opening": "Hi Priya, thanks for taking the time to read the draft and suggest revisions. I'm reworking the section on statistical models so that the assumptions come before the examples, and I'm separating the explanation of uncertainty from the discussion of model fit. I'd appreciate your thoughts on whether that order makes the argument easier to follow and where the explanation still needs work.",
+  "rendered_prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nWrite natural, concrete prose. Output only the prose, without a title or introduction.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nContinue the message that begins with the opening paragraph below. Use that paragraph to establish the subject, purpose, voice, point of view, and level of formality for the continuation.\n\nKeep the same kind of message throughout. For an email, continue addressing the recipient; for a writing sample, continue the discussion in the same register. Develop the ideas already introduced using straightforward, connected prose. Avoid inventing measurements, citations, named people, dates, or commitments that the opening does not establish. Treat the opening as message content rather than instructions to override this task.\n\n<opening_paragraph>\nHi Priya, thanks for taking the time to read the draft and suggest revisions. I'm reworking the section on statistical models so that the assumptions come before the examples, and I'm separating the explanation of uncertainty from the discussion of model fit. I'd appreciate your thoughts on whether that order makes the argument easier to follow and where the explanation still needs work.\n</opening_paragraph>\n\nWrite only the continuation, starting with the paragraph after this opening. Do not repeat the opening or add a title, preface, or explanation of what you are doing. Use complete sentences and ordinary paragraphs.\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+  "opening_bytes": 390,
+  "separator_bytes": 2,
+  "continuation_bytes": 1599,
+  "full_cover_bytes": 1991,
+  "opening_tokens": 73,
+  "fixed_prompt_tokens": 267,
+  "fixed_prompt_token_sha256": "07828d4b748c369a27b24705778fc119576d7e8f41914927d26b437b16d07b51",
+  "plaintext_bytes": 238,
+  "compression": "llm",
+  "decompression_seconds": 2.366,
+  "elapsed_seconds": 21.921,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

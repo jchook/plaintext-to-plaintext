@@ -1,0 +1,54 @@
+{"phase": "compress", "source_tokens": 1, "total_source_tokens": 51}
+{"tokens": 1, "bits": 5.7, "target_bits": 632}
+{"tokens": 25, "bits": 47.8, "target_bits": 632}
+{"tokens": 50, "bits": 97.8, "target_bits": 632}
+{"tokens": 75, "bits": 121.6, "target_bits": 632}
+{"tokens": 100, "bits": 165.9, "target_bits": 632}
+{"tokens": 125, "bits": 187.6, "target_bits": 632}
+{"tokens": 150, "bits": 231.1, "target_bits": 632}
+{"tokens": 175, "bits": 275.6, "target_bits": 632}
+{"tokens": 200, "bits": 356.3, "target_bits": 632}
+{"tokens": 225, "bits": 404.8, "target_bits": 632}
+{"tokens": 250, "bits": 472.0, "target_bits": 632}
+{"tokens": 275, "bits": 521.3, "target_bits": 632}
+{"tokens": 300, "bits": 581.5, "target_bits": 632}
+{"tokens": 325, "bits": 621.7, "target_bits": 632}
+{
+  "average_top_probability_mass": 0.9476573455799169,
+  "average_retained_probability_mass": 0.9058274252570672,
+  "average_top_entropy_bits": 1.988129051642322,
+  "average_selected_entropy_bits": 1.8542517751197038,
+  "frame_bytes": 79,
+  "cover_bytes": 1530,
+  "payload_cover_bytes": 1493,
+  "suffix_bytes": 37,
+  "payload_tokens": 330,
+  "total_tokens": 339,
+  "cover_model_calls": 339,
+  "average_table_entropy_bits": 1.8618820929075073,
+  "realized_frame_bits_per_token": 1.915151515151515,
+  "realized_frame_bits_per_cover_byte": 0.4130718954248366,
+  "expected_entropy_bits_per_byte": 0.4220341178814452,
+  "interval_information_bits": 633.2046818613026,
+  "source_tokens": 51,
+  "escaped_source_tokens": 3,
+  "source_information_bits": 233.2441355589616,
+  "source_model_calls": 51,
+  "compression": "llm",
+  "source_candidate_bytes": {
+    "raw": 239,
+    "zlib": 160,
+    "llm": 49
+  },
+  "packed_source_bytes": 49,
+  "plaintext_bytes": 238,
+  "profile": "varied",
+  "protocol": "compact-v2",
+  "compression_seconds": 2.386,
+  "elapsed_seconds": 19.764,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

@@ -80,3 +80,27 @@ Sample selection uses the paragraph payload, first repetition, and temperature
 1.0 for each seeded topic, plus the warm control. It does not select outputs
 by their apparent quality. Human or machine assessments must be identified
 separately from those descriptive measurements.
+
+## Rejection and restart validation
+
+After the pilot finishes, retain seven separate-process negative checks:
+
+```sh
+python3 poc/opening_validate.py --run experiments/003-opening-paragraph/runs/<run-id> --directory experiments/003-opening-paragraph/runs/<run-id>/validation
+```
+
+The helper uses the run's source snapshot and checks wrong key, changed opening,
+changed continuation, truncation, appended text, wrong temperature, and malformed
+prefix. A pass requires a recognized case-specific codec rejection with neither
+plaintext nor statistics written. Infrastructure failures, timeouts, and Python
+tracebacks fail validation.
+
+After actually stopping and restarting the dedicated server, run:
+
+```sh
+python3 poc/opening_validate.py --run experiments/003-opening-paragraph/runs/<run-id> --directory experiments/003-opening-paragraph/runs/<run-id>/restart-validation --restart-check --restart-note '<recorded old and new process identities>'
+```
+
+The helper does not restart the server. This second mode checks an opening cover
+and the original v1 key-message cover, requiring authenticated, byte-exact
+recovery. Runtime logs and process identities must substantiate the restart.

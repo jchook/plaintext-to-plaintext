@@ -1,0 +1,52 @@
+{"phase": "compress", "source_tokens": 1, "total_source_tokens": 51}
+{"tokens": 1, "bits": 2.1, "target_bits": 632}
+{"tokens": 25, "bits": 36.1, "target_bits": 632}
+{"tokens": 50, "bits": 72.3, "target_bits": 632}
+{"tokens": 75, "bits": 126.7, "target_bits": 632}
+{"tokens": 100, "bits": 184.4, "target_bits": 632}
+{"tokens": 125, "bits": 224.4, "target_bits": 632}
+{"tokens": 150, "bits": 293.0, "target_bits": 632}
+{"tokens": 175, "bits": 340.7, "target_bits": 632}
+{"tokens": 200, "bits": 405.2, "target_bits": 632}
+{"tokens": 225, "bits": 460.5, "target_bits": 632}
+{"tokens": 250, "bits": 527.5, "target_bits": 632}
+{"tokens": 275, "bits": 586.4, "target_bits": 632}
+{
+  "average_top_probability_mass": 0.9638578864827257,
+  "average_retained_probability_mass": 0.9338667454127891,
+  "average_top_entropy_bits": 2.282750960717713,
+  "average_selected_entropy_bits": 2.1263545637853447,
+  "frame_bytes": 79,
+  "cover_bytes": 1425,
+  "payload_cover_bytes": 1384,
+  "suffix_bytes": 41,
+  "payload_tokens": 292,
+  "total_tokens": 303,
+  "cover_model_calls": 303,
+  "average_table_entropy_bits": 2.133125670629907,
+  "realized_frame_bits_per_token": 2.164383561643836,
+  "realized_frame_bits_per_cover_byte": 0.4435087719298246,
+  "expected_entropy_bits_per_byte": 0.45103990548227674,
+  "interval_information_bits": 636.423859316184,
+  "source_tokens": 51,
+  "escaped_source_tokens": 3,
+  "source_information_bits": 233.2441355589616,
+  "source_model_calls": 51,
+  "compression": "llm",
+  "source_candidate_bytes": {
+    "raw": 239,
+    "zlib": 160,
+    "llm": 49
+  },
+  "packed_source_bytes": 49,
+  "plaintext_bytes": 238,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression_seconds": 2.438,
+  "elapsed_seconds": 19.205,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

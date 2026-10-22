@@ -9,6 +9,7 @@ same code without copying it into every run folder.
 | `p2p.py` | Original v1 codec and dedicated model server |
 | `compact.py`, `source_codec.py` | Compact v2 framing, cover profiles, and lossless source coding |
 | `opening.py`, `opening_demo.py` | Public opening paragraph variant and controlled pilot runner |
+| `opening_validate.py` | Saved-cover rejection and externally restarted replay checks |
 | `demo.py`, `compact_demo.py` | Separate-process round-trip runners |
 | `test_p2p.py`, `test_compact.py` | Local tests with test predictors |
 | `keys/alice.txt` | Public demonstration key, with source attribution |
@@ -38,8 +39,8 @@ cmp experiments/001-baseline-v1/examples/key-message.txt /tmp/message.recovered.
 
 Choose unused output paths. Both ends need the exact model/runtime, key bytes,
 and matching protocol/profile. The default compact profile is `warm`; its size
-results are promising, but the [next planned experiment](../experiments/003-opening-paragraph/README.md)
-addresses its uneven prose quality.
+results are promising. The [public-opening pilot](../experiments/003-opening-paragraph/README.md)
+demonstrates topic steering while retaining prose-quality limitations.
 
 ```sh
 python3 -m unittest discover -s poc -p 'test_*.py' -v

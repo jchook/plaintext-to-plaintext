@@ -1,0 +1,39 @@
+{
+  "observed_at": "2026-10-22T03:40:14.368894+00:00",
+  "servers": [
+    {
+      "pid": 22643,
+      "argv": [
+        "/home/jchook/Applications/ollama/lib/ollama/llama-server",
+        "--model",
+        "/home/jchook/.ollama/models/blobs/sha256-dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "11535",
+        "--offline",
+        "--no-webui",
+        "--no-cache-prompt",
+        "--no-cache-idle-slots",
+        "--cache-ram",
+        "0",
+        "--parallel",
+        "1",
+        "--ctx-size",
+        "2048",
+        "--batch-size",
+        "2048",
+        "--ubatch-size",
+        "2048",
+        "--flash-attn",
+        "off",
+        "--gpu-layers",
+        "0",
+        "--threads",
+        "4",
+        "--log-verbosity",
+        "1"
+      ]
+    }
+  ]
+}

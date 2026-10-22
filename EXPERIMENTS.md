@@ -10,7 +10,7 @@ order of ideas, not separately committed development stages.
 | 001: Reproducible v1 codec | Completed local trial | Encrypted bytes carried by arithmetic-coded Llama output recovered exactly in four saved cases, including Unicode and empty input. The 53-byte warning needed 2,635 cover bytes; expansion became the next problem. | [Baseline](experiments/001-baseline-v1/README.md) |
 | Literature review | Archived reference work | Identified precedents, tokenization and runtime risks, and the need to measure retained entropy and compress before encryption. Paper results were not reproduced here. | [Research findings](research/summary.md) |
 | 002: Compact v2 | Completed local trial | Removed padding, added lossless source compression, and compared prompts and temperature. All 21 completed round trips recovered exactly; a 238-byte paragraph used 1,104–1,164 cover bytes. Prose sometimes became conspicuously odd. | [Compact results](experiments/002-compact-v2/README.md) |
-| 003: Opening-paragraph steering | Implementation ready; pilot pending | A versioned template wraps a supplied public opening that also starts the transmitted cover. Test conference follow-ups and STEM/history revision notes at 1.0 and 1.2, measuring continuation quality and full cover size. | [Experiment handoff](experiments/003-opening-paragraph/README.md) |
+| 003: Opening-paragraph steering | Completed pilot | All 32 round trips recovered exactly; supplied openings steered the reviewed samples into conference/STEM/history emails. Covers grew, and recipient-role slips and invented prior conversations remain. Seven rejection checks and two restart decodes passed. | [Results and handoff](experiments/003-opening-paragraph/README.md) |
 
 ## Where we are
 
@@ -19,20 +19,24 @@ current size baseline. Its arithmetic rate is close to the measured filtered
 entropy, so replacing the coder alone has no demonstrated large benefit.
 The small trial does not establish a stable ranking of prompt variants.
 
-The immediate problem is prose quality. The current prompt asks for observations
-from an unfamiliar town, invented names, and small mishaps; `warm` raises the
-temperature to 1.2. The saved paragraph starts at a motel smelling of stale smoke.
-Those prompt and temperature choices are plausible causes of the tone, but their
-effects on readability have not been isolated. The next experiment should do that.
+The immediate problem is prose quality. The old prompt asks for observations
+from an unfamiliar town, invented names, and small mishaps. Experiment 003's
+versioned wrapper and public opening changed the reviewed continuations into
+the requested email topics. The 238-byte payload's mean full covers at 1.2 were
+1,710.5–1,887.5 bytes, versus 1,467 for the warm control, with two trials per cell.
+Opening v1 remains a prototype: the agent review found role changes, repeated
+questions, and invented conversational history. Its wrapper and opening were
+tested together, so their separate effects remain unknown.
 
 ## Direction and decisions
 
 1. Keep exact bytes and authenticated failure as requirements. A better-sounding
    paraphrase of the secret is not successful recovery.
-2. Test the [opening-paragraph idea](experiments/003-opening-paragraph/README.md)
-   before pursuing more capacity. Compare 1.0 and 1.2 under the same runtime and
-   source-compression policy; accept some extra cover length if readability improves.
-3. Evaluate full transmitted size, including any visible opening paragraph.
+2. Keep the [public-opening interface](experiments/003-opening-paragraph/README.md)
+   for further experiments. Next compare a new wrapper version that maintains
+   sender/recipient roles and avoids inventing earlier exchanges. Preserve v1
+   and compare against it; stronger instructions are not yet a demonstrated fix.
+3. Evaluate full transmitted size, including the public opening paragraph.
    Report readable continuation quality separately so copying a good paragraph
    cannot improve the quality score by itself.
 4. Later, compare less restrictive token selection and alternative coders under
@@ -66,6 +70,8 @@ than the surviving records support.
 - `6e80812` preserves the previously uncommitted compact experiment, including
   the failed Unicode scoring log, before this reorganization. It is the source
   revision for the compact verification record's five code hashes.
+- `7ce7883` pins the opening v1 implementation, tests, and pilot runner before
+  collecting all 32 trials. Its measured sources are unchanged in the run snapshot.
 
 The reorganization keeps raw evidence byte-for-byte, including historical paths
 inside JSON and logs. [migration.json](experiments/migration.json) maps those old

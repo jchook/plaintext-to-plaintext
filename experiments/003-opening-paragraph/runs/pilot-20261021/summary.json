@@ -1,0 +1,340 @@
+{
+  "attempt_statuses": {
+    "success": 32
+  },
+  "completed_round_trips": 32,
+  "all_completed_exact_bytes": true,
+  "measurements": [
+    {
+      "case": "key-message",
+      "variant": "opening-conference-followup-t1.0",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": "conference-followup",
+      "cover_bytes": [
+        1880,
+        1563
+      ],
+      "mean_cover_bytes": 1721.5,
+      "median_cover_bytes": 1721.5,
+      "mean_opening_bytes": 356,
+      "mean_encode_seconds": 15.9725,
+      "mean_decode_seconds": 15.758500000000002,
+      "mean_frame_bits_per_token": 1.5763560452505934,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "opening-conference-followup-t1.2",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": "conference-followup",
+      "cover_bytes": [
+        1422,
+        1552
+      ],
+      "mean_cover_bytes": 1487,
+      "median_cover_bytes": 1487.0,
+      "mean_opening_bytes": 356,
+      "mean_encode_seconds": 14.68,
+      "mean_decode_seconds": 14.3795,
+      "mean_frame_bits_per_token": 1.979981301215421,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "opening-history-revision-t1.0",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": "history-revision",
+      "cover_bytes": [
+        2232,
+        1406
+      ],
+      "mean_cover_bytes": 1819,
+      "median_cover_bytes": 1819.0,
+      "mean_opening_bytes": 373,
+      "mean_encode_seconds": 17.985,
+      "mean_decode_seconds": 17.609,
+      "mean_frame_bits_per_token": 1.39905403321166,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "opening-history-revision-t1.2",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": "history-revision",
+      "cover_bytes": [
+        1166,
+        1259
+      ],
+      "mean_cover_bytes": 1212.5,
+      "median_cover_bytes": 1212.5,
+      "mean_opening_bytes": 373,
+      "mean_encode_seconds": 12.724,
+      "mean_decode_seconds": 12.4535,
+      "mean_frame_bits_per_token": 2.395145084800257,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "opening-stem-revision-t1.0",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": "stem-revision",
+      "cover_bytes": [
+        1639,
+        1526
+      ],
+      "mean_cover_bytes": 1582.5,
+      "median_cover_bytes": 1582.5,
+      "mean_opening_bytes": 390,
+      "mean_encode_seconds": 14.5485,
+      "mean_decode_seconds": 14.308499999999999,
+      "mean_frame_bits_per_token": 1.6689006466784244,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "opening-stem-revision-t1.2",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": "stem-revision",
+      "cover_bytes": [
+        1345,
+        1039
+      ],
+      "mean_cover_bytes": 1192,
+      "median_cover_bytes": 1192.0,
+      "mean_opening_bytes": 390,
+      "mean_encode_seconds": 11.783999999999999,
+      "mean_decode_seconds": 11.52,
+      "mean_frame_bits_per_token": 2.5247594050743656,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "varied-auto",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": null,
+      "cover_bytes": [
+        946,
+        916
+      ],
+      "mean_cover_bytes": 931,
+      "median_cover_bytes": 931.0,
+      "mean_opening_bytes": 0,
+      "mean_encode_seconds": 11.2305,
+      "mean_decode_seconds": 11.054,
+      "mean_frame_bits_per_token": 2.0276760276760277,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "key-message",
+      "variant": "warm-auto",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": null,
+      "cover_bytes": [
+        896,
+        974
+      ],
+      "mean_cover_bytes": 935,
+      "median_cover_bytes": 935.0,
+      "mean_opening_bytes": 0,
+      "mean_encode_seconds": 11.7485,
+      "mean_decode_seconds": 11.35,
+      "mean_frame_bits_per_token": 2.1839180795702537,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "opening-conference-followup-t1.0",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": "conference-followup",
+      "cover_bytes": [
+        2794,
+        2973
+      ],
+      "mean_cover_bytes": 2883.5,
+      "median_cover_bytes": 2883.5,
+      "mean_opening_bytes": 356,
+      "mean_encode_seconds": 29.333,
+      "mean_decode_seconds": 29.5245,
+      "mean_frame_bits_per_token": 1.314430545617559,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "opening-conference-followup-t1.2",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": "conference-followup",
+      "cover_bytes": [
+        1811,
+        1940
+      ],
+      "mean_cover_bytes": 1875.5,
+      "median_cover_bytes": 1875.5,
+      "mean_opening_bytes": 356,
+      "mean_encode_seconds": 21.246000000000002,
+      "mean_decode_seconds": 21.1315,
+      "mean_frame_bits_per_token": 2.1691746143883197,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "opening-history-revision-t1.0",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": "history-revision",
+      "cover_bytes": [
+        2317,
+        2407
+      ],
+      "mean_cover_bytes": 2362,
+      "median_cover_bytes": 2362.0,
+      "mean_opening_bytes": 373,
+      "mean_encode_seconds": 24.16,
+      "mean_decode_seconds": 24.3435,
+      "mean_frame_bits_per_token": 1.6509545485427,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "opening-history-revision-t1.2",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": "history-revision",
+      "cover_bytes": [
+        1508,
+        1913
+      ],
+      "mean_cover_bytes": 1710.5,
+      "median_cover_bytes": 1710.5,
+      "mean_opening_bytes": 373,
+      "mean_encode_seconds": 19.252499999999998,
+      "mean_decode_seconds": 19.154,
+      "mean_frame_bits_per_token": 2.4997785617201935,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "opening-stem-revision-t1.0",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": "stem-revision",
+      "cover_bytes": [
+        1933,
+        2222
+      ],
+      "mean_cover_bytes": 2077.5,
+      "median_cover_bytes": 2077.5,
+      "mean_opening_bytes": 390,
+      "mean_encode_seconds": 21.508499999999998,
+      "mean_decode_seconds": 21.688499999999998,
+      "mean_frame_bits_per_token": 2.0264732111544204,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "opening-stem-revision-t1.2",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": "stem-revision",
+      "cover_bytes": [
+        1784,
+        1991
+      ],
+      "mean_cover_bytes": 1887.5,
+      "median_cover_bytes": 1887.5,
+      "mean_opening_bytes": 390,
+      "mean_encode_seconds": 21.0285,
+      "mean_decode_seconds": 20.883,
+      "mean_frame_bits_per_token": 2.200695215565104,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "varied-auto",
+      "completed": 2,
+      "temperature": "1.0",
+      "opening": null,
+      "cover_bytes": [
+        1530,
+        2103
+      ],
+      "mean_cover_bytes": 1816.5,
+      "median_cover_bytes": 1816.5,
+      "mean_opening_bytes": 0,
+      "mean_encode_seconds": 22.909,
+      "mean_decode_seconds": 22.5295,
+      "mean_frame_bits_per_token": 1.6597979797979798,
+      "all_exact_bytes": true
+    },
+    {
+      "case": "paragraph",
+      "variant": "warm-auto",
+      "completed": 2,
+      "temperature": "1.2",
+      "opening": null,
+      "cover_bytes": [
+        1509,
+        1425
+      ],
+      "mean_cover_bytes": 1467,
+      "median_cover_bytes": 1467.0,
+      "mean_opening_bytes": 0,
+      "mean_encode_seconds": 19.93,
+      "mean_decode_seconds": 20.069000000000003,
+      "mean_frame_bits_per_token": 2.125096071250961,
+      "all_exact_bytes": true
+    }
+  ],
+  "samples": [
+    {
+      "name": "paragraph.opening-conference-followup-t1.0.1",
+      "cover": "experiments/003-opening-paragraph/runs/pilot-20261021/paragraph.opening-conference-followup-t1.0.1.cover.txt",
+      "selection": "paragraph payload, first repetition; seeded T1.0 or warm control",
+      "opening": "Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.",
+      "continuation": "One of the points that stuck with me was when you mentioned the challenges of scaling your user testing efforts while still maintaining the quality of your data. I completely agree that this is a tough spot to navigate, and I've seen our team struggle with it as well. We've found that implementing a more robust analytics framework has helped us make more informed decisions down the line, but I'm curious to hear more about your experiences with this. Do you think there's a way to quantify the impact of user testing on the product's overall success, or is it more of a soft metric that's harder to pin down? I'm also wondering if there are any specific tools or methodologies that you've found to be particularly effective in this area. Lastly, I was thinking about our conversation on the importance of iterating quickly based on user feedback - how do you think your team structures this process, and are there any specific processes or check-ins that you've found to be particularly valuable? I'd love to hear your thoughts on this. \n\nThe other point that I wanted to follow up on is the concept of \"good enough\" - you mentioned that it's hard for teams to determine when they've reached a point where the product is simply good enough, rather than truly exceptional. I think this resonates deeply with our own team's struggles, particularly when it comes to balancing feature prioritization and timeline ambitions. We've started to explore ways to better gauge this concept, such as through A/B testing and customer surveys. Have you found that there are any particular metrics or benchmarks that can help you determine whether a product is truly meeting user needs, or is that a more subjective assessment? I'm particularly interested in hearing about any quantitative approaches that you've tried. \n\nI also remembered that you mentioned using design thinking principles to inform decision-making - I think this is really insightful, particularly when it comes to tackling complex problems where there's no clear \"right\" answer. I've been experimenting a bit with design sprints and workshops, and while it's been a steep learning curve, I've seen some promising results. What do you think sets design thinking apart from more traditional problem-solving approaches, especially in a context where there's a lot at stake? Are there any specific tips or best practices that you've found to be particularly effective in this area?",
+      "cover_bytes": 2794,
+      "continuation_bytes": 2436,
+      "exact_bytes": true
+    },
+    {
+      "name": "paragraph.opening-history-revision-t1.0.1",
+      "cover": "experiments/003-opening-paragraph/runs/pilot-20261021/paragraph.opening-history-revision-t1.0.1.cover.txt",
+      "selection": "paragraph payload, first repetition; seeded T1.0 or warm control",
+      "opening": "Hi Morgan, thanks again for your comments on the chapter. I'm narrowing the discussion of trade and port cities so that it follows the people involved in a single journey before stepping back to the wider historical picture. I think that will give readers a clearer way into the topic, but I'd like your thoughts on how to connect that opening with the rest of the chapter.",
+      "continuation": "I was thinking that the journey could start with the arrival in port, before discussing the various interactions and transactions that took place there, and then move gradually back outwards in time to explore the connections between individual journeys and the broader trade networks. \n\nWhat do you think would be the most compelling way to introduce the shift from individual journeys to the larger trade picture, while still keeping the focus on the people involved? Should I use more narrative summaries about the different ships and crews, or try to work in more theoretical frameworks to help structure the flow of the chapter? \n\nI'm still trying to decide how much emphasis to place on the role of the port cities as hubs of power and resistance, versus the agency and initiative of individual traders and sailors. Do you think one approach would overshadow the other, or would they complement each other well? \n\nOne way I'm thinking of setting up the chapter is to divide it into thematic sections, each focusing on a particular aspect of the journey, such as the trade in exotic goods, the interactions with different societies, or the tensions between economic and military objectives. Perhaps this would help to create a clearer flow of ideas and a more focused narrative arc. \n\nLet me know of any suggestions that might help me make the most of the chapter, or if you have any thoughts on the kinds of historical narratives or theoretical frameworks that would be most relevant to this topic. \n\nHow do you think the focus on individual journeys would impact the level of abstraction, and what implications would that have for the broader chapter? \n\nCan I incorporate more experiential details, such as the sensory experiences of the people on board, or the sounds and smells of the ports themselves, to give the narrative a stronger sense of presence and immediacy, while still keeping the focus on the broader historical context?",
+      "cover_bytes": 2317,
+      "continuation_bytes": 1942,
+      "exact_bytes": true
+    },
+    {
+      "name": "paragraph.opening-stem-revision-t1.0.1",
+      "cover": "experiments/003-opening-paragraph/runs/pilot-20261021/paragraph.opening-stem-revision-t1.0.1.cover.txt",
+      "selection": "paragraph payload, first repetition; seeded T1.0 or warm control",
+      "opening": "Hi Priya, thanks for taking the time to read the draft and suggest revisions. I'm reworking the section on statistical models so that the assumptions come before the examples, and I'm separating the explanation of uncertainty from the discussion of model fit. I'd appreciate your thoughts on whether that order makes the argument easier to follow and where the explanation still needs work.",
+      "continuation": "I was thinking that having the assumptions come first would also make the section on statistical testing feel more like a solution rather than an afterthought. Now that the model fit discussion precedes the explanation of uncertainty, I can see how it makes more sense for Priya to think critically about each step of the process. Is it worth considering whether the section on model criticism should come last, given that it seems to wrap up the argument most nicely? I was wondering if her thoughts on prioritizing the model fit discussion versus the criticism would be relevant to refining this part of the document. \n\nAre there any moments where the section on statistical models feels too prescriptive, or where it might be worth offering more counterpoints to test the reader? I've tried to explain how uncertainty arises across different types of statistical models, but I want to make sure that I'm hitting on all the relevant angles. Does Priya still think that the discussion of statistical testing relies too heavily on common assumptions, or are there cases where those assumptions break down? \n\nHow does Priya envision integrating more context about the kinds of problems each statistical model addresses? We both know that the best answer to practical questions rarely lies within the technical rules themselves, but I want to make sure I'm conveying that message clearly to readers. Can she offer any feedback on where I might need to revise the language to make it more accessible to readers who aren't experts in statistics?",
+      "cover_bytes": 1933,
+      "continuation_bytes": 1541,
+      "exact_bytes": true
+    },
+    {
+      "name": "paragraph.warm-auto.1",
+      "cover": "experiments/003-opening-paragraph/runs/pilot-20261021/paragraph.warm-auto.1.cover.txt",
+      "selection": "paragraph payload, first repetition; seeded T1.0 or warm control",
+      "opening": "",
+      "continuation": "As I walked down Willow Creek, the morning sunlight cast long shadows behind the rows of brightly colored umbrellas against the glass storefronts of the shops along the street. The smell of freshly brewed coffee wafted from Mrs. Patel's cafe, enticing passersby with its inviting aroma. I stepped inside and joined the small crowd waiting for their turn at the counter.\n\nMrs. Patel greeted me with a warm smile, the wrinkles on her face deepening into creases that betrayed her years behind the counter. \"Welcome to Willow Creek, dear. What can I get for you today?\" She wiped her hands on a white apron with a faded blue hem, where a single silver pin in the shape of a lemon seemed to vibrate with her energy.\n\nThe espresso machine gurgled, producing a rich stream of black liquid that seemed to flow through her fingers like dark liquid magic. \"I'll have a refill, please,\" I said, and she efficiently replenished my cup. The bell above the door jingled, announcing the arrival of a customer who pushed his way through, leaving a faint scent of rain behind.\n\nThe man was dressed in a navy blue overcoat, its color now muted by the city's early morning haze. He muttered a quick apology as he sidestepped a broom used to clear the entranceway. After his arrival, the atmosphere at the cafe began to change, growing tense as a string of dropped gloves found their way onto the doorstep.\n\nBehind me, a musician began to play a lively tune on his guitar, the notes dancing through the air like a swarm of bees.",
+      "cover_bytes": 1509,
+      "continuation_bytes": 1509,
+      "exact_bytes": true
+    }
+  ],
+  "assessment": "Descriptive measurements only; no human ratings or detectability study."
+}

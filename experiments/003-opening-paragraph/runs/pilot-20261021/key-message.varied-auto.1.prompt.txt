@@ -1,0 +1,6 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+Write natural, concrete prose. Output only the prose, without a title or introduction.<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Write a notebook of observations from an unfamiliar town. Move freely between people, shops, food, objects, overheard conversations, small mishaps, local history, and plans for tomorrow. Invent specific names, places, colors, quantities, and details. Vary the subjects and sentence openings. Use ordinary paragraphs. Write about 1500 words.<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+

@@ -1,0 +1,7 @@
+{
+  "pid": 22643,
+  "signal": "SIGTERM",
+  "identity_matches": true,
+  "stopped_at": "2026-10-22T03:42:09.208719+00:00",
+  "reason": "Experiment complete; restore initially stopped dedicated server state"
+}

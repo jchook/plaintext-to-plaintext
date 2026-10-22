@@ -1,0 +1,11 @@
+Hi Priya, thanks for taking the time to read the draft and suggest revisions. I'm reworking the section on statistical models so that the assumptions come before the examples, and I'm separating the explanation of uncertainty from the discussion of model fit. I'd appreciate your thoughts on whether that order makes the argument easier to follow and where the explanation still needs work.
+
+I've been thinking about how to present the different types of models and how certainty about parameters affects our understanding of the data. One thing I was trying to get at is that it's not just about measuring fit, but about understanding what's uncertain and how it affects our conclusions. 
+
+My worry is that by separating the explanation of uncertainty from the discussion of model fit, I might make it harder to see how the two relate to each other. I want to make sure I'm not doing that. Do you think it would be more productive to keep the two together or separate them entirely, depending on the audience. 
+
+I'm also considering how the presentation of uncertainty could be more intuitive. For example, I'm not entirely happy with the current use of confidence intervals. Have you thought about what might be a better way to explain how uncertainty is represented and what that means for the interpretation of the results. 
+
+I'd appreciate your thoughts on these matters, as well as any other ideas you have. 
+
+I was thinking that maybe I could use some visual aids to help illustrate how uncertainty is represented, but I'm not sure what would be the most effective way to do that. Do you have any experience with this kind of thing.

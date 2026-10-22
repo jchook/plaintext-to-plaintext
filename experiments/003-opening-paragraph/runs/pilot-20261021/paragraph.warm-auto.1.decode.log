@@ -1,0 +1,33 @@
+{"tokens": 1, "bits": 0.9, "target_bits": null}
+{"tokens": 25, "bits": 50.4, "target_bits": null}
+{"tokens": 50, "bits": 82.9, "target_bits": null}
+{"tokens": 75, "bits": 120.0, "target_bits": null}
+{"tokens": 100, "bits": 165.7, "target_bits": null}
+{"tokens": 125, "bits": 189.4, "target_bits": null}
+{"tokens": 150, "bits": 258.4, "target_bits": null}
+{"tokens": 175, "bits": 317.5, "target_bits": null}
+{"tokens": 200, "bits": 368.9, "target_bits": null}
+{"tokens": 225, "bits": 415.6, "target_bits": null}
+{"tokens": 250, "bits": 473.5, "target_bits": null}
+{"tokens": 275, "bits": 551.0, "target_bits": null}
+{"tokens": 300, "bits": 626.4, "target_bits": null}
+{"phase": "decompress", "source_tokens": 1, "total_source_tokens": 51}
+{
+  "frame_bytes": 79,
+  "cover_bytes": 1509,
+  "payload_tokens": 303,
+  "total_tokens": 325,
+  "cover_model_calls": 325,
+  "authenticated": true,
+  "plaintext_bytes": 238,
+  "profile": "warm",
+  "protocol": "compact-v2",
+  "compression": "llm",
+  "decompression_seconds": 2.391,
+  "elapsed_seconds": 20.722,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

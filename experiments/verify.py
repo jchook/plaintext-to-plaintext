@@ -54,6 +54,40 @@ def verify():
             require(digest(saved.stdout) == expected, f'Historical code hash mismatch: {name}')
     counts[f'historical code hashes at {revision}'] = len(compact['code_sha256'])
 
+    opening_record = ROOT / 'experiments/003-opening-paragraph/verification.json'
+    if opening_record.is_file():
+        opening = json.loads(opening_record.read_text())
+        for path, expected in opening['artifact_sha256'].items():
+            check_hash(ROOT / path, expected)
+        counts['opening pilot artifact hashes'] = len(opening['artifact_sha256'])
+        source_revision = opening['source_commit']
+        for path, expected in opening['code_sha256'].items():
+            saved = subprocess.run(['git', 'show', f'{source_revision}:{path}'], cwd=ROOT,
+                                   capture_output=True, check=False)
+            require(saved.returncode == 0, f'Cannot read source {source_revision}:{path}')
+            if saved.returncode == 0:
+                require(digest(saved.stdout) == expected, f'Opening source hash mismatch: {path}')
+        counts[f'opening code hashes at {source_revision[:7]}'] = len(opening['code_sha256'])
+        validated = 0
+        for path in opening.get('validation_records', []):
+            for check in json.loads((ROOT / path).read_text()):
+                require(check.get('passed') is True, f'Opening validation failed: {check["case"]}')
+                output = (ROOT / path).parent / check['case'] / 'decoded.bin'
+                if check['expected_rejection']:
+                    require(check['returncode'] == 1 and not output.exists(),
+                            f'Opening rejection wrote output or exited unexpectedly: {check["case"]}')
+                    require(check['classification'] in check['expected_error_categories'],
+                            f'Unrecognized rejection: {check["case"]}')
+                else:
+                    expected = output.with_name('expected.input')
+                    require(output.is_file() and output.read_bytes() == expected.read_bytes(),
+                            f'Opening restart bytes differ: {check["case"]}')
+                    stats = json.loads(output.with_name('decode.json').read_text())
+                    require(stats.get('authenticated') is True,
+                            f'Opening restart unauthenticated: {check["case"]}')
+                validated += 1
+        counts['opening rejection/restart records checked offline'] = validated
+
     # Check complete triples, not just the equality flags in saved JSON.
     pairs = 0
     result_files = [ROOT / 'experiments/001-baseline-v1/verification.json']
