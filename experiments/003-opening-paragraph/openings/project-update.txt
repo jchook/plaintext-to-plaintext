@@ -1,0 +1,1 @@
+Hi everyone, a quick update on the neighborhood website: the first version of the events page is ready for review, and I'm working through the comments on the navigation. Before we add more features, I'd like us to check whether someone visiting for the first time can find the next meeting and understand how to get involved. Here are the areas I'd like feedback on.

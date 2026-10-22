@@ -10,7 +10,7 @@ order of ideas, not separately committed development stages.
 | 001: Reproducible v1 codec | Completed local trial | Encrypted bytes carried by arithmetic-coded Llama output recovered exactly in four saved cases, including Unicode and empty input. The 53-byte warning needed 2,635 cover bytes; expansion became the next problem. | [Baseline](experiments/001-baseline-v1/README.md) |
 | Literature review | Archived reference work | Identified precedents, tokenization and runtime risks, and the need to measure retained entropy and compress before encryption. Paper results were not reproduced here. | [Research findings](research/summary.md) |
 | 002: Compact v2 | Completed local trial | Removed padding, added lossless source compression, and compared prompts and temperature. All 21 completed round trips recovered exactly; a 238-byte paragraph used 1,104–1,164 cover bytes. Prose sometimes became conspicuously odd. | [Compact results](experiments/002-compact-v2/README.md) |
-| 003: Opening-paragraph steering | Planned, unrun | Test whether a supplied paragraph gives the cover a consistent voice. Compare a style example in the prompt, then a visible public opening, while measuring readability separately from cover size. | [Experiment plan](experiments/003-opening-paragraph/README.md) |
+| 003: Opening-paragraph steering | Planned, unrun | A versioned template wraps a supplied public opening that also starts the transmitted cover. Test conference follow-ups and STEM/history revision notes at 1.0 and 1.2, measuring continuation quality and full cover size. | [Experiment plan](experiments/003-opening-paragraph/README.md) |
 
 ## Where we are
 
