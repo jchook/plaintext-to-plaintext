@@ -8,6 +8,7 @@ same code without copying it into every run folder.
 | --- | --- |
 | `p2p.py` | Original v1 codec and dedicated model server |
 | `compact.py`, `source_codec.py` | Compact v2 framing, cover profiles, and lossless source coding |
+| `opening.py`, `opening_demo.py` | Public opening paragraph variant and controlled pilot runner |
 | `demo.py`, `compact_demo.py` | Separate-process round-trip runners |
 | `test_p2p.py`, `test_compact.py` | Local tests with test predictors |
 | `keys/alice.txt` | Public demonstration key, with source attribution |
@@ -15,6 +16,8 @@ same code without copying it into every run folder.
 For setup and v1 format details, see the [v1 protocol](../experiments/001-baseline-v1/PROTOCOL.md).
 For the current compact codec, see the [v2 protocol](../experiments/002-compact-v2/PROTOCOL.md)
 and [measured results](../experiments/002-compact-v2/README.md).
+The public-opening variant has separate
+[protocol instructions](../experiments/003-opening-paragraph/PROTOCOL.md).
 
 From the repository root:
 

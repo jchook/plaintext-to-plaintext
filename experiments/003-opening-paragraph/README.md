@@ -1,9 +1,9 @@
 # 003: Opening-paragraph steering
 
-Status: planned, unrun. Proposed on 2026-10-21 after the
-[compact v2 trial](../002-compact-v2/README.md). This folder contains a versioned
-prompt draft and public opening fixtures. No codec change or measured improvement
-is claimed yet.
+Status: implementation ready; pilot pending. Proposed on 2026-10-21 after the
+[compact v2 trial](../002-compact-v2/README.md). The separately named opening v1
+codec and runner are implemented; see [PROTOCOL.md](PROTOCOL.md) for commands and
+the exact context and framing rules. No measured improvement is claimed yet.
 
 ## Question and design decision
 
@@ -93,9 +93,8 @@ implementation commit and exact rendered prompts. Interleave conditions and
 retain failures. Independent nonces yield different token paths, so these are
 not paired covers with identical randomness.
 
-The existing shared suite and runner do not implement the proposed variant.
-Implement a separately named protocol and extend the runner before collecting
-data. Preserve existing v1/v2 profiles for old covers. After inspecting the pilot,
+The opening v1 implementation and runner preserve the existing v1/v2 profiles
+for old covers. Checkpoint the implementation before collecting data. After inspecting the pilot,
 record any template changes under a new version before a larger comparison.
 Do not combine results from different wrappers into one condition.
 
