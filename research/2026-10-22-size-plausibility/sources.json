@@ -1,0 +1,115 @@
+{
+  "review_date": "2026-10-22",
+  "scope": "Selective primary-source follow-up and retrospective pilot accounting. Paper results were not reproduced.",
+  "initial_archive_review_date": "2026-10-18",
+  "sources": [
+    {
+      "id": "cachin-1998-expanded-2004",
+      "title": "An Information-Theoretic Model for Steganography",
+      "url": "https://cachin.com/cc/papers/stego.pdf",
+      "review_scope": "Expanded March 2004 paper: abstract, hypothesis-testing definition, and distributional security. Original conference work dates to 1998.",
+      "artifact_sha256": {
+        "research/2026-10-22-size-plausibility/sources/cachin-2004.pdf": "b96f2d121a0052a0b491d6cc75f0ace9bab1dd031ba7a2664289902e023ebd89",
+        "research/2026-10-22-size-plausibility/sources/cachin-2004.txt": "0ffe2b3529c6d749d206a1bfd23eee9cf874c4b7335aea3540a0a8229e54c78d"
+      }
+    },
+    {
+      "id": "hopper-2002",
+      "title": "Provably Secure Steganography",
+      "url": "https://www.iacr.org/archive/crypto2002/24420077/24420077.pdf",
+      "review_scope": "Published abstract and author bibliography only. Full-PDF requests returned HTTP 403 or failed. Used for chronology and computational indistinguishability motivation.",
+      "bibliography_url": "https://www.cs.cmu.edu/~jcl/papers/papers.html",
+      "artifact_sha256": {}
+    },
+    {
+      "id": "lin-2024",
+      "title": "Zero-shot Generative Linguistic Steganography",
+      "url": "https://aclanthology.org/2024.naacl-long.289/",
+      "review_scope": "Sections 2 and 4.4: distributional/perceptual distinction, model mismatch, and Psic effect. Performance claims were not reproduced.",
+      "artifact_sha256": {
+        "research/2026-10-22-size-plausibility/sources/lin-2024.pdf": "987ecaf3dcf949f0626c6f346414cb43a670aec0c3884b58c6118b50f9110f54",
+        "research/2026-10-22-size-plausibility/sources/lin-2024.txt": "2b60922ae200db8ff551c2292da3d67af5f07853269f23533fd0985aa410d6a8"
+      }
+    },
+    {
+      "id": "2019-neural-linguistic-steganography",
+      "title": "Neural Linguistic Steganography",
+      "url": "https://aclanthology.org/D19-1115/",
+      "review_scope": "Venue abstract, prior archived relevance note; direct neural/arithmetic-coding precedent.",
+      "artifact_sha256": {
+        "research/2019-neural-linguistic-steganography/paper.txt": "338d0d05624b1384b74672925f7f799175ff7e517b72c6d3114456a386126857",
+        "research/2019-neural-linguistic-steganography/relevance.md": "bf4b8bf4af45cb34d35fd09649e16c3a8440ca6ff68b44ea30298bb6aba58fe8"
+      }
+    },
+    {
+      "id": "2021-meteor",
+      "title": "Meteor: Cryptographically Secure Steganography for Realistic Distributions",
+      "url": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+      "review_scope": "Archived relevance note and prior research summary; no new proof review or reproduction.",
+      "artifact_sha256": {
+        "research/2021-meteor/paper.txt": "237ce9f8ba02f4f7bcf9539d329076ca9c9a8905eb3e2f8505928dfb64ff7565",
+        "research/2021-meteor/relevance.md": "46df28e314a65c0498f8d73855455540b741b1792e00889ca39880074d7fc3e0"
+      }
+    },
+    {
+      "id": "2023-minimum-entropy-coupling",
+      "title": "Perfectly Secure Steganography Using Minimum Entropy Coupling",
+      "url": "https://arxiv.org/abs/2210.14889",
+      "review_scope": "Author abstract: coupling characterization and throughput objective; no independent proof verification.",
+      "artifact_sha256": {
+        "research/2023-minimum-entropy-coupling/paper.txt": "713335cc2366f23c00f7f755c803210d4470e7cd6085bba913de38ed47e3baa8",
+        "research/2023-minimum-entropy-coupling/relevance.md": "ea645d3291ac2811925812e179f31158b22607e279c89f95ac824ced23d0fc14"
+      }
+    },
+    {
+      "id": "2025-sparsamp",
+      "title": "SparSamp: Efficient Provably Secure Steganography Based on Sparse Sampling",
+      "url": "https://www.usenix.org/conference/usenixsecurity25/presentation/wang-yaofei",
+      "review_scope": "Venue abstract and prior archived summary; no implementation reproduction.",
+      "artifact_sha256": {
+        "research/2025-sparsamp/paper.txt": "67c8cf7d194adc68ef1e5a19baf0f90b412af01b715b16bfbd6ea58b4c0c4c8e",
+        "research/2025-sparsamp/relevance.md": "fb9c0843e5f1f2d4b99da46ec2efcb8cf6b7d56a0643d97dff85df2423ad65fa"
+      }
+    },
+    {
+      "id": "2025-stegozip",
+      "title": "StegoZip: Enhancing Linguistic Steganography Payload in Practice with Large Language Models",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/6c8e215afa321d5d0b295dc1882820df-Abstract-Conference.html",
+      "review_scope": "Venue abstract and archived relevance note; source preprocessing and restoration caveats.",
+      "artifact_sha256": {
+        "research/2025-stegozip/paper.txt": "dc0d91e89e6d691eae19e721ee2f6b09def201d052884fb70f4e313307c7e1b1",
+        "research/2025-stegozip/relevance.md": "71fc8e2304f959d0a38a1a61142d6b5307e0b239666e26df9e1550ea6fb03114"
+      }
+    },
+    {
+      "id": "2026-od-stega",
+      "title": "OD-Stega: LLM-Based Relatively Secure Steganography via Optimized Distributions",
+      "url": "https://aclanthology.org/2026.eacl-long.36/",
+      "review_scope": "Published abstract and paper sections 3.1 and 3.2; KL-constrained entropy, temperature solution, adaptive budget, and sequence composition.",
+      "artifact_sha256": {
+        "research/2026-od-stega/paper.txt": "87e97dbfe7570d6458bbad53609aa7a3213f0c15744e61634fd615b0c66d0b3d",
+        "research/2026-od-stega/relevance.md": "20e5da2c679bf66b682ac3f9a6521595a55a3520f0f1719d3ede0a005dfd469d"
+      }
+    },
+    {
+      "id": "2026-rrc",
+      "title": "Efficient Provably Secure Linguistic Steganography via Range Coding (RRC)",
+      "url": "https://aclanthology.org/2026.acl-long.39/",
+      "review_scope": "Published abstract, Table 5, discussion of perceptual/statistical distinction, and archived implementation caveats.",
+      "artifact_sha256": {
+        "research/2026-rrc/paper.txt": "c45423caf83f0d56f9b9bf103f822d3f2389a80fcff8d387cde1450cfac1822f",
+        "research/2026-rrc/relevance.md": "765b375fe5e617581761b7ce9035f427a2ea1c79335811c1ea23103e3aa85263"
+      }
+    },
+    {
+      "id": "2026-anstega",
+      "title": "Breaking the Generative Steganography Trilemma: ANStega for Optimal Capacity, Efficiency, and Security",
+      "url": "https://www.ndss-symposium.org/wp-content/uploads/2026-f605-paper.pdf",
+      "review_scope": "Published abstract, capacity table, and archived final-state caveat; no proof or implementation reproduction.",
+      "artifact_sha256": {
+        "research/2026-anstega/paper.txt": "23624475b006d5e5c027c4d398497a520f7b3117d3724ba934e3739368091bc4",
+        "research/2026-anstega/relevance.md": "dd23e5dba6bace06acbc71a3f5b8672852da8d5bd0568ae8c4b543576c54632c"
+      }
+    }
+  ]
+}

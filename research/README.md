@@ -2,6 +2,12 @@
 
 Research reviewed 2026-10-18. This archive contains 28 annotated sources, 24 paper PDFs with extracted text, and 12 upstream README snapshots.
 
+The [October 22 size and plausibility follow-up](2026-10-22-size-plausibility/README.md)
+revisits the capacity limits using experiment 003's actual byte costs. It includes
+a reproducible 32-trial audit, a proposed distribution-budget slider, and two
+additional primary-source PDFs with provenance. The counts above describe the
+original October 18 archive.
+
 Start with the [research summary](summary.md). For the next POC iteration, read [RRC](2026-rrc/relevance.md), [ANStega](2026-anstega/relevance.md), [SparSamp](2025-sparsamp/relevance.md), [tokenization verification](2025-stepwise-token-verification/relevance.md), [SyncPool](2024-syncpool/relevance.md), and [StegoZip](2025-stegozip/relevance.md).
 
 Each source has a short relevance.md beside its local artifacts. Paper PDFs are unchanged; paper.txt files are searchable extractions. Repository snapshots preserve documentation, not a source-code checkout. Relative links and images inside upstream READMEs may require the original repository. HTML snapshots retain page markup without mirroring external assets.

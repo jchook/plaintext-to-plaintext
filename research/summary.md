@@ -1,5 +1,10 @@
 # Research findings for the plaintext-to-plaintext POC
 
+Follow-up, October 22: [size, plausibility, and detection](2026-10-22-size-plausibility/README.md)
+applies this literature to the opening-paragraph pilot, with reproducible byte
+accounting and a staged plan for smaller covers. The review below records the
+earlier October 18 findings, including its then-current framing assumptions.
+
 Reviewed October 18, 2026, through three research tracks: recent steganographic
 methods, coding theory, and practical implementations. These are literature and
 documentation findings; we did not reproduce the papers' experiments.

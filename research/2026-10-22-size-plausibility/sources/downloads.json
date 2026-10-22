@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cachin-2004",
+    "requested_url": "https://cachin.com/cc/papers/stego.pdf",
+    "resolved_url": "https://cachin.com/cc/papers/stego.pdf",
+    "retrieved_at": "2026-10-22T05:14:33.163489+00:00",
+    "pdf_bytes": 201845,
+    "pdf_sha256": "b96f2d121a0052a0b491d6cc75f0ace9bab1dd031ba7a2664289902e023ebd89",
+    "text_sha256": "0ffe2b3529c6d749d206a1bfd23eee9cf874c4b7335aea3540a0a8229e54c78d",
+    "text_extraction": "pdftotext -layout"
+  },
+  {
+    "id": "lin-2024",
+    "requested_url": "https://aclanthology.org/2024.naacl-long.289.pdf",
+    "resolved_url": "https://aclanthology.org/2024.naacl-long.289.pdf",
+    "retrieved_at": "2026-10-22T05:14:33.763862+00:00",
+    "pdf_bytes": 561566,
+    "pdf_sha256": "987ecaf3dcf949f0626c6f346414cb43a670aec0c3884b58c6118b50f9110f54",
+    "text_sha256": "2b60922ae200db8ff551c2292da3d67af5f07853269f23533fd0985aa410d6a8",
+    "text_extraction": "pdftotext -layout"
+  }
+]

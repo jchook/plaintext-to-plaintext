@@ -1,0 +1,969 @@
+                     Zero-shot Generative Linguistic Steganography
+                         Ke Lin1
+                               Yiyang Luo2 Zijian Zhang1 Ping Luo1
+                                    1
+                                      Tsinghua University
+                             2
+                               Nanyang Technological University
+                    {leonard.keilin, zijianzhang510}@gmail.com
+                            lawrenceluoyy@outlook.com
+                                luop@tsinghua.edu.cn
+
+
+                       Abstract                                     Alice's
+                                                                                        encode
+                                                                                                    Bitstream
+                                                                                                  01101010                hide
+                                                                                                                                      Stegotext
+                                                                  Secret Text                                                      Wow, nice vibe off
+                                                                                                  11000110
+                                                               Meet me at 9 pm.                                                      here today!
+    Generative linguistic steganography attempts to                                               1 0 1 0 1 ... ...
+
+    hide secret messages into covertext. Previous                        In-context Stegotext Generation
+    studies have generally focused on the statistical
+                                                                                            Bitstream: ... 0 1 1 0 ...
+    differences between the covertext and stego-                      Hide...                                                      Public channel
+    text, however, ill-formed stegotext can read-                                                                                  monitored by Eve
+    ily be identified by humans. In this paper, we                              OK...
+    propose a novel zero-shot approach based on
+    in-context learning for linguistic steganogra-
+    phy to achieve better perceptual and statistical                Bob's                           Bitstream
+                                                                                                  01101010
+                                                                                                                                      Stegotext
+                                                                 Received Text
+    imperceptibility. We also design several new               Meet me at 9 pm.
+                                                                                        decode    11000110               extract
+                                                                                                                                   Wow, nice vibe off
+                                                                                                                                     here today!
+                                                                                                  1 0 1 0 1 ... ...
+    metrics and reproducible language evaluations
+    to measure the imperceptibility of the stego-
+    text. Our experimental results indicate that our           Figure 1: Generative linguistic steganography pipeline.
+    method produces 1.926× more innocent and
+    intelligible stegotext than any other method1 .
+                                                               entire transmission and prevent unintelligible mes-
+1   Introduction                                               sages from being transmitted as Alice attempts to
+Data transmission is generally secured using en-               send secret information to Bob. The solution to
+cryption algorithms to create an unrecognizable                this problem is to use a steganographic function
+ciphertext for secure data transmission (Bellare               to embed the secret message into a stego-carrier
+et al., 1997). Nonetheless, messages transmitted               controlled by the shared secret key. The stego-
+as ciphertexts may easily arouse suspicion from                carrier is then sent to Bob without alarming Eve,
+attackers, and eavesdropping may place a threat on             and Bob can extract the secret message from the
+the messages being sent. Once the communication                stego-carrier by using the corresponding extraction
+channel is discovered, the attackers could alter the           function. A key objective in this scenario is to en-
+messages in any way, causing significant damage.               sure that covert communications are imperceptible.
+   Steganography is the key to ensuring commu-                    In public channels, text is commonly used, how-
+nication privacy by concealing sensitive messages              ever, text contains relatively little redundant infor-
+within monitored channels. General steganography               mation (Zipf, 1999) when compared to other media,
+involves embedding a secret message into a public              so embedding large amounts of information can
+multimedia carrier, such as text (Krishnan et al.,             be challenging. Moreover, steganalysis tools can
+2017), image (Subramanian et al., 2021; Tao et al.,            detect stegotext containing secret messages based
+2019; Guo et al., 2015), audio (Lin et al., 2018),             on machine learning or statistical characteristics
+and video (Liu et al., 2019) to create a stego-carrier         (Taleby Ahvanooey et al., 2019). To address this
+that is then transmitted via the public channel. As            problem, modern steganography utilizes machine
+shown in Fig. 1, the problem of secure and covert              learning techniques to enhance its imperceptibility.
+communication can be viewed as a message trans-                   Over the last few decades, researchers have de-
+mission between two parties, Alice and Bob, along              vised many techniques to realize generation-based
+with a malicious party, Eve. Eve will monitor the              steganography (Xiang et al., 2022), including rule-
+  1
+    The project is available in https://github.com/            based (Chapman and Davida, 1997), statistical
+leonardodalinky/zero-shot-GLS.                                 (Moraldo, 2014; Shniperov and Nikitina, 2016),
+                                                          5168
+    Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics:
+                        Human Language Technologies (Volume 1: Long Papers), pages 5168–5182
+                            June 16-21, 2024 ©2024 Association for Computational Linguistics
+and combinations of these methods (Luo et al.,           2     Background
+2016). Recent developments (Otter et al., 2021)
+in machine learning and natural language process-        2.1    Generative Linguistic Steganography
+ing have led to improved performance in linguistic       General text generation task aims at creating token
+steganography. It involves the use of neural net-        sequence x = [x1 , . . . , xn ] from the joint proba-
+works to learn the statistical distribution of a large   bility of language model PLM (x). The generation
+number of sentences, and then generate stegano-          process can often be viewed as an auto-regression:
+graphic sentences from the learned language model
+                                                                             n
+                                                                             Y
+(Dai and Cai, 2019; Yang et al., 2019b).
+   Prior works have typically formulated statistical            PLM (x) =          PLM (xt | x1 , . . . , xt−1 )
+                                                                             t=1
+imperceptibility as the distance between the cover-                           n                                        (1)
+                                                                             Y
+text distribution and stegotext distribution, however,                   =         PLM (xt | x<t )
+there is no clear and simple method of measuring                             t=1
+perceptual imperceptibility. Furthermore, many
+studies (Ziegler et al., 2019; Yang et al., 2021) have      The goal of linguistic steganography is to send a
+demonstrated that metrics for assessing statistical      secret message m ∈ {0, 1}l ⊂ M to the receiver
+imperceptibility fail to measure perceptual imper-       through a monitored public channel. In generative
+ceptibility and produce inaccurate or even incorrect     linguistic steganography, the sender and receiver
+results. The discrepancy between the statistical and     share an embedding algorithm femb : PLM × M 7→
+perceptual imperceptibility prevents the practical       Pstega , which transforms PLM into the stegano-
+application of linguistic steganography.                 graphic distribution Pstega controlled by message
+                                                         m. It is then used to achieve covert communication
+Our Contributions. In this work, we propose a
+                                                         by generating stegotext y ∼ Pstega . Similarly, there
+novel zero-shot linguistic steganography method
+                                                         exists an extraction process fext : Pstega 7→ M that
+with both improved perceptual and statistical im-
+                                                         extracts the message m from the stegotext y.
+perceptibility. Our new method is built based on
+the in-context learning of large language models         2.2    Statistical Imperceptibility
+(LLM), which utilize some samples of the cover-
+text to generate more intelligible stegotext using       To measure the statistical imperceptibility under
+the question-answer paradigm (QA). Initially, the        surveillance by an eavesdropper, Cachin (1998)
+secret text is encoded in binary bitstreams, which       proposed to use the Kullback-Leibler divergence
+are then used to generate the stegotext. At each         (KLD) between the distributions of natural text
+timestep t, the LM computes the distribution of the      Ptrue and stegotext Pstega . Since we approximate
+t-th token and embeds the bitstream into the gen-        the distribution of true text Ptrue using a language
+erated text by Huffman encoding. To demonstrate          model PLM , there is a gap between the distribu-
+the efficacy of our proposed method compared with        tion predicted by the model and the true distribu-
+different supervised and training-free approaches,       tion of text. Hence, we need to approximate this
+we develop several new metrics and conduct repro-        gap by finding an upper bound. We can formu-
+ducible experiments of language evaluation.              late the upper bound of imperceptibility by using
+   In summary, our contributions are as follows:         Jensen–Shannon divergence (JSD) instead:
+
+   • We present a zero-shot approach for linguistic                                  1                             1
+
+     steganography based on in-context learning              JSD(Ptrue ∥ Pstega ) 2 ≤ JSD(Ptrue ∥ PLM ) 2
+                                                                                                               1
+     using samples of the covertext.                                               + JSD(PLM ∥ Pstega ) 2              (2)
+   • We improve both the binary coding process
+                                                         Assuming that the language model is success-
+     and the embedding process by introducing
+                                                         ful in modeling the covertext distribution, we
+     several novel techniques.
+                                                         can simplify the statistical imperceptibility as
+   • We design several metrics and language evalu-       JSD(PLM ∥ Pstega ). This strong assumption can
+     ations to evaluate both the perceptual and sta-     be considered true due to language models’ perfor-
+     tistical imperceptibility, whereas our method       mance. In other words, it is feasible to measure
+     produces more innocent and intelligible stego-      imperceptibility using only a language model PLM
+     text compared to all the previous methods.          and a steganographic model Pstega .
+                                                     5169
+                                                                                              tion (Weber, 1978), on top of the Huffman process
+    Bitstream:                 0       1       1       1       1       0       1       1
+                                                                                              to achieve better text generation performance.
+                                                                                                 In EF coding, the bitstream is transformed to
+    EF (Round 1):          0       1       0       0       0       1       1       0          record the position at which the bits change based
+                                                                                              on the edge-triggered flip-flops in electronics. We
+                                                                                              apply multi-round EF coding (e.g. 16 rounds) and
+    EF (Round 2):      0       1       1       0       0       1       0       1
+                                                                                              the bitstream with the least number of 1s is retained.
+                                                                                              A simple example of EF is provided in Fig. 2. The
+Figure 2: Example of EF coding. The red and green                                             analysis of EF coding is presented in Section 4.6.
+lines represent that the coding in bitstream changed
+(from 0 to 1, or from 1 to 0) and therefore will be as-                                       3.2   Embedding
+signed as 1 for the next iteration. The blue and yel-
+low line represents that the coding in bitstream did not                                      The goal of the embedding module is to hide and
+change (from 0 to 0, or from 1 to 1) and therefore will                                       extract bitstreams within regular sentences.
+be assigned as 0 for the next iteration. Bitstream is pro-
+cessed through several rounds until the fewest 1s exist.                                      Hide & Extract. During each phase of the gen-
+                                                                                              erative operation, the LM yields a set of candidate
+                                                                                              words. These words are determined based on the
+3    Methodology                                                                              subsequent token’s probability and can potentially
+                                                                                              serve as alternatives for the next possible word to be
+In this section, we present the overall framework                                             generated. Then the LM will determine the length
+of our approach, consisting of three modules:                                                 of the binary bitstream that can be embedded based
+(a) Codec module to (de)compress secret text into                                             on the number of candidate words.
+(from) bitstreams, (b) Embedding module to select                                                Algorithm 1 shows the brief algorithm of the
+candidate words from the distribution of stegotext,                                           hiding process. The binary representation of se-
+(c) In-Context Stegotext Generation module to ap-                                             lected words in the conditional word distribution
+proximate the joint distribution of covertext. The                                            is obtained using the Huffman encoding algorithm.
+pipeline of our framework is illustrated in Fig. 1.                                           It should be noted that this Huffman process is
+Figure 3 also explains the details of the embedding                                           independent of the aforementioned Huffman cod-
+module and the in-context stegotext generation.                                               ing in the Codec section. Following Dai and Cai
+                                                                                              (2019), we use the threshold τ to reduce perplexity
+3.1 Codec
+                                                                                              by pruning words with lower probabilities.
+The sender in linguistic steganography wishes to
+send secret text to the receiver, which must first be                                         Algorithm 1 Information Hiding Algorithm
+converted into a binary bitstream. We refer to this                                           Input: Bitstream m, threshold τ .
+process as encoding and decoding (codec).                                                     Output: stegotext y = [y1 , . . . , yn ].
+                                                                                               1: Timestep t ← 1, output sentence y ← ∅
+Variable-length Coding. There are two cate-
+                                                                                               2: while not the end of m do
+gories of encoding algorithms: fixed-length coding
+                                                                                               3:     ▷ Compute conditional probs
+(FLC) and variable-length coding (VLC). We em-
+                                                                                               4:     p ← Pstega (xt | x<t )
+ploy Huffman coding of the VLC family for token-
+                                                                                               5:     ▷ Prune candidate words
+level encoding, as it is a relatively simple algorithm
+                                                                                               6:     c ← [ci | p(ci ) ≥ τ ]
+and has a sub-optimal compression ratio. Tokens
+                                                                                               7:     ▷ Huffman encoding
+are represented in binary form using the Huffman
+                                                                                               8:     H ← Huffman(c, p)
+code table conditioned on PLM (xt | x<t ).
+                                                                                               9:     ▷ Select candidate
+Edge Flipping Coding. We observe that more                                                    10:     yt ← Word c ∈ H whose binary represen-
+frequent occurrences of sequential zeros in the bit-                                              tation matches the prefix of m
+streams can improve the quality of the generated                                              11:     y ← y ∪ {yt }, t ← t + 1
+text in the embedding module due to the local or-                                             12: end while
+dering of the Huffman tree (i.e., the left branch al-
+ways has a higher probability than the right branch).                                            As the reverse process of hiding, the information
+Hence, we introduce Edge Flipping coding (EF),                                                extraction process extracts steganographic informa-
+inspired by the differential encoding of communica-                                           tion from stegotext. With a few minor differences,
+                                                                                           5170
+  Mimic the language style and                                   Bitstream:      ...       0   1       0       1     1    0       ...
+  semantics of the sentences:
+                                                User
+  1. Wow, tons of replies from you.
+  2. I was getting used to the nice                                0             1                         0             1
+  Spring-like weather.
+
+  Write a similar one to the context.                        0          1   0          1           0           1     0        1
+
+
+                                                             at 0           1        here          to          the        0             1
+              Here is the generated sentence:
+
+ Robot        Wow, nice vibe off here ... ...
+                                                                  off       on                                           here there
+
+
+Figure 3: A running example of the embedding module and in-context stegotext generation. The selected context of
+samples from covertext in gray is used to instruct the stegotext generation. Huffman trees are constructed based on
+the conditional distribution, with the word matching the prefix of a bistream being selected as the next token. For
+example, the red token has 5 candidate words after applying probability pruning. Huffman tree is constructed for
+the 5 candidates and the word "off" matches the prefix of the bitstream and is chosen as the next word.
+
+
+the extraction of secret bitstream is almost identical           any word c ∈ ct−1 , δt (c) has the following value:
+to the hiding process. The extraction algorithm is                        (
+left out in Appendix A.2 for simplicity.                                   max{0, δt−1 (c) − β}                          c not selected
+                                                                 δt (c) ←
+Annealing Selection. Candidate word selection                              δ0                                            c selected
+with specific thresholds τ may result in trivial can-                                                                                (6)
+didates in some cases (e.g., |c| = 1). We note that
+                                                                 3.3    In-Context Stegotext Generation
+trivial candidates often lead to a chain of trivial
+cases in subsequent stegotext generation, reducing               The core of the embedding module is to calculate
+the embedding rate and bit per word (BPW). In-                   the conditional probability Pstega (xt | x<t ). We
+spired by the stimulated annealing algorithm (van                use the question-answer paradigm with pre-defined
+Laarhoven and Aarts, 1987), we propose the an-                   prompting context C using the LLaMA2-Chat-7B
+nealing search to prevent trivial candidates:                    (Touvron et al., 2023) as the stegotext generator.
+                                                                 In other words, the distribution of stegotext can be
+                                      LM(xt | x<t )              represented as Pstega (xt | x<t , C), which is condi-
+ P′stega (xt | x<t ) = Softmax(                     ) (3)
+                                          Tt                     tioned on both the previously generated tokens and
+                                                                 the context from the covertext.
+Here, the temperature Tt at timestep t varies ac-
+cording to the previous candidates ct−1 , the initial            Context Selection. To approximate the distribu-
+temperature T0 , and the annealing factor α:                     tion of covertext, we propose to incorporate several
+                 (                                               random samples from the covertext dataset into the
+                   α · Tt−1 |ct−1 | = 1                          prompting context. Since the covertext dataset is
+          Tt ←                                    (4)
+                   T0        |ct−1 | > 1                         mostly available to both the sender and receiver,
+                                                                 only a little information (e.g., random state for se-
+Repeat Penalty. Another corner case is that sev-                 lection) is required to be pre-shared across different
+eral generated words may repeat themselves after a               parties to reconstruct the prompting context. There-
+few turns, but escape the previous annealing cases.              fore, an eavesdropper who suspects stegotext will
+The recently generated words are penalized for                   be unable to decrypt the message.
+short-term repetition by applying a moving penalty:
+                                                                 In-Context Generation. As LLM is capable of
+   P′′stega (xt | x<t ) = Softmax(LM(·) − δt )         (5)       comprehending the semantics of context due to
+                                                                 its generalization ability, we utilize in-context QA
+Penalties are based on the decay factor β, initial               tasks as a way to instruct the model to mimic the
+penalty δ0 , and the previously selected word. For               style and semantics of the covertext. To be more
+                                                         5171
+specific, we design the following structured QA for-    initial values T0 = 1.0, δ0 = 4.0. More details of
+mat: <ctx1 ,. . . ,ctxk ,[MISS]>, where the QA          baselines can be found in Appendix A.4.
+model is instructed to complete the missing sen-
+                                                        4.2      Evaluation Metrics
+tence [MISS] which is similar to the context. The
+number of contextual sentences k is set as a hyper-     Perplexity. As a measure of the generation qual-
+parameter during inference. The details of the in-      ity, the perplexity (PPL) is commonly used:
+context QA task can be found in Appendix A.3.                                      1 Pn
+                                                                      PPL = 2− n      i=1 log2 P(xi |x<i )           (7)
+4   Experiments                                         JSD. Following Section 2.2, we measure the sta-
+                                                        tistical imperceptibility of the covertext and stego-
+4.1 Experiment Setup
+                                                        text using JSD. Specificly, we finetune two GPT-2
+Datasets. Our experiments evaluate the prior            models on covertext Ccover and stegotext Cstega , re-
+works and our method using two widely used large-       spectively, representing PLM and Pstega . An evalu-
+scale datasets, the IMDB dataset (Maas et al., 2011)    ation of the JSD is then conducted using randomly
+and the Twitter dataset (Go et al., 2009). The texts    sampled text Csample . Three variants of JSD with
+in each dataset are broken down into sentences by       respect to PLM and Csample are designed:
+the nltk toolkit. Statistics are shown in Table 2.
+                                                           • Full JSD: Stego-models are trained on Ccover if
+Baselines. Since no training is needed for our               needed2 . Csample are sampled from Ccover . Full
+zero-shot approach, we compare the performance               JSD measures the statistical imperceptibility
+of our method with several training-free methods:            between covertext and stegotext.
+(a) NLS (Ziegler et al., 2019): This method em-
+                                                           • Half JSD: Covertext dataset is split into two
+beds a secret bitstream using GPT-2 (Radford et al.,
+                                                             equal parts, Ccover
+                                                                           1     and Ccover
+                                                                                        2   . While the stego-
+2019) for sentence complement. (b) SAAC (Shen
+                                                             models are trained on Ccover , the evaluation is
+                                                                                        1
+et al., 2020): This method improves the embedding
+                                                             performed on Ccover
+                                                                              2    . It estimates impercepti-
+process using Self-Adjusting Arithmetic Coding.
+                                                             bility under different but similar distributions.
+   Furthermore, we also compare our benchmarks
+against some fully-supervised steganographic tech-         • Zero JSD: Zero JSD is similar to Full JSD
+niques: (a) RNN-Stega (Yang et al., 2019a):                  except that it uses a vanilla GPT-2 model as
+This method utilizes Recurrent Neural Network                the PLM , without fine-tuning on the covertext.
+models trained on covertext to generate stegotext.           This evaluates the imperceptibility between
+(b) VAE-Stega (Yang et al., 2021): This method               the stegotext and the normal text.
+adopts a Variational Auto-encoder to generate ste-      However, PPL and JSDs are not good met-
+gotext. (c) ADG (Zhang et al., 2021): This method       rics for assessing different stegosystems. While
+proposes the Adaptive Dynamic Grouping tech-            PPL and JSD comparisons are suitable for super-
+niques for better imperceptibility.                     vised text generation tasks like machine translation,
+Implementation Details. All of the models and           where a direct comparison with a golden text is
+benchmarks are implemented with PyTorch. Pre-           possible, they face challenges in general text gener-
+trained models (e.g., GPT-2 and LLaMA2-Chat)            ation due to the absence of such direct relationships
+are obtained using Huggingface library. To en-          between generated output and training data. In
+sure a fair comparison, we rebuild all baseline meth-   steganography, where language distributions may
+ods using the same datasets throughout the entire       vary significantly across methods, comparing PPLs
+experiment. Bits per word (BPW) are used to mea-        and JSDs becomes impractical. Additionally, vari-
+sure the capability of hiding information within        ated settings of language models, such as datasets,
+stegotext. Only steganographic methods with sim-        hyperparameters, and model architecture, will fur-
+ilar BPW should be compared. Additionally, we           ther complicate such comparisons, even if these
+adopt a unified BPW by the nltk toolkit to elim-        models are within the same domain or task.
+inate vocabulary inconsistencies. In each setting,         Though PPL and JSD cannot be used to com-
+8K stegotext is generated for evaluation. We adopt      pare generation ability among different methods, it
+the LLaMA2-Chat-7B as the QA model and set the          still provides an indication of performance between
+context size of our method to k = 2, the threshold      different settings of the same method.
+τ = 0.005, the factors α = 1.25, β = 0.5, and the          2
+                                                               Only supervised methods need training on covertext.
+
+                                                    5172
+                                                   IMDB                                           Twitter
+    Methods      Training-free
+                                  BPW     PPL     JSDfull    JSDhalf   JSDzero   BPW     PPL     JSDfull    JSDhalf   JSDzero
+                                  1.978   10.23   30.33      33.12     38.27     2.556   13.04   39.92      38.97     48.10
+   RNN-Stega
+                                  2.682   12.80   26.76      29.36     34.87     3.359   15.38   36.20      35.53     44.76
+    (LSTM)
+                                  3.351   17.02   22.66      25.72     30.28     4.139   19.78   32.17      31.75     39.19
+                                  1.972    9.68   34.50      36.47     38.53     2.247   10.06   46.07      45.82     46.61
+    VAE-Stega
+                                  2.601   12.38   31.31      33.02     34.56     2.861   12.39   43.89      44.02     43.64
+  (BERT-LSTM)
+                                  3.199   16.31   30.03      31.49     32.82     3.438   16.13   42.12      42.54     40.87
+      ADG                         4.931   56.22   18.24      21.19     22.86     5.702   63.86   25.92      25.35     27.68
+                                  1.889   10.40   23.63      22.83     17.91     2.059   10.95   37.71      36.17     29.34
+      NLS              ✔          2.531   12.90   22.08      21.28     16.73     2.806   14.01   36.61      35.17     29.45
+                                  3.140   16.70   20.37      19.63     14.44     3.513   18.68   34.42      32.90     30.18
+                                  4.471   28.74   18.28      16.40     13.17     5.078   36.74   33.75      32.11     23.08
+     SAAC              ✔          4.749   37.89   18.04      16.06     11.49     5.299   43.35   33.42      31.82     22.33
+                                  5.111   44.02   17.87      15.98     11.44     5.716   54.35   33.20      31.68     22.04
+                                  1.906    8.81   17.90      16.86     13.40     2.550    9.48   30.90      29.34     24.90
+      ours             ✔          2.420   13.70   18.37      17.37     13.67     3.265   14.44   30.99      29.45     25.32
+                                  3.376   45.04   18.61      17.87     13.91     4.029   47.37   31.74      30.18     25.40
+
+Table 1: Experimental results under different BPWs and datasets. JSDs are multiplied by 102 . With the same BPW,
+lower JSD ↓ indicates better performance. There is no data available for smaller BPW in ADG or SAAC due to
+their design of high embedding rates. Our proposed method shows a reduced Psic Effect in comparison to prior
+methods as our JSDs rise with increasing BPW, whereas other methods see a decrease in JSDs.
+
+
+  Dataset    # sentences   Avg. Words       Avg. Bits           of imperceptibility as perceived by humans and
+                                                                machines, as examples shown in Appendix C. We
+  IMDB         494,716           26.70        146.43
+  Twitter     2,063,307          12.31        114.85            believe that previous methods may have fallen into
+                                                                some local optimum of covertext distribution, but
+   Table 2: Statistics of the preprocessed datasets.            do not achieve a balance between the quality and
+                                                                distribution of the stegotext.
+                                                                   In conclusion, the state-of-the-art metrics do not
+4.3 Experimental Results                                        match our method in every case, but our stegotext
+Table 1 summarizes the main results on the IMDB                 is much more natural and does not suffer from
+and Twitter datasets. Some methods are designed                 the Psic Effect, as is evidenced in the case study
+in such a way that it is inapplicable to adjust the             (Fig. 4) and Section 4.5.
+BPW during sentence generation, especially for a                   Furthermore, experiments with three variants of
+small BPW, resulting in a lack of experiments with              JSD have shown that our zero-shot method can be
+certain settings. This also poses a challenge for               used to fool experts with specialized backgrounds
+comparing metrics between similar BPWs.                         and ordinary people without prior knowledge. The
+                                                                generalization ability of our methods ensures better
+Psic Effect An interesting finding in our results               performance than supervised methods in both few-
+is the Perceptual-Statistical Imperceptibility Con-             shot and large-data scenarios.
+flict Effect (Psic Effect) mentioned by Yang et al.
+(2021), a phenomenon in which an increase in                    4.4    Steganalysis
+BPW and PPL is associated with a decrease in                    To assess the statistical imperceptibility of stego-
+JSD. As shown in Table 1, Figure 4, and Table 3,                methods, a classifier is usually deployed as a stegan-
+while techniques like NLS exhibit superior PPL                  alyzer to distinguish between covertext and stego-
+and JSD scores, they produce lower-quality text                 text. Table 3 presents the results of our steganalysis.
+and are more susceptible to detection by attackers.             Most prior works have primarily focused on syn-
+The existence of this unusual phenomenon implies                tactic similarity, which we believe is insufficient
+that it will be more difficult for machines to de-              as text evaluation should encompass both syntactic
+tect stegotext when the text becomes more chaotic               analysis and semantic analysis. Thus we utilize
+and unintelligible. This indicates the inconsistency            three distinct methods, namely TS-BiRNN (Yang
+                                                            5173
+  Secret Bitstream (Base64): cli2EARMSajA
+
+                                                      Fully-supervised
+  RNN-Stega: Richards are also in the film and the film shows us the most disgusting and violent aspects of the movie.The
+  plot revolves around a group of people who are attacked and murdered.
+  VAE-Stega: listen. the music and the music, the music, music of all the actors, the music, and the music! this movie is not
+  worth your eyes.
+  ADG: Richian is condemned to discover the facts that blackmails people through them.
+
+                                                       Training-free
+  NLS: There was so much I wanted to see in this film. I was hoping it was a little more like what I was hoping for from the
+  original film and not what I do not expect.
+  SAAC: I was looking forward to going as Keanu. I really wanted to do a little red carpet before I die.
+
+  Ours: I was genuinely underwhelmed by the film, and I’m afraid the only thing that stood out to me was the final scene. I
+  had been eagerly anticipating it, but unfortunately the rest of the movie fell flat for me.
+
+
+Figure 4: Examples of stegotext generated by various methods about movie reviews with a similar BPW ≈ 2.5,
+except ADG and SAAC. Compared with other baseline methods, our method generates more reasonable sentences.
+
+
+                          Syntactic             Semantic         4.5       Language Evaluation
+   Methods
+                TS-BiRNN       R-BiLSTM-C        BERT-C          While statistical imperceptibility can measure the
+                     Fully-supervised                            similarity between text distributions, human per-
+  RNN-Stega        94.02          93.88            96.50         ception still plays a significant role in assessing the
+  VAE-Stega        94.75          95.65            96.17         perceptual imperceptibility of the stegotext.
+                      Training-free                                 To simulate the human evaluation and ensure
+     NLS           84.60          86.21            92.25         reproducibility, we conduct language evaluation
+     ours          80.29          84.34            89.61         on the generated stegotext of each method using
+                                                                 large language models. First, we attempt to collect
+Table 3: Steganalysis with BPW ≈ 2.5. Each value
+                                                                 the stegotext generated with similar BPW ≈ 2.5
+is the classification accuracy by steganalyzer. Lower
+accuracy ↓ indicates better statistical imperceptibility.        using the IMDB dataset3 . We then randomly se-
+                                                                 lect two sentences from each set of stegotext to
+                                                                 compare, denoted by <sentA ,sentB >. Next,
+                                                                 GPT-3.5 is used to determine which sentence in the
+et al., 2019b), R-BiLSTM-C (Niu et al., 2019)                    pair is considered high-quality. To be more spe-
+and BERT-C, to assess the performance of stego-                  cific, we compare our method with each baseline
+methods in terms of syntactic similarity and seman-              and collect ratios of how much of our stegotext is
+tic similarity. Among these methods, the BERT-C                  deemed to be better than the others. We sample
+method, inspired by Wen et al. (2022), utilizes a                10K sentence pairs between our method and each
+BERT encoder (Devlin et al., 2019) to encode the                 baseline. Appendix A.5 illustrates the details of the
+input sequence and uses a linear classifier to deter-            implementation of language evaluation.
+mine whether the given sequence is a stegotext.                     Table 4 demonstrates three kinds of quality mea-
+   We exclude ADG and SAAC from our analysis                     surement conducted in our experiments:
+since their BPW settings are difficult to adjust, lead-            (a) Soundness measures the extent to which one
+ing to an unfair comparison. Moreover, due to their                    sentence is more logical and meaningful.
+high BPW settings (BPW > 5), ADG and SAAC                          (b) Relevance measures the extent to which one
+cause significant Psic Effect, which makes it diffi-                   sentence is more relevant to the specific topic.
+cult to classify their stegotext accurately through
+                                                                   (c) Engagingness measures the extent to which
+syntactic analysis. Even with extremely low text
+                                                                       one sentence is more appealing and engaging.
+quality, some of these methods can achieve almost
+50% detection accuracy, which indicates a perfect                Our three measurements are all close to 1.0 when
+but unreasonable statistical imperceptibility.                   compared to the ground truth covertext, which in-
+  In conclusion, the results show that our method                dicates a high level of similarity. Most supervised
+outperforms most of the previous methods.                            3
+                                                                         For ADG and SAAC, the BPW is set to 4.931 and 4.471.
+
+                                                            5174
+                                                                     21                                               τ = 0.005
+              3.5               k=2                                                                         3.5
+                                k = 2 w/o EF                                                                          τ = 0.005 w/o EF                            20
+
+
+
+                                                  JSDfull (×10−2 )                                                                             JSDfull (×10−2 )
+                                k=1                                  20                                               τ = 0.001
+              3.0               k=3
+                                                                                                            3.0       τ = 0.010
+                                                                                                                                                                  19
+ BPW                                                                                                  BPW
+              2.5                                                    19                                     2.5
+                                                                                                                                                                  18
+              2.0                                                    18                                     2.0
+                                                                                                                                                                  17
+                0.001        0.005       0.010                        0.001     0.005         0.010               1       2              3                             1   2   3
+                               τ                                                  τ                                       k                                                k
+
+                                                (a)                                                                                          (b)
+
+               Figure 5: Curves of BPW and JSDfull with respect to: (a) different threshold τ (b) different context size k
+
+
+         Eval.          GT
+                                     Fully-supervised                         Training-free             lower ranks are more likely to be selected, which
+                                 RNN           VAE                   ADG      NLS       SAAC            is generally of high word probability. The shift of
+      Sound.            0.788    3.812     8.363                     8.042    1.373     1.654           word distribution results in slight improvements in
+      Relev.            1.196    2.397     3.608                     5.345    2.479     3.850           BPW and JSDs, as shown in Fig. 5.
+      Engag.            1.157    5.386     9.267                     7.224    1.924     2.380              Figure 5 also shows the performance of our
+          Avg.          1.047    3.865     7.080                     6.870    1.926     2.628           method under different hyper-parameter settings.
+                                                                                                        We can observe from the results that an increase
+Table 4: Language evaluation results. Each value repre-                                                 in threshold τ and context size k would result in a
+sents the ratio of how much our stegotext is considered
+                                                                                                        decrease in BPW and JSD. According to the results,
+better than the particular method. For example, a ratio
+of 3.812 means that the number of our stegotext consid-                                                 a higher sentence quality would lead to a lower em-
+ered better is 3.812× more than the other method.                                                       bedding rate but better statistical imperceptibility.
+                                                                                                        This indicates a tradeoff between embedding rate
+                                                                                                        and statistical imperceptibility exists.
+                                                                                      w/o EF
+              0.06                                                                    w/ EF
+                                                                                                        5         Related Work
+
+Probability
+              0.04                                                                                      Linguistic steganography can be divided into three
+                                                                                                        types (Fridrich, 2009), selection-based (Sajedi
+              0.02                                                                                      and Jamzad, 2008; Chen and Chen, 2019), edit-
+                                                                                                        based (Chang and Clark, 2014) and generation-
+              0.00                                                                                      based steganography (Kang et al., 2020; Xiang
+                         0                5            10                                15
+                                                                                                        et al., 2020). However, the low embedding rate
+                                         Rank of candidates
+                                                                                                        of these methods hinders their practical application,
+Figure 6: Distribution of the rank of selected candidates.                                              giving rise to generation-based steganography.
+                                                                                                           To encode secret messages into textual data,
+                                                                                                        early generative steganography utilized the Markov
+methods aim to approximate covertext distribution,                                                      model to obtain conditional probability distribu-
+which results in a large gap between readability                                                        tions (Moraldo, 2014) for text generation. Subse-
+and imperceptibility. Training-free methods, how-                                                       quently, the development of NLP has significantly
+ever, are more effective at balancing both percep-                                                      improved distribution modeling. It was first pro-
+tual and statistical imperceptibility. Furthermore,                                                     posed by Fang et al. (2017) to use a supervised
+our method outperforms all other baselines with an                                                      recurrent neural network (RNN) to learn the statis-
+average improvement of at least 1.926×.                                                                 tical language model of natural texts with a fixed-
+                                                                                                        length coding dictionary. Subsequently, Yang et al.
+4.6 Ablation Study                                                                                      (2019a) proposed a generation-based steganogra-
+We analyze EF coding in terms of the probability                                                        phy based on RNN and Huffman coding. Yang
+of selecting a candidate from a pool of candidates.                                                     et al. also proposed that different neural models
+We replace every occurrence of the candidate with                                                       make a difference, such as the generative adversar-
+its rank of likelihood in the descending-sorted can-                                                    ial network (Yang et al., 2020) and variational auto-
+didate pool in Fig. 6. It appears that words with                                                       encoder (Yang et al., 2021). Zhang et al. (2021) and
+                                                                                                 5175
+Ding et al. (2023) further presented provably secure      of the stegotext may result in invertible damage
+algorithms for better statistical imperceptibility.       to the covert bitstream as in most previous works.
+   While supervised methods attempt to fit mod-           Fortunately, textual data are less likely to suffer
+els to the source distribution, the restriction of the    from lossy compression issues than other types of
+source distribution leads to a high risk of generat-      media (e.g., image, audio, and video).
+ing similar but unintelligible text due to the com-
+plicated process of embedding secret messages.            8   Ethical Considerations
+To address this limitation, models pre-trained on         The use of pre-trained LLMs may exhibit potential
+large-scale datasets are used. Ziegler et al. (2019)      issues, such as insults, political biases, or gender
+proposed that arithmetic coding be used with a            discrimination. It should also be noted that the data
+pre-trained GPT-2 model. Dai and Cai (2019) fur-          underlying our method may introduce additional
+ther proposed an improved Huffman encoding al-            ethical concerns. While we did not observe such
+gorithm, which is intended to adjust embedding            problems during our experiments, users should be
+rates dynamically. Shen et al. (2020) improved the        aware of these issues in practice.
+previous works with self-adjusting arithmetic cod-
+ing for near-imperceptible text. Nevertheless, all        Acknowledgement
+of these training-free approaches employ a similar
+                                                          This research is supported by the National
+paradigm for generating the context’s next sentence,
+                                                          Key R&D Program of China under grant
+making them impractical in actual usage.
+                                                          (No.2022YFB2703001). Thanks to all the review-
+6   Conclusion                                            ers for their insightful suggestions.
+
+In this work, we present a zero-shot approach based
+on in-context learning for linguistic steganography.      References
+For the LLM to generate a similar sentence, sam-          Mihir Bellare, Anand Desai, Eron Jokipii, and Phillip
+ples of covertext serve as the context for the LLM          Rogaway. 1997. A concrete security treatment of
+in the QA. We also integrate several techniques to          symmetric encryption. In Proc. 38th Annual Sympo-
+                                                            sium on Foundations of Comput. Sci., pages 394–403.
+improve the text generation process for better read-        IEEE.
+ability and imperceptibility of the stegotext. Our
+experimental results exhibit the high impercepti-         Christian Cachin. 1998. An information-theoretic
+                                                            model for steganography. In Information Hiding,
+bility of our approach compared to other methods.
+                                                            pages 306–318, Berlin, Heidelberg. Springer Berlin
+In addition, the stegotext is more intelligible and         Heidelberg.
+resembles the covertext in many aspects. We hope
+this work will be a step towards the more practical       Ching-Yun Chang and Stephen Clark. 2014. Practical
+                                                            linguistic steganography using contextual synonym
+applications of linguistic steganography.                   substitution and a novel vertex coding method. Com-
+                                                            put. Linguistics, 40(2):403–448.
+7   Limitations
+                                                          Mark Chapman and George Davida. 1997. Hiding the
+Our approach has indeed demonstrated advantages            hidden: A software system for concealing cipher-
+in producing intelligible and innocent stegotext, yet      text as innocuous text. In Inf. and Commun. Secur.,
+                                                           pages 335–345, Berlin, Heidelberg. Springer Berlin
+we rely heavily on the generalization capabilities         Heidelberg.
+of LLMs. The computation overhead of LLMs is
+approximately 3× to 5× in comparison with prior           Xianyi Chen and Sheng Chen. 2019. Text coverless
+works. There may be an additional vulnerability if          information hiding based on compound and selection
+                                                            of words. Soft Comput., 23.
+real-time communication is required.
+   Further, we have not tested the proposed method        Falcon Dai and Zheng Cai. 2019. Towards near-
+in a relatively large embedding rate setting (e.g.,         imperceptible steganographic text. In Proc. 57th
+                                                            Annu. Meeting Assoc. Comput. Linguistics, pages
+BPW > 5). While we believe that stegotext gen-              4303–4308, Florence, Italy. Assoc. Comput. Linguis-
+erated under settings like these would be highly            tics.
+unintelligible and impractical in real life, the limits
+                                                          Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+of our method have yet to be determined.                     Kristina Toutanova. 2019. BERT: Pre-training of
+   Data integrity is another essential requirement           deep bidirectional transformers for language under-
+of our steganographic method. The incompleteness             standing. In Proc. 2019 Conf. North American Assoc.
+
+                                                      5176
+  Comput. Linguistics, pages 4171–4186, Minneapolis,        Yan Niu, Juan Wen, Ping Zhong, and Yiming Xue. 2019.
+  Minnesota. Association for Computational Linguis-           A hybrid r-bilstm-c neural network based text ste-
+  tics.                                                       ganalysis. IEEE Signal Process. Lett., 26(12):1907–
+                                                              1911.
+Jinyang Ding, Kejiang Chen, Yaofei Wang, Na Zhao,
+   Weiming Zhang, and Nenghai Yu. 2023. Discop:             Daniel W. Otter, Julian R. Medina, and Jugal K. Kalita.
+   Provably secure steganography in practice based on         2021. A survey of the usages of deep learning for
+   "distribution copies". In 2023 IEEE Symp. Secur.           natural language processing. IEEE Trans. Neural
+   Privacy (SP), pages 2238–2255.                             Netw. Learn. Syst., 32(2):604–624.
+
+                                                            Alec Radford, Jeffrey Wu, Rewon Child, David Luan,
+Tina Fang, Martin Jaggi, and Katerina Argyraki. 2017.
+                                                              Dario Amodei, Ilya Sutskever, et al. 2019. Language
+  Generating steganographic text with LSTMs. In Proc.
+                                                              models are unsupervised multitask learners. OpenAI
+  ACL 2017, Student Res. Workshop, pages 100–106,
+                                                              blog, 1(8):9.
+  Vancouver, Canada. Assoc. Comput. Linguistics.
+                                                            Hedieh Sajedi and Mansour Jamzad. 2008. Cover se-
+Jessica Fridrich. 2009. Steganography in digital media:       lection steganography method based on similarity of
+   principles, algorithms, and applications. Cambridge        image blocks. In 2008 IEEE 8th Int. Conf. Comput.
+   University Press.                                          and Inf. Technol. Workshops, pages 379–384.
+
+Alec Go, Richa Bhayani, and Lei Huang. 2009. Twit-          Jiaming Shen, Heng Ji, and Jiawei Han. 2020. Near-
+  ter sentiment classification using distant supervision.      imperceptible neural linguistic steganography via
+  CS224N project report, Stanford, 1(12).                      self-adjusting arithmetic coding. In Proc. 2020
+                                                               Conf. Empirical Methods in Natural Lang. Process.
+Linjie Guo, Jiangqun Ni, Wenkang Su, Chengpei Tang,            (EMNLP), pages 303–313, Online. Association for
+  and Yun-Qing Shi. 2015. Using statistical image              Computational Linguistics.
+  model for jpeg steganography: Uniform embed-
+  ding revisited. IEEE Trans. Inf. Forensics Security,      Alexey Nikolaevich Shniperov and KA Nikitina. 2016.
+  10(12):2669–2680.                                           A text steganography method based on markov
+                                                              chains. Autom. Control and Comput. Sci., 50:802–
+Huixian Kang, Hanzhou Wu, and Xinpeng Zhang. 2020.            808.
+  Generative text steganography based on lstm network
+                                                            Nandhini Subramanian, Omar Elharrouss, Somaya Al-
+  and attention mechanism with keywords. Electron.
+                                                              Maadeed, and Ahmed Bouridane. 2021. Image
+  Imag., 2020(4):291–1.
+                                                              steganography: A review of the recent advances.
+                                                              IEEE Access, 9:23409–23423.
+R. Bala Krishnan, Prasanth Kumar Thandra, and M. Sai
+   Baba. 2017. An overview of text steganography. In        Milad Taleby Ahvanooey, Qianmu Li, Jun Hou,
+   2017 4th Int. Conf. Signal Process., Commun. and           Ahmed Raza Rajput, and Yini Chen. 2019. Mod-
+   Netw. (ICSCN), pages 1–6.                                  ern text hiding, text steganalysis, and applications: A
+                                                              comparative analysis. Entropy, 21(4).
+Zinan Lin, Yongfeng Huang, and Jilong Wang. 2018.
+  Rnn-sm: Fast steganalysis of voip streams using re-       Jinyuan Tao, Sheng Li, Xinpeng Zhang, and Zichi Wang.
+  current neural network. IEEE Trans. Inf. Forensics           2019. Towards robust image steganography. IEEE
+  Security, 13(7):1854–1868.                                   Trans. Circuits Syst. Video Technol., 29(2):594–600.
+
+Yunxia Liu, Shuyang Liu, Yonghao Wang, Hongguo              Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+  Zhao, and Si Liu. 2019. Video steganography: A              Martinet, Marie-Anne Lachaux, Timothée Lacroix,
+  review. Neurocomputing, 335:238–250.                        Baptiste Rozière, Naman Goyal, Eric Hambro,
+                                                              Faisal Azhar, et al. 2023. Llama: Open and effi-
+Yubo Luo, Yongfeng Huang, Fufang Li, and Chinchen             cient foundation language models. arXiv preprint
+  Chang. 2016. Text steganography based on ci-poetry          arXiv:2302.13971.
+  generation using markov chain model. KSII Trans.
+                                                            Peter J. M. van Laarhoven and Emile H. L. Aarts. 1987.
+  Internet and Inf. Syst. (TIIS), 10(9):4568–4584.
+                                                              Simulated annealing, pages 7–15. Springer Nether-
+                                                              lands, Dordrecht.
+Andrew L. Maas, Raymond E. Daly, Peter T. Pham,
+  Dan Huang, Andrew Y. Ng, and Christopher Potts.           W. Weber. 1978. Differential encoding for multiple
+  2011. Learning word vectors for sentiment analysis.         amplitude and phase shift keying systems. IEEE
+  In Proc. 49th Annu. Meeting Assoc. Comput. Linguis-         Transactions on Communications, 26(3):385–391.
+  tics, pages 142–150, Portland, Oregon, USA. Assoc.
+  Comput. Linguistics.                                      Juan Wen, Ziwei Zhang, Yu Yang, and Yiming Xue.
+                                                              2022. Few-shot text steganalysis based on attentional
+H Hernan Moraldo. 2014. An approach for text                  meta-learner. In Proceedings of the 2022 ACM Work-
+  steganography based on markov chains. arXiv                 shop on Information Hiding and Multimedia Security,
+  preprint arXiv:1409.0915.                                   pages 97–106.
+
+                                                        5177
+Lingyun Xiang, Rong Wang, Zhongliang Yang, and Yul-       A     Detailed Implementation
+  ing Liu. 2022. Generative linguistic steganography:
+  A comprehensive review. KSII Trans. Internet and        A.1    Edge Flipping Coding
+  Inf. Syst. (TIIS), 16(3).
+                                                          The pseudo-code for Edge Flipping Coding is pre-
+Lingyun Xiang, Shuanghui Yang, Yuhang Liu, Qian           sented in Algorithm 2 for encoding, and Algo-
+  Li, and Chengzhang Zhu. 2020. Novel linguistic          rithm 3 for decoding.
+  steganography based on character-level text genera-
+  tion. Mathematics, 8(9):1558.
+                                                          Algorithm 2 Edge Flipping Encoding
+Zhong-Liang Yang, Xiao-Qing Guo, Zi-Ming Chen,            Input: Bitstream m.
+  Yong-Feng Huang, and Yu-Jin Zhang. 2019a. Rnn-
+  stega: Linguistic steganography based on recurrent      Output: EF bitstream m′ .
+  neural networks. IEEE Trans. Inf. Forensics Security,    1: Output bitstream m′ ← ∅
+  14(5):1280–1295.                                         2: Bit state s ← 0
+                                                           3: for b ∈ m do
+Zhong-Liang Yang, Si-Yu Zhang, Yu-Ting Hu, Zhi-
+  Wen Hu, and Yong-Feng Huang. 2021. Vae-stega:            4:     if s = b then
+  Linguistic steganography based on variational auto-      5:          m′ ← m′ ∪ {0}
+  encoder. IEEE Trans. Inf. Forensics Security, 16:880–    6:     else
+  895.
+                                                           7:          m′ ← m′ ∪ {1}
+Zhongliang Yang, Ke Wang, Jian Li, Yongfeng Huang,         8:     end if
+  and Yu-Jin Zhang. 2019b. Ts-rnn: Text steganalysis       9:     ▷ Update bit state
+  based on recurrent neural networks. IEEE Signal         10:     s←b
+  Process. Lett., 26(12):1743–1747.
+                                                          11: end for
+Zhongliang Yang, Nan Wei, Qinghe Liu, Yongfeng
+  Huang, and Yujin Zhang. 2020. Gan-tstega: Text
+  steganography based on generative adversarial net-
+                                                          Algorithm 3 Edge Flipping Decoding
+  works. In Digital Forensics and Watermarking, pages
+  18–31, Cham. Springer International Publishing.         Input: EF Bitstream m′ .
+                                                          Output: Bitstream m.
+Siyu Zhang, Zhongliang Yang, Jinshuai Yang, and
+  Yongfeng Huang. 2021. Provably secure generative         1: Output bitstream m ← ∅
+  linguistic steganography. In Findings of the Associa-    2: Bit state s ← 0
+  tion for Computational Linguistics: ACL-IJCNLP           3: for b′ ∈ m′ do
+  2021, pages 3046–3055, Online. Association for           4:     if b′ = 1 then
+  Computational Linguistics.
+                                                           5:          s ← ∼s
+Zachary Ziegler, Yuntian Deng, and Alexander Rush.         6:     end if
+  2019. Neural linguistic steganography. In Proc.          7:     ▷ Append bit state
+  2019 Conf. Empirical Methods Natural Lang. Pro-
+  cess. and 9th Int. Joint Conf. Natural Lang. Process.    8:     m ← m ∪ {s}
+  (EMNLP-IJCNLP), pages 1210–1215, Hong Kong,              9: end for
+  China. Assoc. Comput. Linguistics.
+
+George Kingsley Zipf. 1999. The psycho-biology of            Since EF coding is a bijection, it can be applied
+  language: An introduction to dynamic philology, vol-    multi-round to the original bitstream. The final
+  ume 21. Psychology Press.                               bitstream is the one with the fewest 1s.
+
+                                                          A.2    Bitstream Extraction
+                                                          We provide the bitstream extraction algorithm of
+                                                          the embedding module in Algorithm 4.
+
+                                                          A.3    In-Context QA
+                                                          The complete in-context QA templates of our
+                                                          method are presented in Fig 7. We instruct the
+                                                          LLM to follow the XML-style response for pars-
+                                                          ing results. Covertext context is placed in the
+                                                          {CONTEXT} slot. There is also a hint of the corpus
+                                                          placed on the {CORPUS} slot.
+                                                      5178
+  «SYS»
+  You are an expert at mimicing the language style of others (e.g., the use of
+  words and phrases). And you are a helpful and respectful assistant.
+
+  Users will input sentences from a given corpus. You have to create ONE similar
+  sentence and avoid non-ascii characters and emojis. This is very important to
+  the user’s career.
+
+  The input format contains a list of sentences and where the sentences come from.
+  For example:
+  <CORPUS>{CORPUS}</CORPUS>
+  <CONTEXT>
+  Example sentence 1.
+
+  Example sentence 2.
+  </CONTEXT>
+
+  Your output should be like:
+
+  The generated similar sentence in ONE LINE is:
+
+  «/SYS»
+
+  [INST]<CORPUS>{CORPUS}</CORPUS>
+  <CONTEXT>
+  {CONTEXT}
+  </CONTEXT>[/INST]
+
+  The generated similar sentence in ONE LINE is:
+
+
+Figure 7: QA templates for in-context stegotext generation. Slot {CORPUS} and {CONTEXT} would be replaced
+by the corpus name and the selected context from covertext in the runtime.
+
+
+                                                         A.4   Baselines
+                                                         We rebuild the entire benchmark pipeline for a fair
+                                                         comparison between different stego-methods. The
+                                                         following are the implementation details:
+Algorithm 4 Information Extraction Algorithm
+                                                            • RNN-Stega: We refactor the official codebase
+Input: stegotext y = [y1 , . . . , yn ], threshold τ .        from TensorFlow to PyTorch. Hyper-
+Output: Bitstream m.                                          parameters: lr=0.001, dropout=0.5, 30 epochs,
+ 1: Timestep t ← 1, output bitstream m ← ∅                    768 LSTM units, and 2 layers of LSTM.
+ 2: while not the end of m do
+ 3:    ▷ Compute conditional probs                          • VAE-Stega: We rebuild the VAE pipeline us-
+ 4:    p ← Pstega (xt | x<t )                                 ing PyTorch following the official codebase.
+ 5:    ▷ Prune candidate words                                Hyper-parameter setting: lr=3e-4, 20 epochs,
+ 6:    c ← [ci | p(ci ) ≥ τ ]                                 hidden size of 768, DistilBERTBASE as en-
+ 7:    ▷ Huffman encoding                                     coder, 2 layers of LSTM as decoder.
+ 8:    H ← Huffman(c, p)
+                                                            • ADG: We reproduce ADG based on the of-
+ 9:    ▷ Select candidate
+                                                              ficial codebase. Hyper-parameter setting:
+10:    s ← Bits s whose binary representation
+                                                              lr=0.001, 30 epochs, 768 LSTM units, and
+    matches certain word c ∈ H
+                                                              2 layers of LSTM.
+11:    m ← m ∪ s, t ← t + 1
+12: end while                                               • NLS: We reproduce NLS based on the offi-
+                                                              cial codebase. We use gpt2-medium model
+                                                              from Huggingface Library as the base model.
+
+                                                            • SAAC: We reproduce SAAC based on the
+                                                              official codebase. We use gpt2-medium
+                                                     5179
+    Eval.      GT
+                             Fully-supervised             Training-free        D   Scientific Artifacts
+                        RNN         VAE        ADG        NLS      SAAC
+                                                                               The licenses for all the baselines are listed below:
+ Sound.       .4406     .7922      .8932       .8894      .5786    .6232       RNN-Stega (MIT License), VAE-Stega (MIT Li-
+ Relev.       .5446     .7056      .7830       .8424      .7126    .7938
+ Engag.       .5364     .8434      .9026       .8784      .6580    .7041       cense), ADG (MIT License), NLS (MIT License),
+                                                                               SAAC (GPL-3.0 License). The licenses for mod-
+      Table 5: Raw results of language evaluations.                            els are listed below: BERT (Apache 2.0 License),
+                                                                               GPT-2 (Modified MIT License), LLaMA2-Chat-
+                             α                              β                  7B (LLAMA 2 Community License).
+ Metrics
+               1.00      1.25           1.50     0.25      0.50     1.00
+     BPW       2.149    2.420       2.462        2.116    2.420    2.511
+    JSDfull    18.11    18.37       18.66        18.28    18.37    19.02
+
+    Table 6: Ablation on the annealing search factor α
+and repeat penalty factor β.
+
+
+       model from Huggingface Library as the base
+       model. The hyper-parameter δ is set the same
+       as the original paper: 0.01, 0.05 and 0.10.
+
+A.5 Language Evaluation
+In this section, we provide the actual prompts for
+ChatGPT to discriminate the quality of the sentence
+pair <sentA ,sentB >. Figure 8 illustrates the
+prompting templates. We also randomly swap the
+sentences of a pair before calling the ChatGPT API.
+   The raw data of language evaluations is pre-
+sented in Table 5, where each grid represents the
+percentage of how much ours is considered better.
+
+A.6 Ablation
+We present the ablation study of the factors α and
+β of annealing search and repeat penalty in Table 6.
+
+B      Efficiency
+Table 7 shows the computational overhead of base-
+lines and our method. Due to the use of LLMs, our
+method requires a cost of 3× to 5× more time.
+
+C      Examples
+Figure 9 provides more examples of the generated
+stegotext of each method. In comparison with other
+approaches, ours has better sentence quality.
+
+
+      Method          RNN        VAE      ADG      NLS     SAAC     ours
+ Avg. Time (s)        1.55       2.16     1.87     2.89     3.38     8.41
+
+Table 7: The average time cost of generating one
+steganographic sentence using a single RTX3090.
+
+                                                                            5180
+  The user will input 2 sentences.
+  You have to decide which one is more logically sound and meaningful.                                  This is
+  important to the user’s career.
+
+  The result should be in JSON.
+  It should contain the key "result" with value being either 0 or 1, indicating
+  the first or second one.
+
+  1.    <sentA >
+
+  2.    <sentB >
+
+                                          (a) Template for evaluating soundness.
+  The user will input 2 sentences.
+  You have to decide which one is more likely to be part of some "{TOPIC}".                                     This
+  is important to the user’s career.
+
+  The result should be in JSON.
+  It should contain the key "result" with value being either 0 or 1, indicating
+  the first or second one.
+
+  1.    <sentA >
+
+  2.    <sentB >
+
+(b) Template for evaluating relevance. Here {TOPIC} is used to restrict the evaluation to specific topics. For IMDB, we use
+"movie reviews" as the topic.
+  The user will input 2 sentences.
+  You have to decide which one is more engaging and appealing to readers.                                    This is
+  important to the user’s career.
+
+  The result should be in JSON.
+  It should contain the key "result" with value being either 0 or 1, indicating
+  the first or second one.
+
+  1.    <sentA >
+
+  2.    <sentB >
+
+                                         (c) Template for evaluating engagingness.
+
+                                    Figure 8: Templates for language evaluations.
+
+
+
+
+                                                          5181
+Secret Bitstream (Base64): xB0CEVgADkP2YoA=
+
+                                                     Fully-supervised
+RNN-Stega: Sin City is a great film, and the story is told from the viewer.The plot is pretty simplistic, and has no
+redeemable qualities to it whatsoever.
+VAE-Stega: short! i have the feeling that i have a copy on dvd. i would have been watching it, and i’m a huge fan.
+ADG: Sinbad?No?So HOAME.horrible movie.Acting wise as it describes is hard.
+
+                                                          Training-free
+NLS: And while the latter is certainly true, I think it is also fair to say that CBS has done a pretty good thing. The network
+has been a champion for science and for health.
+SAAC: The Center for Public Integrity of West Allis, Wisconsin, and Wythe Law School of Louisville, Kentucky reported
+this week that cigarette makers have guities.
+
+Ours: All countries have an ugly side, just as ours does. It’s unfair to say that only the Philippines has this issue, though.
+We are all capable of such shortfalls.
+
+                                                             (a)
+Secret Bitstream (Base64): pTJAjKMijGEMkA==
+
+                                                      Fully-supervised
+RNN-Stega: Adding insult from this review, it’s not as if it is shot on the big screen.The problem was that the film was not
+intended.
+VAE-Stega: four years later he’re going to get to the job, and then he becomes a suspect that he was not a guy and he has a
+very strange and very good
+ADG: Adding Wes Anderson is a good story,or a movie that you will get used to.In other words, it’s a great
+
+                                                      Training-free
+NLS: The only thing missing from the film’s budget is a big name star, and that will have to be one of the film-makers’ two
+choices.
+SAAC: The cleanroom in which the court martial took place is flanked by treetops, allowing for ...
+
+Ours: Cheaper doesn’t always have to equal inferior, particularly in the case of indie films, where creators are often pushed
+to maximize the impact of limited resources.
+
+                                                             (b)
+Secret Bitstream (Base64): CYmMLJkPqMO4CHaxyEBBXrkDs5Iw
+
+                                                      Fully-supervised
+RNN-Stega: Extreme to the point where a film that was made was a huge waste.The film’s ending is an absolute disaster,
+but it was very disappointing to see a man that could easily be a good thing.The film had some pretty interesting elements,
+and the movie was very well done, but that’s not enough for it.
+VAE-Stega: if you like "the rose", "love" (the "i have you, you’re better! ")....... the ending is very funny. this is no
+exception. it’is so bad!... the movie is bad.. bad!!.
+ADG: Extremely directed by Gulna Wong who brings the thought of interest for a free part of her life.Avoid this film as a
+film for the best of heartless Arts cinema lover.
+
+                                                           Training-free
+NLS: It was only a matter for him to find a wife to take care in the meantime and then the marriage will be broken up and
+it can be said he’ll lose all his love for his beloved. I mean it makes perfect sense, it seems to make more sense that he has
+to leave her for the woman he loves.
+SAAC: She wants to break things up with him. I’ve always seen this as perfect because it’s a result of her deep love for
+man in this movie. However, not everybody likes watching two men break up, you know?
+
+Ours: Oh my gawd, stop dting married men! Like seriously, why do we keep falling into this trap over and over? Anglea
+basset’s chracter should totall be more concerned with the fact that her husband abandoned hre for another woma than
+some mediocore romance flic. Overall, I would give this movie a big fat C- for wasted poasbility and a little more thought.
+
+                                                             (c)
+
+       Figure 9: Examples of stegotext generated by various methods on the topic of "movie reviews".
+
+
+
+
+                                                            5182
+
