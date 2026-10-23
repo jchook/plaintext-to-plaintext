@@ -1,0 +1,419 @@
+{
+  "reviewed_on": "2026-10-22",
+  "cutoff": "2026-10-22",
+  "scope": "Targeted longitudinal primary-source review; not exhaustive or a pooled meta-analysis.",
+  "new_source_pdfs_downloaded": false,
+  "source_count": 43,
+  "sources": [
+    {
+      "title": "SoK: Watermarking for AI-Generated Content",
+      "url": "https://arxiv.org/abs/2411.18479",
+      "date_or_publication": "November 2024 preprint; IEEE S&P 2025; reviewed June 2025 v3",
+      "relevance": "Section 3.5 distinguishes message embedding from detection. Section 6.2 discusses Gaussian Shading and PRC image watermarks.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v3",
+      "version_url": "https://arxiv.org/abs/2411.18479v3",
+      "inspected_sections": [
+        "3.5 Support for Embedding Messages",
+        "6.1 Text Watermarks",
+        "6.2 Image Watermarks"
+      ]
+    },
+    {
+      "title": "Secure and Robust Watermarking for AI-generated Images: A Comprehensive Survey",
+      "url": "https://arxiv.org/abs/2510.02384",
+      "date_or_publication": "September 2025; reviewed March 2026 v2",
+      "relevance": "Sections 4.4.3, 5.2, and 7 cover keyed noise sampling, capacity, redundancy, and cryptography. The more recent image-specific candidate.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2510.02384v2",
+      "inspected_sections": [
+        "4.4.3 Key-based Embedding",
+        "5.2 Capacity",
+        "7 Secure and Robust AI-generated Image Watermarking"
+      ]
+    },
+    {
+      "title": "Cachin, An Information-Theoretic Model for Steganography",
+      "url": "https://doi.org/10.1007/3-540-49380-8_21",
+      "date_or_publication": "1998",
+      "relevance": "Defines concealment through hypothesis testing and relative entropy between cover and stegotext distributions. Fluent text alone is insufficient evidence.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "Hopper, Langford, and von Ahn, Provably Secure Steganography",
+      "url": "https://eprint.iacr.org/2002/137",
+      "date_or_publication": "2002",
+      "relevance": "Gives computational indistinguishability definitions and constructions from one-way functions. An early basis for sampling an innocent channel while carrying a secret.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "HiDDeN: Hiding Data With Deep Networks",
+      "url": "https://arxiv.org/abs/1807.09937",
+      "date_or_publication": "2018",
+      "relevance": "Jointly learns an image embedder and decoder through noise, crop, and compression transformations. A precursor to learning text encoders through an edit channel.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "See existing archive"
+    },
+    {
+      "title": "Neural Linguistic Steganography",
+      "url": "https://aclanthology.org/D19-1115/",
+      "date_or_publication": "2019",
+      "relevance": "Direct precedent for our arithmetic-coded token choices. [Local note](../2019-neural-linguistic-steganography/relevance.md).",
+      "review_scope": "Existing local paper archive and relevance note reviewed; no new source download."
+    },
+    {
+      "title": "StegaStamp: Invisible Hyperlinks in Physical Photographs",
+      "url": "https://www.matthewtancik.com/stegastamp",
+      "date_or_publication": "2020",
+      "relevance": "Arbitrary hyperlink bitstrings survive print and photography. The prototype retrieves 56 payload bits after error correction; the linked resource can be much larger than the watermark.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "Meteor: Cryptographically Secure Steganography for Realistic Distributions",
+      "url": "https://www.cs.umd.edu/users/kaptchuk/publications/ccs21_meteor.pdf",
+      "date_or_publication": "2021",
+      "relevance": "Addresses uneven, realistic token distributions with cryptographic analysis. [Local note](../2021-meteor/relevance.md).",
+      "review_scope": "Existing local paper archive and relevance note reviewed; no new source download."
+    },
+    {
+      "title": "Perfectly Secure Steganography Using Minimum Entropy Coupling",
+      "url": "https://arxiv.org/abs/2210.14889",
+      "date_or_publication": "2022 preprint; ICLR 2023",
+      "relevance": "Couples payloads with cover symbols while preserving the cover marginal. Minimizing joint entropy increases information carried by a sample. [Local note](../2023-minimum-entropy-coupling/relevance.md).",
+      "review_scope": "Existing local paper archive and relevance note reviewed; no new source download.",
+      "reviewed_arxiv_version": "See existing archive"
+    },
+    {
+      "title": "A Watermark for Large Language Models",
+      "url": "https://arxiv.org/abs/2301.10226",
+      "date_or_publication": "ICML 2023",
+      "relevance": "Secret vocabulary partitions and selected logit boosts. A foundational detection baseline; the original construction is not a general arbitrary-payload codec.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v4",
+      "version_url": "https://arxiv.org/abs/2301.10226v4"
+    },
+    {
+      "title": "Undetectable Watermarks for Language Models",
+      "url": "https://arxiv.org/abs/2306.09194",
+      "date_or_publication": "2023 preprint; COLT 2024",
+      "relevance": "Defines computational concealment against adaptive queries and constructs watermarks under standard assumptions.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2306.09194v1"
+    },
+    {
+      "title": "Robust Distortion-free Watermarks for Language Models",
+      "url": "https://arxiv.org/abs/2307.15593",
+      "date_or_publication": "2023 preprint; TMLR 2024",
+      "relevance": "Uses inverse-transform and exponential-minimum sampling with keyed randomness and alignment-based detection. Directly exploits sampling values, but detection robustness differs from payload recovery.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v3",
+      "version_url": "https://arxiv.org/abs/2307.15593v3"
+    },
+    {
+      "title": "Unbiased Watermark for Large Language Models",
+      "url": "https://arxiv.org/abs/2310.10669",
+      "date_or_publication": "2023 preprint",
+      "relevance": "Develops distribution-preserving watermark reweighting. Check what randomness the preservation claim averages over.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2310.10669v2"
+    },
+    {
+      "title": "Towards Codable Watermarking for Injecting Multi-bits Information to LLMs",
+      "url": "https://arxiv.org/abs/2307.15992",
+      "date_or_publication": "2023 preprint; revised 2024",
+      "relevance": "Formalizes customizable payloads and evaluates coding rate and recovery. Balance-Marking uses probability-balanced vocabulary partitions.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v3",
+      "version_url": "https://arxiv.org/abs/2307.15992v3"
+    },
+    {
+      "title": "Multi-Bit Distortion-Free Watermarking for Large Language Models",
+      "url": "https://arxiv.org/abs/2402.16578",
+      "date_or_publication": "February 2024",
+      "relevance": "Distribution Interval Shift Coding extends sampling watermarks to recoverable metadata. Directly relevant to manipulating intervals.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2402.16578v1"
+    },
+    {
+      "title": "Advancing Beyond Identification: Multi-bit Watermark for Large Language Models",
+      "url": "https://aclanthology.org/2024.naacl-long.224/",
+      "date_or_publication": "NAACL 2024",
+      "relevance": "Multi-bit messages without fine-tuning, with extraction independent of the generating model. A practical payload baseline.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "SemStamp",
+      "url": "https://aclanthology.org/2024.naacl-long.226/",
+      "date_or_publication": "NAACL 2024",
+      "relevance": "Sentence embeddings, locality-sensitive hashing, and rejection sampling improve paraphrase-resistant detection. A relevant representation, not an established high-rate payload channel.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "Pseudorandom Error-Correcting Codes",
+      "url": "https://arxiv.org/abs/2402.09370",
+      "date_or_publication": "CRYPTO 2024",
+      "relevance": "Codewords look random but permit keyed recovery after corruption. Includes a direct constant-rate, stateless steganography application under its assumptions.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2402.09370v2"
+    },
+    {
+      "title": "Edit Distance Robust Watermarks via Indexing Pseudorandom Codes",
+      "url": "https://arxiv.org/abs/2406.02633",
+      "date_or_publication": "NeurIPS 2024",
+      "relevance": "Handles insertions, deletions, and substitutions. Alphabet and security-parameter assumptions matter for practical tokenizers.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2406.02633v2"
+    },
+    {
+      "title": "Scalable watermarking for identifying large language model outputs",
+      "url": "https://www.nature.com/articles/s41586-024-08025-4",
+      "date_or_publication": "Nature 2024",
+      "relevance": "SynthID-Text uses tournament sampling and evaluates quality at scale. Its main objective is provenance detection.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "The Stable Signature",
+      "url": "https://arxiv.org/abs/2303.15435",
+      "date_or_publication": "ICCV 2023",
+      "relevance": "Fine-tunes an image generator's decoder to emit a recoverable binary signature. A persistent model signature differs from fresh per-message ciphertext.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2303.15435v2"
+    },
+    {
+      "title": "Tree-Ring Watermarks",
+      "url": "https://arxiv.org/abs/2305.20030",
+      "date_or_publication": "NeurIPS 2023",
+      "relevance": "Structures initial diffusion noise and retrieves it through inversion. Establishes a sampling-noise approach; fingerprints need separate concealment analysis.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v3",
+      "version_url": "https://arxiv.org/abs/2305.20030v3"
+    },
+    {
+      "title": "Gaussian Shading",
+      "url": "https://arxiv.org/abs/2404.04956",
+      "date_or_publication": "CVPR 2024",
+      "relevance": "Maps randomized watermark bits into Gaussian latent sampling. A clear analogue of feeding encrypted bits into an LLM sampler.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v3",
+      "version_url": "https://arxiv.org/abs/2404.04956v3"
+    },
+    {
+      "title": "An Undetectable Watermark for Generative Image Models",
+      "url": "https://arxiv.org/abs/2410.07369",
+      "date_or_publication": "2024 preprint; ICLR 2025",
+      "relevance": "PRCs select diffusion latents. Reports 512-bit message recovery under tested attacks and up to 2,500 bits without removal attacks. Image results do not predict text capacity.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v4",
+      "version_url": "https://arxiv.org/abs/2410.07369v4",
+      "inspected_sections": [
+        "2 Related work",
+        "4.4 Encoding long messages in the watermark",
+        "Practical undetectability discussion"
+      ]
+    },
+    {
+      "title": "Watermark Anything with Localized Messages",
+      "url": "https://arxiv.org/abs/2411.07231",
+      "date_or_publication": "ICLR 2025",
+      "relevance": "Recovers messages locally from spliced regions. Suggests independently decodable text segments.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2411.07231v2"
+    },
+    {
+      "title": "Gaussian Shading++",
+      "url": "https://arxiv.org/abs/2504.15026",
+      "date_or_publication": "2025 preprint",
+      "relevance": "Adds PRC-protected seed transport and soft decoding for repeated use and varying generation settings. Seed management is part of the protocol.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2504.15026v2"
+    },
+    {
+      "title": "Video Seal: Open and Efficient Video Watermarking",
+      "url": "https://arxiv.org/abs/2412.09492",
+      "date_or_publication": "December 2024",
+      "relevance": "Trains through video transformations and aggregates soft predictions across frames. The reviewed paper uses 96-bit messages by default; later repository models have different capacities.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2412.09492v1",
+      "inspected_sections": [
+        "2.2.3 Extraction",
+        "2.3 Training pipeline",
+        "3.3 Training",
+        "3.4 Baselines",
+        "3.5 Evaluated transformations"
+      ]
+    },
+    {
+      "title": "VideoShield",
+      "url": "https://arxiv.org/abs/2501.14195",
+      "date_or_publication": "ICLR 2025",
+      "relevance": "Maps bits into video diffusion noise, recovers through inversion, and localizes spatial and temporal tampering. Relevant to sampling and synchronization.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2501.14195v2",
+      "inspected_sections": [
+        "Abstract and method outline"
+      ]
+    },
+    {
+      "title": "COVER: Codec-Robust Video Watermarking with Generative Video Priors",
+      "url": "https://arxiv.org/abs/2609.26236",
+      "date_or_publication": "September 2026 preprint",
+      "relevance": "Embeds and recovers in video-autoencoder latent space, training through codec surrogates. Supports designing for the actual damage channel, but supplies no ready-made text representation.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2609.26236v1",
+      "inspected_sections": [
+        "Abstract and method outline"
+      ]
+    },
+    {
+      "title": "Distributional Information Embedding: A Framework for Multi-bit Watermarking",
+      "url": "https://arxiv.org/abs/2501.16558",
+      "date_or_publication": "2025 preprint",
+      "relevance": "Analyzes information rate, quality, and detectability. Distinguish its asymptotic and finite-token settings.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2501.16558v2"
+    },
+    {
+      "title": "StealthInk",
+      "url": "https://arxiv.org/abs/2506.05502",
+      "date_or_publication": "ICML 2025",
+      "relevance": "Multi-bit provenance through distribution-preserving sampling, with model-free extraction. More directly relevant than presence-only watermarking.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2506.05502v1"
+    },
+    {
+      "title": "Provably Robust Multi-bit Watermarking for AI-generated Text",
+      "url": "https://www.usenix.org/conference/usenixsecurity25/presentation/qu-watermarking",
+      "date_or_publication": "2024 preprint; USENIX Security 2025",
+      "relevance": "Reports 97.6% message match for 20 bits in 200 tokens in its comparison: 0.1 payload bits/token. Robustness can consume substantial cover length.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "Robust Multi-bit Text Watermark with LLM-based Paraphrasers",
+      "url": "https://arxiv.org/abs/2412.03123",
+      "date_or_publication": "2024 preprint; ICML 2025",
+      "relevance": "Rewrites existing prose using two trained paraphrasers, then classifies sentence-level bit evidence. The closest direct precedent for watermarking one text with another.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2412.03123v2",
+      "inspected_sections": [
+        "Abstract and method outline",
+        "4.3 Robustness, including Sentence Paraphrasing"
+      ]
+    },
+    {
+      "title": "Ideal Pseudorandom Codes",
+      "url": "https://eprint.iacr.org/2024/1840",
+      "date_or_publication": "STOC 2025",
+      "relevance": "Strengthens adaptive robustness and develops linear-rate message constructions. Parameters and decoding costs need a concrete implementation.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "Improved Pseudorandom Codes from Permuted Puzzles",
+      "url": "https://eprint.iacr.org/2025/2222",
+      "date_or_publication": "2025 preprint; STOC 2026",
+      "relevance": "Addresses prior quasipolynomial distinguishing attacks and constant-alphabet edit robustness under a new conjecture. Early PRCs are not a finished primitive.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "MirrorMark",
+      "url": "https://arxiv.org/abs/2601.22246",
+      "date_or_publication": "January 2026; reviewed May v3",
+      "relevance": "Maps symbols through mirrored pseudorandom sampling values or ranks. A scheduler balances payload positions and localizes edit effects.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v3",
+      "version_url": "https://arxiv.org/abs/2601.22246v3"
+    },
+    {
+      "title": "WorldCup Sampling for Multi-bit LLM Watermarking",
+      "url": "https://arxiv.org/abs/2602.01752",
+      "date_or_publication": "February 2026; reviewed May v2",
+      "relevance": "Hierarchical sampling as communication, with entropy-aware modulation and confidence-aware recovery. Relevant to uneven token reliability.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2602.01752v2"
+    },
+    {
+      "title": "ArcMark: Distortion-Free Multi-Byte LLM Watermark via Optimal Transport",
+      "url": "https://arxiv.org/abs/2602.07235",
+      "date_or_publication": "February 2026; reviewed May v2",
+      "relevance": "Random linear coding, optimal transport, and shared randomness. The reviewed decoder scores all candidate messages, so arbitrary ciphertext requires further coding work.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2602.07235v2",
+      "inspected_sections": [
+        "3 ArcMark encoding, embedding, and decoding",
+        "4 Capacity assumptions"
+      ]
+    },
+    {
+      "title": "Undetectable Conversations Between AI Agents via Pseudorandom Noise-Resilient Key Exchange",
+      "url": "https://arxiv.org/abs/2604.04757",
+      "date_or_publication": "April 2026 preprint",
+      "relevance": "Theoretical bridge from watermarks to explicit covert payloads and near-entropy rates with an interaction-unique key. Private-context and key-exchange results extend beyond our shared-model codec.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2604.04757v1",
+      "inspected_sections": [
+        "Abstract",
+        "Background section outline and entropy definitions; construction not independently audited"
+      ]
+    },
+    {
+      "title": "Covert Multi-bit LLM Watermarking: An Information Theory and Coding Approach",
+      "url": "https://arxiv.org/abs/2605.16709",
+      "date_or_publication": "May 2026; reviewed September v2",
+      "relevance": "Latest version studies non-autoregressive models, non-causal access within blocks, and polar coding. Not a capacity theorem for our causal Llama sampler.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced.",
+      "reviewed_arxiv_version": "v2",
+      "version_url": "https://arxiv.org/abs/2605.16709v2"
+    },
+    {
+      "title": "You Can Have a Second Chance",
+      "url": "https://aclanthology.org/2026.acl-long.1297/",
+      "date_or_publication": "ACL 2026",
+      "relevance": "Unbiased multi-bit watermarking for diffusion language models through stable contexts and remasking. An adjacent model-family branch.",
+      "review_scope": "Primary abstract, proceedings summary, or author project overview; experiments not reproduced."
+    },
+    {
+      "title": "CertMark",
+      "url": "https://arxiv.org/abs/2609.33332",
+      "date_or_publication": "September 2026 preprint",
+      "relevance": "Message-conditioned Gumbel-max randomness and decoding with an abstention certificate. Candidate enumeration occurs within chunks; inspect payload size, cost, and assumptions.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2609.33332v1",
+      "inspected_sections": [
+        "3 Method and candidate decoding",
+        "Certificate and contamination assumptions"
+      ]
+    },
+    {
+      "title": "SimpleMark",
+      "url": "https://arxiv.org/abs/2610.05712",
+      "date_or_publication": "October 2026 preprint",
+      "relevance": "Explicit divergence constraints for each realized key and message, distinguished from average-key preservation. Its zero-capacity statement concerns the stronger exact conditional constraint.",
+      "review_scope": "Selected full-text passages and primary abstract; experiments and proofs not independently reproduced.",
+      "reviewed_arxiv_version": "v1",
+      "version_url": "https://arxiv.org/abs/2610.05712v1",
+      "inspected_sections": [
+        "3.2 Perfect Distortion-Freeness",
+        "3.3 Rate Bounds",
+        "Appendix C Distortion-Freeness: Per-Key vs. On-Average"
+      ]
+    }
+  ]
+}

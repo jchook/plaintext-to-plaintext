@@ -8,6 +8,13 @@ a reproducible 32-trial audit, a proposed distribution-budget slider, and two
 additional primary-source PDFs with provenance. The counts above describe the
 original October 18 archive.
 
+The [October 22 watermarking review](2026-10-22-watermarking/README.md) traces
+sampling steganography and message-carrying image, video, and text watermarks
+from 1998 through October 2026. It adds a source catalogue, examines the transfer
+from video compression robustness to text editing, and proposes separate
+comparisons for payload density and recovery after edits. Its new sources are
+linked primary works, not additions to the original PDF archive.
+
 Start with the [research summary](summary.md). For the next POC iteration, read [RRC](2026-rrc/relevance.md), [ANStega](2026-anstega/relevance.md), [SparSamp](2025-sparsamp/relevance.md), [tokenization verification](2025-stepwise-token-verification/relevance.md), [SyncPool](2024-syncpool/relevance.md), and [StegoZip](2025-stegozip/relevance.md).
 
 Each source has a short relevance.md beside its local artifacts. Paper PDFs are unchanged; paper.txt files are searchable extractions. Repository snapshots preserve documentation, not a source-code checkout. Relative links and images inside upstream READMEs may require the original repository. HTML snapshots retain page markup without mirroring external assets.
