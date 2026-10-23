@@ -1,0 +1,40 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-05.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "3f0024113f3d",
+      "scores": {"fluency": 1, "coherence_purpose": 0, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 0, "ending": 1, "length": 0},
+      "notes": "Long email signs off, adds a paragraph explaining compliance with the writing instructions, offers adjustments, then announces continuation of the main message and starts new topics. Invents an attachment, design studio, brand strategy, and customer-advocacy work. Individual prose is mostly readable, with an awkward How do you find that balancing question, but the full message is not usable correspondence.",
+      "failure_categories": ["prompt_leakage", "invented_facts", "repetition", "unnatural_ending", "excessive_length"]
+    },
+    {
+      "id": "b4dfae9d8747",
+      "scores": {"fluency": 1, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 0, "ending": 2, "length": 0},
+      "notes": "Maintains the intended people and ends conventionally, but seven paragraphs repeat the conversation, research collaboration, agenda, and scheduling requests. Invents an attached summary and prior research successes. Would you have any questions ... or was there anything that I felt like I missed is awkward. Much too long for the limited purpose.",
+      "failure_categories": ["invented_facts", "repetition", "excessive_length"]
+    },
+    {
+      "id": "fa2b1eba8685",
+      "scores": {"fluency": 1, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 0, "ending": 1, "length": 0},
+      "notes": "Relevant topics and consistent named roles, but twelve short paragraphs repeatedly schedule, defer scheduling, offer resources, close, and reopen questions. Invents machine-learning research and follow-up timing. Let me know in your thoughts is unidiomatic. Final question reopens the message after several closures.",
+      "failure_categories": ["invented_facts", "repetition", "unnatural_ending", "excessive_length"]
+    },
+    {
+      "id": "ed1c1e99b177",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Moderate length and a complete Your thoughts ending, but consider our insights ... fits is ungrammatical and the request about the recipient's survey staff participating in our decision process muddles roles. Invents survey responses and coordination details already discussed by Shannon. Several requests are difficult to interpret.",
+      "failure_categories": ["invented_facts", "role_drift"]
+    },
+    {
+      "id": "0fae399e1a1d",
+      "scores": {"fluency": 0, "coherence_purpose": 1, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 1, "ending": 1, "length": 1},
+      "notes": "Recognizable feedback-infrastructure topic, but grammar breaks in I think that worth exploring might be a worthwhile adaptation and effective today's work well. Invents a customer-insights discussion, customization capability, other companies' presentations, and a three-week implementation estimate. Ends by introducing that estimate rather than completing a focused request.",
+      "failure_categories": ["grammatical_collapse", "invented_facts", "repetition", "unnatural_ending", "excessive_length"]
+    }
+  ]
+}

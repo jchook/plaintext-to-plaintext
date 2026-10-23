@@ -1,0 +1,7 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+One specific area of inquiry I have is regarding the product feedback mechanism we discussed – how does your team ensure that a representative sample of users gets exposed to the feedback loop without being incentivized to provide skewed input.
+
+Another area of discussion I'd love to further address is the role users play in the product design review process – how do you work with users to gather feedback that doesn't lead to feature requests that may not actually meet their needs.
+
+Can you give me a sense for how your approach on this latter front has evolved from the launch strategies of your predecessors, or whether any fundamental shifts have been made to incorporate user insights in a way that was different from our previous conversations?

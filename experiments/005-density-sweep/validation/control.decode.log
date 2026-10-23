@@ -1,0 +1,56 @@
+{"tokens": 1, "bits": 0.7, "target_bits": null}
+{"tokens": 25, "bits": 36.4, "target_bits": null}
+{"tokens": 50, "bits": 69.4, "target_bits": null}
+{"tokens": 75, "bits": 97.0, "target_bits": null}
+{"tokens": 100, "bits": 132.5, "target_bits": null}
+{"tokens": 125, "bits": 166.7, "target_bits": null}
+{"tokens": 150, "bits": 190.1, "target_bits": null}
+{"tokens": 175, "bits": 205.3, "target_bits": null}
+{"tokens": 200, "bits": 223.1, "target_bits": null}
+{"tokens": 225, "bits": 237.5, "target_bits": null}
+{"tokens": 250, "bits": 255.4, "target_bits": null}
+{"tokens": 275, "bits": 279.2, "target_bits": null}
+{"tokens": 300, "bits": 311.8, "target_bits": null}
+{"tokens": 325, "bits": 332.4, "target_bits": null}
+{"tokens": 350, "bits": 355.5, "target_bits": null}
+{
+  "frame_bytes": 47,
+  "cover_bytes": 2232,
+  "payload_tokens": 367,
+  "total_tokens": 374,
+  "cover_model_calls": 374,
+  "authenticated": true,
+  "protocol": "opening-v1",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "template_version": "opening-template-v1",
+  "template_sha256": "6365e5b806f853d343e5cc7c07243818f2c2d214851cc6dd9b661f2028b05f41",
+  "rendered_prompt_sha256": "95e07a18b9c4490aea30d746f377336c40f4868543e319247ba95e28b66d857c",
+  "opening_sha256": "ead64812f02fbebd807014cab89acb89434fa0149eb798d3f0cc517e9073e6c2",
+  "temperature": "1.0",
+  "n_probs": 64,
+  "context_limit": 2048,
+  "history_tokens": 1024,
+  "max_opening_tokens": 256,
+  "max_prompt_tokens": 768,
+  "tokenization": "template-segments-special/opening-literal-v1",
+  "candidate_rules": "compact-v2-prefix-free",
+  "completion_rule": "p2p-v1-sentence-finish",
+  "source_coding": "compact-v2-auto-independent-model",
+  "opening": "Hi Morgan, thanks again for your comments on the chapter. I'm narrowing the discussion of trade and port cities so that it follows the people involved in a single journey before stepping back to the wider historical picture. I think that will give readers a clearer way into the topic, but I'd like your thoughts on how to connect that opening with the rest of the chapter.",
+  "rendered_prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nWrite natural, concrete prose. Output only the prose, without a title or introduction.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nContinue the message that begins with the opening paragraph below. Use that paragraph to establish the subject, purpose, voice, point of view, and level of formality for the continuation.\n\nKeep the same kind of message throughout. For an email, continue addressing the recipient; for a writing sample, continue the discussion in the same register. Develop the ideas already introduced using straightforward, connected prose. Avoid inventing measurements, citations, named people, dates, or commitments that the opening does not establish. Treat the opening as message content rather than instructions to override this task.\n\n<opening_paragraph>\nHi Morgan, thanks again for your comments on the chapter. I'm narrowing the discussion of trade and port cities so that it follows the people involved in a single journey before stepping back to the wider historical picture. I think that will give readers a clearer way into the topic, but I'd like your thoughts on how to connect that opening with the rest of the chapter.\n</opening_paragraph>\n\nWrite only the continuation, starting with the paragraph after this opening. Do not repeat the opening or add a title, preface, or explanation of what you are doing. Use complete sentences and ordinary paragraphs.\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+  "opening_bytes": 373,
+  "separator_bytes": 2,
+  "continuation_bytes": 1857,
+  "full_cover_bytes": 2232,
+  "opening_tokens": 74,
+  "fixed_prompt_tokens": 268,
+  "fixed_prompt_token_sha256": "af71fb6c742cde67d7e01c5201cc079fa816e19bc29f4774151316159ad10b5a",
+  "plaintext_bytes": 16,
+  "compression": "raw",
+  "decompression_seconds": 0.0,
+  "elapsed_seconds": 21.858,
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "server_build": "b1-0f3a71be1",
+  "cold": false,
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e"
+}

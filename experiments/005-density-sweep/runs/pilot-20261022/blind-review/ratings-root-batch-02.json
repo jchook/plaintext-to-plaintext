@@ -1,0 +1,105 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-02.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "21decf7393b9",
+      "scores": {
+        "fluency": 1,
+        "coherence_purpose": 1,
+        "sender_recipient": 1,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 1,
+        "length": 1
+      },
+      "notes": "Shifts to a competing company and invented interface, testing and engineering plans. Awkward phrases include casting different considerations regarding information diffusion and listening through your representative's insights. Final paragraph repeats the overhaul discussion instead of advancing the follow-up.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "role_drift",
+        "unnatural_ending",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "3b74684fe53a",
+      "scores": {
+        "fluency": 2,
+        "coherence_purpose": 2,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 0,
+        "ending": 1,
+        "length": 0
+      },
+      "notes": "Grammatical and stable direct address, but eight paragraphs repeatedly reopen a call request and add one more question. Invents data-quality problems, research findings, and a proposed joint analytics project. Excessive length and repeated closing attempts make it unsuitable as a simple conference follow-up.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "unnatural_ending",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "764583dc72e6",
+      "scores": {
+        "fluency": 0,
+        "coherence_purpose": 0,
+        "sender_recipient": 0,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 1,
+        "length": 1
+      },
+      "notes": "Central sentence collapses into a run-on mixing quantitative and unaligned statistical distributions with unclear business goals. My product lead finds yourselves is a clear role/grammar failure. Invents shared user trends and collected feedback. Final sentence recovers some meaning but does not repair the middle.",
+      "failure_categories": [
+        "grammatical_collapse",
+        "invented_facts",
+        "role_drift"
+      ]
+    },
+    {
+      "id": "4d71f2da830c",
+      "scores": {
+        "fluency": 1,
+        "coherence_purpose": 2,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 2,
+        "length": 1
+      },
+      "notes": "Relevant questions and a complete final question, but opening clause could be rich could be is awkward. Invents a Paris meeting last quarter and Shannon reporting its details. Multiple broad user-feedback questions make the email longer and less focused than its stated couple of follow-up points.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "30b7af285426",
+      "scores": {
+        "fluency": 1,
+        "coherence_purpose": 2,
+        "sender_recipient": 1,
+        "unsupported_claims": 0,
+        "repetition": 0,
+        "ending": 1,
+        "length": 0
+      },
+      "notes": "Invents detailed user-testing discussions and feedback already provided. Reopens questions after two scheduling/closing paragraphs. Final request muddles whose testing approach and experience are being discussed. I didn't catch that completely clear is unidiomatic. Too long and apologetic for a focused follow-up.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "role_drift",
+        "unnatural_ending",
+        "excessive_length"
+      ]
+    }
+  ]
+}

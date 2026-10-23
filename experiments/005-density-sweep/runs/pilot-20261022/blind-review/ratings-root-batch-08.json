@@ -1,0 +1,40 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-08.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "c278df49d164",
+      "scores": {"fluency": 1, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 1},
+      "notes": "On-topic and ends with a clear call request, but repeats feedback and efficacy questions before adding case studies. Invents research findings, active testing, and a prior case-study proposal. Would that something is ungrammatical and usability, usability problems is a weak distinction. Longer than needed, with several blank-line gaps.",
+      "failure_categories": ["invented_facts", "repetition", "excessive_length"]
+    },
+    {
+      "id": "66d301b88f30",
+      "scores": {"fluency": 0, "coherence_purpose": 0, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 2},
+      "notes": "Brief and ends with an intelligible request for thoughts, but the preceding Q&A, testing-facility, and research-methodology passages collapse grammatically. One thing more could add and What the core aspects now seem somewhat unclear have no stable syntax. Invents completed discussions and coordination, with unclear product ownership.",
+      "failure_categories": ["grammatical_collapse", "invented_facts", "role_drift"]
+    },
+    {
+      "id": "2be7d728c107",
+      "scores": {"fluency": 2, "coherence_purpose": 1, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 1, "length": 2},
+      "notes": "Grammatical, moderate length and stable direct address. Invents beta prototypes, an internal design-team question and other product lines. The question about organizational changes being primary causes of this issue has an unclear referent and relation to group disparities. Final paragraph adds a vague investment observation rather than closing the specific request.",
+      "failure_categories": ["invented_facts", "unnatural_ending"]
+    },
+    {
+      "id": "3cce51b7a463",
+      "scores": {"fluency": 2, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 0, "ending": 2, "length": 0},
+      "notes": "Readable and a conventional final close, but a very long message repeatedly reopens calls, findings, feedback, messaging and testing after apparent endings. Invents detailed complaints, dashboard changes and prior proposals. Treats the launch and marketing decisions as a shared project despite the opening's exploratory coordination between separate teams.",
+      "failure_categories": ["invented_facts", "role_drift", "repetition", "excessive_length"]
+    },
+    {
+      "id": "f575c4a5c358",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 1},
+      "notes": "Ends with a clear choice about discussing value or waiting for Shannon, but What I found ourselves wrestling with regards has a pronoun/grammar problem. Invents surveys, focus groups, last week's exhibition-hall chaos and personal frustration. Repeated abstract value discussion drifts from a focused launch follow-up and adds interpersonal tension unsupported by the opening.",
+      "failure_categories": ["invented_facts", "role_drift", "repetition", "excessive_length"]
+    }
+  ]
+}

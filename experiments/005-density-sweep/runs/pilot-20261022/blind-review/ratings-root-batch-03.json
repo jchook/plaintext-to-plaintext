@@ -1,0 +1,104 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-03.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "bce7346af820",
+      "scores": {
+        "fluency": 2,
+        "coherence_purpose": 1,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 0,
+        "ending": 2,
+        "length": 0
+      },
+      "notes": "Readable sentences and a complete conventional ending, but twelve paragraphs repeatedly restart the discussion, announce more materials, and ask one more question. Invents demonstrated benefits and market impact. References conversation today blur an email follow-up into a live conversation. Clearly excessive for a couple of points.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "327d5f18b503",
+      "scores": {
+        "fluency": 0,
+        "coherence_purpose": 1,
+        "sender_recipient": 1,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 1,
+        "length": 1
+      },
+      "notes": "Begins mid-sentence with can make and includes fragments In terms, of meeting and Can give you. Reverses the research-lead role and invents testing phases, regression tests, and a marketing-lead conversation. Testing topic is discernible, but execution is not ordinary correspondence.",
+      "failure_categories": [
+        "grammatical_collapse",
+        "invented_facts",
+        "role_drift",
+        "unnatural_ending"
+      ]
+    },
+    {
+      "id": "737b7ef0628a",
+      "scores": {
+        "fluency": 0,
+        "coherence_purpose": 0,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 0,
+        "length": 1
+      },
+      "notes": "Starts with relevant questions but ends in a long syntactic collapse: earlier this month before, and how, after... along way since and they come up. Invents earlier-month recommendations. Direct-address roles remain identifiable, but the last sentence is incoherent and has no natural endpoint.",
+      "failure_categories": [
+        "grammatical_collapse",
+        "invented_facts",
+        "unnatural_ending"
+      ]
+    },
+    {
+      "id": "d14c4f69e80d",
+      "scores": {
+        "fluency": 2,
+        "coherence_purpose": 0,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 0,
+        "ending": 0,
+        "length": 0
+      },
+      "notes": "Mostly grammatical, but extends through repeated closes and a placeholder signature, explicitly calls the original message a prompt, announces Let me try again, and repeats the supplied opening. This is a clear purpose/ending failure regardless of fluent individual sentences. Also invents prior testing discussions.",
+      "failure_categories": [
+        "prompt_leakage",
+        "invented_facts",
+        "repetition",
+        "unnatural_ending",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "70706724b8fd",
+      "scores": {
+        "fluency": 1,
+        "coherence_purpose": 1,
+        "sender_recipient": 1,
+        "unsupported_claims": 1,
+        "repetition": 0,
+        "ending": 1,
+        "length": 0
+      },
+      "notes": "Long sequence of generic questions repeats alignment, collaboration, and choosing discussion topics. Slides toward treating the launch as shared and assumes an existing list of possibilities. Odd capitalization in wrap Things Up and a final scheduling abstraction weaken the ending. Little conspicuous named invention, but too repetitive and unfocused.",
+      "failure_categories": [
+        "repetition",
+        "role_drift",
+        "unnatural_ending",
+        "excessive_length"
+      ]
+    }
+  ]
+}

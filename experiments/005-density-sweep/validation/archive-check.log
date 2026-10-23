@@ -1,0 +1,10 @@
+unchanged moved artifacts: 198
+historical compact artifact hashes: 122
+historical code hashes at 6e80812: 5
+opening pilot artifact hashes: 392
+opening code hashes at 7ce7883: 11
+opening rejection/restart records checked offline: 9
+saved full round trips compared byte-for-byte: 97
+saved restart recoveries compared byte-for-byte: 3
+local documentation links: 121
+PASS: archive intact. No model inference was run.

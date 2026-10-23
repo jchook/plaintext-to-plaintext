@@ -1,0 +1,81 @@
+Starting 1/40 key-message.opening-conference-followup-t1.6.1
+{"name": "key-message.opening-conference-followup-t1.6.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1064, "encode_seconds": 10.137}
+Starting 2/40 key-message.opening-conference-followup-t1.2.1
+{"name": "key-message.opening-conference-followup-t1.2.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1341, "encode_seconds": 12.938}
+Starting 3/40 key-message.opening-conference-followup-t1.4.1
+{"name": "key-message.opening-conference-followup-t1.4.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1144, "encode_seconds": 11.151}
+Starting 4/40 key-message.opening-conference-followup-t0.8.1
+{"name": "key-message.opening-conference-followup-t0.8.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 2316, "encode_seconds": 24.304}
+Starting 5/40 key-message.opening-conference-followup-t1.0.1
+{"name": "key-message.opening-conference-followup-t1.0.1", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1685, "encode_seconds": 16.299}
+Starting 6/40 paragraph.opening-conference-followup-t1.6.1
+{"name": "paragraph.opening-conference-followup-t1.6.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1346, "encode_seconds": 14.65}
+Starting 7/40 paragraph.opening-conference-followup-t1.4.1
+{"name": "paragraph.opening-conference-followup-t1.4.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1568, "encode_seconds": 15.264}
+Starting 8/40 paragraph.opening-conference-followup-t1.2.1
+{"name": "paragraph.opening-conference-followup-t1.2.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1976, "encode_seconds": 21.195}
+Starting 9/40 paragraph.opening-conference-followup-t0.8.1
+{"name": "paragraph.opening-conference-followup-t0.8.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 3446, "encode_seconds": 38.617}
+Starting 10/40 paragraph.opening-conference-followup-t1.0.1
+{"name": "paragraph.opening-conference-followup-t1.0.1", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2169, "encode_seconds": 23.726}
+Starting 11/40 binary.opening-conference-followup-t1.2.1
+{"name": "binary.opening-conference-followup-t1.2.1", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 2246, "encode_seconds": 22.698}
+Starting 12/40 binary.opening-conference-followup-t1.4.1
+{"name": "binary.opening-conference-followup-t1.4.1", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 1568, "encode_seconds": 15.405}
+Starting 13/40 binary.opening-conference-followup-t1.6.1
+{"name": "binary.opening-conference-followup-t1.6.1", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 1418, "encode_seconds": 12.947}
+Starting 14/40 binary.opening-conference-followup-t1.0.1
+{"name": "binary.opening-conference-followup-t1.0.1", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 3688, "encode_seconds": 34.829}
+Starting 15/40 binary.opening-conference-followup-t0.8.1
+{"name": "binary.opening-conference-followup-t0.8.1", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 3704, "encode_seconds": 39.232}
+Starting 16/40 unicode.opening-conference-followup-t1.0.1
+{"name": "unicode.opening-conference-followup-t1.0.1", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 2335, "encode_seconds": 22.466}
+Starting 17/40 unicode.opening-conference-followup-t1.4.1
+{"name": "unicode.opening-conference-followup-t1.4.1", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 1416, "encode_seconds": 13.444}
+Starting 18/40 unicode.opening-conference-followup-t1.2.1
+{"name": "unicode.opening-conference-followup-t1.2.1", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 1947, "encode_seconds": 20.259}
+Starting 19/40 unicode.opening-conference-followup-t0.8.1
+{"name": "unicode.opening-conference-followup-t0.8.1", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 3923, "encode_seconds": 43.426}
+Starting 20/40 unicode.opening-conference-followup-t1.6.1
+{"name": "unicode.opening-conference-followup-t1.6.1", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 1200, "encode_seconds": 11.51}
+Starting 21/40 binary.opening-conference-followup-t1.6.2
+{"name": "binary.opening-conference-followup-t1.6.2", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 1407, "encode_seconds": 12.924}
+Starting 22/40 binary.opening-conference-followup-t1.2.2
+{"name": "binary.opening-conference-followup-t1.2.2", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 1910, "encode_seconds": 18.333}
+Starting 23/40 binary.opening-conference-followup-t0.8.2
+{"name": "binary.opening-conference-followup-t0.8.2", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 4175, "encode_seconds": 44.811}
+Starting 24/40 binary.opening-conference-followup-t1.4.2
+{"name": "binary.opening-conference-followup-t1.4.2", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 1560, "encode_seconds": 14.707}
+Starting 25/40 binary.opening-conference-followup-t1.0.2
+{"name": "binary.opening-conference-followup-t1.0.2", "exact_bytes": true, "plaintext_bytes": 64, "cover_bytes": 3373, "encode_seconds": 33.986}
+Starting 26/40 key-message.opening-conference-followup-t0.8.2
+{"name": "key-message.opening-conference-followup-t0.8.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 2200, "encode_seconds": 23.058}
+Starting 27/40 key-message.opening-conference-followup-t1.4.2
+{"name": "key-message.opening-conference-followup-t1.4.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1044, "encode_seconds": 10.305}
+Starting 28/40 key-message.opening-conference-followup-t1.6.2
+{"name": "key-message.opening-conference-followup-t1.6.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 955, "encode_seconds": 8.253}
+Starting 29/40 key-message.opening-conference-followup-t1.0.2
+{"name": "key-message.opening-conference-followup-t1.0.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1695, "encode_seconds": 15.477}
+Starting 30/40 key-message.opening-conference-followup-t1.2.2
+{"name": "key-message.opening-conference-followup-t1.2.2", "exact_bytes": true, "plaintext_bytes": 16, "cover_bytes": 1365, "encode_seconds": 12.559}
+Starting 31/40 unicode.opening-conference-followup-t1.0.2
+{"name": "unicode.opening-conference-followup-t1.0.2", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 2297, "encode_seconds": 21.732}
+Starting 32/40 unicode.opening-conference-followup-t1.2.2
+{"name": "unicode.opening-conference-followup-t1.2.2", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 2049, "encode_seconds": 19.337}
+Starting 33/40 unicode.opening-conference-followup-t1.6.2
+{"name": "unicode.opening-conference-followup-t1.6.2", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 1075, "encode_seconds": 10.725}
+Starting 34/40 unicode.opening-conference-followup-t0.8.2
+{"name": "unicode.opening-conference-followup-t0.8.2", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 4146, "encode_seconds": 44.68}
+Starting 35/40 unicode.opening-conference-followup-t1.4.2
+{"name": "unicode.opening-conference-followup-t1.4.2", "exact_bytes": true, "plaintext_bytes": 42, "cover_bytes": 1530, "encode_seconds": 14.414}
+Starting 36/40 paragraph.opening-conference-followup-t1.6.2
+{"name": "paragraph.opening-conference-followup-t1.6.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1186, "encode_seconds": 13.475}
+Starting 37/40 paragraph.opening-conference-followup-t1.2.2
+{"name": "paragraph.opening-conference-followup-t1.2.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1585, "encode_seconds": 17.484}
+Starting 38/40 paragraph.opening-conference-followup-t0.8.2
+{"name": "paragraph.opening-conference-followup-t0.8.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 3575, "encode_seconds": 41.504}
+Starting 39/40 paragraph.opening-conference-followup-t1.4.2
+{"name": "paragraph.opening-conference-followup-t1.4.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 1535, "encode_seconds": 16.909}
+Starting 40/40 paragraph.opening-conference-followup-t1.0.2
+{"name": "paragraph.opening-conference-followup-t1.0.2", "exact_bytes": true, "plaintext_bytes": 238, "cover_bytes": 2437, "encode_seconds": 25.667}
+Completed 40/40 authenticated round trips: /home/jchook/projects/plaintext-to-plaintext/experiments/005-density-sweep/runs/pilot-20261022

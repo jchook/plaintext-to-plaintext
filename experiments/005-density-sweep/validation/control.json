@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/jchook/.local/opt/miniconda3/bin/python3",
+    "experiments/005-density-sweep/codec.py",
+    "decode",
+    "--key",
+    "poc/keys/alice.txt",
+    "--input",
+    "experiments/003-opening-paragraph/runs/pilot-20261021/key-message.opening-history-revision-t1.0.1.cover.txt",
+    "--output",
+    "experiments/005-density-sweep/validation/control.recovered",
+    "--stats",
+    "experiments/005-density-sweep/validation/control.decode.json",
+    "--temperature",
+    "1.0"
+  ],
+  "source_attempt": "key-message.opening-history-revision-t1.0.1",
+  "returncode": 0,
+  "elapsed_seconds": 21.938005736010382,
+  "exact_bytes": true
+}

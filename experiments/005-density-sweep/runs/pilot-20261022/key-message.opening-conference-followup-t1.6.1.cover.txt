@@ -1,0 +1,5 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+One thing that struck me from our conversation was how open your team is to feedback on the development process - most of our discussions with external partners touch base primarily when there's a problem or change they've anticipated, but I was amazed at how freely you were willing to take constructive criticism. On our end, we've stumbled upon a few opportunities to shave off processing steps in the backend, which could potentially bring that launch forward without adding much operational overhead. 
+
+I wanted also to reiterate our thoughts on customer psychology - how the core identity of your product aligns with broader market needs, which is what we're trying to tap into with our own research.

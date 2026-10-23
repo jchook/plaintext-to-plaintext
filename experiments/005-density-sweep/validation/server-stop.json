@@ -1,0 +1,10 @@
+{
+  "pid": 2792,
+  "argv_verified": true,
+  "start_time_ticks_verified": true,
+  "signal": "SIGTERM",
+  "sent_at": "2026-10-23T01:43:43.852068+00:00",
+  "process_gone": true,
+  "finished_at": "2026-10-23T01:43:43.952333+00:00",
+  "original_exec_session_exit_code": 0
+}

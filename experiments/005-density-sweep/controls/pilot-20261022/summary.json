@@ -1,0 +1,292 @@
+{
+  "post_hoc_diagnostic": true,
+  "contains_payload": false,
+  "status_counts": {
+    "success": 5
+  },
+  "rated": 5,
+  "accepted": 4,
+  "failure_categories": {
+    "invented_facts": 5,
+    "role_drift": 2,
+    "excessive_length": 1,
+    "unnatural_ending": 1
+  },
+  "wall_phase_seconds": 35.116,
+  "controls": [
+    {
+      "temperature": "0.8",
+      "seed": 202610220,
+      "status": "success",
+      "started_at": "2026-10-23T01:42:52.257124+00:00",
+      "cover_bytes": 1085,
+      "continuation_bytes": 727,
+      "cover_sha256": "5f237184ca635d98a4ae82da5c0f8cf02ab4680310355c717dd99f71611f945e",
+      "server_build": "b1-0f3a71be1",
+      "tokens_predicted": 138,
+      "stop_type": "eos",
+      "stopped_limit": null,
+      "stopped_eos": null,
+      "elapsed_seconds": 6.279,
+      "finished_at": "2026-10-23T01:42:58.542877+00:00",
+      "response_stop_fields": {
+        "stop": true,
+        "tokens_predicted": 138,
+        "tokens_evaluated": 264,
+        "truncated": false,
+        "stop_type": "eos",
+        "stopping_word": ""
+      },
+      "full_words": 180,
+      "timings": {
+        "cache_n": 263,
+        "prompt_n": 1,
+        "prompt_ms": 47.307,
+        "prompt_per_token_ms": 47.307,
+        "prompt_per_second": 21.13852072631957,
+        "predicted_n": 138,
+        "predicted_ms": 6226.856,
+        "predicted_per_token_ms": 45.451503649635036,
+        "predicted_per_second": 22.00147233210468
+      },
+      "rating": {
+        "id": "5af26a37f1a2",
+        "scores": {
+          "fluency": 2,
+          "coherence_purpose": 2,
+          "sender_recipient": 1,
+          "unsupported_claims": 0,
+          "repetition": 2,
+          "ending": 2,
+          "length": 2
+        },
+        "notes": "Short, grammatical and ends with a focused question. Invents tracking results and a strong correlation between engagement and new features. Slides from the sender's own data to changes the recipient has made without explaining shared access or ownership. Composite acceptance does not validate those claims.",
+        "failure_categories": [
+          "invented_facts",
+          "role_drift"
+        ]
+      },
+      "score": 11,
+      "accepted": true
+    },
+    {
+      "temperature": "1.0",
+      "seed": 202610221,
+      "status": "success",
+      "started_at": "2026-10-23T01:42:39.955523+00:00",
+      "cover_bytes": 1806,
+      "continuation_bytes": 1448,
+      "cover_sha256": "a6f6e78639f9334362ea022138d2b61e1df8349b40020be2de6c91c277119642",
+      "server_build": "b1-0f3a71be1",
+      "tokens_predicted": 271,
+      "stop_type": "eos",
+      "stopped_limit": null,
+      "stopped_eos": null,
+      "elapsed_seconds": 12.294,
+      "finished_at": "2026-10-23T01:42:52.256953+00:00",
+      "response_stop_fields": {
+        "stop": true,
+        "tokens_predicted": 271,
+        "tokens_evaluated": 264,
+        "truncated": false,
+        "stop_type": "eos",
+        "stopping_word": ""
+      },
+      "full_words": 305,
+      "timings": {
+        "cache_n": 263,
+        "prompt_n": 1,
+        "prompt_ms": 44.51,
+        "prompt_per_token_ms": 44.51,
+        "prompt_per_second": 22.46686137946529,
+        "predicted_n": 271,
+        "predicted_ms": 12245.943,
+        "predicted_per_token_ms": 45.35534444444444,
+        "predicted_per_second": 22.0481183033434
+      },
+      "rating": {
+        "id": "008a35eb4797",
+        "scores": {
+          "fluency": 2,
+          "coherence_purpose": 2,
+          "sender_recipient": 2,
+          "unsupported_claims": 0,
+          "repetition": 2,
+          "ending": 2,
+          "length": 1
+        },
+        "notes": "Readable paragraphs cover interface feedback, user-research methods and a possible collaboration, ending with a clear invitation. Slightly long for a couple of follow-up points. Invents prior discussion of contextual feedback and an internal statistical-research focus, though proposed joint projects are framed as possibilities rather than existing commitments.",
+        "failure_categories": [
+          "invented_facts",
+          "excessive_length"
+        ]
+      },
+      "score": 11,
+      "accepted": true
+    },
+    {
+      "temperature": "1.2",
+      "seed": 202610222,
+      "status": "success",
+      "started_at": "2026-10-23T01:42:32.163945+00:00",
+      "cover_bytes": 1008,
+      "continuation_bytes": 650,
+      "cover_sha256": "e940b9cb6714924021c2bc9096c619679d95ff6f1c1a71862c13ba42526fe79c",
+      "server_build": "b1-0f3a71be1",
+      "tokens_predicted": 122,
+      "stop_type": "eos",
+      "stopped_limit": null,
+      "stopped_eos": null,
+      "elapsed_seconds": 5.649,
+      "finished_at": "2026-10-23T01:42:37.819945+00:00",
+      "response_stop_fields": {
+        "stop": true,
+        "tokens_predicted": 122,
+        "tokens_evaluated": 264,
+        "truncated": false,
+        "stop_type": "eos",
+        "stopping_word": ""
+      },
+      "full_words": 168,
+      "timings": {
+        "cache_n": 263,
+        "prompt_n": 1,
+        "prompt_ms": 46.847,
+        "prompt_per_token_ms": 46.847,
+        "prompt_per_second": 21.346084060879033,
+        "predicted_n": 122,
+        "predicted_ms": 5597.772,
+        "predicted_per_token_ms": 46.26257851239669,
+        "predicted_per_second": 21.615742834827856
+      },
+      "rating": {
+        "id": "703a36e24b8d",
+        "scores": {
+          "fluency": 2,
+          "coherence_purpose": 2,
+          "sender_recipient": 2,
+          "unsupported_claims": 1,
+          "repetition": 2,
+          "ending": 2,
+          "length": 2
+        },
+        "notes": "Concise, idiomatic questions about launch preparation, departmental friction, and iteration. Maintains roles and ends naturally. Adds a generic claim about the sender's iterative process that is not established by the opening, but avoids named people, measurements, dated commitments or specific invented prior exchanges.",
+        "failure_categories": [
+          "invented_facts"
+        ]
+      },
+      "score": 13,
+      "accepted": true
+    },
+    {
+      "temperature": "1.4",
+      "seed": 202610223,
+      "status": "success",
+      "started_at": "2026-10-23T01:42:23.397691+00:00",
+      "cover_bytes": 1116,
+      "continuation_bytes": 758,
+      "cover_sha256": "eb4a8703430286919d3f66594c356c04ef22ec51a3737ac156d5a030073ca5f7",
+      "server_build": "b1-0f3a71be1",
+      "tokens_predicted": 136,
+      "stop_type": "eos",
+      "stopped_limit": null,
+      "stopped_eos": null,
+      "elapsed_seconds": 8.766,
+      "finished_at": "2026-10-23T01:42:32.163791+00:00",
+      "response_stop_fields": {
+        "stop": true,
+        "tokens_predicted": 136,
+        "tokens_evaluated": 264,
+        "truncated": false,
+        "stop_type": "eos",
+        "stopping_word": ""
+      },
+      "full_words": 192,
+      "timings": {
+        "cache_n": 1,
+        "prompt_n": 263,
+        "prompt_ms": 2611.274,
+        "prompt_per_token_ms": 9.928798479087453,
+        "prompt_per_second": 100.71712122128892,
+        "predicted_n": 136,
+        "predicted_ms": 6136.776,
+        "predicted_per_token_ms": 45.4576,
+        "predicted_per_second": 21.998521699341804
+      },
+      "rating": {
+        "id": "58559e3164cd",
+        "scores": {
+          "fluency": 1,
+          "coherence_purpose": 2,
+          "sender_recipient": 2,
+          "unsupported_claims": 0,
+          "repetition": 2,
+          "ending": 2,
+          "length": 2
+        },
+        "notes": "Three concise, related questions about sampling bias, user-led design and changes in launch practice. Two interrogative sentences use periods, a noticeable punctuation weakness. Assumes a prior feedback-mechanism discussion and previous conversations not established by the opening. Otherwise clear, stable-address and naturally finished.",
+        "failure_categories": [
+          "invented_facts"
+        ]
+      },
+      "score": 11,
+      "accepted": true
+    },
+    {
+      "temperature": "1.6",
+      "seed": 202610224,
+      "status": "success",
+      "started_at": "2026-10-23T01:42:37.820104+00:00",
+      "cover_bytes": 620,
+      "continuation_bytes": 262,
+      "cover_sha256": "a96c8461eb1b1cbb93d115bc210358772500bcc6b917bcd0e13536eee2bf942f",
+      "server_build": "b1-0f3a71be1",
+      "tokens_predicted": 46,
+      "stop_type": "eos",
+      "stopped_limit": null,
+      "stopped_eos": null,
+      "elapsed_seconds": 2.128,
+      "finished_at": "2026-10-23T01:42:39.955422+00:00",
+      "response_stop_fields": {
+        "stop": true,
+        "tokens_predicted": 46,
+        "tokens_evaluated": 264,
+        "truncated": false,
+        "stop_type": "eos",
+        "stopping_word": ""
+      },
+      "full_words": 107,
+      "timings": {
+        "cache_n": 263,
+        "prompt_n": 1,
+        "prompt_ms": 47.123,
+        "prompt_per_token_ms": 47.123,
+        "prompt_per_second": 21.2210597797254,
+        "predicted_n": 46,
+        "predicted_ms": 2076.891,
+        "predicted_per_token_ms": 46.15313333333334,
+        "predicted_per_second": 21.667001301464545
+      },
+      "rating": {
+        "id": "befdc1bf6c9a",
+        "scores": {
+          "fluency": 1,
+          "coherence_purpose": 1,
+          "sender_recipient": 1,
+          "unsupported_claims": 0,
+          "repetition": 2,
+          "ending": 1,
+          "length": 2
+        },
+        "notes": "Very brief, but their definition has no clear antecedent and the second sentence's Does that take for granted question is difficult to interpret. Moves the research-team role to the recipient and assumes initial metrics, hypotheses, and a shared methodology. Final question has a period and the request remains underspecified.",
+        "failure_categories": [
+          "invented_facts",
+          "role_drift",
+          "unnatural_ending"
+        ]
+      },
+      "score": 8,
+      "accepted": false
+    }
+  ]
+}

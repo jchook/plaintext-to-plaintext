@@ -1,0 +1,198 @@
+{
+  "started_at": "2026-10-23T01:13:35.538910+00:00",
+  "argv": [
+    "/home/jchook/.local/opt/miniconda3/bin/python3",
+    "/home/jchook/projects/plaintext-to-plaintext/experiments/005-density-sweep/run.py",
+    "--directory",
+    "experiments/005-density-sweep/runs/pilot-20261022"
+  ],
+  "cwd": "/home/jchook/projects/plaintext-to-plaintext",
+  "dry_run": false,
+  "interleaving_seed": 20261022,
+  "planned_attempts": 40,
+  "url": "http://127.0.0.1:11535",
+  "key_path": "/home/jchook/projects/plaintext-to-plaintext/poc/keys/alice.txt",
+  "key_sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e",
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "settings": {
+    "compression": "auto",
+    "n_probs": 64,
+    "history_context_tokens": 1024,
+    "max_tokens": 5000,
+    "cold": false,
+    "timeout_seconds": 3600,
+    "maximum_full_cover_bytes": 8000,
+    "cases": [
+      "key-message",
+      "paragraph",
+      "unicode",
+      "binary"
+    ],
+    "openings": [
+      "conference-followup"
+    ],
+    "temperatures": [
+      "0.8",
+      "1.0",
+      "1.2",
+      "1.4",
+      "1.6"
+    ],
+    "controls": [],
+    "repetitions": 2
+  },
+  "commit": "12628b49e9dfd44105f1beae584878ab2d6c7111",
+  "git_status_porcelain": " M research/README.md\n?? experiments/005-density-sweep/runs/pilot-20261022/source/experiments/003-opening-paragraph/openings/conference-followup.txt\n?? experiments/005-density-sweep/runs/pilot-20261022/source/experiments/003-opening-paragraph/prompt-template-v1.txt\n?? experiments/005-density-sweep/runs/pilot-20261022/source/experiments/005-density-sweep/README.md\n?? experiments/005-density-sweep/runs/pilot-20261022/source/experiments/005-density-sweep/codec.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/experiments/005-density-sweep/run.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/poc/compact.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/poc/compact_demo.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/poc/opening.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/poc/opening_demo.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/poc/p2p.py\n?? experiments/005-density-sweep/runs/pilot-20261022/source/poc/source_codec.py\n?? experiments/005-density-sweep/sweep.log\n?? experiments/005-density-sweep/validation/control.decode.json\n?? experiments/005-density-sweep/validation/control.decode.log\n?? experiments/005-density-sweep/validation/control.json\n?? experiments/005-density-sweep/validation/control.recovered\n?? experiments/005-density-sweep/validation/local-tests.log\n?? experiments/005-density-sweep/validation/model-check.json\n?? experiments/005-density-sweep/validation/sandbox-server-failure.log\n?? research/2026-10-22-encoding-density-audit/audit.json\n?? research/2026-10-22-encoding-density-audit/audit.py\n?? research/2026-10-22-watermarking/README.md\n?? research/2026-10-22-watermarking/sources.json\n",
+  "sources": {
+    "poc/p2p.py": {
+      "sha256": "374e5349555ee744194536595974607c3e35252353dc3fa3606128c05133bdf4",
+      "dirty": false,
+      "snapshot": "source/poc/p2p.py"
+    },
+    "poc/compact.py": {
+      "sha256": "0e80aa9b7d5c7d164e9bb2449dab1707a4a937344be3bd87c4186d3401ff3e78",
+      "dirty": false,
+      "snapshot": "source/poc/compact.py"
+    },
+    "poc/source_codec.py": {
+      "sha256": "f30fcc5f08a01dabfc77d3ff1e32145527432ed439722a18474d569cfab71d42",
+      "dirty": false,
+      "snapshot": "source/poc/source_codec.py"
+    },
+    "poc/compact_demo.py": {
+      "sha256": "5c84248ddc0bc5f8c5b45b36a3bb5e33d352d9b6a1d87723d4d1bb6f814c65d4",
+      "dirty": false,
+      "snapshot": "source/poc/compact_demo.py"
+    },
+    "poc/opening.py": {
+      "sha256": "b9147764e2c4ce34feb039213af0496f7cf702fbb7bc24498360347dc74bea40",
+      "dirty": false,
+      "snapshot": "source/poc/opening.py"
+    },
+    "poc/opening_demo.py": {
+      "sha256": "0976ab1e1db248bf898b7fe913f0857b050515655a3c3e7fc4cec1866fed7cfa",
+      "dirty": false,
+      "snapshot": "source/poc/opening_demo.py"
+    },
+    "experiments/005-density-sweep/run.py": {
+      "sha256": "5ff0134a20ceaf164fd2b6cc4bbcdda61b8644b1219bc6c272f0db9b2d7a92d2",
+      "dirty": false,
+      "snapshot": "source/experiments/005-density-sweep/run.py"
+    },
+    "experiments/005-density-sweep/codec.py": {
+      "sha256": "d95bab260d6bb4dedb7dbcde9017c8e46665fb9c4313e74f64efecc1f3e3b68f",
+      "dirty": false,
+      "snapshot": "source/experiments/005-density-sweep/codec.py"
+    },
+    "experiments/005-density-sweep/README.md": {
+      "sha256": "fd3cd826cde1b27d0e96e4abd096c2c76ce2287e2d54200df5a70917a33d4b17",
+      "dirty": false,
+      "snapshot": "source/experiments/005-density-sweep/README.md"
+    },
+    "experiments/003-opening-paragraph/prompt-template-v1.txt": {
+      "sha256": "6365e5b806f853d343e5cc7c07243818f2c2d214851cc6dd9b661f2028b05f41",
+      "dirty": false,
+      "snapshot": "source/experiments/003-opening-paragraph/prompt-template-v1.txt"
+    },
+    "experiments/003-opening-paragraph/openings/conference-followup.txt": {
+      "sha256": "8f780bb8eea6d7e7b69eb673fd7f6a87398809160b61f6cfafbb698d9f8cba5a",
+      "dirty": false,
+      "snapshot": "source/experiments/003-opening-paragraph/openings/conference-followup.txt"
+    }
+  },
+  "server_props": {
+    "default_generation_settings": {
+      "params": {
+        "seed": 4294967295,
+        "temperature": 0.800000011920929,
+        "dynatemp_range": 0.0,
+        "dynatemp_exponent": 1.0,
+        "top_k": 40,
+        "top_p": 0.949999988079071,
+        "min_p": 0.05000000074505806,
+        "top_n_sigma": -1.0,
+        "xtc_probability": 0.0,
+        "xtc_threshold": 0.10000000149011612,
+        "typical_p": 1.0,
+        "repeat_last_n": 64,
+        "repeat_penalty": 1.0,
+        "presence_penalty": 0.0,
+        "frequency_penalty": 0.0,
+        "dry_multiplier": 0.0,
+        "dry_base": 1.75,
+        "dry_allowed_length": 2,
+        "dry_penalty_last_n": 64,
+        "mirostat": 0,
+        "mirostat_tau": 5.0,
+        "mirostat_eta": 0.10000000149011612,
+        "adaptive_target": -1.0,
+        "adaptive_decay": 0.8999999761581421,
+        "max_tokens": -1,
+        "n_predict": -1,
+        "n_keep": 0,
+        "n_discard": 0,
+        "ignore_eos": false,
+        "stream": false,
+        "n_probs": 0,
+        "min_keep": 0,
+        "chat_format": "Content-only",
+        "reasoning_format": "none",
+        "reasoning_in_content": false,
+        "generation_prompt": "",
+        "samplers": [
+          "penalties",
+          "dry",
+          "top_n_sigma",
+          "top_k",
+          "typ_p",
+          "top_p",
+          "min_p",
+          "xtc",
+          "temperature"
+        ],
+        "speculative.types": "none",
+        "timings_per_token": false,
+        "post_sampling_probs": false,
+        "backend_sampling": false,
+        "lora": []
+      },
+      "n_ctx": 2048
+    },
+    "total_slots": 1,
+    "model_alias": "/home/jchook/.ollama/models/blobs/sha256-dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+    "model_ftype": "Q4_K - Medium",
+    "model_path": "/home/jchook/.ollama/models/blobs/sha256-dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+    "modalities": {
+      "vision": false,
+      "video": false,
+      "audio": false
+    },
+    "media_marker": "<__media_17gnIeQq3Vu5tcjN6zS6pXiqprmsQiQi__>",
+    "endpoint_slots": true,
+    "endpoint_props": false,
+    "endpoint_metrics": false,
+    "ui": false,
+    "ui_settings": {},
+    "chat_template": "{{- bos_token }}\n{%- if custom_tools is defined %}\n    {%- set tools = custom_tools %}\n{%- endif %}\n{%- if not tools_in_user_message is defined %}\n    {%- set tools_in_user_message = true %}\n{%- endif %}\n{%- if not date_string is defined %}\n    {%- if strftime_now is defined %}\n        {%- set date_string = strftime_now(\"%d %b %Y\") %}\n    {%- else %}\n        {%- set date_string = \"26 Jul 2024\" %}\n    {%- endif %}\n{%- endif %}\n{%- if not tools is defined %}\n    {%- set tools = none %}\n{%- endif %}\n\n{#- This block extracts the system message, so we can slot it into the right place. #}\n{%- if messages[0]['role'] == 'system' %}\n    {%- set system_message = messages[0]['content']|trim %}\n    {%- set messages = messages[1:] %}\n{%- else %}\n    {%- set system_message = \"\" %}\n{%- endif %}\n\n{#- System message #}\n{{- \"<|start_header_id|>system<|end_header_id|>\\n\\n\" }}\n{%- if tools is not none %}\n    {{- \"Environment: ipython\\n\" }}\n{%- endif %}\n{{- \"Cutting Knowledge Date: December 2023\\n\" }}\n{{- \"Today Date: \" + date_string + \"\\n\\n\" }}\n{%- if tools is not none and not tools_in_user_message %}\n    {{- \"You have access to the following functions. To call a function, please respond with JSON for a function call.\" }}\n    {{- 'Respond in the format {\"name\": function name, \"parameters\": dictionary of argument name and its value}.' }}\n    {{- \"Do not use variables.\\n\\n\" }}\n    {%- for t in tools %}\n        {{- t | tojson(indent=4) }}\n        {{- \"\\n\\n\" }}\n    {%- endfor %}\n{%- endif %}\n{{- system_message }}\n{{- \"<|eot_id|>\" }}\n\n{#- Custom tools are passed in a user message with some extra guidance #}\n{%- if tools_in_user_message and not tools is none %}\n    {#- Extract the first user message so we can plug it in here #}\n    {%- if messages | length != 0 %}\n        {%- set first_user_message = messages[0]['content']|trim %}\n        {%- set messages = messages[1:] %}\n    {%- else %}\n        {{- raise_exception(\"Cannot put tools in the first user message when there's no first user message!\") }}\n{%- endif %}\n    {{- '<|start_header_id|>user<|end_header_id|>\\n\\n' -}}\n    {{- \"Given the following functions, please respond with a JSON for a function call \" }}\n    {{- \"with its proper arguments that best answers the given prompt.\\n\\n\" }}\n    {{- 'Respond in the format {\"name\": function name, \"parameters\": dictionary of argument name and its value}.' }}\n    {{- \"Do not use variables.\\n\\n\" }}\n    {%- for t in tools %}\n        {{- t | tojson(indent=4) }}\n        {{- \"\\n\\n\" }}\n    {%- endfor %}\n    {{- first_user_message + \"<|eot_id|>\"}}\n{%- endif %}\n\n{%- for message in messages %}\n    {%- if not (message.role == 'ipython' or message.role == 'tool' or 'tool_calls' in message) %}\n        {{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\\n\\n'+ message['content'] | trim + '<|eot_id|>' }}\n    {%- elif 'tool_calls' in message %}\n        {%- if not message.tool_calls|length == 1 %}\n            {{- raise_exception(\"This model only supports single tool-calls at once!\") }}\n        {%- endif %}\n        {%- set tool_call = message.tool_calls[0].function %}\n        {{- '<|start_header_id|>assistant<|end_header_id|>\\n\\n' -}}\n        {{- '{\"name\": \"' + tool_call.name + '\", ' }}\n        {{- '\"parameters\": ' }}\n        {{- tool_call.arguments | tojson }}\n        {{- \"}\" }}\n        {{- \"<|eot_id|>\" }}\n    {%- elif message.role == \"tool\" or message.role == \"ipython\" %}\n        {{- \"<|start_header_id|>ipython<|end_header_id|>\\n\\n\" }}\n        {%- if message.content is mapping or message.content is iterable %}\n            {{- message.content | tojson }}\n        {%- else %}\n            {{- message.content }}\n        {%- endif %}\n        {{- \"<|eot_id|>\" }}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|start_header_id|>assistant<|end_header_id|>\\n\\n' }}\n{%- endif %}",
+    "chat_template_caps": {
+      "supports_object_arguments": true,
+      "supports_parallel_tool_calls": false,
+      "supports_preserve_reasoning": false,
+      "supports_reasoning_effort": false,
+      "supports_string_content": true,
+      "supports_system_role": true,
+      "supports_tool_calls": true,
+      "supports_tools": true,
+      "supports_typed_content": false
+    },
+    "bos_token": "<|begin_of_text|>",
+    "eos_token": "<|eot_id|>",
+    "build_info": "b1-0f3a71be1",
+    "is_sleeping": false,
+    "cors_proxy_enabled": false
+  },
+  "finished_at": "2026-10-23T01:41:52.466237+00:00",
+  "successful_attempts": 40,
+  "failed_attempts": 0
+}

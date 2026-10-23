@@ -1,0 +1,40 @@
+{
+  "assessment": "temperature-blinded machine assessment of secondary ordinary-generation controls; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-01.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing temperature mappings or numerical condition results for either cohort. Reviewer knows these are ordinary-generation controls, so comparison between cohorts is not treatment-blinded.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "58559e3164cd",
+      "scores": {"fluency": 1, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Three concise, related questions about sampling bias, user-led design and changes in launch practice. Two interrogative sentences use periods, a noticeable punctuation weakness. Assumes a prior feedback-mechanism discussion and previous conversations not established by the opening. Otherwise clear, stable-address and naturally finished.",
+      "failure_categories": ["invented_facts"]
+    },
+    {
+      "id": "5af26a37f1a2",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Short, grammatical and ends with a focused question. Invents tracking results and a strong correlation between engagement and new features. Slides from the sender's own data to changes the recipient has made without explaining shared access or ownership. Composite acceptance does not validate those claims.",
+      "failure_categories": ["invented_facts", "role_drift"]
+    },
+    {
+      "id": "befdc1bf6c9a",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 2, "ending": 1, "length": 2},
+      "notes": "Very brief, but their definition has no clear antecedent and the second sentence's Does that take for granted question is difficult to interpret. Moves the research-team role to the recipient and assumes initial metrics, hypotheses, and a shared methodology. Final question has a period and the request remains underspecified.",
+      "failure_categories": ["invented_facts", "role_drift", "unnatural_ending"]
+    },
+    {
+      "id": "703a36e24b8d",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 1, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Concise, idiomatic questions about launch preparation, departmental friction, and iteration. Maintains roles and ends naturally. Adds a generic claim about the sender's iterative process that is not established by the opening, but avoids named people, measurements, dated commitments or specific invented prior exchanges.",
+      "failure_categories": ["invented_facts"]
+    },
+    {
+      "id": "008a35eb4797",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 1},
+      "notes": "Readable paragraphs cover interface feedback, user-research methods and a possible collaboration, ending with a clear invitation. Slightly long for a couple of follow-up points. Invents prior discussion of contextual feedback and an internal statistical-research focus, though proposed joint projects are framed as possibilities rather than existing commitments.",
+      "failure_categories": ["invented_facts", "excessive_length"]
+    }
+  ]
+}

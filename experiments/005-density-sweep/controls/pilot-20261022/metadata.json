@@ -1,0 +1,16 @@
+{
+  "started_at": "2026-10-23T01:42:23.395353+00:00",
+  "argv": [
+    "experiments/005-density-sweep/ordinary_controls.py"
+  ],
+  "source_commit": "83391d04fb1b35fa09e0519f21f65885893baf06",
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "protocol": "../../controls-protocol.md",
+  "sources": {
+    "ordinary_controls.py": "9e78d68a4f1ea57554304206f5a839c9a07dae099229dd80f8abda2744c7308f",
+    "controls-protocol.md": "068a751d11cd46a8309e947e01d2952d1f5b2ab6c25f649474b3373d958ed4b9"
+  },
+  "sampling_caveat": "Normal top64 generation; no prefix-free restrictions, payload mapping, or greedy completion suffix.",
+  "finished_at": "2026-10-23T01:42:58.543062+00:00"
+}

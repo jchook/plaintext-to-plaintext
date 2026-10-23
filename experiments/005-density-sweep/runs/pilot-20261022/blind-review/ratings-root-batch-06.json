@@ -1,0 +1,40 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-06.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "7b977123b182",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 2},
+      "notes": "Concise and ends in a complete statement, but invents already delivered notes, an agenda, survey findings, and Shannon's opinions. Your research lead here changes the original sender-side research-lead role. Repeated She thinks and an unclear reference to shared frustrations weaken otherwise readable prose.",
+      "failure_categories": ["invented_facts", "role_drift", "repetition"]
+    },
+    {
+      "id": "275c750ca475",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Two focused paragraphs address two product-research points, with clear roles, natural grammar, specific questions, and a complete ending. Invents prior questions, a weekly research roundtable, a testing budget and possibly an existing A/B regimen; that dimension fails. Other dimensions meet the frozen rubric, so the composite threshold can accept it despite invented facts.",
+      "failure_categories": ["invented_facts"]
+    },
+    {
+      "id": "ab94e1723c95",
+      "scores": {"fluency": 2, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Short, grammatical and ends with a clear question, but assumes a shared ongoing project and data-collection script already exchanged. Those invented technical details and collective our testing framework depart from the initial exploratory coordination between separate teams.",
+      "failure_categories": ["invented_facts", "role_drift"]
+    },
+    {
+      "id": "37b145efaeea",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 2},
+      "notes": "Two coherent, non-redundant paragraphs discuss feedback segmentation and implementation tradeoffs. Clear address and a naturally qualified final idea. Invents a prior discussion, data already collected, a possible deficiency in the recipient's analysis, and Shannon's expected position. It clears the frozen composite threshold while failing that factual-grounding dimension.",
+      "failure_categories": ["invented_facts"]
+    },
+    {
+      "id": "0133dd576036",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 1},
+      "notes": "Starts with content-analysis questions, then invents categorization work, shared pilot sessions, and narrative-pacing discussions that drift from the launch follow-up. How do think is ungrammatical, and counterintuitive to us muddles whose observations are requested. Multiple speculative questions create an unfocused long email, though the final sentence is complete.",
+      "failure_categories": ["invented_facts", "role_drift", "repetition", "excessive_length"]
+    }
+  ]
+}

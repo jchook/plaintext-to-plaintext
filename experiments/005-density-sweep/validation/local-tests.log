@@ -1,0 +1,44 @@
+test_bounded_malformed_decompression (test_compact.CompactTests.test_bounded_malformed_decompression) ... ok
+test_compact_frames_and_fresh_roundtrips (test_compact.CompactTests.test_compact_frames_and_fresh_roundtrips) ... ok
+test_digest_detects_wrong_restored_bytes (test_compact.CompactTests.test_digest_detects_wrong_restored_bytes) ... ok
+test_empty_compact_roundtrip (test_compact.CompactTests.test_empty_compact_roundtrip) ... ok
+test_frame_authentication_includes_length (test_compact.CompactTests.test_frame_authentication_includes_length) ... ok
+test_inexact_tokenizer_is_rejected (test_compact.CompactTests.test_inexact_tokenizer_is_rejected) ... ok
+test_invalid_cover_and_wrong_key_fail (test_compact.CompactTests.test_invalid_cover_and_wrong_key_fail) ... ok
+test_positive_normalized_frequencies_and_interior_point (test_compact.CompactTests.test_positive_normalized_frequencies_and_interior_point) ... ok
+test_raw_zlib_llm_auto_roundtrips (test_compact.CompactTests.test_raw_zlib_llm_auto_roundtrips) ... ok
+test_source_exact_bytes_and_escape_paths (test_compact.CompactTests.test_source_exact_bytes_and_escape_paths) ... ok
+test_source_high_token_ids (test_compact.CompactTests.test_source_high_token_ids) ... ok
+test_specific_server_parser_failure_allows_fallback (test_compact.CompactTests.test_specific_server_parser_failure_allows_fallback) ... ok
+test_unsupported_tokenization_falls_back_without_loss (test_compact.CompactTests.test_unsupported_tokenization_falls_back_without_loss) ... ok
+test_cli_fresh_decode_and_no_plaintext_for_invalid_input (test_opening.OpeningCliTests.test_cli_fresh_decode_and_no_plaintext_for_invalid_input) ... ok
+test_invalid_paths_and_openings_do_not_contact_model_or_write_output (test_opening.OpeningCliTests.test_invalid_paths_and_openings_do_not_contact_model_or_write_output) ... ok
+test_cold_model_never_reuses_server_completion_cache (test_opening.OpeningModelTests.test_cold_model_never_reuses_server_completion_cache) ... ok
+test_opening_and_total_prompt_token_limits_before_scoring (test_opening.OpeningModelTests.test_opening_and_total_prompt_token_limits_before_scoring) ... ok
+test_opening_tokenized_literally_and_prompt_history_bounded (test_opening.OpeningModelTests.test_opening_tokenized_literally_and_prompt_history_bounded) ... ok
+test_server_truncation_and_history_policy_drift_fail (test_opening.OpeningModelTests.test_server_truncation_and_history_policy_drift_fail) ... ok
+test_empty_key_and_token_budget_fail (test_opening.OpeningTests.test_empty_key_and_token_budget_fail) ... ok
+test_frame_authentication_binds_opening_and_temperature (test_opening.OpeningTests.test_frame_authentication_binds_opening_and_temperature) ... ok
+test_fresh_roundtrips_without_sidecar_or_opening_parameter (test_opening.OpeningTests.test_fresh_roundtrips_without_sidecar_or_opening_parameter) ... ok
+test_input_validation_precedes_source_or_cover_work (test_opening.OpeningTests.test_input_validation_precedes_source_or_cover_work) ... ok
+test_invalid_cover_boundary_and_utf8_fail_before_prediction (test_opening.OpeningTests.test_invalid_cover_boundary_and_utf8_fail_before_prediction) ... ok
+test_invalid_openings_are_rejected (test_opening.OpeningTests.test_invalid_openings_are_rejected) ... ok
+test_literal_template_rendering_and_exact_prefix (test_opening.OpeningTests.test_literal_template_rendering_and_exact_prefix) ... ok
+test_modified_truncated_and_appended_continuations_fail (test_opening.OpeningTests.test_modified_truncated_and_appended_continuations_fail) ... ok
+test_only_registered_temperatures_are_accepted (test_opening.OpeningTests.test_only_registered_temperatures_are_accepted) ... ok
+test_opening_and_configuration_bound_to_keys (test_opening.OpeningTests.test_opening_and_configuration_bound_to_keys) ... ok
+test_wrong_key_opening_temperature_and_template_fail (test_opening.OpeningTests.test_wrong_key_opening_temperature_and_template_fail) ... ok
+test_authenticated_frame_boundaries (test_p2p.CodecTests.test_authenticated_frame_boundaries) ... ok
+test_exact_roundtrips_with_fresh_decoders (test_p2p.CodecTests.test_exact_roundtrips_with_fresh_decoders) ... ok
+test_failure_has_bounded_work (test_p2p.CodecTests.test_failure_has_bounded_work) ... ok
+test_half_open_interval_boundary (test_p2p.CodecTests.test_half_open_interval_boundary) ... ok
+test_modified_truncated_and_extra_text_rejected (test_p2p.CodecTests.test_modified_truncated_and_extra_text_rejected) ... ok
+test_new_nonce_produces_distinct_covers (test_p2p.CodecTests.test_new_nonce_produces_distinct_covers) ... ok
+test_prefix_free_selection_and_byte_filters (test_p2p.CodecTests.test_prefix_free_selection_and_byte_filters) ... ok
+test_table_is_positive_exact_and_keyed (test_p2p.CodecTests.test_table_is_positive_exact_and_keyed) ... ok
+test_wrong_key_rejected (test_p2p.CodecTests.test_wrong_key_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 39 tests in 4.070s
+
+OK

@@ -1,0 +1,6 @@
+Starting dedicated CPU server; keep this terminal open.
+warning: no usable GPU found, --gpu-layers option will be ignored
+warning: one possible reason is that llama.cpp was compiled without GPU support
+warning: consult docs/build.md for compilation instructions
+0.00.003.928 E srv         start: couldn't bind HTTP server socket, hostname: 127.0.0.1, port: 11535
+0.00.003.957 E srv  llama_server: exiting due to HTTP server error

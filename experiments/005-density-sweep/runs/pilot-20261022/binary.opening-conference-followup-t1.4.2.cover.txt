@@ -1,0 +1,7 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+Going forward, I think it would be helpful if we clarify the approach to collecting post-launch feedback. We discussed the need for a customer insights group, but I'm not sure if that's a viable option for your timeline. What's more important to you might be our ability to provide a platform for some ad-hoc polling and surveying. We could offer customization based on specific product categories to ensure the questions are targeted and relevant. 
+
+Similarly important are the channels of communication where data or survey responses would go from our end. Should they be accessible within our website, by API integration with your tools or platforms, or even provided on separate URLs that could be shared with designated personnel? Given how some of the other companies presented at the conference were incorporating external question collection channels, I think that worth exploring might be a worthwhile adaptation. Your internal channels, while effective today's work well, won't suit our current strategy if you're planning major upgrades or transitions. 
+
+From a scale that gets us started from zero it can take around three weeks working our end to get the necessary infrastructure in place.

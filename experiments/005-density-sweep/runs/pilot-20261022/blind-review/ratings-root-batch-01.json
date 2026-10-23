@@ -1,0 +1,100 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-01.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "06509dcb3cea",
+      "scores": {
+        "fluency": 1,
+        "coherence_purpose": 2,
+        "sender_recipient": 1,
+        "unsupported_claims": 0,
+        "repetition": 2,
+        "ending": 2,
+        "length": 2
+      },
+      "notes": "Short, relevant follow-up, but invents a prototype observation, Karen, and an already arranged meeting. Meeting changes from the recipient's head of product and sender's research lead to two sender-side people. Final clause about even better ways being shared is awkward.",
+      "failure_categories": [
+        "invented_facts",
+        "role_drift"
+      ]
+    },
+    {
+      "id": "05fba15b5f3d",
+      "scores": {
+        "fluency": 2,
+        "coherence_purpose": 2,
+        "sender_recipient": 1,
+        "unsupported_claims": 0,
+        "repetition": 0,
+        "ending": 1,
+        "length": 0
+      },
+      "notes": "Readable but excessive follow-up repeats collaboration and feedback requests across six paragraphs. Invents surveys, a workshop, research report, webinar, database access, and support commitments. Both of your teams is a role slip. Ends with another new support offer after multiple apparent closes.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "role_drift",
+        "unnatural_ending",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "2d0a891adc7e",
+      "scores": {
+        "fluency": 2,
+        "coherence_purpose": 2,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 2,
+        "length": 1
+      },
+      "notes": "On-topic, grammatical and maintains direct address, but invents James, Emily, and a completed meeting arrangement. A long run of overlapping feature, value, protocol, and feedback questions makes the request less focused.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "cf7a9e3fab43",
+      "scores": {
+        "fluency": 2,
+        "coherence_purpose": 2,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 1,
+        "ending": 2,
+        "length": 1
+      },
+      "notes": "Coherent feedback discussion and natural closing call request. Invents a suite of tools already in development. Repeated requests about gathering user feedback and generic data-driven justification pad a simple conference follow-up.",
+      "failure_categories": [
+        "invented_facts",
+        "repetition",
+        "excessive_length"
+      ]
+    },
+    {
+      "id": "f5df5ebb8090",
+      "scores": {
+        "fluency": 1,
+        "coherence_purpose": 1,
+        "sender_recipient": 2,
+        "unsupported_claims": 0,
+        "repetition": 2,
+        "ending": 1,
+        "length": 2
+      },
+      "notes": "Concise, but shifts from discussion of openness to criticism into invented backend savings and a customer-psychology conversation. The external-partners clause is awkward and the final paragraph ends on a vague research assertion rather than a clear follow-up point.",
+      "failure_categories": [
+        "invented_facts",
+        "unnatural_ending"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-04.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "fa7802258a7d",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 1, "ending": 0, "length": 1},
+      "notes": "Invents a pilot study, retention results, a workshop, and a new evaluation framework. Ownership shifts among our product, their results, and our tools. By the way, had a chance drops the subject. Final isolated sentence introduces gradual scale-up without developing or closing that new point.",
+      "failure_categories": ["invented_facts", "role_drift", "repetition", "unnatural_ending", "excessive_length"]
+    },
+    {
+      "id": "509872c3ee63",
+      "scores": {"fluency": 2, "coherence_purpose": 0, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 0, "ending": 0, "length": 0},
+      "notes": "Grammatical passages, but includes placeholder signatures, explanatory notes about response style, a Revised version, another formatting explanation, and another restarted email. Invents research methods and data summaries. Clear prompt leakage and repeated content make the whole continuation unusable as correspondence.",
+      "failure_categories": ["prompt_leakage", "invented_facts", "repetition", "unnatural_ending", "excessive_length"]
+    },
+    {
+      "id": "ea1490977f27",
+      "scores": {"fluency": 0, "coherence_purpose": 0, "sender_recipient": 1, "unsupported_claims": 1, "repetition": 1, "ending": 1, "length": 1},
+      "notes": "Contains unfilled instructional placeholders such as mention one clear obstacle and suggest how such integration aims to help. Sentences about finding both sides where needed and hurdles carrying the bulk of a research team are not coherent ordinary prose. Avoids named factual inventions but fails to produce a finished email.",
+      "failure_categories": ["prompt_leakage", "grammatical_collapse", "role_drift", "unnatural_ending"]
+    },
+    {
+      "id": "0ddbd21d9367",
+      "scores": {"fluency": 1, "coherence_purpose": 2, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 1},
+      "notes": "Relevant launch questions and a complete final request, but invents identified UI problems, a conversation with Shannon, a couple-of-weeks timeline, and possible prior outreach. Refers to the recipient's team as theirs and changes to my head of product. Data-visualization sentence has a dangling clause. Several broad questions pad the message.",
+      "failure_categories": ["invented_facts", "role_drift", "repetition", "excessive_length"]
+    },
+    {
+      "id": "5fb0b6cd7f1a",
+      "scores": {"fluency": 0, "coherence_purpose": 1, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 1, "length": 2},
+      "notes": "Short and broadly on feedback, but the central run-on loses syntax around a similar realization coming your way and we'll likely look this more. Invents the sender's collection practices and asserts data already exists or soon will. Final burden claim is grammatical but does not repair the unclear request.",
+      "failure_categories": ["grammatical_collapse", "invented_facts", "unnatural_ending"]
+    }
+  ]
+}

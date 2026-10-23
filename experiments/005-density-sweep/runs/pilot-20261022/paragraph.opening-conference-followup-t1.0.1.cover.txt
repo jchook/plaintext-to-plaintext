@@ -1,0 +1,11 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+I wanted to press a bit further on the strategy you mentioned for testing the product with a small group of users before moving to a larger scale. You mentioned something about observing user behavior over a period of weeks, but I'm hoping we can clarify what that looks like in practice. Would you be open to sharing some specific ideas or approaches from your team's testing experience so far? I'm guessing it's been more trial-and-error than anything else, but I think that's what interests me most - hearing about the kinds of discoveries you've been making and how that's informing your strategy going forward. What did you take away from our conversation about the importance of iterating on user feedback, for example? I didn't catch that completely clear before. 
+
+Also, I was curious to know if there's anything from your product launch that you think we could learn from or adapt to our own situation. That conversation at the conference got stuck on the specifics of our product, but I think there might be some general principles or best practices that could be applied more broadly. Any thoughts on that? 
+
+Would it still be okay to follow up sometime next week to discuss those points more in depth, or is that too quick a follow-up? Either way, I'm looking forward to hearing more about what's working for your team. 
+
+Let me know if either or both of those sound like reasonable follow-ups. I want to make sure I'm not getting in the way or overwhelming you - we definitely can set up a time to talk more at your convenience. 
+
+Also, I did want to check in on the feedback you gave us about our own testing approach. How has that been going for you - have you found any challenges or successes that you'd be willing to share? I think that's going to be really valuable for us as we move forward.

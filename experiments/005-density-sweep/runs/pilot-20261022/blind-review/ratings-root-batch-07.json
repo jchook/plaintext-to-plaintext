@@ -1,0 +1,40 @@
+{
+  "assessment": "blinded machine assessment; not human ratings or steganalysis",
+  "reviewer": "root",
+  "batch": "batch-07.json",
+  "rubric": "experiments/005-density-sweep/README.md, Frozen plausibility assessment",
+  "blinding": "Scores saved before viewing condition mapping or quantitative results. Text length and stylistic clues remain visible.",
+  "opening_assessment": "Fixed supplied opening supplies context only; its quality contributes no points to continuation scores.",
+  "ratings": [
+    {
+      "id": "8427fba842c6",
+      "scores": {"fluency": 1, "coherence_purpose": 1, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 2, "ending": 0, "length": 2},
+      "notes": "Moderate length, but you team is a grammar error and the final gist of how changes impact that middle section has no clear referent. Keeping feedback straight away is key does not provide an intelligible ending. Invents rollout methods, research focus, and Shannon's contact, with shifting ownership of product features.",
+      "failure_categories": ["invented_facts", "role_drift", "unnatural_ending"]
+    },
+    {
+      "id": "ccc2e33adb47",
+      "scores": {"fluency": 2, "coherence_purpose": 0, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 0, "ending": 1, "length": 0},
+      "notes": "Individual sentences are readable, but the email expands through duplicated placeholder signatures and contact fields, a note explaining how it was written, and a rewritten writing-sample version of the same discussion. Invents remote-testing experience and scheduling assurances. The final version ends coherently, but the complete continuation fails its purpose.",
+      "failure_categories": ["prompt_leakage", "invented_facts", "repetition", "unnatural_ending", "excessive_length"]
+    },
+    {
+      "id": "4cddac29c8e4",
+      "scores": {"fluency": 0, "coherence_purpose": 0, "sender_recipient": 1, "unsupported_claims": 0, "repetition": 2, "ending": 1, "length": 2},
+      "notes": "Short, but was that one to blame also and worked it out pretty close are incoherent or unidiomatic. Introduces a survey, Shannon's proposed scale, a table, ownership decisions, and a next-Tuesday appointment without context. Changes the meeting arrangement to the sender's head of product. Final request has unclear decision referents.",
+      "failure_categories": ["grammatical_collapse", "invented_facts", "role_drift", "unnatural_ending"]
+    },
+    {
+      "id": "a31f21d05b22",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 1, "ending": 2, "length": 1},
+      "notes": "Grammatical, stable roles, and a natural scheduling close. Invents a usability lead's problems, the research lead's current work, and Shannon's opinion of the recipient's head of product. Repeated requests for valuable insights, help with tradeoffs, and a call make three long paragraphs less focused than necessary.",
+      "failure_categories": ["invented_facts", "repetition", "excessive_length"]
+    },
+    {
+      "id": "4a4d208620ef",
+      "scores": {"fluency": 2, "coherence_purpose": 2, "sender_recipient": 2, "unsupported_claims": 0, "repetition": 2, "ending": 2, "length": 1},
+      "notes": "Readable, stable-address discussion of competition, customer segments and accessibility, with distinct paragraphs and a complete final observation. Some broad business phrasing and length reduce focus. Invents startup-market analysis, earlier customer-segment remarks, and internal findings; overall composite acceptance must not be read as factual grounding.",
+      "failure_categories": ["invented_facts", "excessive_length"]
+    }
+  ]
+}

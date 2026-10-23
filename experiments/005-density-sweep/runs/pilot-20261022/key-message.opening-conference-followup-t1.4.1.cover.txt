@@ -1,0 +1,5 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+With the product launch still on my team's to-do list, I can only imagine the progress you're seeing with your approach. At the conference, I also noticed that your team's prototype is quite different from ours - I'm curious to learn more about the trade-offs and challenges you're encountering with that design choice. Has your testing revealed any patterns or trends in user behavior that might speak to different priorities when launching a product? How do you plan on refining the launch process to maintain user engagement? I'd appreciate your thoughts on that. 
+
+I've spoken with Shannon and arranged a meeting with my head of product and Karen from our research team to discuss comparisons in our methods, so even better ways to tackle the questions we touched on will be shared.

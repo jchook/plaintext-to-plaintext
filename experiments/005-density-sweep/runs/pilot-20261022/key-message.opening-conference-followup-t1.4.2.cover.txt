@@ -1,0 +1,5 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+From what you mentioned, I think it's clear that everyone agrees our current testing framework could use some updates. Maybe we can take some lessons from the product design team and revisit our existing structure. Their insights may give us some ideas about ways to simplify the system and make it more reliable. I just want to make sure we can get some pilot tests going soon. Otherwise, some of the user feedback we discussed might get lost in translation. 
+
+Shannon had some thoughts on that, but we also need to check in with our analytics lead to make sure we're sending the right data back to our database. Have you received all the changes we made to the data collection script?

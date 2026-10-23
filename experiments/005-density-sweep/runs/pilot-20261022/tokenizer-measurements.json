@@ -1,0 +1,255 @@
+{
+  "command": [
+    "experiments/005-density-sweep/measure_tokens.py"
+  ],
+  "measured_at": "2026-10-23T01:42:23.319801+00:00",
+  "model_sha256": "dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "server_build": "b1-0f3a71be1",
+  "request_settings": {
+    "add_special": false,
+    "parse_special": false
+  },
+  "tokenize_requests": 80,
+  "measurements": [
+    {
+      "name": "key-message.opening-conference-followup-t1.6.1",
+      "cover_sha256": "a1031c9ff5f55ea9e82acbb2d4043a8323d24e27a102f28656762b98aa18e64c",
+      "full_cover_tokenizer_tokens": 201,
+      "continuation_tokenizer_tokens": 131
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.2.1",
+      "cover_sha256": "d9351f19e22f46a5940cfad6e9abb8482c554c18323b577cfff35d075e0b79c0",
+      "full_cover_tokenizer_tokens": 250,
+      "continuation_tokenizer_tokens": 180
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.4.1",
+      "cover_sha256": "6a0a279be67aba265e76da6e1b62417e488942ee3ee0d7d51bb076f5779773e1",
+      "full_cover_tokenizer_tokens": 221,
+      "continuation_tokenizer_tokens": 151
+    },
+    {
+      "name": "key-message.opening-conference-followup-t0.8.1",
+      "cover_sha256": "331e8b8930512d2efaf08373d8da994ca5a58109e00af7617eb9907fa992d520",
+      "full_cover_tokenizer_tokens": 457,
+      "continuation_tokenizer_tokens": 387
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.0.1",
+      "cover_sha256": "f5e1c89cd74906fc555760ff13648c4a105034b75f7992670d90077823610ba3",
+      "full_cover_tokenizer_tokens": 337,
+      "continuation_tokenizer_tokens": 267
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.6.1",
+      "cover_sha256": "f67ea98f1dc24e5abde6d2b0198af83cdc91d7278593383ea7d9964dff819360",
+      "full_cover_tokenizer_tokens": 248,
+      "continuation_tokenizer_tokens": 178
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.4.1",
+      "cover_sha256": "220e6d8391e5120092b87fa0b6eae2bfec77ed96ee9d64792cc8f6a4d9ecd44b",
+      "full_cover_tokenizer_tokens": 260,
+      "continuation_tokenizer_tokens": 190
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.2.1",
+      "cover_sha256": "bdde67e68342a242e62016abc7e4dd7a23269f26833fe718f529a1b3138b4d58",
+      "full_cover_tokenizer_tokens": 367,
+      "continuation_tokenizer_tokens": 297
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t0.8.1",
+      "cover_sha256": "2df3593dd75151f002232af6f4fb07f76e10d3c1057513fca2f3d36706e0ee3f",
+      "full_cover_tokenizer_tokens": 689,
+      "continuation_tokenizer_tokens": 619
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.0.1",
+      "cover_sha256": "679ae227dd0e62f50d80b3a84e8fd9d18baff5dae8ec5853cdf1b19190a52b9a",
+      "full_cover_tokenizer_tokens": 440,
+      "continuation_tokenizer_tokens": 370
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.2.1",
+      "cover_sha256": "ff69f6e78249b91e78947c6c88161b63d196db5ed0b01a7fef82dfd7b0f54029",
+      "full_cover_tokenizer_tokens": 436,
+      "continuation_tokenizer_tokens": 366
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.4.1",
+      "cover_sha256": "f0ef040c9ae48b9da47eb5c9219fd8bddc8289eeee0089e8539f284dd9853bb2",
+      "full_cover_tokenizer_tokens": 300,
+      "continuation_tokenizer_tokens": 230
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.6.1",
+      "cover_sha256": "2b586801dc1e489f6b2bbf64739f46c780fb2b52208dedb38a303af01822b140",
+      "full_cover_tokenizer_tokens": 259,
+      "continuation_tokenizer_tokens": 189
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.0.1",
+      "cover_sha256": "220c3d044948c07911f7623e9b2a4632a690a80c8627ee38f823df15dd0d952d",
+      "full_cover_tokenizer_tokens": 719,
+      "continuation_tokenizer_tokens": 649
+    },
+    {
+      "name": "binary.opening-conference-followup-t0.8.1",
+      "cover_sha256": "df3e4069ca1b03fdba41a7433585ca53bb971967352b30fdee0bade9ce4f8f9d",
+      "full_cover_tokenizer_tokens": 747,
+      "continuation_tokenizer_tokens": 677
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.0.1",
+      "cover_sha256": "2d6d6d2524d6feb658e049cec2fc079c4a214f919dc2aa8e9b3b0e162dc75fbb",
+      "full_cover_tokenizer_tokens": 459,
+      "continuation_tokenizer_tokens": 389
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.4.1",
+      "cover_sha256": "e6eb499e70a87ca1636ae8c493fa271a30ae41fa5079b44a78d2be2db6b8779e",
+      "full_cover_tokenizer_tokens": 268,
+      "continuation_tokenizer_tokens": 198
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.2.1",
+      "cover_sha256": "c0a89207b3f2e1b26fb7b235809785e802f8d1672bc4ad5287482eee2746c12e",
+      "full_cover_tokenizer_tokens": 389,
+      "continuation_tokenizer_tokens": 319
+    },
+    {
+      "name": "unicode.opening-conference-followup-t0.8.1",
+      "cover_sha256": "b2588c055443693926c444efc916d795658035b73c13d9bd93a64a77e68686dd",
+      "full_cover_tokenizer_tokens": 807,
+      "continuation_tokenizer_tokens": 737
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.6.1",
+      "cover_sha256": "61ec9848f24ede062449691a5c81b5e17350fc368f3d28a020854ce2a10906cb",
+      "full_cover_tokenizer_tokens": 229,
+      "continuation_tokenizer_tokens": 159
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.6.2",
+      "cover_sha256": "a9159f7746eaba5d394ac6095986197690ebdf3f9be6a8af8446539d2c65202e",
+      "full_cover_tokenizer_tokens": 266,
+      "continuation_tokenizer_tokens": 196
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.2.2",
+      "cover_sha256": "f8f13403aa17c20977285ba2a053c1dc50cdea3baadf546f17c7069f98fad391",
+      "full_cover_tokenizer_tokens": 359,
+      "continuation_tokenizer_tokens": 289
+    },
+    {
+      "name": "binary.opening-conference-followup-t0.8.2",
+      "cover_sha256": "7c653dc4caaa33154694b8e80b5305943034bfe8157dc4649d389986c5c25d09",
+      "full_cover_tokenizer_tokens": 813,
+      "continuation_tokenizer_tokens": 743
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.4.2",
+      "cover_sha256": "9186ac9181702f09abd53e7ded19d87c0556c1ecf17ac275bf50b8edb51685dd",
+      "full_cover_tokenizer_tokens": 289,
+      "continuation_tokenizer_tokens": 219
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.0.2",
+      "cover_sha256": "cd9ee5efbaee1ac7e9d96cd9fe339560746cafc282a3887ec14f06a342d9b345",
+      "full_cover_tokenizer_tokens": 681,
+      "continuation_tokenizer_tokens": 611
+    },
+    {
+      "name": "key-message.opening-conference-followup-t0.8.2",
+      "cover_sha256": "fc8b52bfe09a072ac231fc961f6cdd4f2161494b95f0fa994d0f16dc2f6cc1aa",
+      "full_cover_tokenizer_tokens": 444,
+      "continuation_tokenizer_tokens": 374
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.4.2",
+      "cover_sha256": "707f6720fd564e657b612041fafd86da704ae9e9a299d6b130bc252c6aba0d23",
+      "full_cover_tokenizer_tokens": 206,
+      "continuation_tokenizer_tokens": 136
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.6.2",
+      "cover_sha256": "09f564cf3f72834c7bd9e9a71bcecaaeda064cf863ea8c89f952f91a33cf0af1",
+      "full_cover_tokenizer_tokens": 169,
+      "continuation_tokenizer_tokens": 99
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.0.2",
+      "cover_sha256": "0f5df9bc0218c9682529c9c5dd6069d684a840a6306c38b928239ce1f95449a8",
+      "full_cover_tokenizer_tokens": 323,
+      "continuation_tokenizer_tokens": 253
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.2.2",
+      "cover_sha256": "518b9fa8dd961390ed55a7dd9a4761dc3accb55189c9fa313405128b7021f1ab",
+      "full_cover_tokenizer_tokens": 250,
+      "continuation_tokenizer_tokens": 180
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.0.2",
+      "cover_sha256": "bf649243dfa30e9bf23aa2db261c361afa42cf68358a158d7c0e0c62f296bbdd",
+      "full_cover_tokenizer_tokens": 446,
+      "continuation_tokenizer_tokens": 376
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.2.2",
+      "cover_sha256": "933fe7c98068c340fccd23f603f53670126fdb0594c22daa1c8c13b1a72e3a85",
+      "full_cover_tokenizer_tokens": 371,
+      "continuation_tokenizer_tokens": 301
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.6.2",
+      "cover_sha256": "4ec4bd575d0b270ba362a36e6c975c980d44b58bf6a2fb5dc9001467fd7ab13f",
+      "full_cover_tokenizer_tokens": 217,
+      "continuation_tokenizer_tokens": 147
+    },
+    {
+      "name": "unicode.opening-conference-followup-t0.8.2",
+      "cover_sha256": "1dfe26447321e2d2439c741883e04deca6f2a6d7568c90ac3131b03cb5ef4799",
+      "full_cover_tokenizer_tokens": 824,
+      "continuation_tokenizer_tokens": 754
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.4.2",
+      "cover_sha256": "607c88b9705728be3a0dea3ea0cc9b6857e578b77b5ebb4045a0309775f9b142",
+      "full_cover_tokenizer_tokens": 291,
+      "continuation_tokenizer_tokens": 221
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.6.2",
+      "cover_sha256": "1ecd5de199d6ef9763a45948aed3585cd08ac7d3af38ceea0b3c54ad2c28ec74",
+      "full_cover_tokenizer_tokens": 230,
+      "continuation_tokenizer_tokens": 160
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.2.2",
+      "cover_sha256": "7460c11a4e07ed7b55f156142e5b84d2018158379deaef59f693c1b2fd0b9050",
+      "full_cover_tokenizer_tokens": 304,
+      "continuation_tokenizer_tokens": 234
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t0.8.2",
+      "cover_sha256": "f62ce9c56dcc1f18ca2cc8532c2ae8de8022120b2e0b2d38d3c05b9d90953415",
+      "full_cover_tokenizer_tokens": 721,
+      "continuation_tokenizer_tokens": 651
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.4.2",
+      "cover_sha256": "01a614a2a2acaa480e37b2b54b839678aac41ca0bf497584abca29ae297a4ab2",
+      "full_cover_tokenizer_tokens": 285,
+      "continuation_tokenizer_tokens": 215
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.0.2",
+      "cover_sha256": "43de91d06427807f97d12f48ed38a0b004349b7decb36530b905091413706fae",
+      "full_cover_tokenizer_tokens": 475,
+      "continuation_tokenizer_tokens": 405
+    }
+  ]
+}

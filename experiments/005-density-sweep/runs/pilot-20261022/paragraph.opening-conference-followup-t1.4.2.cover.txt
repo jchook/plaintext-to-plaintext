@@ -1,0 +1,7 @@
+Hi Alex, it was great meeting you at the conference and hearing how your team is approaching the product launch. I'm going to ask Shannon to coordinate a conversation between your head of product and our research lead so we can compare notes on the questions we discussed. In the meantime, I wanted to follow up on a couple of points from our conversation.
+
+I was wondering if you could give me a sense of how user experience is influencing the overall strategy behind your product. Specifically, I recall you mentioning testing a few different prototypes with beta users and gathering feedback on areas where we discussed similar issues with our own research. I'm trying to wrap my head around how your team is ensuring that the product prioritizes user-centered design while still meeting its key performance indicators. How do you walk the tightrope between optimizing for metrics and making decisions that align with user goals? I'd love to hear your thoughts. 
+
+Our design team brought up a question related to the interface and where we might need to invest more in usability tests versus A/B tests in the coming months. Have you encountered any notable disparities between user groups that require extra testing in this phase or do other changes within the organization seem like primary causes of this issue? 
+
+We do believe some of our other product lines would gain greatly from similar work as well, so looking into areas where we can overlap product knowledge and improve those aspects may turn out to be a good investment.
