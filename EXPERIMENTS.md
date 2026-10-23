@@ -12,7 +12,9 @@ order of ideas, not separately committed development stages.
 | 002: Compact v2 | Completed local trial | Removed padding, added lossless source compression, and compared prompts and temperature. All 21 completed round trips recovered exactly; a 238-byte paragraph used 1,104–1,164 cover bytes. Prose sometimes became conspicuously odd. | [Compact results](experiments/002-compact-v2/README.md) |
 | 003: Opening-paragraph steering | Completed pilot | All 32 round trips recovered exactly; supplied openings steered the reviewed samples into conference/STEM/history emails. Covers grew, and recipient-role slips and invented prior conversations remain. Seven rejection checks and two restart decodes passed. | [Results and handoff](experiments/003-opening-paragraph/README.md) |
 | Size and plausibility review | Completed research follow-up | Audited all 32 pilot covers. Public openings and carrying capacity dominate size; the coder already uses most selected entropy. Separated plausibility from detectability and reviewed a divergence-based slider. | [Research and accounting](research/2026-10-22-size-plausibility/README.md) |
+| Successful-encoding audit | Completed retrospective review | Checked 57 saved successes. Fixed frame bytes have a large proportional prose cost; most apparent filler still carries encrypted bits. Ending padding is a smaller cost. | [Length audit](research/2026-10-22-encoding-density-audit/README.md) |
 | 004: Size frontier | Planned; no inference yet | First compare short public openings, then adaptive probability control and a simple rank baseline. Measure full bytes, plausibility, and detection separately. | [Plan](experiments/004-size-frontier/README.md) |
+| 005: Density sweep | Completed local pilot | All 40 round trips recovered exactly. Raising temperature from 1.2 to 1.6 cut mean complete size by 33%, but grammar deteriorated. Temperature 1.2 had the best mean machine-review score; only two of eight covers cleared the overall threshold. | [Protocol and evidence](experiments/005-density-sweep/README.md) |
 
 ## Where we are
 
@@ -38,6 +40,23 @@ Public openings plus separators average 375 bytes; encrypted frames add 30
 bytes to the packed source. A capacity slider has a research basis, but
 plausibility and detectability remain separate, uncalibrated outcomes.
 
+[Experiment 005](experiments/005-density-sweep/README.md) now supplies a
+five-setting fixed-temperature comparison on four payloads, with two repetitions
+per cell. Mean complete covers fell from 3,435.6 bytes at 0.8 to 1,206.4 at 1.6;
+mean frame rates rose from 0.99 to 4.05 bits per carrying token. Low-temperature
+covers often repeated themselves; six of eight covers at 1.6 had grammatical
+collapse in the blinded machine review. The best mean review score was at 1.2,
+but its two overall rubric passes still invented facts. These results establish
+a working density control, with quality calibration still incomplete.
+
+Five separate ordinary-generation controls all stopped naturally and four
+cleared the same overall rubric. This small post-hoc diagnostic suggests testing
+whether excluding end-of-message tokens and continuing until the frame fits
+contribute to the longer covers' defects. It does not isolate those mechanisms:
+ordinary generation also uses different token restrictions and stopping rules,
+and the reviewer knew the control cohort. No detection or edit-tolerance result
+was measured.
+
 ## Direction and decisions
 
 1. Keep exact bytes and authenticated failure as requirements. A better-sounding
@@ -57,7 +76,10 @@ plausibility and detectability remain separate, uncalibrated outcomes.
    as separate questions with separate experiments.
 5. Treat the slider as a choice along a measured size/quality frontier, with
    detectability evaluated against both ordinary model output and intended
-   correspondence. Extra length does not itself improve plausibility.
+   correspondence. Experiment 005 shows that lower temperature and extra length
+   do not themselves improve plausibility. Use its fixed-temperature measurements
+   as controls for the adaptive comparison, and inspect candidate exclusions and
+   natural-ending probabilities alongside per-step carrying rates.
 
 ## How to record the next experiment
 
@@ -88,6 +110,9 @@ than the surviving records support.
   revision for the compact verification record's five code hashes.
 - `7ce7883` pins the opening v1 implementation, tests, and pilot runner before
   collecting all 32 trials. Its measured sources are unchanged in the run snapshot.
+- `12628b4` freezes the experiment 005 runner and five-setting protocol before
+  collecting its 40 trials. The experiment retains all measured source snapshots,
+  exact outputs, ratings, and the separately declared ordinary-generation controls.
 
 The reorganization keeps raw evidence byte-for-byte, including historical paths
 inside JSON and logs. [migration.json](experiments/migration.json) maps those old
