@@ -8,6 +8,12 @@ Question: does the same model and public-opening wrapper produce repetition,
 unsupported claims, role drift, prompt leakage, or grammatical failures during
 ordinary generation too?
 
+A pre-control hypothesis is that suppressing EOS while requiring enough bits to
+represent the frame can force generation beyond a natural ending, into repeated
+closings, alternate drafts, or writing advice. Ordinary generation with EOS can
+help assess this explanation. It remains confounded with candidate filtering
+and different stopping lengths.
+
 Five samples, one at each temperature 0.8/1.0/1.2/1.4/1.6. Same rendered prompt,
 conference opening, pinned model and single-slot server. Explicit top_k64,
 top_p1, min_p0, typical_p1, repeat_penalty1, presence_penalty0,
