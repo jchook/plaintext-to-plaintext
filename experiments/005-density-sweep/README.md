@@ -186,6 +186,14 @@ cover and continuation token counts were measured with the pinned tokenizer;
 [measurements](runs/pilot-20261022/tokenizer-measurements.json) and individual
 rates are retained separately from the carrying-token rate.
 
+The [plaintext-versus-stegotext plot](plots/plaintext-vs-stegotext.png)
+excludes the supplied opening and separator (358 bytes), retaining the generated
+sentence ending. Diamonds show two-trial means; dots and bars show the observations
+and their range. The payloads differ in compressibility, so these points do not
+establish a general size-scaling curve. [SVG](plots/plaintext-vs-stegotext.svg)
+and [plotted data](plots/plaintext-vs-stegotext.json) are also saved. Reproduce with
+`python3 experiments/005-density-sweep/plot_lengths.py` (requires Matplotlib).
+
 The initial sandbox could not bind the server socket. Its
 [failed startup log](validation/sandbox-server-failure.log) is retained; approved
 execution started the dedicated local server. No model server existed initially.

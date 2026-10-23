@@ -1,0 +1,591 @@
+{
+  "source": "runs/pilot-20261022/results.json",
+  "source_sha256": "f9d41892b51564c2fab60495885e07b8d77be03bef1f1a0091188bb990134b40",
+  "x": "Original plaintext/payload bytes, before lossless compression",
+  "y": "Full cover bytes minus supplied opening paragraph and separator",
+  "sentence_completion_included": true,
+  "points": [
+    {
+      "name": "key-message.opening-conference-followup-t1.6.1",
+      "case": "key-message",
+      "temperature": "1.6",
+      "repetition": 1,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 706,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.2.1",
+      "case": "key-message",
+      "temperature": "1.2",
+      "repetition": 1,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 983,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.4.1",
+      "case": "key-message",
+      "temperature": "1.4",
+      "repetition": 1,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 786,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t0.8.1",
+      "case": "key-message",
+      "temperature": "0.8",
+      "repetition": 1,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 1958,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.0.1",
+      "case": "key-message",
+      "temperature": "1.0",
+      "repetition": 1,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 1327,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.6.1",
+      "case": "paragraph",
+      "temperature": "1.6",
+      "repetition": 1,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 988,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.4.1",
+      "case": "paragraph",
+      "temperature": "1.4",
+      "repetition": 1,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 1210,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.2.1",
+      "case": "paragraph",
+      "temperature": "1.2",
+      "repetition": 1,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 1618,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t0.8.1",
+      "case": "paragraph",
+      "temperature": "0.8",
+      "repetition": 1,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 3088,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.0.1",
+      "case": "paragraph",
+      "temperature": "1.0",
+      "repetition": 1,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 1811,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.2.1",
+      "case": "binary",
+      "temperature": "1.2",
+      "repetition": 1,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 1888,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.4.1",
+      "case": "binary",
+      "temperature": "1.4",
+      "repetition": 1,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 1210,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.6.1",
+      "case": "binary",
+      "temperature": "1.6",
+      "repetition": 1,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 1060,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.0.1",
+      "case": "binary",
+      "temperature": "1.0",
+      "repetition": 1,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 3330,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t0.8.1",
+      "case": "binary",
+      "temperature": "0.8",
+      "repetition": 1,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 3346,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.0.1",
+      "case": "unicode",
+      "temperature": "1.0",
+      "repetition": 1,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 1977,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.4.1",
+      "case": "unicode",
+      "temperature": "1.4",
+      "repetition": 1,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 1058,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.2.1",
+      "case": "unicode",
+      "temperature": "1.2",
+      "repetition": 1,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 1589,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t0.8.1",
+      "case": "unicode",
+      "temperature": "0.8",
+      "repetition": 1,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 3565,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.6.1",
+      "case": "unicode",
+      "temperature": "1.6",
+      "repetition": 1,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 842,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.6.2",
+      "case": "binary",
+      "temperature": "1.6",
+      "repetition": 2,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 1049,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.2.2",
+      "case": "binary",
+      "temperature": "1.2",
+      "repetition": 2,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 1552,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t0.8.2",
+      "case": "binary",
+      "temperature": "0.8",
+      "repetition": 2,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 3817,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.4.2",
+      "case": "binary",
+      "temperature": "1.4",
+      "repetition": 2,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 1202,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "binary.opening-conference-followup-t1.0.2",
+      "case": "binary",
+      "temperature": "1.0",
+      "repetition": 2,
+      "plaintext_bytes": 64,
+      "packed_source_bytes": 65,
+      "generated_stegotext_bytes": 3015,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t0.8.2",
+      "case": "key-message",
+      "temperature": "0.8",
+      "repetition": 2,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 1842,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.4.2",
+      "case": "key-message",
+      "temperature": "1.4",
+      "repetition": 2,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 686,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.6.2",
+      "case": "key-message",
+      "temperature": "1.6",
+      "repetition": 2,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 597,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.0.2",
+      "case": "key-message",
+      "temperature": "1.0",
+      "repetition": 2,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 1337,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "key-message.opening-conference-followup-t1.2.2",
+      "case": "key-message",
+      "temperature": "1.2",
+      "repetition": 2,
+      "plaintext_bytes": 16,
+      "packed_source_bytes": 17,
+      "generated_stegotext_bytes": 1007,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.0.2",
+      "case": "unicode",
+      "temperature": "1.0",
+      "repetition": 2,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 1939,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.2.2",
+      "case": "unicode",
+      "temperature": "1.2",
+      "repetition": 2,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 1691,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.6.2",
+      "case": "unicode",
+      "temperature": "1.6",
+      "repetition": 2,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 717,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t0.8.2",
+      "case": "unicode",
+      "temperature": "0.8",
+      "repetition": 2,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 3788,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "unicode.opening-conference-followup-t1.4.2",
+      "case": "unicode",
+      "temperature": "1.4",
+      "repetition": 2,
+      "plaintext_bytes": 42,
+      "packed_source_bytes": 43,
+      "generated_stegotext_bytes": 1172,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.6.2",
+      "case": "paragraph",
+      "temperature": "1.6",
+      "repetition": 2,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 828,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.2.2",
+      "case": "paragraph",
+      "temperature": "1.2",
+      "repetition": 2,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 1227,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t0.8.2",
+      "case": "paragraph",
+      "temperature": "0.8",
+      "repetition": 2,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 3217,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.4.2",
+      "case": "paragraph",
+      "temperature": "1.4",
+      "repetition": 2,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 1177,
+      "excluded_opening_and_separator_bytes": 358
+    },
+    {
+      "name": "paragraph.opening-conference-followup-t1.0.2",
+      "case": "paragraph",
+      "temperature": "1.0",
+      "repetition": 2,
+      "plaintext_bytes": 238,
+      "packed_source_bytes": 49,
+      "generated_stegotext_bytes": 2079,
+      "excluded_opening_and_separator_bytes": 358
+    }
+  ],
+  "means_and_ranges": [
+    {
+      "temperature": "0.8",
+      "case": "key-message",
+      "plaintext_bytes": 16,
+      "mean_generated_stegotext_bytes": 1900,
+      "min_generated_stegotext_bytes": 1842,
+      "max_generated_stegotext_bytes": 1958,
+      "trials": 2
+    },
+    {
+      "temperature": "0.8",
+      "case": "unicode",
+      "plaintext_bytes": 42,
+      "mean_generated_stegotext_bytes": 3676.5,
+      "min_generated_stegotext_bytes": 3565,
+      "max_generated_stegotext_bytes": 3788,
+      "trials": 2
+    },
+    {
+      "temperature": "0.8",
+      "case": "binary",
+      "plaintext_bytes": 64,
+      "mean_generated_stegotext_bytes": 3581.5,
+      "min_generated_stegotext_bytes": 3346,
+      "max_generated_stegotext_bytes": 3817,
+      "trials": 2
+    },
+    {
+      "temperature": "0.8",
+      "case": "paragraph",
+      "plaintext_bytes": 238,
+      "mean_generated_stegotext_bytes": 3152.5,
+      "min_generated_stegotext_bytes": 3088,
+      "max_generated_stegotext_bytes": 3217,
+      "trials": 2
+    },
+    {
+      "temperature": "1.0",
+      "case": "key-message",
+      "plaintext_bytes": 16,
+      "mean_generated_stegotext_bytes": 1332,
+      "min_generated_stegotext_bytes": 1327,
+      "max_generated_stegotext_bytes": 1337,
+      "trials": 2
+    },
+    {
+      "temperature": "1.0",
+      "case": "unicode",
+      "plaintext_bytes": 42,
+      "mean_generated_stegotext_bytes": 1958,
+      "min_generated_stegotext_bytes": 1939,
+      "max_generated_stegotext_bytes": 1977,
+      "trials": 2
+    },
+    {
+      "temperature": "1.0",
+      "case": "binary",
+      "plaintext_bytes": 64,
+      "mean_generated_stegotext_bytes": 3172.5,
+      "min_generated_stegotext_bytes": 3015,
+      "max_generated_stegotext_bytes": 3330,
+      "trials": 2
+    },
+    {
+      "temperature": "1.0",
+      "case": "paragraph",
+      "plaintext_bytes": 238,
+      "mean_generated_stegotext_bytes": 1945,
+      "min_generated_stegotext_bytes": 1811,
+      "max_generated_stegotext_bytes": 2079,
+      "trials": 2
+    },
+    {
+      "temperature": "1.2",
+      "case": "key-message",
+      "plaintext_bytes": 16,
+      "mean_generated_stegotext_bytes": 995,
+      "min_generated_stegotext_bytes": 983,
+      "max_generated_stegotext_bytes": 1007,
+      "trials": 2
+    },
+    {
+      "temperature": "1.2",
+      "case": "unicode",
+      "plaintext_bytes": 42,
+      "mean_generated_stegotext_bytes": 1640,
+      "min_generated_stegotext_bytes": 1589,
+      "max_generated_stegotext_bytes": 1691,
+      "trials": 2
+    },
+    {
+      "temperature": "1.2",
+      "case": "binary",
+      "plaintext_bytes": 64,
+      "mean_generated_stegotext_bytes": 1720,
+      "min_generated_stegotext_bytes": 1552,
+      "max_generated_stegotext_bytes": 1888,
+      "trials": 2
+    },
+    {
+      "temperature": "1.2",
+      "case": "paragraph",
+      "plaintext_bytes": 238,
+      "mean_generated_stegotext_bytes": 1422.5,
+      "min_generated_stegotext_bytes": 1227,
+      "max_generated_stegotext_bytes": 1618,
+      "trials": 2
+    },
+    {
+      "temperature": "1.4",
+      "case": "key-message",
+      "plaintext_bytes": 16,
+      "mean_generated_stegotext_bytes": 736,
+      "min_generated_stegotext_bytes": 686,
+      "max_generated_stegotext_bytes": 786,
+      "trials": 2
+    },
+    {
+      "temperature": "1.4",
+      "case": "unicode",
+      "plaintext_bytes": 42,
+      "mean_generated_stegotext_bytes": 1115,
+      "min_generated_stegotext_bytes": 1058,
+      "max_generated_stegotext_bytes": 1172,
+      "trials": 2
+    },
+    {
+      "temperature": "1.4",
+      "case": "binary",
+      "plaintext_bytes": 64,
+      "mean_generated_stegotext_bytes": 1206,
+      "min_generated_stegotext_bytes": 1202,
+      "max_generated_stegotext_bytes": 1210,
+      "trials": 2
+    },
+    {
+      "temperature": "1.4",
+      "case": "paragraph",
+      "plaintext_bytes": 238,
+      "mean_generated_stegotext_bytes": 1193.5,
+      "min_generated_stegotext_bytes": 1177,
+      "max_generated_stegotext_bytes": 1210,
+      "trials": 2
+    },
+    {
+      "temperature": "1.6",
+      "case": "key-message",
+      "plaintext_bytes": 16,
+      "mean_generated_stegotext_bytes": 651.5,
+      "min_generated_stegotext_bytes": 597,
+      "max_generated_stegotext_bytes": 706,
+      "trials": 2
+    },
+    {
+      "temperature": "1.6",
+      "case": "unicode",
+      "plaintext_bytes": 42,
+      "mean_generated_stegotext_bytes": 779.5,
+      "min_generated_stegotext_bytes": 717,
+      "max_generated_stegotext_bytes": 842,
+      "trials": 2
+    },
+    {
+      "temperature": "1.6",
+      "case": "binary",
+      "plaintext_bytes": 64,
+      "mean_generated_stegotext_bytes": 1054.5,
+      "min_generated_stegotext_bytes": 1049,
+      "max_generated_stegotext_bytes": 1060,
+      "trials": 2
+    },
+    {
+      "temperature": "1.6",
+      "case": "paragraph",
+      "plaintext_bytes": 238,
+      "mean_generated_stegotext_bytes": 908,
+      "min_generated_stegotext_bytes": 828,
+      "max_generated_stegotext_bytes": 988,
+      "trials": 2
+    }
+  ]
+}
