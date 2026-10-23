@@ -54,6 +54,22 @@ This example uses the public Alice demonstration key, Llama 3.2 3B, and opening 
 at temperature 1.2. See the [full pilot results](experiments/003-opening-paragraph/README.md)
 for other samples, sizes, and limitations.
 
+## Payload size and cover length
+
+The five-temperature pilot completed 40 authenticated, byte-exact round trips.
+Higher temperature produced shorter covers, with more grammatical failures at
+the highest setting. Lower temperature often produced longer, repetitive prose.
+See the [experiment results](experiments/005-density-sweep/README.md) for the
+size and quality measurements.
+
+![Plaintext length versus generated stegotext length at five temperatures](experiments/005-density-sweep/plots/plaintext-vs-stegotext.svg)
+
+The plot excludes the supplied opening paragraph and separator (358 bytes).
+Diamonds show two-trial means; bars show their range. The inputs differ in
+compressibility: the 238-byte paragraph packs to 49 bytes, so these points do
+not establish a general length-scaling curve.
+[PNG version](experiments/005-density-sweep/plots/plaintext-vs-stegotext.png).
+
 ## Run and verify
 
 From the repository root:
