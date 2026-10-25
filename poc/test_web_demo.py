@@ -25,7 +25,7 @@ class DemoTests(unittest.TestCase):
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline:
             result = demo.get(job_id)
-            if result['state'] != 'running':
+            if result['state'] not in ('queued', 'running'):
                 return result
             time.sleep(.01)
         self.fail('Test job did not finish.')
@@ -76,15 +76,115 @@ class DemoTests(unittest.TestCase):
             result = self.wait(demo, demo.start(web_demo.validate_request(self.request())))
         self.assertEqual(result['state'], 'failed')
         self.assertNotIn('result', result)
-        self.assertFalse(demo.busy.locked())
 
-    def test_single_job_and_expiration(self):
-        demo = web_demo.Demo()
-        demo.busy.acquire()
+
+class BlockingDemo(web_demo.Demo):
+    """Hold the worker so admission, waiting, and races can be tested."""
+    def __init__(self, max_waiting=2):
+        super().__init__(max_waiting=max_waiting)
+        self.started = threading.Event()
+        self.release = threading.Event()
+        self.order = []
+
+    def run(self, job_id, request):
+        self.order.append(job_id)
+        self.started.set()
+        if self.release.wait(10):
+            self.update(job_id, state='complete', result={'text': request['data'].decode()})
+        else:
+            self.update(job_id, state='failed', error='Test worker timed out.')
+
+
+class QueueTests(unittest.TestCase):
+    request = DemoTests.request
+    wait = DemoTests.wait
+    def start_blocked(self, demo):
+        first = demo.start(web_demo.validate_request(self.request()))
+        self.assertTrue(demo.started.wait(2))
+        self.addCleanup(demo.release.set)
+        return first
+
+    def test_fifo_positions_capacity_and_cancellation(self):
+        demo = BlockingDemo()
+        first = self.start_blocked(demo)
+        second = demo.start(web_demo.validate_request(self.request()))
+        third = demo.start(web_demo.validate_request(self.request()))
+        self.assertEqual(demo.get(second)['queue_position'], 1)
+        self.assertEqual(demo.get(third)['queue_position'], 2)
+        self.assertEqual(demo.get(third)['jobs_ahead'], 2)
+        self.assertIsNone(demo.get(third)['estimated_wait_seconds'])
         self.assertIsNone(demo.start(web_demo.validate_request(self.request())))
-        demo.busy.release()
-        demo.jobs['old'] = {'state': 'complete', 'result': {}, 'updated': time.monotonic() - web_demo.RESULT_SECONDS - 1}
-        self.assertIsNone(demo.get('old'))
+        self.assertEqual(demo.cancel(first), 'started')
+        self.assertEqual(demo.cancel(second), 'cancelled')
+        self.assertEqual(demo.cancel(second), 'cancelled')
+        self.assertEqual(demo.get(third)['queue_position'], 1)
+        fourth = demo.start(web_demo.validate_request(self.request()))
+        self.assertIsNotNone(fourth)
+        self.assertNotIn('request', demo.jobs[second])
+        self.assertNotIn('request', demo.get(third))
+        self.assertNotIn('key', demo.get(third))
+        demo.release.set()
+        self.assertEqual(self.wait(demo, fourth)['state'], 'complete')
+        self.assertEqual(demo.order, [first, third, fourth])
+        self.assertEqual(demo.get(second)['state'], 'cancelled')
+
+    def test_eta_uses_remaining_work_and_distinct_action_samples(self):
+        demo = BlockingDemo()
+        first = self.start_blocked(demo)
+        cover = 'Opening.\n\nSome generated prose.'
+        second = demo.start(web_demo.validate_request(self.request(action='decode', text=cover)))
+        third = demo.start(web_demo.validate_request(self.request()))
+        with demo.guard:
+            demo.durations['encode'].append(40)
+            demo.durations['decode'].append(10)
+            demo.jobs[first]['started'] = time.monotonic() - 10
+        self.assertAlmostEqual(demo.get(second)['estimated_wait_seconds'], 30, delta=1)
+        self.assertAlmostEqual(demo.get(third)['estimated_wait_seconds'], 40, delta=1)
+        self.assertEqual(demo.get(third)['estimate_samples'], 2)
+
+    def test_expiry_frees_waiting_payloads_and_results(self):
+        demo = BlockingDemo(max_waiting=1)
+        self.start_blocked(demo)
+        waiting = demo.start(web_demo.validate_request(self.request()))
+        with demo.guard:
+            demo.jobs[waiting]['created'] = time.monotonic() - web_demo.QUEUE_SECONDS - 1
+        self.assertEqual(demo.get(waiting)['state'], 'failed')
+        self.assertNotIn('request', demo.jobs[waiting])
+        self.assertIsNotNone(demo.start(web_demo.validate_request(self.request())))
+        with demo.guard:
+            demo.jobs[waiting]['updated'] = time.monotonic() - web_demo.RESULT_SECONDS - 1
+        self.assertIsNone(demo.get(waiting))
+
+    def test_concurrent_admission_is_bounded(self):
+        demo = BlockingDemo(max_waiting=3)
+        self.start_blocked(demo)
+        admitted = []
+        guard = threading.Lock()
+
+        def submit():
+            job_id = demo.start(web_demo.validate_request(self.request()))
+            with guard:
+                admitted.append(job_id)
+
+        threads = [threading.Thread(target=submit) for _ in range(30)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(sum(job is not None for job in admitted), 3)
+        self.assertEqual(len(demo.pending), 3)
+        self.assertEqual(len(demo.order), 1)
+
+    def test_finished_retention_does_not_evict_waiting_jobs(self):
+        demo = BlockingDemo(max_waiting=25)
+        self.start_blocked(demo)
+        waiting = [demo.start(web_demo.validate_request(self.request())) for _ in range(25)]
+        self.assertTrue(all(waiting))
+        with demo.guard:
+            for index in range(25):
+                demo.jobs[f'done-{index}'] = {'state': 'complete', 'updated': time.monotonic(), 'result': {}}
+        self.assertEqual(demo.get(waiting[-1])['queue_position'], 25)
+        self.assertEqual(sum(job['state'] == 'complete' for job in demo.jobs.values()), 20)
 
 
 class HttpTests(unittest.TestCase):
@@ -126,6 +226,29 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.call('/api/jobs', 'POST', body, {'Content-Type': 'text/plain'})[0], 415)
         self.assertEqual(self.call('/api/jobs', 'POST', '[]', {'Content-Type': 'application/json'})[0], 400)
         self.assertEqual(self.call('/api/jobs', 'POST', 'x' * (web_demo.MAX_REQUEST_BYTES + 1), {'Content-Type': 'application/json'})[0], 413)
+
+    def test_full_queue_retry_and_capability_cancellation(self):
+        demo = BlockingDemo(max_waiting=1)
+        headers = {'Content-Type': 'application/json'}
+        body = json.dumps(DemoTests().request())
+        with patch.object(self.server, 'demo', demo):
+            try:
+                status, _, raw = self.call('/api/jobs', 'POST', body, headers)
+                self.assertEqual(status, 202)
+                first = json.loads(raw)['id']
+                self.assertTrue(demo.started.wait(2))
+                status, _, raw = self.call('/api/jobs', 'POST', body, headers)
+                self.assertEqual(status, 202)
+                waiting = json.loads(raw)['id']
+                status, retry, _ = self.call('/api/jobs', 'POST', body, headers)
+                self.assertEqual(status, 429)
+                self.assertEqual(retry['Retry-After'], '60')
+                self.assertEqual(self.call(f'/api/jobs/{first}/cancel', 'POST', '{}', headers)[0], 409)
+                self.assertEqual(self.call('/api/jobs/missing/cancel', 'POST', '{}', headers)[0], 404)
+                self.assertEqual(self.call(f'/api/jobs/{waiting}/cancel', 'POST', '{}', headers)[0], 200)
+                self.assertEqual(json.loads(self.call(f'/api/jobs/{waiting}')[2])['state'], 'cancelled')
+            finally:
+                demo.release.set()
 
 
 if __name__ == '__main__':

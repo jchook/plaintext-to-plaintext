@@ -6,6 +6,7 @@ let running = false;
 let config;
 let generated;
 let decoded;
+let currentJob;
 
 function randomKey() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -14,7 +15,11 @@ function randomKey() {
 async function api(path, options = {}) {
   const response = await fetch(path, {cache: 'no-store', ...options});
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'The demo could not complete this request.');
+  if (!response.ok) {
+    const error = new Error(result.error || 'The demo could not complete this request.');
+    error.status = response.status;
+    throw error;
+  }
   return result;
 }
 
@@ -102,6 +107,23 @@ async function checkStatus() {
 }
 
 function describeProgress(job) {
+  const queued = job.state === 'queued';
+  $('progress-icon').classList.toggle('queued', queued);
+  $('progress-icon').textContent = queued ? job.queue_position : '';
+  $('queue-note').hidden = !queued;
+  $('cancel-job').hidden = !queued;
+  if (queued) {
+    $('progress-phase').textContent = `You're #${job.queue_position} in line`;
+    const ahead = `${job.jobs_ahead} ${job.jobs_ahead === 1 ? 'request' : 'requests'} ahead`;
+    let wait = 'Estimating the wait after the first completed run.';
+    if (job.estimated_wait_seconds !== null) {
+      const seconds = job.estimated_wait_seconds;
+      wait = seconds < 10 ? 'Estimated start: shortly.' : seconds < 60 ? 'Estimated start: less than a minute.' :
+        `Estimated start: about ${Math.ceil(seconds / 60)} ${seconds <= 60 ? 'minute' : 'minutes'}.`;
+    }
+    $('progress-detail').textContent = `${ahead} · ${wait}`;
+    return;
+  }
   $('progress-phase').textContent = job.phase;
   const progress = job.progress || {};
   if (progress.source_tokens) {
@@ -109,7 +131,8 @@ function describeProgress(job) {
   } else if (progress.tokens) {
     $('progress-detail').textContent = `${progress.tokens.toLocaleString()} tokens processed${progress.target_bits ? ` · ${Math.min(100, Math.floor(100 * progress.bits / progress.target_bits))}% of payload carried` : ''}.`;
   } else {
-    $('progress-detail').textContent = 'Local inference can take a few minutes. Keep this tab open.';
+    $('progress-detail').textContent = job.taking_longer ? 'This run is taking longer than usual. Your place is safe; keep this tab open.' :
+      'Local inference can take a few minutes. Keep this tab open.';
   }
 }
 
@@ -135,8 +158,22 @@ $('demo-form').addEventListener('submit', async (event) => {
   }, 1000);
   try {
     const {id} = await api('/api/jobs', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(request)});
+    currentJob = id;
+    let connectionFailures = 0;
     while (true) {
-      const job = await api(`/api/jobs/${encodeURIComponent(id)}`);
+      let job;
+      try {
+        job = await api(`/api/jobs/${encodeURIComponent(id)}`);
+        connectionFailures = 0;
+      } catch (error) {
+        if (error.status && error.status < 500) throw error;
+        connectionFailures += 1;
+        $('progress-phase').textContent = 'Reconnecting to your request';
+        $('progress-detail').textContent = 'Your request has not been resubmitted. We’ll keep checking for its result.';
+        await new Promise((resolve) => setTimeout(resolve, Math.min(15000, 2000 * connectionFailures)));
+        continue;
+      }
+      if (job.state === 'cancelled') break;
       if (job.state === 'failed') throw new Error(job.error);
       if (job.state === 'complete') {
         if (mode === 'encode') generated = {result: job.result, request};
@@ -144,16 +181,30 @@ $('demo-form').addEventListener('submit', async (event) => {
         break;
       }
       describeProgress(job);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, job.state === 'queued' ? 3000 : 1000));
     }
   } catch (error) {
     showError(error.message);
   } finally {
     clearInterval(timer);
+    currentJob = undefined;
+    $('cancel-job').hidden = true;
     setRunning(false);
     renderResult();
     checkStatus();
   }
+});
+
+$('cancel-job').addEventListener('click', async () => {
+  if (!currentJob) return;
+  $('cancel-job').disabled = true;
+  try {
+    await api(`/api/jobs/${encodeURIComponent(currentJob)}/cancel`, {method: 'POST',
+      headers: {'Content-Type': 'application/json'}, body: '{}'});
+    $('progress-phase').textContent = 'Removed from the queue';
+    $('cancel-job').hidden = true;
+  } catch (error) {showError(error.message);}
+  finally {$('cancel-job').disabled = false;}
 });
 
 $('encode-tab').addEventListener('click', () => setMode('encode'));

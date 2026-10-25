@@ -57,7 +57,7 @@
           </details>
           <div class="action-bar"><p id="action-note"><span aria-hidden="true">✓</span> Every generated cover is checked for exact recovery.</p><button id="submit" class="primary-button" type="submit" disabled>Hide message <span aria-hidden="true">↗</span></button></div>
         </form>
-        <div id="progress" class="progress" role="status" hidden><span class="spinner" aria-hidden="true"></span><div><strong id="progress-phase">Preparing model</strong><span id="progress-detail">Local inference can take a few minutes.</span></div><span id="elapsed">0:00</span></div>
+        <div id="progress" class="progress" role="status" hidden><span id="progress-icon" class="spinner" aria-hidden="true"></span><div><strong id="progress-phase">Preparing model</strong><span id="progress-detail">Local inference can take a few minutes.</span><span id="queue-note" hidden>One request runs at a time. Wait estimates use recent runs and can change.</span></div><button id="cancel-job" type="button" class="text-button" hidden>Leave queue</button><span id="elapsed" title="Time since submitting">0:00</span></div>
         <div id="error" class="error" role="alert" hidden></div>
         <div id="success" class="success" role="status" hidden><span aria-hidden="true">✓</span><div><strong id="success-title">Exact recovery verified</strong><p id="success-detail"></p></div><button id="recover-generated" type="button" class="text-button">Try recovering it ↗</button></div>
       </div>

@@ -39,19 +39,35 @@ a new key, so save the key separately before closing or refreshing the tab.
 Standard compression chooses the smaller of raw bytes and DEFLATE without
 source-model inference. Model compression is opt-in and sends the original
 message to the local model. Encoding is limited to 512 UTF-8 bytes and recovery
-to 32 KiB of cover text. One job runs at a time; generated cover text can reach
-the codec's 5,000-token limit. Local inference may take several minutes. Progress
+to 32 KiB of cover text. One job runs at a time, including recovery verification;
+up to 20 more wait in a first-in, first-out queue. The page shows your position,
+how many requests are ahead, and an approximate start time. Estimates use the
+median of the most recent 20 successful jobs per operation (encode or decode)
+and account for elapsed time in the active job. No wait estimate is invented
+before timing samples exist. Different message sizes and settings can make the
+estimate change. You can leave the queue before your job starts. A full queue
+returns HTTP 429 with a 60-second retry hint; rejected jobs are not resubmitted
+automatically. The browser polls queued jobs every three seconds, running jobs
+every second, and backs off when reconnecting without creating another job.
+
+Generated cover text can reach the codec's 5,000-token limit. Local inference
+may take several minutes. Progress
 checks stop work after 30 minutes; an individual inference call can take longer
-to return. Completed jobs expire after 30 minutes and only the latest 20 are
-retained in process memory. The browser polls with unguessable job IDs; neither
+to return. Waiting jobs expire after 30 minutes; cancellation and expiry release
+their queued message and key. Completed jobs expire after 30 minutes and only the
+latest 20 are retained in process memory. The browser polls with unguessable job IDs; neither
 keys nor input messages are included in those URLs or access logs.
 
 The demo binds only to loopback and checks Host/Origin on API requests. It is a
 local development server, not a multi-user deployment. Hosting requires a
 separately provisioned pinned model runtime, HTTPS, and deployment access
-controls. The existing wire protocol and experiment artifacts are unchanged.
+controls. The queue is bounded in process memory and is lost on restart; keep
+the tab open while waiting. A public launch still needs edge rate limiting and
+static-asset caching. Multiple app replicas would need a shared queue and job
+store. The existing wire protocol and experiment artifacts are unchanged.
 Use `--port 8001` for another web port or `--url http://127.0.0.1:11535` for
-the dedicated inference endpoint. No additional Python dependencies are needed.
+the dedicated inference endpoint. Use `--queue-size 10` to change the maximum
+number of waiting requests. No additional Python dependencies are needed.
 
 ## Runtime and CLI
 
