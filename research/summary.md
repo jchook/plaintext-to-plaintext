@@ -1,5 +1,9 @@
 # Research findings for the plaintext-to-plaintext POC
 
+Follow-up, October 23: [density and recovery research leads](2026-10-23-density-and-recovery/README.md)
+collect ideas from compression, constrained storage, communications, and coding,
+including the Video Seal review and possible experiments for this system.
+
 Follow-up, October 22: [size, plausibility, and detection](2026-10-22-size-plausibility/README.md)
 applies this literature to the opening-paragraph pilot, with reproducible byte
 accounting and a staged plan for smaller covers. The review below records the

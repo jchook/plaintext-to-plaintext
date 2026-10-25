@@ -17,6 +17,12 @@ linked primary works, not additions to the original PDF archive.
 
 Start with the [research summary](summary.md). For the next POC iteration, read [RRC](2026-rrc/relevance.md), [ANStega](2026-anstega/relevance.md), [SparSamp](2025-sparsamp/relevance.md), [tokenization verification](2025-stepwise-token-verification/relevance.md), [SyncPool](2024-syncpool/relevance.md), and [StegoZip](2025-stegozip/relevance.md).
 
+The [October 23 density and recovery leads](2026-10-23-density-and-recovery/README.md)
+collect potential advances from short-message compression, DNA storage codecs,
+distribution shaping, syndrome-trellis codes, and synchronization research. They
+include the Video Seal follow-up and candidate experiments, with proposed text
+transfers distinguished from published findings.
+
 Each source has a short relevance.md beside its local artifacts. Paper PDFs are unchanged; paper.txt files are searchable extractions. Repository snapshots preserve documentation, not a source-code checkout. Relative links and images inside upstream READMEs may require the original repository. HTML snapshots retain page markup without mirroring external assets.
 
 The [manifest](manifest.json) and per-source metadata.json files record requested and resolved URLs, retrieval timestamps, byte counts, SHA-256 checksums, and any download errors. README snapshots also record their upstream Git blob identifiers. Paper and repository claims were reviewed, not independently reproduced. Original authorship and licensing notices remain in the source artifacts.
