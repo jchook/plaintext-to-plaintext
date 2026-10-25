@@ -72,6 +72,9 @@ not establish a general length-scaling curve.
 
 ## Run and verify
 
+For a guided browser demo with editable opening prose and collapsed advanced
+controls, see the [web demo setup](poc/README.md#web-demo).
+
 From the repository root:
 
 ```sh

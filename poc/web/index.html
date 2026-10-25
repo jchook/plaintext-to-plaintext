@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hide a short message in model-generated prose, then recover it exactly.">
+  <title>Plaintext — a secret, in plain sight</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <a class="wordmark" href="/" aria-label="Plaintext home"><span class="mark" aria-hidden="true">p<span>·</span>p</span> plaintext<span class="wordmark-note">/ an experiment</span></a>
+      <div class="runtime" role="status"><span id="status-dot" class="status-dot"></span><span id="runtime-status">Checking local model…</span></div>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">PLAINTEXT TO PLAINTEXT</p>
+        <h1>A secret,<br>in plain sight.</h1>
+        <p class="lede">Turn a short message into ordinary-looking prose.<br class="desktop-break"> Recover the original, down to the last byte.</p>
+      </section>
+      <div class="workspace">
+        <div class="workspace-toolbar">
+          <div class="tabs" role="tablist" aria-label="Demo mode">
+            <button id="encode-tab" type="button" role="tab" aria-selected="true" aria-controls="demo-panel" tabindex="0">Hide a message</button>
+            <button id="decode-tab" type="button" role="tab" aria-selected="false" aria-controls="demo-panel" tabindex="-1">Recover a message</button>
+          </div>
+          <span class="protocol-label">LOCAL DEMO</span>
+        </div>
+        <form id="demo-form">
+          <div id="demo-panel" class="panels" role="tabpanel" aria-labelledby="encode-tab">
+            <section class="input-panel">
+              <div class="panel-heading"><span class="step">01</span><label id="input-label" for="message">Your message</label><span id="input-count" class="count">0 / 512 bytes</span></div>
+              <p id="input-hint" class="panel-hint">A little something you want to keep between the lines.</p>
+              <textarea id="message" aria-describedby="input-hint input-count" spellcheck="false" placeholder="Write a short message…">The key is 12345</textarea>
+              <textarea id="cover-input" hidden aria-label="Complete generated text" spellcheck="false" placeholder="Paste the complete, unchanged text here…"></textarea>
+              <div class="input-bottom"><button id="sample" type="button" class="text-button">Try a sample</button><span id="input-note">Short messages work best.</span></div>
+            </section>
+            <section class="output-panel">
+              <div class="panel-heading"><span class="step">02</span><label id="output-label" for="output">The cover text</label><button id="copy" type="button" class="text-button copy-button" disabled>Copy text</button></div>
+              <div id="empty-state" class="empty-state"><span class="empty-glyph" aria-hidden="true">¶</span><p id="empty-title">A message beneath the words.</p><span id="empty-hint">Your generated prose will appear here.</span></div>
+              <textarea id="output" readonly hidden spellcheck="false" aria-label="Generated cover text"></textarea>
+              <div id="result-meta" class="result-meta" hidden></div>
+            </section>
+          </div>
+          <details id="advanced" class="advanced">
+            <summary><span>Advanced controls</span><span class="advanced-summary">Opening paragraph, temperature &amp; key</span><span class="chevron" aria-hidden="true">+</span></summary>
+            <div class="advanced-body">
+              <div id="opening-control" class="field opening-field"><div class="field-label"><label for="opening">Opening paragraph</label><button id="reset-opening" class="text-button" type="button">Reset</button></div><p>This paragraph appears at the start of the cover. Rewrite it to set the subject and voice.</p><textarea id="opening" rows="4" spellcheck="true" aria-describedby="opening-note"></textarea><span id="opening-note" class="field-note">Use one paragraph, without line breaks. The decoder reads it from the cover.</span></div>
+              <div class="control-grid">
+                <div class="field"><label for="temperature">Temperature</label><select id="temperature"><option value="1.2">1.2 · Default</option><option value="1.0">1.0 · Lower temperature</option></select><p>Use the same setting to recover the message.</p></div>
+                <div id="compression-control" class="field"><label for="compression">Compression</label><select id="compression"><option value="standard">Standard · Automatic</option><option value="raw">None · Original bytes</option><option value="llm">Model · Experimental</option></select><p id="compression-note">Chooses the smaller of raw bytes and DEFLATE.</p></div>
+              </div>
+              <div class="field key-field"><div class="field-label"><label for="key">Demo key</label><button id="new-key" class="text-button" type="button">New random key</button></div><input id="key" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="64" maxlength="64" pattern="[0-9a-fA-F]{64}" required><p>A random key for this tab. To recover elsewhere, save this key and the temperature separately from the cover text.</p></div>
+            </div>
+          </details>
+          <div class="action-bar"><p id="action-note"><span aria-hidden="true">✓</span> Every generated cover is checked for exact recovery.</p><button id="submit" class="primary-button" type="submit" disabled>Hide message <span aria-hidden="true">↗</span></button></div>
+        </form>
+        <div id="progress" class="progress" role="status" hidden><span class="spinner" aria-hidden="true"></span><div><strong id="progress-phase">Preparing model</strong><span id="progress-detail">Local inference can take a few minutes.</span></div><span id="elapsed">0:00</span></div>
+        <div id="error" class="error" role="alert" hidden></div>
+        <div id="success" class="success" role="status" hidden><span aria-hidden="true">✓</span><div><strong id="success-title">Exact recovery verified</strong><p id="success-detail"></p></div><button id="recover-generated" type="button" class="text-button">Try recovering it ↗</button></div>
+      </div>
+      <div class="footnotes"><p><span class="footnote-label">How it works</span>Your message is compressed and encrypted, then carried by the model’s word choices. The meaning of the cover can be unrelated to your message.</p><p><span class="footnote-label">An experimental demo</span>Everything runs on this computer. Model compression also sends the original message to the local model. Generated prose can be awkward or invent details; low detectability has not been established.</p></div>
+    </main>
+    <footer><span>Same message. Different words.</span><span>Local inference · Byte-exact recovery</span></footer>
+  </div>
+</body>
+</html>
