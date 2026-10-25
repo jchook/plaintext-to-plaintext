@@ -4,6 +4,40 @@ This experimental codec encrypts a message, then carries the encrypted bytes in
 model-generated prose. The receiver uses the key and the same model and protocol
 to recover the original bytes exactly.
 
+## Try the web demo
+
+Start with the [setup guide](poc/README.md#setup) for prerequisites, inference
+runtime configuration, and troubleshooting. The prototype has been tested on
+Linux with Python 3.12 and a compatible dedicated `llama-server`. It runs local
+CPU inference using a roughly 1.9 GB quantized Llama 3.2 3B model.
+
+Once Git, Python 3.10+ with `venv`, Ollama, and the compatible inference runtime
+are installed, run:
+
+```sh
+git clone https://github.com/jchook/plaintext-to-plaintext.git
+cd plaintext-to-plaintext
+python3 -m venv .venv
+.venv/bin/python -m pip install -r poc/requirements.txt
+ollama pull llama3.2:3b-instruct-q4_K_M
+.venv/bin/python poc/p2p.py serve
+```
+
+Keep that terminal open. In a second terminal, change into the same repository
+directory, then run:
+
+```sh
+.venv/bin/python poc/p2p.py probe
+.venv/bin/python poc/web_demo.py
+```
+
+Open **http://127.0.0.1:8000**, enter a short message, and choose **Hide message**.
+The demo checks exact recovery before displaying the generated text. Advanced
+controls let you rewrite the opening paragraph and change temperature,
+compression, or the random key. Save the key and temperature separately from
+the exact cover text to recover it later. Refreshing the page generates a new
+key. See [web demo behavior and limits](poc/README.md#web-demo) for queue details.
+
 ## Input and output
 
 Here is a real round trip from the public-opening experiment.
@@ -72,15 +106,11 @@ not establish a general length-scaling curve.
 
 ## Run and verify
 
-For a guided browser demo with editable opening prose and collapsed advanced
-controls, see the [web demo setup](poc/README.md#web-demo).
-
-From the repository root:
+After the [setup steps](poc/README.md#setup), run from the repository root:
 
 ```sh
-python3 -m pip install -r poc/requirements.txt
-python3 -m unittest discover -s poc -p 'test_*.py' -v
-python3 experiments/verify.py
+.venv/bin/python -m unittest discover -s poc -p 'test_*.py' -v
+.venv/bin/python experiments/verify.py
 ```
 
 The tests use local test predictors. The archive check compares saved bytes and

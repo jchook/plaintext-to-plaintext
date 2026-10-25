@@ -15,12 +15,136 @@ same code without copying it into every run folder.
 | `keys/alice.txt` | Public demonstration key, with source attribution |
 | `web_demo.py`, `web/` | Guided local web demo using the opening-v1 codec |
 
-## Web demo
+## Setup
 
-Start the dedicated model server using the runtime setup below, then run:
+These instructions set up the local web demo from a fresh clone. Public hosting
+is a separate deployment step; the current launcher binds to this computer only.
+
+### Prerequisites
+
+- Git and Python 3.10+ with the `venv` module. The current demo and tests have
+  been exercised on Linux with Python 3.12. On Debian/Ubuntu, the `python3-venv`
+  package supplies virtual-environment support.
+- [Ollama](https://docs.ollama.com/quickstart), installed and running so it can
+  download the model. Follow the [official Linux installation guide](https://docs.ollama.com/linux)
+  on Linux. If the service is not running, start `ollama serve` in a separate
+  terminal and leave it open while downloading.
+- A compatible `llama-server` executable. Some Ollama installations bundle one;
+  packaging varies. The codec starts a dedicated instance of that executable
+  with a fixed CPU configuration. See [inference runtime](#inference-runtime)
+  before proceeding if your installation does not include it.
+- Disk space for the repository, Python environment, and roughly 1.9 GB of model
+  weights. The inference runtime also needs RAM for weights, context, and work
+  buffers. Inference runs on CPU; a GPU is optional for future configurations.
+
+The prototype imports the Unix `fcntl` module. Native Windows is not currently
+supported; use a Linux environment such as WSL2 and run these commands inside
+that environment. macOS has not been validated for exact model replay here.
+
+### 1. Clone and install Python dependencies
 
 ```sh
-python3 poc/web_demo.py
+git clone https://github.com/jchook/plaintext-to-plaintext.git
+cd plaintext-to-plaintext
+python3 -m venv .venv
+.venv/bin/python -m pip install -r poc/requirements.txt
+```
+
+`cryptography` is the only declared third-party Python dependency. The commands
+use the virtual environment's Python directly, so shell activation is not needed.
+Run subsequent commands from this repository root.
+
+### 2. Download the model and start inference
+
+```sh
+ollama pull llama3.2:3b-instruct-q4_K_M
+.venv/bin/python poc/p2p.py serve
+```
+
+Keep this terminal open. The dedicated model server listens on
+`127.0.0.1:11535`; it is separate from the ordinary Ollama service used for the
+download. Startup loads the downloaded model, then waits for codec requests.
+
+### 3. Verify replay and start the web demo
+
+Open a second terminal and change into the same `plaintext-to-plaintext`
+directory. Run the replay check first:
+
+```sh
+.venv/bin/python poc/p2p.py probe
+```
+
+It should report `"exact_replay": true`. If it fails, follow the troubleshooting
+table below before relying on encode/decode compatibility. Then start the demo:
+
+```sh
+.venv/bin/python poc/web_demo.py
+```
+
+Open **http://127.0.0.1:8000**. Keep both server terminals open while using the
+demo. Press Ctrl-C in each to shut them down. The Python dependencies alone
+are sufficient for the interface; there is no frontend build step.
+
+### Inference runtime
+
+The launcher searches for `llama-server` on `PATH` and in several paths relative
+to the Ollama executable. You can select an existing compatible binary explicitly:
+
+```sh
+export P2P_LLAMA_SERVER="/absolute/path/to/llama-server"
+.venv/bin/python poc/p2p.py serve
+```
+
+The model store defaults to `~/.ollama/models`. If Ollama downloaded the model
+elsewhere, set `OLLAMA_MODELS` to that actual, readable directory before starting
+the dedicated server:
+
+```sh
+export OLLAMA_MODELS="/absolute/path/to/ollama/models"
+.venv/bin/python poc/p2p.py serve
+```
+
+That directory must contain the downloaded `blobs/sha256-…` file. Setting the
+variable here does not move model files or reconfigure an already-running Ollama
+download service. Both environment variables can be set together when needed.
+
+The expected model SHA-256 is:
+
+```text
+dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff
+```
+
+The saved experiments record server build `b1-0f3a71be1`. The repository does not
+yet distribute a pinned runtime installer or container. A different upstream
+build may reject launcher flags or return different probabilities. Use a build
+compatible with the launcher's arguments and API, then run `probe`; replaying
+historical covers provides an additional compatibility check. Matching the model
+name or passing `probe` alone does not establish compatibility with old covers
+or another machine. Preserve the runtime, model, and protocol used to encode.
+
+### Troubleshooting
+
+| Symptom | Next step |
+| --- | --- |
+| Python cannot create `.venv` | Install your operating system's Python virtual-environment package, then repeat step 1. |
+| `ollama pull` cannot connect | Start the Ollama application/service, or run `ollama serve` in another terminal, then retry the download. |
+| `Set P2P_LLAMA_SERVER` | Locate your compatible `llama-server` executable and set its absolute path as shown above. Ollama installations that omit it need a compatible runtime supplied separately. |
+| Missing pinned model | Download the exact tag above and check `OLLAMA_MODELS`. A system Ollama service may use a different user's model directory. |
+| Server rejects a command-line flag | The installed inference build differs from the one used here. Use a compatible runtime; changing launch flags can change the inference behavior. |
+| `Cannot reach …11535` or model unavailable in the page | Check that the dedicated `p2p.py serve` process is running and finished loading. Its terminal contains startup errors. |
+| Replay check fails | Confirm the model/runtime and keep the dedicated server free of unrelated inference requests. The CLI's `--cold` option is available for experiments, but the web demo currently uses the default cache policy. |
+| Web port 8000 is in use | Run `.venv/bin/python poc/web_demo.py --port 8001` and open `http://127.0.0.1:8001`. |
+| Inference port 11535 is in use | Choose an unused port with `p2p.py serve --port 11536`; give `probe` and `web_demo.py` the matching `--url http://127.0.0.1:11536`. |
+| Recovery fails after refreshing or on another tab | Restore the original key and temperature in Advanced controls, and paste the exact full cover. A new tab or refresh generates a different key. |
+| Queue is full | Retry later. One request runs at a time; restarting the server discards its in-memory queue. |
+
+## Web demo
+
+After completing [setup](#setup), keep the dedicated model server running and
+launch the browser interface from the repository root:
+
+```sh
+.venv/bin/python poc/web_demo.py
 ```
 
 Open **http://127.0.0.1:8000**. Enter a short message and choose **Hide message**.
@@ -51,12 +175,12 @@ automatically. The browser polls queued jobs every three seconds, running jobs
 every second, and backs off when reconnecting without creating another job.
 
 Generated cover text can reach the codec's 5,000-token limit. Local inference
-may take several minutes. Progress
-checks stop work after 30 minutes; an individual inference call can take longer
-to return. Waiting jobs expire after 30 minutes; cancellation and expiry release
+may take several minutes. Progress checks stop work after 30 minutes; an
+individual inference call can take longer to return. Waiting jobs expire after
+30 minutes; cancellation and expiry release
 their queued message and key. Completed jobs expire after 30 minutes and only the
-latest 20 are retained in process memory. The browser polls with unguessable job IDs; neither
-keys nor input messages are included in those URLs or access logs.
+latest 20 are retained in process memory. The browser polls with unguessable job
+IDs; neither keys nor input messages are included in those URLs or access logs.
 
 The demo binds only to loopback and checks Host/Origin on API requests. It is a
 local development server, not a multi-user deployment. Hosting requires a
@@ -77,20 +201,13 @@ and [measured results](../experiments/002-compact-v2/README.md).
 The public-opening variant has separate
 [protocol instructions](../experiments/003-opening-paragraph/PROTOCOL.md).
 
-From the repository root:
+After [setup](#setup), with the dedicated model server running, use another
+terminal in the repository root:
 
 ```sh
-python3 -m pip install -r poc/requirements.txt
-ollama pull llama3.2:3b-instruct-q4_K_M
-python3 poc/p2p.py serve
-```
-
-In another terminal:
-
-```sh
-python3 poc/p2p.py probe
-python3 poc/compact.py encode --key poc/keys/alice.txt --input experiments/001-baseline-v1/examples/key-message.txt --output /tmp/message.cover.txt --stats /tmp/message.encode.json
-python3 poc/compact.py decode --key poc/keys/alice.txt --input /tmp/message.cover.txt --output /tmp/message.recovered.txt --stats /tmp/message.decode.json
+.venv/bin/python poc/p2p.py probe
+.venv/bin/python poc/compact.py encode --key poc/keys/alice.txt --input experiments/001-baseline-v1/examples/key-message.txt --output /tmp/message.cover.txt --stats /tmp/message.encode.json
+.venv/bin/python poc/compact.py decode --key poc/keys/alice.txt --input /tmp/message.cover.txt --output /tmp/message.recovered.txt --stats /tmp/message.decode.json
 cmp experiments/001-baseline-v1/examples/key-message.txt /tmp/message.recovered.txt
 ```
 
@@ -100,10 +217,10 @@ results are promising. The [public-opening pilot](../experiments/003-opening-par
 demonstrates topic steering while retaining prose-quality limitations.
 
 ```sh
-python3 -m unittest discover -s poc -p 'test_*.py' -v
-python3 experiments/verify.py
-python3 poc/demo.py
-python3 poc/compact_demo.py --repetitions 2
+.venv/bin/python -m unittest discover -s poc -p 'test_*.py' -v
+.venv/bin/python experiments/verify.py
+.venv/bin/python poc/demo.py
+.venv/bin/python poc/compact_demo.py --repetitions 2
 ```
 
 New demo runs go to a timestamped directory in the corresponding experiment's
