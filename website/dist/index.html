@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore real examples of messages hidden in generated prose. Find a local setup for your hardware and try your own messages on your computer.">
+  <meta name="theme-color" content="#f6f4ee">
+  <title>Plaintext — a secret, in plain sight</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a class="brand" href="#" aria-label="Plaintext home"><span class="brand-mark" aria-hidden="true">p·p</span> plaintext <span class="brand-note">/ an experiment</span></a>
+      <nav aria-label="Main"><a href="#playground">Try an example</a><a href="#local">Run locally</a><a href="https://github.com/jchook/plaintext-to-plaintext" target="_blank" rel="noopener">GitHub ↗</a></nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div><p class="eyebrow">SAME MESSAGE. DIFFERENT WORDS.</p><h1>A secret,<br>in plain sight.</h1></div>
+        <div class="hero-copy"><span class="pill"><span class="dot"></span> Explore here. Create locally.</span><p>A short message becomes a longer piece of prose.<br>The original is hidden in the word choices.</p><p class="muted">Play with real examples below. Bring your own message<br class="wide-only"> to the local app when you’re ready.</p></div>
+      </section>
+
+      <section id="playground" class="playground" aria-labelledby="playground-title">
+        <div class="playground-heading"><div><p class="eyebrow">01 / THE PLAYGROUND</p><h2 id="playground-title">See what’s between the lines.</h2></div><span class="pill recorded">Recorded examples · no live inference</span></div>
+        <div class="demo-controls">
+          <div class="message-options" role="group" aria-label="Example message"><button type="button" data-message="key-message" aria-pressed="true">A little secret <span>16 B</span></button><button type="button" data-message="paragraph" aria-pressed="false">A whole paragraph <span>238 B</span></button></div>
+          <div class="selector"><label for="topic">Cover style</label><select id="topic"><option value="conference-followup">Conference follow-up</option><option value="history-revision">History chapter</option><option value="stem-revision">Research note</option></select></div>
+          <div class="selector"><label for="temperature">Temperature</label><select id="temperature"><option value="1.2">1.2</option><option value="1.0">1.0</option></select></div>
+        </div>
+        <div class="demo-panels">
+          <div class="secret-panel"><div class="panel-title"><span class="step">INPUT</span><span id="message-bytes">16 bytes</span></div><pre id="message">The key is 12345</pre><p class="annotation">This is the message to recover.<br>Its meaning doesn’t need to appear in the cover.</p><div class="flow" aria-label="Recorded byte counts"><div><span>Original</span><strong id="original-size">16 B</strong></div><span aria-hidden="true">›</span><div><span>Packed</span><strong id="packed-size">17 B</strong></div><span aria-hidden="true">›</span><div><span>Encrypted frame</span><strong id="frame-size">47 B</strong></div></div></div>
+          <div class="cover-panel"><div class="panel-title"><span class="step">COVER TEXT</span><button type="button" id="copy-cover" class="text-button" disabled>Copy text</button></div><div id="cover" class="cover-text" tabindex="0" aria-label="Recorded cover text"><div class="cover-placeholder"><span aria-hidden="true">¶</span><p>A different way to say the same thing.</p><small>Replay an example to reveal its saved cover text.</small></div></div><div class="cover-meta"><span id="cover-size">—</span><span id="recording-time">Recorded on a local CPU</span></div></div>
+        </div>
+        <div class="demo-action"><div><strong id="demo-status" role="status">A real round trip, ready to replay.</strong><p id="demo-note">The output and recovery were recorded in our experiments. This page reveals saved results.</p></div><button type="button" id="replay" class="primary">Replay example <span aria-hidden="true">↗</span></button></div>
+        <div id="recovery" class="recovery" hidden><div><span class="check" aria-hidden="true">✓</span><div><strong>Saved recovery matches the original</strong><p>Authenticated during the original experiment. Revealed here from the recording.</p></div></div><button type="button" id="reveal" class="text-button">Reveal the message ↓</button><pre id="recovered" hidden></pre></div>
+        <div class="record-footer"><button type="button" id="another" class="text-button">Try the other recording ↻</button><a id="source-link" target="_blank" rel="noopener">View exact experiment files ↗</a></div>
+      </section>
+      <div class="playground-notes"><p><strong>Change the context.</strong> The same secret can travel inside different subjects and voices. Choose another cover style to see how the opening changes the continuation.</p><p><strong>Look closely.</strong> These are unedited model outputs, including awkward wording and invented details. Exact recovery is demonstrated; statistical invisibility is still an open question.</p></div>
+
+      <section id="local" class="local-section" aria-labelledby="local-title">
+        <div class="local-intro"><p class="eyebrow">02 / MAKE IT YOURS</p><h2 id="local-title">Your message.<br>Your machine.</h2><p>Run the live app locally to write your own messages and opening paragraphs. Tell us about your hardware to find a starting point.</p><a href="https://github.com/jchook/plaintext-to-plaintext/blob/main/poc/README.md#setup" target="_blank" rel="noopener">Read the full setup guide ↗</a></div>
+        <div class="hardware-guide">
+          <div class="hardware-top"><span>FIND YOUR LOCAL SETUP</span><span class="small-pill">Planning guide</span></div>
+          <div class="hardware-fields"><div class="slider-label"><label for="ram">System RAM</label><output for="ram" id="ram-output">16 GB</output></div><input id="ram" type="range" min="4" max="64" step="4" value="16"><div class="range-ends"><span>4 GB</span><span>64 GB</span></div>
+          <div class="slider-label"><label for="vram">Dedicated GPU VRAM</label><output for="vram" id="vram-output">0 GB · CPU only</output></div><input id="vram" type="range" min="0" max="24" step="2" value="0"><div class="range-ends"><span>No GPU</span><span>24 GB</span></div>
+          <div class="system-field"><label for="system">Operating system</label><select id="system"><option value="linux">Linux</option><option value="mac">macOS / Apple Silicon</option><option value="windows">Windows / WSL2</option></select></div></div>
+          <div class="recommendation"><span id="recommendation-badge" class="support-badge">VERIFIED MODEL PROFILE</span><h3 id="model-name">Llama 3.2 · 3B</h3><p id="hardware-note">Start with the verified CPU profile. The suggested 8 GB system RAM budget includes headroom for the app and runtime.</p><p id="gpu-note" class="gpu-note">GPU memory is optional. The verified profile currently runs on CPU.</p><div class="command"><code id="model-command">ollama pull llama3.2:3b-instruct-q4_K_M</code><button type="button" id="copy-model" aria-label="Copy model download command">Copy</button></div><p class="estimate-note">Memory guidance is a conservative estimate, not a measured minimum or a speed guarantee. Close other memory-heavy apps.</p></div>
+          <details class="candidates"><summary>What about smaller models?</summary><p>Llama 3.2 1B and Qwen3 0.6B are candidates for future profiles. They have not been validated with this codec, so downloading them alone won’t make them work in the local app.</p><a href="https://ollama.com/library/llama3.2:1b" target="_blank" rel="noopener">Llama 3.2 1B · ~1.3 GB download ↗</a><a href="https://ollama.com/library/qwen3:0.6b" target="_blank" rel="noopener">Qwen3 0.6B · ~523 MB download ↗</a></details>
+        </div>
+      </section>
+
+      <section class="setup" aria-labelledby="setup-title"><div class="setup-top"><div><p class="eyebrow">03 / OPEN THE LOCAL APP</p><h2 id="setup-title">A small setup. Then it’s yours.</h2></div><span>Linux is the tested path.</span></div><div class="setup-grid"><div><p>Install <a href="https://docs.ollama.com/quickstart" target="_blank" rel="noopener">Ollama</a>, Python 3.10+ with <code>venv</code>, and Git. Then clone the project and run the launcher.</p><p>The launcher sets up Python dependencies, downloads the pinned model if needed, starts the dedicated runtime, checks replay, and opens the app.</p><p class="setup-caveat">A compatible <code>llama-server</code> is required. Some Ollama installations bundle it; others need it installed separately. The launcher checks this before downloading the model.</p><p id="system-note">The current profile has been tested on Linux. Both servers stop when you exit the launcher.</p></div><div class="setup-code"><div><span>TERMINAL</span><button type="button" id="copy-setup" class="text-button">Copy commands</button></div><pre id="setup-commands">git clone https://github.com/jchook/plaintext-to-plaintext.git
+cd plaintext-to-plaintext
+./run-local.sh</pre><a href="https://github.com/jchook/plaintext-to-plaintext/blob/main/poc/README.md#setup" target="_blank" rel="noopener">Runtime paths, troubleshooting &amp; manual setup ↗</a></div></div></section>
+
+      <details class="backend-details"><summary>Connecting other model backends</summary><p>The codec needs repeatable next-token probabilities, exact token IDs and bytes, token-history control, and reversible tokenization. A chat-compatible endpoint alone does not establish compatibility.</p><p>The current adapter supports a pinned dedicated <code>llama-server</code> using a model downloaded with Ollama. Attach an already-running compatible endpoint with <code>./run-local.sh --url http://127.0.0.1:11535</code>. The launcher checks identity and replay before opening the app.</p><p>Direct Ollama API support and more model profiles need adapters and their own round-trip tests. When added, each profile must identify the model, tokenizer, prompt, and sampling rules so the receiver can reproduce them.</p></details>
+    </main>
+    <footer><div class="brand"><span class="brand-mark" aria-hidden="true">p·p</span> plaintext</div><p>Recorded examples here. Live inference on your computer.</p><a href="https://github.com/jchook/plaintext-to-plaintext">Source &amp; research ↗</a></footer>
+    <p id="notice" class="notice" role="status" hidden></p>
+  </div>
+</body>
+</html>

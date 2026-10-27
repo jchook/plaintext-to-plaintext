@@ -6,30 +6,30 @@ to recover the original bytes exactly.
 
 ## Try the web demo
 
+The [recorded-example playground](website/README.md) is a static site for exploring
+24 saved round trips and planning a local setup. It replays real experiment
+outputs; live encoding runs in the local app on your computer.
+
 Start with the [setup guide](poc/README.md#setup) for prerequisites, inference
 runtime configuration, and troubleshooting. The prototype has been tested on
 Linux with Python 3.12 and a compatible dedicated `llama-server`. It runs local
 CPU inference using a roughly 1.9 GB quantized Llama 3.2 3B model.
 
 Once Git, Python 3.10+ with `venv`, Ollama, and the compatible inference runtime
-are installed, run:
+are installed, use the launcher:
 
 ```sh
 git clone https://github.com/jchook/plaintext-to-plaintext.git
 cd plaintext-to-plaintext
-python3 -m venv .venv
-.venv/bin/python -m pip install -r poc/requirements.txt
-ollama pull llama3.2:3b-instruct-q4_K_M
-.venv/bin/python poc/p2p.py serve
+./run-local.sh
 ```
 
-Keep that terminal open. In a second terminal, change into the same repository
-directory, then run:
-
-```sh
-.venv/bin/python poc/p2p.py probe
-.venv/bin/python poc/web_demo.py
-```
+The launcher installs the Python dependencies, downloads the pinned model if
+needed (about 2 GB), checks model identity and replay, and starts the model and web
+servers. It opens **http://127.0.0.1:8000** in your browser. Keep the terminal open;
+Ctrl-C stops the servers started by the launcher. Use `./run-local.sh --check`
+to check prerequisites without downloading the model or starting either server,
+or see the [manual setup](poc/README.md#setup) for separate-terminal instructions.
 
 Open **http://127.0.0.1:8000**, enter a short message, and choose **Hide message**.
 The demo checks exact recovery before displaying the generated text. Advanced

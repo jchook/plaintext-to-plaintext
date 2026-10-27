@@ -18,7 +18,8 @@ same code without copying it into every run folder.
 ## Setup
 
 These instructions set up the local web demo from a fresh clone. Public hosting
-is a separate deployment step; the current launcher binds to this computer only.
+can use the separate [static playground](../website/README.md), which replays
+saved examples without inference. The live app binds to this computer only.
 
 ### Prerequisites
 
@@ -40,6 +41,43 @@ is a separate deployment step; the current launcher binds to this computer only.
 The prototype imports the Unix `fcntl` module. Native Windows is not currently
 supported; use a Linux environment such as WSL2 and run these commands inside
 that environment. macOS has not been validated for exact model replay here.
+
+### One-command launcher
+
+After installing the prerequisites above:
+
+```sh
+git clone https://github.com/jchook/plaintext-to-plaintext.git
+cd plaintext-to-plaintext
+./run-local.sh
+```
+
+The shell launcher creates `.venv` when needed and installs the declared Python
+dependencies if they are missing. The Python launcher checks for a runtime before
+downloading anything large, downloads the pinned model through Ollama when needed,
+checks the actual model SHA-256 before starting a runtime it owns. It then verifies
+model identity and exact replay, starts the web app, and opens the browser.
+Keep the terminal open. Ctrl-C stops only server processes this launcher started;
+an existing model server is left running.
+
+Useful options:
+
+```sh
+./run-local.sh --check
+./run-local.sh --no-browser --port 8001
+./run-local.sh --url http://127.0.0.1:11535
+```
+
+`--check` still bootstraps Python dependencies, but does not download a model or
+start servers. Without `--url`, it checks the local runtime and the model file's
+checksum. With `--url`, it checks endpoint reachability; full compatibility and
+replay checks run when launching. `--url` attaches an existing compatible endpoint
+and never downloads or starts its model. The web app still uses the pinned model
+and protocol; this option does not enable arbitrary chat models or the ordinary
+Ollama API. Missing runtime paths and model-store locations can be configured
+with the environment variables below.
+
+The separate-terminal instructions below remain available for manual setup.
 
 ### 1. Clone and install Python dependencies
 
