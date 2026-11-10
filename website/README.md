@@ -56,7 +56,10 @@ still needs a codec adapter and exact recovery validation.
 ## Sampler illustration
 
 The “How it works” section uses an independent toy arithmetic coder in
-`dist/sampler.js`. Enter one payload byte and step through candidate selection.
+`dist/sampler.js`. Enter 1–16 bytes of example ciphertext in hexadecimal and step through candidate
+selection, or use Play/Pause to watch the output develop. The default contains
+eight bytes. We use exact integer arithmetic so the longer examples do not lose
+precision as the interval narrows.
 Decode the emitted tokens to see the recoverable bit prefix grow. Change the
 opening context to select a different invented vocabulary and interval order.
 These are illustrative token strings and probabilities, not model measurements.
@@ -69,8 +72,8 @@ key secret. Use the CLI to embed ciphertext from age, GPG, or another tool;
 `--compression raw` avoids compression of already encrypted data. The codec
 still applies its own authenticated encryption.
 
-Check all 256 byte values in both toy contexts, including partial decoding and
-wrong-context rejection:
+Check all 256 single-byte values in both toy contexts, plus longer payloads up
+to sixteen bytes, partial decoding, and wrong-context rejection:
 
 ```sh
 node website/test-sampler.cjs
