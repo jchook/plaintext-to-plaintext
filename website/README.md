@@ -53,28 +53,39 @@ identity, and fresh encode/decode checks. Ollama's current generation API expose
 [log probabilities](https://docs.ollama.com/api/generate), but direct API support
 still needs a codec adapter and exact recovery validation.
 
-## Sampler illustration
+## Recorded sampler walkthrough
 
-The “How it works” section uses an independent toy arithmetic coder in
-`dist/sampler.js`. Enter 1–16 bytes of example ciphertext in hexadecimal and step through candidate
-selection, or use Play/Pause to watch the output develop. The default contains
-eight bytes. We use exact integer arithmetic so the longer examples do not lose
-precision as the interval narrows.
-Decode the emitted tokens to see the recoverable bit prefix grow. Change the
-opening context to select a different invented vocabulary and interval order.
-These are illustrative token strings and probabilities, not model measurements.
-The toy uses small dyadic weights and fixed context-specific toy keys; the codec
-uses its own candidate filtering, integer probability table, and HMAC ordering.
+The “How it works” section replays two real opening-v1 experiment covers.
+`dist/sampler-recordings.json` includes each retained token candidate, its
+integer coding probability, the actual selection, and the recovered ciphertext.
+We record the probability tables while decoding the archived covers through the
+pinned model. We verify authenticated recovery and exact sentence completion
+before exporting. No secret key material is included in the website.
 
-The opening paragraph is public context included in the cover. In opening-v1,
-we bind it into both prompt rendering and key derivation. Keep the cryptographic
-key secret. Use the CLI to embed ciphertext from age, GPG, or another tool;
-`--compression raw` avoids compression of already encrypted data. The codec
-still applies its own authenticated encryption.
+Use Play/Pause, Next, Back, and Reset to inspect the recording. The browser
+reconstructs the arithmetic intervals and ciphertext bits from the recorded
+tables. The ciphertext is read-only because a different payload would require
+new model inference. The final sentence completion does not encode more data.
+The table shows the top four candidates plus the selection when needed; the
+interval strip includes every retained candidate. Coding probabilities include
+the codec’s filtering, temperature adjustment, and integer allocation.
 
-Check all 256 single-byte values in both toy contexts, plus longer payloads up
-to sixteen bytes, partial decoding, and wrong-context rejection:
+To regenerate the recordings, start the pinned local server and run:
 
 ```sh
+.venv/bin/python scripts/export_sampler.py
+```
+
+Check the recordings against the archived covers and verify the browser’s exact
+ciphertext reconstruction without running a model:
+
+```sh
+.venv/bin/python scripts/export_sampler.py --check
 node website/test-sampler.cjs
 ```
+
+The first paragraph is included in the cover text so the decoder can reconstruct
+the model context. In opening-v1, we also bind it into key derivation. Use the CLI
+to embed ciphertext from age, GPG, or another tool. Select `--compression raw` to
+skip compression of data that has already been encrypted. The codec also applies
+its own authenticated encryption.
