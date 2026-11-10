@@ -62,11 +62,14 @@ We record the probability tables while decoding the archived covers through the
 pinned model. We verify authenticated recovery and exact sentence completion
 before exporting. No secret key material is included in the website.
 
-Use Play/Pause, Next, Back, and Reset to inspect the recording. The browser
+By default, replay only the first complete sentence (27 or 31 payload tokens).
+Use Play/Pause, Next, Back, and Reset to inspect it. Choose Continue recording
+to replay the remaining tokens and recover the full ciphertext. The excerpt
+reports partial bit recovery and does not claim a complete message round trip. The browser
 reconstructs the arithmetic intervals and ciphertext bits from the recorded
 tables. The ciphertext is read-only because a different payload would require
 new model inference. The final sentence completion does not encode more data.
-The table shows the top four candidates plus the selection when needed; the
+The table shows the top three candidates plus the selection when needed; the
 interval strip includes every retained candidate. Coding probabilities include
 the codec’s filtering, temperature adjustment, and integer allocation.
 
@@ -83,6 +86,12 @@ ciphertext reconstruction without running a model:
 .venv/bin/python scripts/export_sampler.py --check
 node website/test-sampler.cjs
 ```
+
+The opening paragraph starts collapsed. Its disclosure explains how it changes
+subject and style and how the codec uses it during key derivation. The main
+visual keeps token labels, probability bars, and the cover text visible together
+on narrow screens. Full ciphertext, recovered bits, and interval widths are in
+the recording-details disclosure.
 
 The first paragraph is included in the cover text so the decoder can reconstruct
 the model context. In opening-v1, we also bind it into key derivation. Use the CLI

@@ -51,14 +51,29 @@ const SamplerDemo = (() => {
     const shift = Math.max(0, value.toString(2).length - 53);
     return Math.log2(Number(value >> BigInt(shift))) + shift;
   }
-  return {prepare, recovered, hexToBits, log2Integer};
+  function excerptLength(record) {
+    let text = '';
+    for (let index = 0; index < Math.min(40, record.steps.length); index += 1) {
+      const step = record.steps[index];
+      text += step.rows[step.chosen].token;
+      if (index >= 19 && /[.!?]["')]*\s*$/.test(text)) return index + 1;
+    }
+    return Math.min(32, record.steps.length);
+  }
+
+  function topCandidates(step) {
+    const rows = step.rows.slice().sort((a, b) => b.count - a.count).slice(0, 3);
+    if (!rows.includes(step.chosen)) rows.push(step.chosen);
+    return rows;
+  }
+  return {prepare, recovered, hexToBits, log2Integer, excerptLength, topCandidates};
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SamplerDemo;
 
 if (typeof document !== 'undefined') {
   const el = (id) => document.getElementById(id);
-  let recordings, selected, cursor = 0, timer;
+  let recordings, selected, cursor = 0, playbackLimit = 0, timer;
   const percent = (count) => `${(count / 655.36).toFixed(count < 7 ? 4 : 2)}%`;
 
   function pause() {
@@ -70,39 +85,54 @@ if (typeof document !== 'undefined') {
   function render() {
     const {record, bits, steps} = selected;
     const complete = cursor === steps.length;
-    const step = steps[Math.min(cursor, steps.length - 1)];
+    const stopped = cursor === playbackLimit;
+    const excerptDone = stopped && !complete;
+    const step = steps[Math.min(cursor, playbackLimit - 1)];
     const decoded = cursor ? steps[cursor - 1].decoded : '';
     const interval = cursor ? steps[cursor - 1].after : {low: 0n, high: 1n, den: 1n};
     el('sampler-opening').textContent = record.opening;
-    el('sampler-output').textContent = steps.slice(0, cursor).map((item) => item.chosen.token).join('') + (complete ? record.suffix : '');
+    el('sampler-output').replaceChildren();
+    if (!cursor) {
+      const hint = document.createElement('span'); hint.className = 'output-placeholder';
+      hint.textContent = 'Press Play or Next token to follow the recording.'; el('sampler-output').append(hint);
+    } else {
+      el('sampler-output').append(document.createTextNode(steps.slice(0, cursor - 1).map((item) => item.chosen.token).join('')));
+      const recent = document.createElement('mark'); recent.textContent = steps[cursor - 1].chosen.token;
+      el('sampler-output').append(recent);
+      if (complete) el('sampler-output').append(document.createTextNode(record.suffix));
+    }
     el('sampler-output').scrollTop = el('sampler-output').scrollHeight;
-    el('sampler-step').textContent = complete ? `Complete · ${cursor} payload tokens` : `Next token · step ${cursor + 1} of ${steps.length}`;
-    el('sampler-next').textContent = complete ? 'Ciphertext recovered' : `Next: ${JSON.stringify(step.chosen.token)}`;
-    el('sampler-next').disabled = complete;
+    el('sampler-step').textContent = `${cursor} / ${playbackLimit} tokens`;
+    el('sampler-next').disabled = stopped;
+    el('sampler-next').hidden = stopped;
+    el('sampler-continue').hidden = !excerptDone;
     el('sampler-back').disabled = cursor === 0;
-    el('sampler-play').disabled = complete;
-    if (complete) pause();
+    el('sampler-play').disabled = stopped;
+    if (stopped) pause();
     el('sampler-rows').replaceChildren();
-    const top = step.rows.slice().sort((a, b) => b.count - a.count).slice(0, 4);
-    if (!top.includes(step.chosen)) top.push(step.chosen);
+    const top = SamplerDemo.topCandidates(step);
     top.forEach((row) => {
       const tr = document.createElement('tr');
       if (row === step.chosen) tr.className = 'chosen';
       const token = document.createElement('td');
-      const code = document.createElement('code'); code.textContent = JSON.stringify(row.token); token.append(code);
+      const label = document.createElement('div');
+      const code = document.createElement('code'); code.textContent = JSON.stringify(row.token); label.append(code);
+      if (row === step.chosen) {
+        const chosen = document.createElement('span'); chosen.className = 'chosen-label'; chosen.textContent = 'Selected';
+        label.append(chosen);
+      }
+      token.append(label);
       const probability = document.createElement('td');
       const bar = document.createElement('span'); bar.className = 'token-probability';
       bar.style.setProperty('--probability', `${row.count / 655.36}%`);
       bar.textContent = percent(row.count); probability.append(bar);
-      const range = document.createElement('td');
-      range.textContent = `[${(row.start / 65536).toFixed(5)}, ${((row.start + row.count) / 65536).toFixed(5)})`;
-      const choice = document.createElement('td'); choice.textContent = row === step.chosen ? 'Selected' : '';
-      tr.append(token, probability, range, choice); el('sampler-rows').append(tr);
+      tr.append(token, probability); el('sampler-rows').append(tr);
     });
     el('sampler-strip').replaceChildren();
     step.rows.forEach((row) => {
       const segment = document.createElement('span'); segment.style.flex = row.count;
       segment.className = row === step.chosen ? 'selected-segment' : '';
+      segment.textContent = row.token.trim() || JSON.stringify(row.token);
       segment.setAttribute('aria-label', `${JSON.stringify(row.token)}: ${percent(row.count)}`);
       el('sampler-strip').append(segment);
     });
@@ -111,25 +141,28 @@ if (typeof document !== 'undefined') {
     el('sampler-recovered').textContent = decoded.padEnd(bits.length, '·').match(/.{8}/g).join(' ');
     const logWidth = SamplerDemo.log2Integer(interval.high - interval.low) - SamplerDemo.log2Integer(interval.den);
     el('sampler-interval').textContent = (2 ** logWidth).toExponential(3);
-    el('sampler-result').textContent = complete ? `Recovered all ${bits.length} ciphertext bits. The final sentence is completed without encoding more data.` :
-      `Recovered ${decoded.length} of ${bits.length} ciphertext bits from ${cursor} tokens.`;
+    el('sampler-result').textContent = complete ? `Recovered all ${bits.length} ciphertext bits.` :
+      `${excerptDone ? 'Excerpt complete. ' : ''}${decoded.length} of ${bits.length} ciphertext bits recovered.`;
   }
 
   function reset() {
     pause();
     selected = recordings[Number(el('sampler-context').value)];
     el('sampler-bits').value = selected.record.ciphertext;
+    el('sampler-payload-preview').textContent = `Ciphertext ${selected.record.ciphertext.slice(0, 8)}… · ${selected.bits.length / 8} bytes`;
+    playbackLimit = SamplerDemo.excerptLength(selected.record);
     el('sampler-source').href = 'https://github.com/jchook/plaintext-to-plaintext/blob/main/' + selected.record.artifact_path + '.encode.json';
     cursor = 0; render();
   }
-  el('sampler-next').addEventListener('click', () => {pause(); if (selected && cursor < selected.steps.length) {cursor += 1; render();}});
+  el('sampler-next').addEventListener('click', () => {pause(); if (selected && cursor < playbackLimit) {cursor += 1; render();}});
   el('sampler-back').addEventListener('click', () => {pause(); if (cursor > 0) {cursor -= 1; render();}});
   el('sampler-play').addEventListener('click', () => {
     if (timer) {pause(); return;}
     el('sampler-play').textContent = 'Pause';
     el('sampler-play').setAttribute('aria-pressed', 'true');
-    timer = setInterval(() => {if (cursor < selected.steps.length) {cursor += 1; render();} else pause();}, 110);
+    timer = setInterval(() => {if (cursor < playbackLimit) {cursor += 1; render();} else pause();}, 220);
   });
+  el('sampler-continue').addEventListener('click', () => {pause(); playbackLimit = selected.steps.length; render();});
   el('sampler-reset').addEventListener('click', reset);
   el('sampler-context').addEventListener('change', reset);
   document.addEventListener('visibilitychange', () => {if (document.hidden) pause();});

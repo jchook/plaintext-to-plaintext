@@ -10,9 +10,21 @@ let count = 0;
 for (const record of data.records) {
   const prepared = demo.prepare(record, data.total);
   assert.ok(prepared.steps.length > 100);
+  const excerpt = demo.excerptLength(record);
+  assert.ok(excerpt >= 20 && excerpt <= 40);
+  assert.ok(excerpt < prepared.steps.length);
+  assert.match(prepared.steps.slice(0, excerpt).map((step) => step.chosen.token).join(''), /[.!?]["')]*\s*$/);
+  assert.ok(prepared.steps[excerpt - 1].decoded.length < prepared.bits.length);
+  assert.equal(excerpt, record.label === 'Conference follow-up' ? 27 : 31);
+
   assert.equal(crypto.createHash('sha256').update(record.cover).digest('hex'), record.cover_sha256);
   assert.equal(fs.readFileSync(path.join(__dirname, '..', record.artifact_path + '.cover.txt'), 'utf8'), record.cover);
   for (const step of prepared.steps) {
+    const visible = demo.topCandidates(step);
+    assert.ok(visible.length >= 3 && visible.length <= 4);
+    assert.ok(visible.includes(step.chosen));
+    for (const row of visible) assert.ok(row.token.length > 0);
+
     assert.ok(prepared.bits.startsWith(step.decoded));
     assert.ok(step.position >= step.chosen.start / data.total);
     assert.ok(step.position < (step.chosen.start + step.chosen.count) / data.total);
