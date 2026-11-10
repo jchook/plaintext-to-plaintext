@@ -52,3 +52,26 @@ and bytes, token-history control, reversible tokenization, explicit model/profil
 identity, and fresh encode/decode checks. Ollama's current generation API exposes
 [log probabilities](https://docs.ollama.com/api/generate), but direct API support
 still needs a codec adapter and exact recovery validation.
+
+## Sampler illustration
+
+The “How it works” section uses an independent toy arithmetic coder in
+`dist/sampler.js`. Enter one payload byte and step through candidate selection.
+Decode the emitted tokens to see the recoverable bit prefix grow. Change the
+opening context to select a different invented vocabulary and interval order.
+These are illustrative token strings and probabilities, not model measurements.
+The toy uses small dyadic weights and fixed context-specific toy keys; the codec
+uses its own candidate filtering, integer probability table, and HMAC ordering.
+
+The opening paragraph is public context included in the cover. In opening-v1,
+we bind it into both prompt rendering and key derivation. Keep the cryptographic
+key secret. Use the CLI to embed ciphertext from age, GPG, or another tool;
+`--compression raw` avoids compression of already encrypted data. The codec
+still applies its own authenticated encryption.
+
+Check all 256 byte values in both toy contexts, including partial decoding and
+wrong-context rejection:
+
+```sh
+node website/test-sampler.cjs
+```

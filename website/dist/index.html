@@ -3,21 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Plain text to plain text encryption. Hide secret messages in plausible cover text using a local language model.">
+  <meta name="description" content="Plaintext to plaintext encryption. Hide secret messages in plausible cover text using a local language model.">
   <meta name="theme-color" content="#f6f4ee">
-  <title>Plaintext | Plain text to plain text encryption</title>
+  <title>Plaintext | Plaintext to plaintext encryption</title>
   <link rel="stylesheet" href="./style.css">
   <script src="./app.js" defer></script>
+  <script src="./sampler.js" defer></script>
 </head>
 <body>
   <div class="page">
     <header>
       <a class="brand" href="#" aria-label="Plaintext home"><span class="brand-mark" aria-hidden="true">p·p</span> plaintext <span class="brand-note">/ an experiment</span></a>
-      <nav aria-label="Main"><a href="#playground">Examples</a><a href="#local">Run locally</a><a href="https://github.com/jchook/plaintext-to-plaintext" target="_blank" rel="noopener">GitHub</a></nav>
+      <nav aria-label="Main"><a href="#playground">Examples</a><a href="#how">How it works</a><a href="#local">Run locally</a><a href="https://github.com/jchook/plaintext-to-plaintext" target="_blank" rel="noopener">GitHub</a></nav>
     </header>
     <main>
       <section class="hero">
-        <div><h1>Plain text to<br>plain text encryption</h1></div>
+        <div><h1>Plaintext to<br>plaintext encryption</h1></div>
         <div class="hero-copy"><p>Hide secret messages in plausible cover text.</p><p class="muted">Encrypt a message, then encode it in LLM-generated prose. Recover it with the key and the same model profile.</p></div>
       </section>
 
@@ -38,8 +39,28 @@
       </section>
       <div class="playground-notes"><p>Inspect the unedited outputs in the experiment files. We have verified message recovery; we have not established resistance to statistical detection.</p></div>
 
+      <section id="how" class="sampler-section" aria-labelledby="sampler-title">
+        <div class="sampler-intro"><div><p class="eyebrow">02 / HOW IT WORKS</p><h2 id="sampler-title">Encode data through the sampler</h2></div><p>We use the sampler to encode arbitrary data into LLM output. At each step, we divide an interval among candidate tokens in proportion to their probabilities, then select the interval containing the payload’s value. Decode by reconstructing the same intervals from the output tokens.</p></div>
+        <div class="sampler-controls">
+          <div><label for="sampler-bits">Payload bits (after encryption)</label><input id="sampler-bits" value="10110110" maxlength="8" pattern="[01]{8}" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="sampler-error"></div>
+          <div><label for="sampler-context">Opening paragraph</label><select id="sampler-context"><option value="field">Field note</option><option value="letter">Workshop follow-up</option></select></div>
+          <span class="sampler-caption">Illustration with invented tokens and probabilities.</span>
+        </div>
+        <p id="sampler-error" class="sampler-error" role="alert" hidden>Enter exactly eight binary digits (0 or 1).</p>
+        <div class="sampler-grid">
+          <div class="sampler-distribution"><div class="sampler-label"><span id="sampler-step">Next token · step 1</span><span>Top 4 candidates</span></div>
+            <table class="token-table"><thead><tr><th scope="col">Token</th><th scope="col">Probability</th><th scope="col">Interval</th><th scope="col"><span class="sr-only">Choice</span></th></tr></thead><tbody id="sampler-rows"></tbody></table>
+            <div class="sampler-axis"><span>0</span><span>1</span></div><div class="sampler-track" role="img" aria-label="Candidate intervals with the payload position marked"><div id="sampler-strip" class="sampler-strip"></div><span id="sampler-point" class="sampler-point" role="img" aria-label="Payload position"></span></div>
+            <p class="sampler-caption">Wider intervals correspond to more probable tokens. The codec keys interval order to the token history. This illustration uses a fixed toy key.</p>
+          </div>
+          <div class="sampler-text"><span class="sampler-label">Public opening paragraph</span><p id="sampler-opening"></p><span class="sampler-label">Output tokens</span><pre id="sampler-output"></pre><div class="sampler-decoded"><span>Recovered bits</span><code id="sampler-recovered">········</code></div><div class="sampler-range"><span>Payload interval</span><code id="sampler-interval">[0.000000, 1.000000)</code></div></div>
+        </div>
+        <div class="sampler-actions"><p id="sampler-result" role="status" aria-live="polite"></p><div><button id="sampler-back" type="button" class="sampler-button">Back</button><button id="sampler-reset" type="button" class="sampler-button">Reset</button><button id="sampler-next" type="button" class="primary">Emit token</button></div></div>
+        <div class="sampler-notes"><div><h3>The opening sets the context</h3><p>The first paragraph is part of the decoding context and key derivation. It is public and included in the cover; keep the cryptographic key secret. Write a different paragraph to change the subject, voice, and format.</p></div><div><h3>Encrypt before embedding</h3><p>Encrypt your data with age, GPG, or another tool before embedding it. We also apply authenticated encryption inside the codec. Use the CLI for binary ciphertext and select <code>--compression raw</code> to skip compression.</p></div></div>
+      </section>
+
       <section id="local" class="local-section" aria-labelledby="local-title">
-        <div class="local-intro"><p class="eyebrow">02 / LOCAL APP</p><h2 id="local-title">Run locally</h2><p>Encode your own messages and edit the opening paragraph. Check the requirements for your hardware below.</p><a href="https://github.com/jchook/plaintext-to-plaintext/blob/main/poc/README.md#setup" target="_blank" rel="noopener">Setup guide</a></div>
+        <div class="local-intro"><p class="eyebrow">03 / LOCAL APP</p><h2 id="local-title">Run locally</h2><p>Encode your own messages and edit the opening paragraph. Check the requirements for your hardware below.</p><a href="https://github.com/jchook/plaintext-to-plaintext/blob/main/poc/README.md#setup" target="_blank" rel="noopener">Setup guide</a></div>
         <div class="hardware-guide">
           <div class="hardware-top"><span>HARDWARE</span><span class="small-pill">Estimates</span></div>
           <div class="hardware-fields"><div class="slider-label"><label for="ram">System RAM</label><output for="ram" id="ram-output">16 GB</output></div><input id="ram" type="range" min="4" max="64" step="4" value="16"><div class="range-ends"><span>4 GB</span><span>64 GB</span></div>
@@ -50,7 +71,7 @@
         </div>
       </section>
 
-      <section class="setup" aria-labelledby="setup-title"><div class="setup-top"><div><p class="eyebrow">03 / SETUP</p><h2 id="setup-title">Install and launch</h2></div></div><div class="setup-grid"><div><p>Install <a href="https://docs.ollama.com/quickstart" target="_blank" rel="noopener">Ollama</a>, Python 3.10+ with <code>venv</code>, and Git. Then clone the project and run the launcher.</p><p>Run the launcher to install Python dependencies, download the pinned model, check replay, and open the app.</p><p class="setup-caveat">Install a compatible <code>llama-server</code> if your Ollama installation does not include one. Run <code>./run-local.sh --check</code> to check prerequisites.</p><p id="system-note">We have tested this setup on Linux. Exit the launcher to stop both servers.</p></div><div class="setup-code"><div><span>TERMINAL</span><button type="button" id="copy-setup" class="text-button">Copy commands</button></div><pre id="setup-commands">git clone https://github.com/jchook/plaintext-to-plaintext.git
+      <section class="setup" aria-labelledby="setup-title"><div class="setup-top"><div><p class="eyebrow">04 / SETUP</p><h2 id="setup-title">Install and launch</h2></div></div><div class="setup-grid"><div><p>Install <a href="https://docs.ollama.com/quickstart" target="_blank" rel="noopener">Ollama</a>, Python 3.10+ with <code>venv</code>, and Git. Then clone the project and run the launcher.</p><p>Run the launcher to install Python dependencies, download the pinned model, check replay, and open the app.</p><p class="setup-caveat">Install a compatible <code>llama-server</code> if your Ollama installation does not include one. Run <code>./run-local.sh --check</code> to check prerequisites.</p><p id="system-note">We have tested this setup on Linux. Exit the launcher to stop both servers.</p></div><div class="setup-code"><div><span>TERMINAL</span><button type="button" id="copy-setup" class="text-button">Copy commands</button></div><pre id="setup-commands">git clone https://github.com/jchook/plaintext-to-plaintext.git
 cd plaintext-to-plaintext
 ./run-local.sh</pre><a href="https://github.com/jchook/plaintext-to-plaintext/blob/main/poc/README.md#setup" target="_blank" rel="noopener">Manual setup and troubleshooting</a></div></div></section>
 
