@@ -26,13 +26,13 @@ function chooseExample() {
   const placeholder = document.createElement('div');
   placeholder.className = 'cover-placeholder';
   const glyph = document.createElement('span'); glyph.textContent = '¶'; glyph.setAttribute('aria-hidden', 'true');
-  const heading = document.createElement('p'); heading.textContent = 'A different way to say the same thing.';
-  const hint = document.createElement('small'); hint.textContent = 'Replay an example to reveal its saved cover text.';
+  const heading = document.createElement('p'); heading.textContent = 'Cover text';
+  const hint = document.createElement('small'); hint.textContent = 'Replay this example to view the output.';
   placeholder.append(glyph, heading, hint); $('cover').append(placeholder);
   $('cover-size').textContent = '—';
   $('recording-time').textContent = 'Recorded on a local CPU';
   $('demo-status').textContent = `Recording ${trial} · ${selected.topic_label.toLowerCase()}`;
-  $('demo-note').textContent = 'The output and recovery were recorded in our experiments. This page reveals saved results.';
+  $('demo-note').textContent = `Llama 3.2 3B · temperature ${selected.temperature}`;
   $('source-link').href = github + selected.artifact_path + '.encode.json';
 }
 
@@ -44,8 +44,7 @@ async function replay() {
   $('copy-cover').disabled = true;
   $('recovery').hidden = true;
   $('cover').textContent = '';
-  $('demo-status').textContent = 'Replaying the recorded cover…';
-  $('demo-note').textContent = 'This is a playback animation. No model is running in your browser or on a server.';
+  $('demo-status').textContent = 'Replaying…';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const step = reduced ? row.cover.length : Math.ceil(row.cover.length / 24);
   for (let end = step; end < row.cover.length; end += step) {
@@ -58,8 +57,8 @@ async function replay() {
   $('cover').scrollTop = 0;
   $('cover-size').textContent = `${row.cover_bytes.toLocaleString()} UTF-8 bytes`;
   $('recording-time').textContent = `Original round trip: ${row.seconds}s`;
-  $('demo-status').textContent = 'Recorded cover revealed. Now recover the secret.';
-  $('demo-note').textContent = `${row.message_bytes} source bytes carried in ${row.cover_bytes.toLocaleString()} cover bytes · Llama 3.2 3B · temperature ${row.temperature}`;
+  $('demo-status').textContent = 'Cover text ready.';
+  $('demo-note').textContent = `Llama 3.2 3B · temperature ${row.temperature}`;
   $('replay').disabled = false;
   $('copy-cover').disabled = false;
   $('recovery').hidden = false;
@@ -74,18 +73,18 @@ function hardware() {
   $('vram').disabled = unified;
   $('vram-output').textContent = unified ? 'Shared system memory' : vram ? `${vram} GB` : '0 GB · CPU only';
   const ready = ram >= 8;
-  $('recommendation-badge').textContent = ready ? 'VERIFIED MODEL PROFILE' : 'BELOW SUGGESTED MEMORY BUDGET';
-  $('model-name').textContent = ready ? 'Llama 3.2 · 3B' : 'No verified low-memory profile yet';
-  $('hardware-note').textContent = ready ? 'Start with the verified CPU profile. The suggested 8 GB system RAM budget includes headroom for the app and runtime.' :
-    'The verified 3B profile has a suggested 8 GB system RAM budget. Smaller models need codec validation before we can recommend them for this app.';
+  $('recommendation-badge').textContent = ready ? 'TESTED MODEL' : 'BELOW SUGGESTED RAM';
+  $('model-name').textContent = ready ? 'Llama 3.2 · 3B' : 'At least 8 GB RAM suggested';
+  $('hardware-note').textContent = ready ? 'Allow 8 GB of system RAM for the model, runtime, and app.' :
+    'Allow 8 GB for the tested 3B model. We have not tested smaller models with this codec.';
   $('copy-model').disabled = !ready;
-  $('model-command').textContent = ready ? 'ollama pull llama3.2:3b-instruct-q4_K_M' : 'See smaller-model candidates below';
-  $('gpu-note').textContent = unified ? 'Apple Silicon uses shared memory; RAM and VRAM are not added together. This runtime has not been validated on macOS.' :
-    vram ? `Your ${vram} GB GPU could help a future GPU profile. The current verified profile uses CPU, so VRAM does not change this recommendation.` :
-    'GPU memory is optional. The verified profile currently runs on CPU.';
-  $('system-note').textContent = {linux: 'The current profile has been tested on Linux. Both servers stop when you exit the launcher.',
-    windows: 'Run these commands inside WSL2. Native Windows is not supported by the current Unix-only launcher and file locking.',
-    mac: 'These shell commands require Python and Git on macOS. Exact runtime replay on macOS has not yet been validated; check the setup guide first.'}[system];
+  $('model-command').textContent = ready ? 'ollama pull llama3.2:3b-instruct-q4_K_M' : 'No tested model for this RAM estimate';
+  $('gpu-note').textContent = unified ? 'Count Apple Silicon’s shared memory as RAM. We have not tested this runtime on macOS.' :
+    vram ? `Use the CPU profile for now. We have not tested GPU inference with this codec.` :
+    'Use the tested CPU profile; no GPU is required.';
+  $('system-note').textContent = {linux: 'We have tested this setup on Linux. Exit the launcher to stop both servers.',
+    windows: 'Run these commands inside WSL2. The launcher requires Unix shell and file locking support.',
+    mac: 'Install Python and Git on macOS. We have not verified exact replay on macOS; check the setup guide.'}[system];
 }
 
 let noticeTimer;
@@ -117,7 +116,7 @@ $('reveal').addEventListener('click', () => {
   $('recovered').textContent = selected.recovered;
   $('recovered').hidden = false;
   $('reveal').hidden = true;
-  $('demo-status').textContent = 'Original message revealed from the saved recovery.';
+  $('demo-status').textContent = 'Recovered message shown.';
 });
 $('copy-cover').addEventListener('click', () => {if (selected) copy(selected.cover, $('copy-cover'));});
 ['ram', 'vram'].forEach((id) => $(id).addEventListener('input', hardware));
@@ -137,5 +136,5 @@ fetch('./examples.json').then((response) => {
   chooseExample();
 }).catch(() => {
   $('demo-status').textContent = 'The recorded examples could not load.';
-  $('demo-note').textContent = 'Reload this page, or follow the experiment links on GitHub. The local setup guide is still available below.';
+  $('demo-note').textContent = 'Reload the page or view the experiment files on GitHub.';
 });
