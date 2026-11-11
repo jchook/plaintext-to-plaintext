@@ -126,6 +126,7 @@ results, decisions, and next experiment.
 | --- | --- |
 | [experiments/](experiments/) | Numbered experiments, handoff READMEs, inputs, covers, recovered bytes, and measurements |
 | [poc/](poc/README.md) | Shared codec implementations, tests, runners, and public demonstration key |
+| [Prior Art](docs/Prior%20Art.md) | Study links and brief descriptions of steganography, compression, coding, and watermarking research |
 | [research/](research/README.md) | Archived papers and implementation references; [findings](research/summary.md) |
 | [blog/concept.md](blog/concept.md) | Explanation of the original v1 construction |
 
