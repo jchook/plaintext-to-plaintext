@@ -15,3 +15,5 @@
 .token-table{height:168px}@media(max-width:650px){.token-table{height:144px}}
 
 .sampler-strip > span{container-type:inline-size}.sampler-token-label{display:block;width:100%;padding-inline:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}@container(max-width:28px){.sampler-token-label{visibility:hidden}}
+
+.sampler-section{overflow-anchor:none}.sampler-actions #sampler-next{min-width:96px}.sampler-actions #sampler-play{min-width:68px}.sampler-actions [aria-disabled=true]{opacity:.45;cursor:default}

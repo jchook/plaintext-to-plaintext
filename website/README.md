@@ -63,7 +63,8 @@ pinned model. We verify authenticated recovery and exact sentence completion
 before exporting. No secret key material is included in the website.
 
 By default, replay only the first complete sentence (27 or 31 payload tokens).
-Use Play/Pause, Next, Back, and Reset to inspect it. Choose Continue recording
+Use Play/Pause, Next, Back, and Reset to inspect it. Playback resumes from the
+current position and retains the final frame when it stops. Choose Continue
 to replay the remaining tokens and recover the full ciphertext. The excerpt
 reports partial bit recovery and does not claim a complete message round trip. The browser
 reconstructs the arithmetic intervals and ciphertext bits from the recorded
@@ -85,6 +86,7 @@ ciphertext reconstruction without running a model:
 ```sh
 .venv/bin/python scripts/export_sampler.py --check
 node website/test-sampler.cjs
+node website/test-sampler-playback.cjs
 ```
 
 The opening paragraph starts collapsed. Its disclosure explains how it changes

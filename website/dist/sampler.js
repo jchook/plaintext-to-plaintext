@@ -75,6 +75,18 @@ if (typeof document !== 'undefined') {
   const el = (id) => document.getElementById(id);
   let recordings, selected, cursor = 0, playbackLimit = 0, timer;
   const percent = (count) => `${(count / 655.36).toFixed(count < 7 ? 4 : 2)}%`;
+  const outputPrefix = document.createTextNode('');
+  const outputToken = document.createElement('mark');
+  const outputSuffix = document.createTextNode('');
+  el('sampler-output').replaceChildren(outputPrefix, outputToken, outputSuffix);
+
+  function setAvailable(id, available) {
+    // Keep the native button focusable when playback finishes. Disabling or
+    // hiding the focused control can make a mobile browser restore old focus.
+    el(id).disabled = false;
+    el(id).setAttribute('aria-disabled', String(!available));
+  }
+
 
   function pause() {
     clearInterval(timer); timer = undefined;
@@ -91,23 +103,16 @@ if (typeof document !== 'undefined') {
     const decoded = cursor ? steps[cursor - 1].decoded : '';
     const interval = cursor ? steps[cursor - 1].after : {low: 0n, high: 1n, den: 1n};
     el('sampler-opening').textContent = record.opening;
-    el('sampler-output').replaceChildren();
-    if (!cursor) {
-      const hint = document.createElement('span'); hint.className = 'output-placeholder';
-      hint.textContent = 'Press Play or Next token to follow the recording.'; el('sampler-output').append(hint);
-    } else {
-      el('sampler-output').append(document.createTextNode(steps.slice(0, cursor - 1).map((item) => item.chosen.token).join('')));
-      const recent = document.createElement('mark'); recent.textContent = steps[cursor - 1].chosen.token;
-      el('sampler-output').append(recent);
-      if (complete) el('sampler-output').append(document.createTextNode(record.suffix));
-    }
-    el('sampler-output').scrollTop = el('sampler-output').scrollHeight;
+    outputPrefix.data = cursor ? steps.slice(0, cursor - 1).map((item) => item.chosen.token).join('') :
+      'Press Play or Next token to follow the recording.';
+    outputToken.textContent = cursor ? steps[cursor - 1].chosen.token : '';
+    outputSuffix.data = complete ? record.suffix : '';
+    el('sampler-output').className = cursor ? '' : 'output-placeholder';
     el('sampler-step').textContent = `${cursor} / ${playbackLimit} tokens`;
-    el('sampler-next').disabled = stopped;
-    el('sampler-next').hidden = stopped;
-    el('sampler-continue').hidden = !excerptDone;
-    el('sampler-back').disabled = cursor === 0;
-    el('sampler-play').disabled = stopped;
+    el('sampler-next').textContent = excerptDone ? 'Continue' : 'Next token';
+    setAvailable('sampler-next', !complete);
+    setAvailable('sampler-back', cursor > 0);
+    setAvailable('sampler-play', !stopped);
     if (stopped) pause();
     el('sampler-rows').replaceChildren();
     const top = SamplerDemo.topCandidates(step);
@@ -144,6 +149,8 @@ if (typeof document !== 'undefined') {
     el('sampler-interval').textContent = (2 ** logWidth).toExponential(3);
     el('sampler-result').textContent = complete ? `Recovered all ${bits.length} ciphertext bits.` :
       `${excerptDone ? 'Excerpt complete. ' : ''}${decoded.length} of ${bits.length} ciphertext bits recovered.`;
+    // Scroll only after all updates, with the existing text nodes still in place.
+    el('sampler-output').scrollTop = el('sampler-output').scrollHeight;
   }
 
   function reset() {
@@ -155,15 +162,24 @@ if (typeof document !== 'undefined') {
     el('sampler-source').href = 'https://github.com/jchook/plaintext-to-plaintext/blob/main/' + selected.record.artifact_path + '.encode.json';
     cursor = 0; render();
   }
-  el('sampler-next').addEventListener('click', () => {pause(); if (selected && cursor < playbackLimit) {cursor += 1; render();}});
-  el('sampler-back').addEventListener('click', () => {pause(); if (cursor > 0) {cursor -= 1; render();}});
+  el('sampler-next').addEventListener('click', () => {
+    if (!selected || cursor === selected.steps.length) return;
+    pause();
+    if (cursor === playbackLimit) playbackLimit = selected.steps.length;
+    else cursor += 1;
+    render();
+  });
+  el('sampler-back').addEventListener('click', () => {
+    if (!selected || cursor === 0) return;
+    pause(); cursor -= 1; render();
+  });
   el('sampler-play').addEventListener('click', () => {
+    if (!selected || cursor === playbackLimit) return;
     if (timer) {pause(); return;}
     el('sampler-play').textContent = 'Pause';
     el('sampler-play').setAttribute('aria-pressed', 'true');
     timer = setInterval(() => {if (cursor < playbackLimit) {cursor += 1; render();} else pause();}, 220);
   });
-  el('sampler-continue').addEventListener('click', () => {pause(); playbackLimit = selected.steps.length; render();});
   el('sampler-reset').addEventListener('click', reset);
   el('sampler-context').addEventListener('change', reset);
   document.addEventListener('visibilitychange', () => {if (document.hidden) pause();});
