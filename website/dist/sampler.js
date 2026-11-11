@@ -132,7 +132,8 @@ if (typeof document !== 'undefined') {
     step.rows.forEach((row) => {
       const segment = document.createElement('span'); segment.style.flex = row.count;
       segment.className = row === step.chosen ? 'selected-segment' : '';
-      segment.textContent = row.token.trim() || JSON.stringify(row.token);
+      const label = document.createElement('span'); label.className = 'sampler-token-label';
+      label.textContent = row.token.trim() || JSON.stringify(row.token); segment.append(label);
       segment.setAttribute('aria-label', `${JSON.stringify(row.token)}: ${percent(row.count)}`);
       el('sampler-strip').append(segment);
     });
