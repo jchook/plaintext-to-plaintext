@@ -89,9 +89,9 @@ node website/test-sampler.cjs
 
 The opening paragraph starts collapsed. Its disclosure explains how it changes
 subject and style and how the codec uses it during key derivation. The main
-visual keeps token labels, probability bars, and the cover text visible together
-on narrow screens. Full ciphertext, recovered bits, and interval widths are in
-the recording-details disclosure.
+visual gives the token choices and probability strip the full width on narrow
+screens, with smaller generated text below. Full ciphertext, recovered bits, and
+interval widths are in the recording-details disclosure.
 
 The first paragraph is included in the cover text so the decoder can reconstruct
 the model context. In opening-v1, we also bind it into key derivation. Use the CLI
