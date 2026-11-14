@@ -173,7 +173,7 @@ or another machine. Preserve the runtime, model, and protocol used to encode.
 | Replay check fails | Confirm the model/runtime and keep the dedicated server free of unrelated inference requests. The CLI's `--cold` option is available for experiments, but the web demo currently uses the default cache policy. |
 | Web port 8000 is in use | Run `.venv/bin/python poc/web_demo.py --port 8001` and open `http://127.0.0.1:8001`. |
 | Inference port 11535 is in use | Choose an unused port with `p2p.py serve --port 11536`; give `probe` and `web_demo.py` the matching `--url http://127.0.0.1:11536`. |
-| Recovery fails after refreshing or on another tab | Restore the original key and temperature in Advanced controls, and paste the exact full cover. A new tab or refresh generates a different key. |
+| Recovery fails after refreshing or on another tab | Restore the original key, temperature, and KL budget in Advanced controls, and paste the exact full cover. A new tab or refresh generates a different key. |
 | Queue is full | Retry later. One request runs at a time; restarting the server discards its in-memory queue. |
 
 ## Web demo
@@ -191,12 +191,48 @@ the recovered bytes before showing a verified result. **Try recovering it**
 copies the cover and its original settings into the recovery form.
 
 Advanced controls start collapsed. They let you rewrite the public opening
-paragraph, select temperature 1.2 (default) or 1.0, change compression, and copy
+paragraph, select temperature 1.2 (default) or 1.0, set an adaptive KL budget,
+change compression, and copy
 or replace the random 256-bit key. The opening becomes part of the cover and is
-read automatically during recovery. Keep the exact cover, key, temperature, and
+read automatically during recovery. Keep the exact cover, key, temperature, KL budget, and
 pinned model/runtime to recover later; the key is not embedded in the cover.
 Keys and messages are not persisted by the demo. Refreshing the page generates
 a new key, so save the key separately before closing or refreshing the tab.
+
+The **Adaptive KL budget** defaults to `0`, preserving fixed-temperature behavior
+and compatibility with existing covers. A positive value enables entropy-relative
+KL shaping based on [OD-Stega, sections 3.2–3.3](https://aclanthology.org/2026.eacl-long.36.pdf).
+`0.05` is an illustrative starting value, not a measured quality recommendation.
+Larger values allow greater probability changes and may produce shorter covers.
+**Try recovering it** restores the budget used for that cover.
+
+The opening CLI accepts the same setting on both commands:
+
+```sh
+.venv/bin/python poc/opening.py encode --key key.bin --opening opening.txt \
+  --input secret.txt --output cover.txt --temperature 1.2 --kl-budget 0.05
+.venv/bin/python poc/opening.py decode --key key.bin --input cover.txt \
+  --output recovered.txt --temperature 1.2 --kl-budget 0.05
+```
+
+At each position, `P` is the fixed-temperature distribution after the existing
+printable and prefix-free filters. The optimizer maximizes `H(Q)` subject to
+`D_KL(Q || P) <= kl_budget * H(P)`, with entropy and divergence measured in bits.
+It uses temperature scaling with a deterministic 48-step inverse-temperature
+bisection at 40-digit decimal precision, or uniform weights if those fit the
+budget. Candidate support stays fixed. Temperature `1.0` uses the filtered
+original model probabilities as the reference; `1.2` uses the warmer reference.
+The budget measures additional shaping relative to that reference, not divergence
+from the full model distribution or a probability of detection.
+
+Positive budgets use the `opening-kl-v1` protocol and are bound into key derivation
+and frame authentication. Equivalent spellings such as `.05` and `0.0500` agree.
+Zero retains the original `opening-v1` configuration and key derivation. Both the
+temperature and budget must match for recovery. Statistics include mean reference
+and shaped entropy, KL divergence, and allowed KL budget over all scored steps,
+including sentence completion. Those diagnostics describe the continuous weights
+before the arithmetic coder's integer-table rounding. Shaping quality and density
+have not yet been measured with this model.
 
 Standard compression chooses the smaller of raw bytes and DEFLATE without
 source-model inference. Model compression is opt-in and sends the original

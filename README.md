@@ -33,8 +33,9 @@ or see the [manual setup](poc/README.md#setup) for separate-terminal instruction
 
 Open **http://127.0.0.1:8000**, enter a short message, and choose **Hide message**.
 The demo checks exact recovery before displaying the generated text. Advanced
-controls let you rewrite the opening paragraph and change temperature,
-compression, or the random key. Save the key and temperature separately from
+controls let you rewrite the opening paragraph and change temperature, adaptive
+KL budget, compression, or the random key. The KL budget defaults to zero, which
+keeps fixed-temperature sampling. Save the key, temperature, and KL budget separately from
 the exact cover text to recover it later. Refreshing the page generates a new
 key. See [web demo behavior and limits](poc/README.md#web-demo) for queue details.
 

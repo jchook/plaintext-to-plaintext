@@ -10,6 +10,7 @@ from cryptography.exceptions import InvalidTag
 
 import opening
 import p2p
+import shaping
 from p2p import CodecError
 from test_p2p import Oracle
 from test_compact import SourceOracle
@@ -60,6 +61,52 @@ class OpeningTests(unittest.TestCase):
         self.assertNotEqual(original, opening.keys(self.material, self.paragraph, '1.2'))
         with patch.object(opening, 'TEMPLATE', opening.TEMPLATE + '\nA changed wrapper.'):
             self.assertNotEqual(original, opening.keys(self.material, self.paragraph, '1.0'))
+
+    def test_kl_configuration_authentication_and_zero_compatibility(self):
+        old = opening.config(self.paragraph)
+        self.assertNotIn('distribution_shaping', old)
+        self.assertEqual(old, opening.config(self.paragraph, kl_budget='0.00'))
+        # Independently reconstruct the historical protocol namespace.
+        import hashlib
+        import json
+        encoded = json.dumps(old, sort_keys=True, separators=(',', ':')).encode()
+        self.assertEqual(opening.protocol(self.paragraph, kl_budget='0'),
+                         b'plaintext-to-plaintext-opening-v1/' + hashlib.sha256(encoded).digest())
+        self.assertEqual(opening.protocol(self.paragraph)[-32:].hex(),
+                         '1c7adbd69b641d664b2573852d5c74b0acc9e2ea7d67666bd26be382fb5b84c1')
+        self.assertEqual(opening.keys(self.material, self.paragraph, kl_budget='.05'),
+                         opening.keys(self.material, self.paragraph, kl_budget='0.0500'))
+        key, _ = opening.keys(self.material, self.paragraph, kl_budget='.05')
+        frame = opening.seal(b'\x00secret', key, self.paragraph, kl_budget='.05')
+        self.assertEqual(opening.unseal(frame, key, self.paragraph, kl_budget='.05'), b'\x00secret')
+        for budget in ('0', '.1'):
+            with self.assertRaises(InvalidTag):
+                opening.unseal(frame, key, self.paragraph, kl_budget=budget)
+
+    def test_shaped_roundtrip_with_fresh_predictor_and_wrong_budget_rejection(self):
+        class ShapedOracle(Oracle):
+            def __init__(self, budget):
+                super().__init__()
+                self.kl_budget = shaping.validate_budget(budget)
+
+            def candidates(self, history):
+                return shaping.shape(super().candidates(history), self.kl_budget)[0]
+
+        data = b'Exact secret\r\n\t\x00\xff'
+        for budget in ('.01', '.05', '1'):
+            with self.subTest(budget=budget):
+                cover, enc = opening.encode(data, self.material, ShapedOracle(budget), SourceOracle,
+                                            self.paragraph, compression='raw', kl_budget=budget)
+                restored, dec = opening.decode(cover, self.material, ShapedOracle(budget), SourceOracle,
+                                               kl_budget=budget)
+                self.assertEqual(restored, data)
+                self.assertEqual(enc['protocol'], 'opening-kl-v1')
+                self.assertTrue(dec['authenticated'])
+                with self.assertRaises(CodecError):
+                    self.decode(cover, kl_budget='0')
+        with self.assertRaisesRegex(CodecError, 'KL budget'):
+            opening.encode(data, self.material, ShapedOracle('.05'), SourceOracle,
+                           self.paragraph, kl_budget='.1')
 
     def test_frame_authentication_binds_opening_and_temperature(self):
         key, _ = opening.keys(self.material, self.paragraph)
@@ -153,6 +200,8 @@ class OpeningCliTests(unittest.TestCase):
                 self.assertEqual(opening.main([*args, '--stats', str(stats)]), 1)
                 self.assertFalse(output.exists())
                 self.assertEqual(stats.read_bytes(), b'preserve existing stats')
+                self.assertEqual(opening.main([*args, '--kl-budget', '-0.1']), 1)
+                self.assertFalse(output.exists())
                 model.assert_not_called()
 
     def test_cli_fresh_decode_and_no_plaintext_for_invalid_input(self):
@@ -165,10 +214,12 @@ class OpeningCliTests(unittest.TestCase):
             cover, output, stats = root / 'cover', root / 'output', root / 'stats'
 
             class StubCover(Oracle, opening.CoverModel):
-                def __init__(self, url, cold, paragraph, temperature):
+                def __init__(self, url, cold, paragraph, temperature, kl_budget='0'):
                     Oracle.__init__(self)
                     self.opening = paragraph
                     self.temperature_string = temperature
+                    self.kl_budget = kl_budget
+                    self.shaping_steps = 0
                     self.build = 'unit-test oracle'
 
             common = ['--key', str(key)]
@@ -181,6 +232,14 @@ class OpeningCliTests(unittest.TestCase):
                 self.assertEqual(opening.main(['decode', *common, '--input', str(cover),
                                               '--output', str(output)]), 0)
                 self.assertEqual(output.read_bytes(), source.read_bytes())
+                shaped_cover = root / 'shaped-cover'
+                shaped_output = root / 'shaped-output'
+                self.assertEqual(opening.main(['encode', *common, '--opening', str(public),
+                                              '--input', str(source), '--output', str(shaped_cover),
+                                              '--kl-budget', '.05']), 0)
+                self.assertEqual(opening.main(['decode', *common, '--input', str(shaped_cover),
+                                              '--output', str(shaped_output), '--kl-budget', '0.0500']), 0)
+                self.assertEqual(shaped_output.read_bytes(), source.read_bytes())
                 before = output.read_bytes()
                 self.assertEqual(opening.main(['decode', *common, '--input', str(cover),
                                               '--output', str(output)]), 1)
@@ -202,7 +261,7 @@ class OpeningModelTests(unittest.TestCase):
     paragraph = b'Thanks for looking at the revised draft.'
 
     def make_model(self, opening_tokens=8, left_tokens=20, right_tokens=10,
-                   cold=False, truncated=False):
+                   cold=False, truncated=False, kl_budget='0'):
         requests = []
         paragraph = self.paragraph
 
@@ -228,8 +287,21 @@ class OpeningModelTests(unittest.TestCase):
             raise AssertionError('Unexpected endpoint ' + path)
 
         with patch.object(opening.CoverModel, 'request', request):
-            model = opening.CoverModel(opening=paragraph, cold=cold)
+            model = opening.CoverModel(opening=paragraph, cold=cold, kl_budget=kl_budget)
         return model, request, requests
+
+    def test_shaping_is_applied_after_filtering_and_reported(self):
+        baseline, request, _ = self.make_model()
+        shaped, _, _ = self.make_model(kl_budget='.05')
+        with patch.object(opening.CoverModel, 'request', request):
+            original = baseline.candidates([])
+            changed = shaped.candidates([])
+        self.assertEqual(changed, shaping.shape(original, '.05')[0])
+        self.assertEqual(baseline.shaping_stats(), {})
+        stats = shaped.shaping_stats()
+        self.assertEqual(stats['shaping_scored_steps'], 1)
+        self.assertGreater(stats['average_shaped_entropy_bits'], stats['average_reference_entropy_bits'])
+        self.assertLessEqual(stats['average_kl_divergence_bits'], stats['average_kl_budget_bits'])
 
     def test_opening_tokenized_literally_and_prompt_history_bounded(self):
         model, request, requests = self.make_model()

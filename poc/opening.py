@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Opening v1: a public first paragraph steers an authenticated prose cover.
 
-The decoder requires the cover, key, shared template/model, and temperature. It
+The decoder requires the cover, key, shared template/model, and sampling settings. It
 extracts the public paragraph from the cover; no per-message sidecar is needed.
 Existing compact v2 profiles and their wire formats are unchanged.
 """
@@ -25,6 +25,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 import compact
 import p2p
 import source_codec
+import shaping
 
 TEMPLATE_PATH = Path(__file__).resolve().parent.parent / 'experiments/003-opening-paragraph/prompt-template-v1.txt'
 TEMPLATE = TEMPLATE_PATH.read_bytes().decode('utf-8')
@@ -94,11 +95,12 @@ def split_cover(cover):
     return validate_opening(opening), continuation
 
 
-def config(opening, temperature='1.0'):
+def config(opening, temperature='1.0', kl_budget='0'):
     opening = validate_opening(opening)
     validate_temperature(temperature)
+    kl_budget = shaping.validate_budget(kl_budget)
     prompt = render_prompt(opening)
-    return {
+    result = {
         'protocol': 'opening-v1', 'model_sha256': p2p.MODEL_SHA,
         'template_version': TEMPLATE_VERSION,
         'template_sha256': hashlib.sha256(TEMPLATE.encode('utf-8')).hexdigest(),
@@ -112,43 +114,57 @@ def config(opening, temperature='1.0'):
         'completion_rule': 'p2p-v1-sentence-finish',
         'source_coding': 'compact-v2-auto-independent-model',
     }
+    # Omit new fields entirely when disabled: old keys, frames and covers replay.
+    if kl_budget != '0':
+        result.update(protocol='opening-kl-v1', distribution_shaping={
+            'method': 'od-stega-kl-v1', 'kl_budget': kl_budget,
+            'reference': 'fixed-temperature-prefix-free',
+            'budget_rule': 'coefficient-times-reference-entropy-bits',
+            'precision': shaping.PRECISION, 'bisection_steps': shaping.BISECTION_STEPS,
+        })
+    return result
 
 
-def protocol(opening, temperature='1.0'):
-    encoded = json.dumps(config(opening, temperature), sort_keys=True, separators=(',', ':')).encode('utf-8')
-    return b'plaintext-to-plaintext-opening-v1/' + hashlib.sha256(encoded).digest()
+def protocol(opening, temperature='1.0', kl_budget='0'):
+    settings = config(opening, temperature, kl_budget)
+    encoded = json.dumps(settings, sort_keys=True, separators=(',', ':')).encode('utf-8')
+    return ('plaintext-to-plaintext-' + settings['protocol'] + '/').encode() + hashlib.sha256(encoded).digest()
 
 
-def keys(material, opening, temperature='1.0'):
+def keys(material, opening, temperature='1.0', kl_budget='0'):
     if not material:
         raise p2p.CodecError('The key file is empty.')
-    value = HKDF(algorithm=hashes.SHA256(), length=64, salt=protocol(opening, temperature),
+    value = HKDF(algorithm=hashes.SHA256(), length=64, salt=protocol(opening, temperature, kl_budget),
                  info=b'encryption-and-interval-order').derive(material)
     return value[:32], value[32:]
 
 
-def seal(packed, key, opening, temperature='1.0'):
+def seal(packed, key, opening, temperature='1.0', kl_budget='0'):
     if not 1 <= len(packed) <= compact.MAX_FRAME - compact.FRAME_OVERHEAD:
         raise p2p.CodecError('Compressed source exceeds the frame limit.')
     nonce = secrets.token_bytes(12)
     header = compact.mask_length(struct.pack('>H', len(packed)), key, nonce)
-    return nonce + header + ChaCha20Poly1305(key).encrypt(nonce, packed, protocol(opening, temperature) + header)
+    return nonce + header + ChaCha20Poly1305(key).encrypt(nonce, packed, protocol(opening, temperature, kl_budget) + header)
 
 
-def unseal(frame, key, opening, temperature='1.0'):
+def unseal(frame, key, opening, temperature='1.0', kl_budget='0'):
     if len(frame) < compact.FRAME_OVERHEAD + 1:
         raise InvalidTag
     size = struct.unpack('>H', compact.mask_length(frame[12:14], key, frame[:12]))[0]
     if len(frame) != size + compact.FRAME_OVERHEAD:
         raise InvalidTag
-    return ChaCha20Poly1305(key).decrypt(frame[:12], frame[14:], protocol(opening, temperature) + frame[12:14])
+    return ChaCha20Poly1305(key).decrypt(frame[:12], frame[14:], protocol(opening, temperature, kl_budget) + frame[12:14])
 
 
 class CoverModel(compact.CoverModel):
     """Reuse v2 scoring, with explicit configuration instead of global profiles."""
-    def __init__(self, url=p2p.DEFAULT_URL, cold=False, opening=b'', temperature='1.0'):
+    def __init__(self, url=p2p.DEFAULT_URL, cold=False, opening=b'', temperature='1.0', kl_budget='0'):
         self.opening = validate_opening(opening)
         self.temperature_string = validate_temperature(temperature)
+        self.kl_budget = shaping.validate_budget(kl_budget)
+        self.shaping_steps = self.uniform_shaping_steps = 0
+        self.shaping_sums = dict.fromkeys(('reference_entropy_bits', 'shaped_entropy_bits',
+                                           'kl_divergence_bits', 'kl_budget_bits'), 0.0)
         before, after = template_parts()
         # Llama initializes/checks the pinned server and starts with no cached
         # completion calls. All three tokenization requests remain read-only.
@@ -173,9 +189,29 @@ class CoverModel(compact.CoverModel):
         if p2p.CONTEXT_TOKENS != HISTORY_TOKENS:
             raise p2p.CodecError('Shared rolling history policy differs from opening v1.')
 
+    def candidates(self, history):
+        selected = super().candidates(history)
+        if self.kl_budget == '0':
+            return selected
+        selected, diagnostics = shaping.shape(selected, self.kl_budget)
+        self.shaping_steps += 1
+        self.uniform_shaping_steps += int(diagnostics['uniform'])
+        for name in self.shaping_sums:
+            self.shaping_sums[name] += diagnostics[name]
+        return selected
+
+    def shaping_stats(self):
+        # Includes sentence-ending scoring calls, on both encode and decode.
+        if self.kl_budget == '0' or not self.shaping_steps:
+            return {}
+        return {'shaping_scored_steps': self.shaping_steps,
+                'uniform_shaping_steps': self.uniform_shaping_steps,
+                **{'average_' + name: value / self.shaping_steps
+                   for name, value in self.shaping_sums.items()}}
+
 
 def decode_frame(cover, encryption_key, order_key, oracle, opening, temperature='1.0',
-                 max_tokens=5000, progress=None):
+                 max_tokens=5000, progress=None, *, kl_budget='0'):
     # The arithmetic and suffix rules match v2. Keep the authentication boundary
     # here explicit so opening-v1 never mutates the existing protocol registry.
     interval, history, offset, frame_size = p2p.Interval(), [], 0, None
@@ -202,7 +238,7 @@ def decode_frame(cover, encryption_key, order_key, oracle, opening, temperature=
         frame = interval.common_bytes(frame_size) if frame_size else None
         if frame is not None:
             try:
-                packed = unseal(frame, encryption_key, opening, temperature)
+                packed = unseal(frame, encryption_key, opening, temperature, kl_budget)
             except InvalidTag as error:
                 raise p2p.CodecError('Frame authentication failed.') from error
             payload_tokens = len(history)
@@ -214,9 +250,9 @@ def decode_frame(cover, encryption_key, order_key, oracle, opening, temperature=
     raise p2p.CodecError('No authenticated message recovered within the available cover and token limit.')
 
 
-def public_stats(opening, temperature, continuation, oracle):
+def public_stats(opening, temperature, continuation, oracle, kl_budget='0'):
     prompt = render_prompt(opening)
-    result = config(opening, temperature)
+    result = config(opening, temperature, kl_budget)
     result.update({
         'opening': opening.decode('utf-8'), 'rendered_prompt': prompt,
         'opening_bytes': len(opening), 'separator_bytes': 2,
@@ -229,29 +265,33 @@ def public_stats(opening, temperature, continuation, oracle):
         result['fixed_prompt_tokens'] = len(oracle.base)
         result['fixed_prompt_token_sha256'] = hashlib.sha256(
             json.dumps(oracle.base, separators=(',', ':')).encode()).hexdigest()
+    if hasattr(oracle, 'shaping_stats'):
+        result.update(oracle.shaping_stats())
     return result
 
 
-def check_oracle(oracle, opening, temperature):
+def check_oracle(oracle, opening, temperature, kl_budget='0'):
     # Toy oracles can exercise framing without inference; real predictors must
     # match the authenticated context exactly.
     if (getattr(oracle, 'opening', opening) != opening or
-            getattr(oracle, 'temperature_string', temperature) != temperature):
-        raise p2p.CodecError('Cover model does not match the opening and temperature.')
+            getattr(oracle, 'temperature_string', temperature) != temperature or
+            getattr(oracle, 'kl_budget', kl_budget) != kl_budget):
+        raise p2p.CodecError('Cover model does not match the opening, temperature, and KL budget.')
 
 
 def encode(data, material, cover_oracle, source_factory, opening, temperature='1.0',
-           compression='auto', max_tokens=5000, progress=None):
+           compression='auto', max_tokens=5000, progress=None, *, kl_budget='0'):
     started = time.monotonic()
     opening = validate_opening(opening)
-    check_oracle(cover_oracle, opening, temperature)
-    encryption_key, order_key = keys(material, opening, temperature)
+    kl_budget = shaping.validate_budget(kl_budget)
+    check_oracle(cover_oracle, opening, temperature, kl_budget)
+    encryption_key, order_key = keys(material, opening, temperature, kl_budget)
     packed, source_stats = source_codec.pack(data, compression, source_factory, progress)
     compressed_at = time.monotonic()
-    frame = seal(packed, encryption_key, opening, temperature)
+    frame = seal(packed, encryption_key, opening, temperature, kl_budget)
     continuation, stats = compact.encode_frame(frame, order_key, cover_oracle, max_tokens, progress)
     stats.update(source_stats)
-    stats.update(public_stats(opening, temperature, continuation, cover_oracle))
+    stats.update(public_stats(opening, temperature, continuation, cover_oracle, kl_budget))
     stats.update({'plaintext_bytes': len(data), 'compression_seconds': round(compressed_at - started, 3),
                   'elapsed_seconds': round(time.monotonic() - started, 3),
                   'realized_frame_bits_per_continuation_byte': 8 * len(frame) / len(continuation),
@@ -260,16 +300,18 @@ def encode(data, material, cover_oracle, source_factory, opening, temperature='1
     return opening + b'\n\n' + continuation, stats
 
 
-def decode(cover, material, cover_oracle, source_factory, temperature='1.0', max_tokens=5000, progress=None):
+def decode(cover, material, cover_oracle, source_factory, temperature='1.0', max_tokens=5000, progress=None,
+           *, kl_budget='0'):
     started = time.monotonic()
     opening, continuation = split_cover(cover)
-    check_oracle(cover_oracle, opening, temperature)
-    encryption_key, order_key = keys(material, opening, temperature)
+    kl_budget = shaping.validate_budget(kl_budget)
+    check_oracle(cover_oracle, opening, temperature, kl_budget)
+    encryption_key, order_key = keys(material, opening, temperature, kl_budget)
     packed, stats = decode_frame(continuation, encryption_key, order_key, cover_oracle,
-                                 opening, temperature, max_tokens, progress)
+                                 opening, temperature, max_tokens, progress, kl_budget=kl_budget)
     decompressed_at = time.monotonic()
     data = source_codec.unpack(packed, source_factory, progress)
-    stats.update(public_stats(opening, temperature, continuation, cover_oracle))
+    stats.update(public_stats(opening, temperature, continuation, cover_oracle, kl_budget))
     stats.update({'plaintext_bytes': len(data), 'compression': {0: 'raw', 1: 'zlib', 2: 'llm'}[packed[0]],
                   'decompression_seconds': round(time.monotonic() - decompressed_at, 3),
                   'elapsed_seconds': round(time.monotonic() - started, 3)})
@@ -283,6 +325,9 @@ def main(argv=None):
     parser.add_argument('--cold', action='store_true')
     parser.add_argument('--opening', help='UTF-8 paragraph file; required for encoding only')
     parser.add_argument('--temperature', choices=TEMPERATURES, default='1.0')
+    parser.add_argument('--kl-budget', default='0',
+                        help='Adaptive KL budget as a multiple of reference entropy (e.g. 0.05); '
+                             '0 keeps fixed temperature. Must match when decoding.')
     parser.add_argument('--compression', choices=('auto', 'raw', 'zlib', 'llm'), default='auto')
     parser.add_argument('--key', required=True)
     parser.add_argument('--input', required=True)
@@ -291,6 +336,7 @@ def main(argv=None):
     parser.add_argument('--max-tokens', type=int, default=5000)
     args = parser.parse_args(argv)
     try:
+        kl_budget = shaping.validate_budget(args.kl_budget)
         if args.max_tokens <= 0:
             raise p2p.CodecError('Token limit must be positive.')
         if Path(args.output).exists() or (args.stats and Path(args.stats).exists()):
@@ -309,15 +355,16 @@ def main(argv=None):
                 raise p2p.CodecError('Decode reads the opening from the cover; omit --opening.')
             opening, _ = split_cover(data)
         with p2p.server_lock(args.url):
-            oracle = CoverModel(args.url, args.cold, opening, args.temperature)
+            oracle = CoverModel(args.url, args.cold, opening, args.temperature, kl_budget=kl_budget)
             source_factory = lambda: SourceModel(args.url, args.cold)
             progress = lambda row: print(json.dumps(row), file=sys.stderr, flush=True)
             if args.command == 'encode':
                 output, stats = encode(data, material, oracle, source_factory, opening,
-                                       args.temperature, args.compression, args.max_tokens, progress)
+                                       args.temperature, args.compression, args.max_tokens, progress,
+                                       kl_budget=kl_budget)
             else:
                 output, stats = decode(data, material, oracle, source_factory, args.temperature,
-                                       args.max_tokens, progress)
+                                       args.max_tokens, progress, kl_budget=kl_budget)
             stats.update({'model': p2p.MODEL, 'server_build': oracle.build, 'cold': args.cold,
                           'key_sha256': hashlib.sha256(material).hexdigest()})
             p2p.write_new(args.output, output)

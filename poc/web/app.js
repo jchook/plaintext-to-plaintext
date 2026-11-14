@@ -71,7 +71,7 @@ function setMode(next) {
   $('input-label').htmlFor = encode ? 'message' : 'cover-input';
   $('input-label').textContent = encode ? 'Your message' : 'The complete cover text';
   $('input-hint').textContent = encode ? 'A little something you want to keep between the lines.' : 'Keep the opening paragraph, whitespace, and ending unchanged.';
-  $('input-note').textContent = encode ? 'Short messages work best.' : 'Use the original key and temperature.';
+  $('input-note').textContent = encode ? 'Short messages work best.' : 'Use the original key, temperature, and KL budget.';
   $('sample').hidden = !encode;
   $('opening-control').hidden = !encode;
   $('compression-control').hidden = !encode;
@@ -81,7 +81,7 @@ function setMode(next) {
   $('empty-hint').textContent = encode ? 'Your generated prose will appear here.' : 'Your authenticated message will appear here.';
   $('action-note').textContent = encode ? '✓ Every generated cover is checked for exact recovery.' : '✓ Recovered text appears only after authentication.';
   $('submit').textContent = encode ? 'Hide message ↗' : 'Recover message ↗';
-  $('advanced').querySelector('.advanced-summary').textContent = encode ? 'Opening paragraph, temperature & key' : 'Temperature & key';
+  $('advanced').querySelector('.advanced-summary').textContent = encode ? 'Opening paragraph, sampling & key' : 'Sampling & key';
   $('error').hidden = true;
   renderResult();
   countInput();
@@ -146,7 +146,7 @@ $('demo-form').addEventListener('submit', async (event) => {
   else decoded = undefined;
   renderResult();
   const request = {action: mode, text: mode === 'encode' ? $('message').value : $('cover-input').value,
-    opening: $('opening').value, temperature: $('temperature').value,
+    opening: $('opening').value, temperature: $('temperature').value, kl_budget: $('kl-budget').value,
     compression: $('compression').value, key: $('key').value};
   setRunning(true);
   describeProgress({phase: 'Preparing model'});
@@ -228,6 +228,7 @@ $('recover-generated').addEventListener('click', () => {
   $('cover-input').value = generated.result.text;
   $('key').value = generated.request.key;
   $('temperature').value = generated.request.temperature;
+  $('kl-budget').value = generated.request.kl_budget;
   setMode('decode');
   $('cover-input').focus();
 });
@@ -249,6 +250,7 @@ async function initialize() {
     config = await api('/api/config');
     $('opening').value = config.opening;
     $('temperature').value = config.temperature;
+    $('kl-budget').value = config.kl_budget;
     countInput();
     checkStatus();
   } catch (error) {showError(error.message);}

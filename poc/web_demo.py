@@ -46,13 +46,15 @@ def validate_request(body):
     if not isinstance(key, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', key):
         raise ValueError('The demo key must contain exactly 64 hexadecimal characters.')
     temperature = opening.validate_temperature(body.get('temperature', '1.2'))
+    kl_budget = opening.shaping.validate_budget(body.get('kl_budget', '0'))
     compression = body.get('compression', 'standard')
     if compression not in ('standard', 'raw', 'llm'):
         raise ValueError('Choose standard, raw, or model compression.')
     paragraph = (opening.validate_opening(body.get('opening', DEFAULT_OPENING))
                  if action == 'encode' else opening.split_cover(data)[0])
     return {'action': action, 'data': data, 'key': bytes.fromhex(key),
-            'temperature': temperature, 'compression': compression, 'opening': paragraph}
+            'temperature': temperature, 'kl_budget': kl_budget,
+            'compression': compression, 'opening': paragraph}
 
 
 class Demo:
@@ -196,19 +198,23 @@ class Demo:
         try:
             data, key = request['data'], request['key']
             temperature, paragraph = request['temperature'], request['opening']
+            kl_budget = request['kl_budget']
             with p2p.server_lock(self.model_url):
                 source = lambda: opening.SourceModel(self.model_url)
-                oracle = opening.CoverModel(self.model_url, opening=paragraph, temperature=temperature)
+                oracle = opening.CoverModel(self.model_url, opening=paragraph, temperature=temperature,
+                                            kl_budget=kl_budget)
                 if request['action'] == 'encode':
                     mode = request['compression']
                     if mode == 'standard':
                         mode = 'zlib' if len(zlib.compress(data, level=9)) < len(data) else 'raw'
                     self.update(job_id, phase='Compressing and hiding your message')
                     cover, encoded = opening.encode(data, key, oracle, source, paragraph,
-                                                    temperature, mode, progress=progress)
+                                                    temperature, mode, progress=progress, kl_budget=kl_budget)
                     self.update(job_id, phase='Checking exact recovery', progress={})
-                    decoder = opening.CoverModel(self.model_url, opening=paragraph, temperature=temperature)
-                    recovered, decoded = opening.decode(cover, key, decoder, source, temperature, progress=progress)
+                    decoder = opening.CoverModel(self.model_url, opening=paragraph, temperature=temperature,
+                                                 kl_budget=kl_budget)
+                    recovered, decoded = opening.decode(cover, key, decoder, source, temperature,
+                                                        progress=progress, kl_budget=kl_budget)
                     if recovered != data or not decoded['authenticated']:
                         raise p2p.CodecError('The generated text failed its recovery check.')
                     result = {'text': cover.decode('utf-8'), 'recovered': recovered.decode('utf-8'),
@@ -216,7 +222,8 @@ class Demo:
                               'compression': encoded['compression'], 'verified': True}
                 else:
                     self.update(job_id, phase='Recovering and authenticating the message')
-                    recovered, decoded = opening.decode(data, key, oracle, source, temperature, progress=progress)
+                    recovered, decoded = opening.decode(data, key, oracle, source, temperature,
+                                                        progress=progress, kl_budget=kl_budget)
                     result = {'text': recovered.decode('utf-8'), 'input_bytes': len(data),
                               'output_bytes': len(recovered), 'compression': decoded['compression'],
                               'authenticated': decoded['authenticated']}
@@ -256,7 +263,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed_host():
             self.reply(403, {'error': 'Open this demo using its localhost address.'})
         elif self.path == '/api/config':
-            self.reply(200, {'opening': DEFAULT_OPENING, 'temperature': '1.2',
+            self.reply(200, {'opening': DEFAULT_OPENING, 'temperature': '1.2', 'kl_budget': '0',
                              'max_message_bytes': MAX_MESSAGE_BYTES, 'max_cover_bytes': MAX_COVER_BYTES,
                              'model': p2p.MODEL})
         elif self.path == '/api/status':

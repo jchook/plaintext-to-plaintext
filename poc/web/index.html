@@ -45,14 +45,15 @@
             </section>
           </div>
           <details id="advanced" class="advanced">
-            <summary><span>Advanced controls</span><span class="advanced-summary">Opening paragraph, temperature &amp; key</span><span class="chevron" aria-hidden="true">+</span></summary>
+            <summary><span>Advanced controls</span><span class="advanced-summary">Opening paragraph, sampling &amp; key</span><span class="chevron" aria-hidden="true">+</span></summary>
             <div class="advanced-body">
               <div id="opening-control" class="field opening-field"><div class="field-label"><label for="opening">Opening paragraph</label><button id="reset-opening" class="text-button" type="button">Reset</button></div><p>This paragraph appears at the start of the cover. Rewrite it to set the subject and voice.</p><textarea id="opening" rows="4" spellcheck="true" aria-describedby="opening-note"></textarea><span id="opening-note" class="field-note">Use one paragraph, without line breaks. The decoder reads it from the cover.</span></div>
               <div class="control-grid">
                 <div class="field"><label for="temperature">Temperature</label><select id="temperature"><option value="1.2">1.2 · Default</option><option value="1.0">1.0 · Lower temperature</option></select><p>Use the same setting to recover the message.</p></div>
+                <div class="field"><label for="kl-budget">Adaptive KL budget · Experimental</label><input id="kl-budget" type="number" min="0" step="any" value="0" required aria-describedby="kl-budget-note"><p id="kl-budget-note">0 keeps fixed temperature. Try 0.05 for adaptive shaping; larger values allow more change and may shorten the cover. Save this setting for recovery.</p></div>
                 <div id="compression-control" class="field"><label for="compression">Compression</label><select id="compression"><option value="standard">Standard · Automatic</option><option value="raw">None · Original bytes</option><option value="llm">Model · Experimental</option></select><p id="compression-note">Chooses the smaller of raw bytes and DEFLATE.</p></div>
               </div>
-              <div class="field key-field"><div class="field-label"><label for="key">Demo key</label><button id="new-key" class="text-button" type="button">New random key</button></div><input id="key" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="64" maxlength="64" pattern="[0-9a-fA-F]{64}" required><p>A random key for this tab. To recover elsewhere, save this key and the temperature separately from the cover text.</p></div>
+              <div class="field key-field"><div class="field-label"><label for="key">Demo key</label><button id="new-key" class="text-button" type="button">New random key</button></div><input id="key" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="64" maxlength="64" pattern="[0-9a-fA-F]{64}" required><p>A random key for this tab. To recover elsewhere, save this key, temperature, and KL budget separately from the cover text.</p></div>
             </div>
           </details>
           <div class="action-bar"><p id="action-note"><span aria-hidden="true">✓</span> Every generated cover is checked for exact recovery.</p><button id="submit" class="primary-button" type="submit" disabled>Hide message <span aria-hidden="true">↗</span></button></div>

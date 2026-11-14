@@ -36,6 +36,7 @@ class DemoTests(unittest.TestCase):
                  self.request(temperature='1.6'), self.request(opening='one\ntwo'),
                  self.request(compression='unknown'), self.request(action='decode', text='no opening'),
                  self.request(text='\ud800')]
+        cases += [self.request(kl_budget=value) for value in ('-1', 'NaN', 'Infinity', '', None, True)]
         for body in cases:
             with self.subTest(body=repr(body)[:100]), self.assertRaises((ValueError, web_demo.p2p.CodecError)):
                 web_demo.validate_request(body)
@@ -67,6 +68,26 @@ class DemoTests(unittest.TestCase):
                 result = self.wait(demo, demo.start(web_demo.validate_request(self.request(text=text))))
                 self.assertEqual(result['state'], 'complete', result)
                 self.assertEqual(result['result']['compression'], expected)
+
+    def test_kl_budget_reaches_fresh_encoder_and_decoder_and_must_match(self):
+        demo = web_demo.Demo()
+        with patch.object(opening, 'CoverModel', side_effect=lambda *a, **kw: Oracle()) as model, \
+             patch.object(opening, 'SourceModel', side_effect=lambda *a, **kw: SourceOracle()), \
+             patch.object(web_demo.p2p, 'server_lock', side_effect=lambda *a: contextlib.nullcontext()):
+            request = web_demo.validate_request(self.request(kl_budget='0.0500'))
+            self.assertEqual(request['kl_budget'], '0.05')
+            encoded = self.wait(demo, demo.start(request))
+            self.assertEqual(encoded['state'], 'complete', encoded)
+            self.assertEqual([call.kwargs['kl_budget'] for call in model.call_args_list], ['0.05', '0.05'])
+            cover = encoded['result']['text']
+            decoded = self.wait(demo, demo.start(web_demo.validate_request(
+                self.request(action='decode', text=cover, kl_budget='.05'))))
+            self.assertEqual(decoded['state'], 'complete', decoded)
+            self.assertEqual(decoded['result']['text'], self.request()['text'])
+            failed = self.wait(demo, demo.start(web_demo.validate_request(
+                self.request(action='decode', text=cover, kl_budget='0'))))
+            self.assertEqual(failed['state'], 'failed')
+            self.assertNotIn('result', failed)
 
     def test_mismatched_verification_does_not_release_cover(self):
         demo = web_demo.Demo()
