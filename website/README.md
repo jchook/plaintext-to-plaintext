@@ -1,5 +1,13 @@
 # Recorded-example playground
 
+Live demo: <https://jchook.github.io/plaintext-to-plaintext/>
+
+GitHub Pages hosts `website/dist` for free. The
+[`pages.yml` workflow](../.github/workflows/pages.yml) verifies the recordings and
+publishes changes to `website/` on `main`. You can also run it manually from the
+repository's Actions tab. In Settings → Pages, the publishing source is
+**GitHub Actions**.
+
 This is a static website. Visitors can replay 24 real archived round trips,
 change between recorded inputs, cover styles, temperatures and trials, and reveal
 the saved recovery. The interface explicitly identifies playback and saved

@@ -1,0 +1,44 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'scripts/export_examples.py'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify recorded demo
+        run: |
+          python3 scripts/export_examples.py --check
+          node --check website/dist/app.js
+          node --check website/dist/sampler.js
+          node website/test-sampler.cjs
+          node website/test-sampler-playback.cjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: website/dist
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

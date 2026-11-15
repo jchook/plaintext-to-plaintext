@@ -6,7 +6,7 @@ to recover the original bytes exactly.
 
 ## Try the web demo
 
-The [recorded-example playground](website/README.md) shows 24 saved round trips
+The [recorded-example playground](https://jchook.github.io/plaintext-to-plaintext/) shows 24 saved round trips
 from real experiments. To encode your own messages, run the local app.
 
 Start with the [setup guide](poc/README.md#setup) for prerequisites, inference
