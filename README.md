@@ -1,14 +1,13 @@
 # Plaintext to plaintext
 
-This experimental codec encrypts a message, then carries the encrypted bytes in
-model-generated prose. The receiver uses the key and the same model and protocol
+This experimental codec encrypts a message and embeds it in model-generated
+prose. The receiver uses the key and the same model and protocol
 to recover the original bytes exactly.
 
 ## Try the web demo
 
-The [recorded-example playground](website/README.md) is a static site for exploring
-24 saved round trips and planning a local setup. It replays real experiment
-outputs; live encoding runs in the local app on your computer.
+The [recorded-example playground](website/README.md) shows 24 saved round trips
+from real experiments. To encode your own messages, run the local app.
 
 Start with the [setup guide](poc/README.md#setup) for prerequisites, inference
 runtime configuration, and troubleshooting. The prototype has been tested on
@@ -25,23 +24,26 @@ cd plaintext-to-plaintext
 ```
 
 The launcher installs the Python dependencies, downloads the pinned model if
-needed (about 2 GB), checks model identity and replay, and starts the model and web
-servers. It opens **http://127.0.0.1:8000** in your browser. Keep the terminal open;
+needed (about 2 GB), verifies the model and its ability to reproduce outputs
+exactly, and starts the model and web servers. It opens **http://127.0.0.1:8000**
+in your browser. Keep the terminal open;
 Ctrl-C stops the servers started by the launcher. Use `./run-local.sh --check`
 to check prerequisites without downloading the model or starting either server,
-or see the [manual setup](poc/README.md#setup) for separate-terminal instructions.
+or follow the [manual setup](poc/README.md#setup) to run the servers in separate
+terminals.
 
-Open **http://127.0.0.1:8000**, enter a short message, and choose **Hide message**.
+In the app, enter a short message and choose **Hide message**.
 The demo checks exact recovery before displaying the generated text. Advanced
 controls let you rewrite the opening paragraph and change temperature, adaptive
 KL budget, compression, or the random key. The KL budget defaults to zero, which
-keeps fixed-temperature sampling. Save the key, temperature, and KL budget separately from
-the exact cover text to recover it later. Refreshing the page generates a new
-key. See [web demo behavior and limits](poc/README.md#web-demo) for queue details.
+uses fixed-temperature sampling. To recover the message later, preserve the
+generated text exactly and save the key, temperature, and KL budget separately.
+Refreshing the page generates a new key. See
+[web demo behavior and limits](poc/README.md#web-demo) for queue details.
 
 ## Input and output
 
-Here is a real round trip from the public-opening experiment.
+This round trip comes from the public-opening experiment.
 
 Input message (16 bytes):
 
@@ -49,7 +51,7 @@ Input message (16 bytes):
 The key is 12345
 ```
 
-Transmitted stegotext (1,422 bytes):
+Generated text, called stegotext or cover text (1,422 bytes):
 
 > Hi Alex, it was great meeting you at the conference and hearing how your team is
 > approaching the product launch. I'm going to ask Shannon to coordinate a conversation
@@ -77,10 +79,10 @@ Recovered message (16 bytes, authenticated and byte-for-byte identical):
 The key is 12345
 ```
 
-The first paragraph is a supplied public opening that sets the subject and voice.
+The sender supplies the first paragraph to set the subject and voice.
 The generated continuation carries the encrypted message; its meaning can be
 unrelated to the input. The decoder reads the opening from the cover and rebuilds
-the shared prompt without a per-message sidecar.
+the shared prompt without a separate metadata file for each message.
 
 Exact saved files: [input](experiments/003-opening-paragraph/runs/pilot-20261021/key-message.opening-conference-followup-t1.2.1.input),
 [stegotext](experiments/003-opening-paragraph/runs/pilot-20261021/key-message.opening-conference-followup-t1.2.1.cover.txt),
@@ -91,18 +93,19 @@ for other samples, sizes, and limitations.
 
 ## Payload size and cover length
 
-The five-temperature pilot completed 40 authenticated, byte-exact round trips.
-Higher temperature produced shorter covers, with more grammatical failures at
-the highest setting. Lower temperature often produced longer, repetitive prose.
+The pilot tested five temperatures and completed 40 authenticated round trips,
+recovering the original bytes exactly. Higher temperature produced shorter covers,
+with more grammatical errors at the highest setting. Lower temperature often
+produced longer, repetitive prose.
 See the [experiment results](experiments/005-density-sweep/README.md) for the
 size and quality measurements.
 
 ![Plaintext length versus generated stegotext length at five temperatures](experiments/005-density-sweep/plots/plaintext-vs-stegotext.svg)
 
 The plot excludes the supplied opening paragraph and separator (358 bytes).
-Diamonds show two-trial means; bars show their range. The inputs differ in
-compressibility: the 238-byte paragraph packs to 49 bytes, so these points do
-not establish a general length-scaling curve.
+Diamonds show the mean of two trials; bars show their range. The inputs differ in
+compressibility: the 238-byte paragraph compresses to 49 bytes. These results do
+not show how cover length scales with input size in general.
 [PNG version](experiments/005-density-sweep/plots/plaintext-vs-stegotext.png).
 
 ## Run and verify
@@ -120,18 +123,18 @@ hashes; it does not rerun model inference. To encode your own messages, follow t
 
 ## Project map
 
-Start with [Experiments and directions](EXPERIMENTS.md) for the short history,
+See [Experiments and directions](EXPERIMENTS.md) for the project history,
 results, decisions, and next experiment.
 
 | Location | Contents |
 | --- | --- |
-| [experiments/](experiments/) | Numbered experiments, handoff READMEs, inputs, covers, recovered bytes, and measurements |
+| [experiments/](experiments/) | Numbered experiments, READMEs, inputs, covers, recovered bytes, and measurements |
 | [poc/](poc/README.md) | Shared codec implementations, tests, runners, and public demonstration key |
 | [Prior Art](docs/Prior%20Art.md) | Study links and brief descriptions of steganography, compression, coding, and watermarking research |
 | [research/](research/README.md) | Archived papers and implementation references; [findings](research/summary.md) |
 | [blog/concept.md](blog/concept.md) | Explanation of the original v1 construction |
 
-This prototype has demonstrated exact local recovery. Covers can still be verbose,
-invent details, or lose track of recipient roles. Statistical detectability,
-real email transport, phone performance, and compatibility across runtimes remain
-open questions.
+This prototype has demonstrated exact local recovery. Generated text can still
+be verbose, include invented details, or confuse sender and recipient roles.
+Statistical detectability, real email transport, phone performance, and
+compatibility across runtimes remain open questions.
